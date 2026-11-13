@@ -1,0 +1,20 @@
+# Unreal-generated output and local editor state
+/Binaries/
+/DerivedDataCache/
+/Intermediate/
+/Saved/
+/Plugins/**/Binaries/
+/Plugins/**/DerivedDataCache/
+/Plugins/**/Intermediate/
+/Plugins/**/Saved/
+
+# Generated IDE files
+/.vs/
+/*.sln
+/*.slnx
+/*.xcworkspace/
+/*.xcodeproj/
+*.VC.db
+*.VC.opendb
+*.suo
+*.user
