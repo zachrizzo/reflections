@@ -18,7 +18,7 @@ cd reflections
 git lfs pull
 ```
 
-The project currently runs on Unreal Engine 5.9.0, changelist `60351404`. Check `Engine/Build/Build.version` in your installation. On Windows, install the Visual Studio C++ game development tools for Unreal, then open `reflections.uproject` and build the project modules when prompted. If the project’s engine association is unfamiliar to your machine, launch the matching `Engine/Binaries/Win64/UnrealEditor.exe` and open `reflections.uproject` from it, or pass the full `.uproject` path on the command line. The GUID in `EngineAssociation` is registered locally. See [Epic’s engine association documentation](https://dev.epicgames.com/documentation/en-us/unreal-engine/managing-game-code-in-unreal-engine).
+The project currently runs on Unreal Engine 5.9.0 Preview, changelist `60351404`. Check `Engine/Build/Build.version` in your installation. On Windows, install the Visual Studio C++ game development tools for Unreal, then open `reflections.uproject` and build the project modules when prompted. If the project’s engine association is unfamiliar to your machine, launch the matching `Engine/Binaries/Win64/UnrealEditor.exe` and open `reflections.uproject` from it, or pass the full `.uproject` path on the command line. The GUID in `EngineAssociation` is registered locally. [Epic’s engine association documentation](https://dev.epicgames.com/documentation/en-us/unreal-engine/managing-game-code-in-unreal-engine)
 
 ## Work in parallel
 
@@ -28,6 +28,6 @@ The project currently runs on Unreal Engine 5.9.0, changelist `60351404`. Check 
 
 ## Edit together in Unreal
 
-1. Everyone opens a clean checkout of the same commit using the same Unreal Engine build. Connect all machines to the same LAN or private VPN.
+1. Everyone opens a clean checkout of the same commit using the same Unreal Engine build. Connect all machines to the same LAN or private VPN. On first launch, Unreal may write hardware defaults and generate an Android File Server token in `Config/DefaultEngine.ini`. Review `git diff -- Config/DefaultEngine.ini` and discard those generated changes before starting a session. Keep intentional project settings in your normal commits.
 2. The host opens **Multi-User Browser** from the toolbar or **Window → Multi-User Browser**, launches the server, and creates a session. Teammates open the browser and join that session. If discovery fails, configure a static endpoint using the server's private address and port. [Epic’s networking guide](https://dev.epicgames.com/documentation/en-us/unreal-engine/advanced-multi-user-networking-in-unreal-engine)
 3. Before leaving, have one person use **Source Control → Persist Session Changes** to write the session changes to their checkout. They review, commit, and push those files. Everyone syncs to the new commit before the next session. [Epic’s Multi-User Editing guide](https://dev.epicgames.com/documentation/en-us/unreal-engine/getting-started-with-multi-user-editing-in-unreal-engine)
