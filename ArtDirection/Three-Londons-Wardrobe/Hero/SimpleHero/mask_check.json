@@ -1,0 +1,22 @@
+{
+  "hand": {
+    "visible_vertices": 1104,
+    "hidden_vertices": 0
+  },
+  "forearm": {
+    "visible_vertices": 193,
+    "hidden_vertices": 0
+  },
+  "torso": {
+    "visible_vertices": 0,
+    "hidden_vertices": 222
+  },
+  "leg": {
+    "visible_vertices": 0,
+    "hidden_vertices": 514
+  },
+  "foot": {
+    "visible_vertices": 0,
+    "hidden_vertices": 860
+  }
+}

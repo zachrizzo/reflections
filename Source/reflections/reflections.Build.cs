@@ -15,13 +15,23 @@ public class reflections : ModuleRules
 			"InputCore",
 			"EnhancedInput",
 			"AIModule",
+			"NavigationSystem",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate"
+			"Slate",
+			"SlateCore",
+			"PhysicsCore"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime", "MassSpawner", "MassActors", "MassEntity", "MassCore", "MetaHumanCrowd", "Niagara", "WebSockets", "AudioCaptureCore", "AudioCapture", "Json" });
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.AddRange(new string[] {
+				"ClothingSystemEditor", "ClothingSystemEditorInterface",
+				"ClothingSystemRuntimeCommon", "ClothingSystemRuntimeInterface"
+			});
+		}
 
 		PublicIncludePaths.AddRange(new string[] {
 			"reflections",
@@ -49,3 +59,7 @@ public class reflections : ModuleRules
 		// To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
 	}
 }
+
+
+
+

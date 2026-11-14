@@ -1,0 +1,18 @@
+{
+  "blueprint": "/Game/Characters/Hero/SimplePreview/BP_HeroSimplePreview",
+  "skin_chain": [
+    "/Game/Characters/Hero/Assembled/Hero/Body/Materials/MI_Body_Baked_VT.MI_Body_Baked_VT",
+    "/Game/Characters/WhiteLondon/IvenRook/MetaHuman/Assembled/Common/Lookdev_UHM/Skin/Materials/Baked/MI_Head_Baked_LOD0_VT.MI_Head_Baked_LOD0_VT",
+    "/Game/Characters/WhiteLondon/IvenRook/MetaHuman/Assembled/Common/Lookdev_UHM/Skin/Materials/M_skin_unified_baked.M_skin_unified_baked"
+  ],
+  "masked_material": "/Game/Characters/Hero/SimplePreview/Materials/MI_HeroSimple_Skin_1.MI_HeroSimple_Skin_1",
+  "mask": "/Game/Characters/Hero/SimplePreview/Materials/T_HeroSimple_BodyMask.T_HeroSimple_BodyMask",
+  "meshes": {
+    "Shirt": "/Game/Characters/Hero/SimplePreview/Clothing/SK_HeroSimple_Shirt.SK_HeroSimple_Shirt",
+    "Trousers": "/Game/Characters/Hero/SimplePreview/Clothing/SK_HeroSimple_Trousers.SK_HeroSimple_Trousers",
+    "Footwear": "/Game/Characters/Hero/SimplePreview/Clothing/SK_HeroSimple_Footwear.SK_HeroSimple_Footwear",
+    "Cloak": "/Game/Characters/Hero/SimplePreview/Clothing/SK_HeroSimple_Cloak.SK_HeroSimple_Cloak"
+  },
+  "source": "/Game/Characters/Hero/Sample/BP_HeroSampleVisual",
+  "cloak_physics": "/Game/Characters/Hero/Assembled/Hero/Body/PHYS_MHC_Hero.PHYS_MHC_Hero"
+}

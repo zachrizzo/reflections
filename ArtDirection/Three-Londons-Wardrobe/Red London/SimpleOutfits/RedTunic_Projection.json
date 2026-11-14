@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\Three-Londons-Wardrobe\\Red London\\SimpleOutfits/RedTunic_Reference.png",
+  "output": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\Three-Londons-Wardrobe\\Red London\\SimpleOutfits\\RedTunic_Projection.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 30,
+  "resolution": 384,
+  "seed": 4912,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 686100,
+  "faces": 1372266,
+  "seconds": 62.9,
+  "bounds": [
+    [
+      -0.9981517791748047,
+      -0.9992316365242004,
+      -0.40182870626449585
+    ],
+    [
+      0.994736909866333,
+      0.9944139122962952,
+      0.4102625548839569
+    ]
+  ]
+}

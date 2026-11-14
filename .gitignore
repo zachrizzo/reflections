@@ -18,3 +18,7 @@
 *.VC.opendb
 *.suo
 *.user
+
+# Python bytecode
+__pycache__/
+*.pyc

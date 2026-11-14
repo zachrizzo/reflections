@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "ArtDirection/Three-Londons-Wardrobe/Hero/TravelCloak/Hero_TightTrousers_Reference.png",
+  "output": "ArtDirection\\Three-Londons-Wardrobe\\Hero\\TravelCloak\\Hero_TightTrousers_Projection.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 26,
+  "resolution": 320,
+  "seed": 23816,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 141584,
+  "faces": 283168,
+  "seconds": 43.7,
+  "bounds": [
+    [
+      -0.43361032009124756,
+      -0.9964125752449036,
+      -0.27638834714889526
+    ],
+    [
+      0.42733001708984375,
+      0.992572546005249,
+      0.26555368304252625
+    ]
+  ]
+}

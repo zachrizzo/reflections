@@ -1,0 +1,55 @@
+{
+  "source": "C:\\Users\\zachc\\Documents\\Unreal Projects\\action_fighting_UE59\\Content",
+  "assets": [
+    {
+      "path": "Blueprints/Combat/Blood/NS_BloodImpact.uasset",
+      "status": "copied",
+      "sha256": "0e5d5feeafc3584e63dc693ae862fdcdb5a1e487238e45903d6585989747e542"
+    },
+    {
+      "path": "Blueprints/Combat/Blood/M_BloodParticle.uasset",
+      "status": "copied",
+      "sha256": "1868fb078635e5418fb2f9bab43b5139087378778b9306c2a5677046f1ae2842"
+    },
+    {
+      "path": "Blueprints/Combat/Explosives/NS_GasCanExplosion.uasset",
+      "status": "copied",
+      "sha256": "b97e7c11c452a0a84197cdd3c4c76d804e6c683918add1fda2ebd34fe86d0cfa"
+    },
+    {
+      "path": "Blueprints/Combat/Explosives/NS_MissileTrail.uasset",
+      "status": "copied",
+      "sha256": "dd299fb35cbb4b56f9ad1087966d197ed42b28c87660a8c8831caf7d3176b202"
+    },
+    {
+      "path": "Blueprints/Combat/Explosives/NS_GasCanGroundFire.uasset",
+      "status": "copied",
+      "sha256": "4dd3aa2ba3a1d4fae37f163a677b549e1209c4aa338216812f1c6f32c211bdb1"
+    },
+    {
+      "path": "Blueprints/Combat/Explosives/M_ExplosionFire.uasset",
+      "status": "copied",
+      "sha256": "94d27daecf55a8b3ec3d75fb51caceed631aab9c4e5010d1fe994dc5ba69602d"
+    },
+    {
+      "path": "Blueprints/Combat/Explosives/M_ExplosionSmoke.uasset",
+      "status": "copied",
+      "sha256": "37679ba300941c6eefab7319f600e942024881b236fbc1e227516a5170f63f0b"
+    },
+    {
+      "path": "Blueprints/Combat/Explosives/M_ExplosionSpark.uasset",
+      "status": "copied",
+      "sha256": "4c0ba339f902186cde44f1815a9d1ae247446c8ce8c5cd85ec3a703c2e94fd13"
+    },
+    {
+      "path": "Blueprints/Combat/Explosives/T_Explosion_Fire_SubUV.uasset",
+      "status": "copied",
+      "sha256": "88463b7ca31a4568b199aab4f136b687eb7d7cd27cbe270c6891a10bfd0314db"
+    },
+    {
+      "path": "Blueprints/Combat/Explosives/T_Explosion_Smoke_SubUV.uasset",
+      "status": "copied",
+      "sha256": "842b53bb31d91328e897b2102c74bbe63dd87c1a9ce3d10fe2f3dc0bb2157dd6"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "limitation": "nearest-normal estimate on open body mesh; not proven intersections; one synthetic pose per label",
+  "poses": {
+    "rest": {
+      "SK_WhiteGuard_WorkTunic": {
+        "vertices": 17368,
+        "inside_normal_estimate_pct": 4.27
+      },
+      "SK_WhiteGuard_RagSkirt": {
+        "vertices": 12844,
+        "inside_normal_estimate_pct": 0.0
+      },
+      "SK_WhiteGuard_Sandals": {
+        "vertices": 18956,
+        "inside_normal_estimate_pct": 19.5
+      },
+      "SK_WhiteGuard_Tattoos": {
+        "vertices": 2096,
+        "inside_normal_estimate_pct": 0.0
+      }
+    },
+    "stride": {
+      "SK_WhiteGuard_WorkTunic": {
+        "vertices": 17368,
+        "inside_normal_estimate_pct": 4.27
+      },
+      "SK_WhiteGuard_RagSkirt": {
+        "vertices": 12844,
+        "inside_normal_estimate_pct": 0.0
+      },
+      "SK_WhiteGuard_Sandals": {
+        "vertices": 18956,
+        "inside_normal_estimate_pct": 19.52
+      },
+      "SK_WhiteGuard_Tattoos": {
+        "vertices": 2096,
+        "inside_normal_estimate_pct": 0.0
+      }
+    },
+    "crouch": {
+      "SK_WhiteGuard_WorkTunic": {
+        "vertices": 17368,
+        "inside_normal_estimate_pct": 4.27
+      },
+      "SK_WhiteGuard_RagSkirt": {
+        "vertices": 12844,
+        "inside_normal_estimate_pct": 0.0
+      },
+      "SK_WhiteGuard_Sandals": {
+        "vertices": 18956,
+        "inside_normal_estimate_pct": 19.52
+      },
+      "SK_WhiteGuard_Tattoos": {
+        "vertices": 2096,
+        "inside_normal_estimate_pct": 0.0
+      }
+    }
+  }
+}

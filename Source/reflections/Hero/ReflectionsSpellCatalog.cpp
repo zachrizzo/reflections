@@ -1,0 +1,56 @@
+#include "Hero/ReflectionsSpellCatalog.h"
+
+namespace
+{
+    using D = EReflectionsSpellDelivery;
+    using E = EReflectionsSpellElement;
+    using A = EHeroSpell;
+    const FReflectionsSpellSpec Specs[] = {
+        {TEXT("Healing"), A::Healing, E::Life, D::Heal, 35, 0, 0, 0, 0, 20, 6},
+        {TEXT("Levitation"), A::Levitation, E::Air, D::Hover, 0, 0, 0, 0, 0, 15, 6},
+        {TEXT("Water Bolt"), A::Water, E::Water, D::Projectile, 10, 0, 1250, 2200, 100, 8, 4},
+        {TEXT("Fire Bolt"), A::Fire, E::Fire, D::Projectile, 14, 0, 1500, 2400, 80, 10, 4},
+        {TEXT("Flame Burst"), A::Fire, E::Fire, D::Area, 16, 260, 0, 0, 120, 18, 6},
+        {TEXT("Fireball"), A::Fire, E::Fire, D::Projectile, 20, 220, 850, 1800, 100, 22, 7},
+        {TEXT("Ice Shard"), A::Water, E::Ice, D::Projectile, 18, 0, 1800, 2600, 50, 12, 4},
+        {TEXT("Frost Nova"), A::Water, E::Ice, D::Area, 12, 360, 0, 0, 140, 20, 7},
+        {TEXT("Tidal Surge"), A::Water, E::Water, D::Area, 10, 410, 0, 0, 900, 24, 8},
+        {TEXT("Water Orb"), A::Water, E::Water, D::Projectile, 12, 180, 800, 1800, 380, 16, 5},
+        {TEXT("Lightning Burst"), A::Fire, E::Lightning, D::Projectile, 11, 340, 2100, 2500, 0, 20, 6},
+        {TEXT("Lightning Bolt"), A::Fire, E::Lightning, D::Projectile, 21, 0, 2800, 3200, 0, 16, 5},
+        {TEXT("Thunder Wave"), A::Fire, E::Lightning, D::Area, 13, 320, 0, 0, 750, 22, 7},
+        {TEXT("Stone Shard"), A::Fire, E::Earth, D::Projectile, 24, 0, 1150, 2000, 350, 18, 5},
+        {TEXT("Earth Shock"), A::Fire, E::Earth, D::Area, 19, 250, 0, 0, 500, 22, 7},
+        {TEXT("Force Push"), A::Water, E::Arcane, D::Area, 2, 430, 0, 0, 1400, 18, 6},
+        {TEXT("Arcane Bolt"), A::Fire, E::Arcane, D::Projectile, 15, 100, 1650, 2500, 100, 12, 4},
+        {TEXT("Greater Heal"), A::Healing, E::Life, D::Heal, 70, 0, 0, 0, 0, 35, 10},
+        {TEXT("Healing Pulse"), A::Healing, E::Life, D::Heal, 25, 400, 0, 0, 0, 25, 8},
+        {TEXT("Arcane Shield"), A::Levitation, E::Arcane, D::Ward, 40, 0, 0, 0, 0, 25, 10},
+    };
+    static_assert(UE_ARRAY_COUNT(Specs) == ReflectionsSpellCatalog::Count, "Every spell needs a specification");
+}
+
+bool ReflectionsSpellCatalog::IsValid(EHeroSpell Spell)
+{
+    return static_cast<uint8>(Spell) < static_cast<uint8>(EHeroSpell::MAX);
+}
+const FReflectionsSpellSpec& ReflectionsSpellCatalog::Get(EHeroSpell Spell)
+{
+    return Specs[IsValid(Spell) ? static_cast<uint8>(Spell) : 0];
+}
+
+FLinearColor ReflectionsSpellCatalog::ElementColor(EReflectionsSpellElement Element)
+{
+    switch (Element)
+    {
+    case EReflectionsSpellElement::Life: return FLinearColor(0.55f, 1.0f, 0.45f);
+    case EReflectionsSpellElement::Air: return FLinearColor(0.75f, 0.9f, 1.0f);
+    case EReflectionsSpellElement::Water: return FLinearColor(0.15f, 0.5f, 1.0f);
+    case EReflectionsSpellElement::Fire: return FLinearColor(1.0f, 0.35f, 0.06f);
+    case EReflectionsSpellElement::Ice: return FLinearColor(0.5f, 0.85f, 1.0f);
+    case EReflectionsSpellElement::Lightning: return FLinearColor(0.55f, 0.6f, 1.0f);
+    case EReflectionsSpellElement::Earth: return FLinearColor(0.9f, 0.6f, 0.28f);
+    case EReflectionsSpellElement::Arcane: return FLinearColor(0.75f, 0.3f, 1.0f);
+    default: return FLinearColor::White;
+    }
+}

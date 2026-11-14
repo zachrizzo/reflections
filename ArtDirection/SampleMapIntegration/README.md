@@ -1,0 +1,11 @@
+# Hero sample crowd preview
+
+`/Game/Characters/Hero/Sample/Lvl_HeroSampleCrowd` is a saved copy of the sample sandbox as it existed in the editor, including its unsaved in-memory level state at the time. The original `Lvl_HeroSampleSandbox` asset was not overwritten. Five conventional MetaHuman actor Blueprint looks were added to the copy: three Red London (`BP_Crowd_03`, `16`, `29`) and two White London (`BP_WhiteLook_01_Plain`, `06_GuardBoldRunes`). They are prototypes, not the separate experimental Mass Crowd Collection or a full city population; several outfits still need fit and motion work. The actors live in the `Crowd Preview` folder and can be removed or moved individually.
+
+`Config/DefaultEngine.ini` sets both GameDefaultMap and EditorStartupMap to this copy. The level retains `/Script/reflections.ReflectionsSampleGameMode` as its world override. In PIE, the active player was `/Game/Characters/Hero/Sample/BP_HeroSample`, all five preview actors existed, and the spell HUD was visible. This is a basic visual/runtime check; it is not a performance, AI behavior, or crowd navigation test.
+
+## Blueprint compilation issue
+
+On a prior Play action, the editor reported failures for `BP_Player`, `AC_Hostility`, `AIC_Human`, `AC_Weapons` and `SandboxCharacter_Mover_ABP`. The migrated assets reference classes under `/Script/action_fighting`, a native module absent from this project. The active hero uses the sample's CMC character, but the copied sample visual override manager refers to `GM_Sandbox`, which pulls in the Mover blueprint and custom action-game graph dependencies. The pre-custom local Mover backups have different missing `City` or `Humans` asset dependencies, so no replacement has been applied. A later PIE started without displaying the dialog, but this does not establish that the underlying Blueprint compile failures were repaired.
+
+Do not overwrite the original sample assets or silence the errors by stripping graph nodes without testing the affected locomotion. Repair requires a clean compatible sample source or a carefully audited graph-level removal of unrelated game-specific additions, followed by Blueprint recompilation and PIE movement/traversal verification.

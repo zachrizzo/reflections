@@ -1,0 +1,150 @@
+{
+  "rest": {
+    "Charcoal - Coat": {
+      "vertices": 4738,
+      "penetrating_estimate_over_2mm_pct": 16.34,
+      "within_3cm_pct": 39.24,
+      "3_to_10cm_pct": 60.34,
+      "over_10cm_pct": 0.42,
+      "median_clearance_cm": 3.61,
+      "p95_clearance_cm": 6.43
+    },
+    "B_OiledLeather": {
+      "vertices": 2376,
+      "penetrating_estimate_over_2mm_pct": 3.62,
+      "within_3cm_pct": 55.81,
+      "3_to_10cm_pct": 44.19,
+      "over_10cm_pct": 0.0,
+      "median_clearance_cm": 2.81,
+      "p95_clearance_cm": 6.87
+    },
+    "C_TarnishedBrass": {
+      "vertices": 3145,
+      "penetrating_estimate_over_2mm_pct": 0.0,
+      "within_3cm_pct": 47.69,
+      "3_to_10cm_pct": 52.31,
+      "over_10cm_pct": 0.0,
+      "median_clearance_cm": 3.1,
+      "p95_clearance_cm": 7.12
+    },
+    "Charcoal - Lining": {
+      "vertices": 823,
+      "penetrating_estimate_over_2mm_pct": 40.7,
+      "within_3cm_pct": 26.0,
+      "3_to_10cm_pct": 73.51,
+      "over_10cm_pct": 0.49,
+      "median_clearance_cm": 3.81,
+      "p95_clearance_cm": 8.08
+    },
+    "Charcoal - Piping": {
+      "vertices": 1240,
+      "penetrating_estimate_over_2mm_pct": 3.06,
+      "within_3cm_pct": 33.71,
+      "3_to_10cm_pct": 66.29,
+      "over_10cm_pct": 0.0,
+      "median_clearance_cm": 3.5,
+      "p95_clearance_cm": 6.3
+    },
+    "F_FlaxShirt": {
+      "vertices": 1148,
+      "penetrating_estimate_over_2mm_pct": 10.63,
+      "within_3cm_pct": 70.21,
+      "3_to_10cm_pct": 29.79,
+      "over_10cm_pct": 0.0,
+      "median_clearance_cm": 2.2,
+      "p95_clearance_cm": 4.5
+    },
+    "G_WalnutTwill": {
+      "vertices": 2584,
+      "penetrating_estimate_over_2mm_pct": 27.09,
+      "within_3cm_pct": 90.94,
+      "3_to_10cm_pct": 7.97,
+      "over_10cm_pct": 1.08,
+      "median_clearance_cm": 1.45,
+      "p95_clearance_cm": 3.46
+    },
+    "H_WeltAndSole": {
+      "vertices": 160,
+      "penetrating_estimate_over_2mm_pct": 1.25,
+      "within_3cm_pct": 40.0,
+      "3_to_10cm_pct": 60.0,
+      "over_10cm_pct": 0.0,
+      "median_clearance_cm": 3.4,
+      "p95_clearance_cm": 5.32
+    }
+  },
+  "stride": {
+    "Charcoal - Coat": {
+      "vertices": 4738,
+      "penetrating_estimate_over_2mm_pct": 16.5,
+      "within_3cm_pct": 37.29,
+      "3_to_10cm_pct": 62.33,
+      "over_10cm_pct": 0.38,
+      "median_clearance_cm": 3.68,
+      "p95_clearance_cm": 6.51
+    },
+    "B_OiledLeather": {
+      "vertices": 2376,
+      "penetrating_estimate_over_2mm_pct": 3.7,
+      "within_3cm_pct": 55.6,
+      "3_to_10cm_pct": 44.4,
+      "over_10cm_pct": 0.0,
+      "median_clearance_cm": 2.81,
+      "p95_clearance_cm": 6.98
+    },
+    "C_TarnishedBrass": {
+      "vertices": 3145,
+      "penetrating_estimate_over_2mm_pct": 0.0,
+      "within_3cm_pct": 47.73,
+      "3_to_10cm_pct": 52.27,
+      "over_10cm_pct": 0.0,
+      "median_clearance_cm": 3.09,
+      "p95_clearance_cm": 7.28
+    },
+    "Charcoal - Lining": {
+      "vertices": 823,
+      "penetrating_estimate_over_2mm_pct": 40.7,
+      "within_3cm_pct": 26.49,
+      "3_to_10cm_pct": 73.15,
+      "over_10cm_pct": 0.36,
+      "median_clearance_cm": 3.86,
+      "p95_clearance_cm": 7.9
+    },
+    "Charcoal - Piping": {
+      "vertices": 1240,
+      "penetrating_estimate_over_2mm_pct": 3.06,
+      "within_3cm_pct": 34.03,
+      "3_to_10cm_pct": 65.97,
+      "over_10cm_pct": 0.0,
+      "median_clearance_cm": 3.55,
+      "p95_clearance_cm": 6.27
+    },
+    "F_FlaxShirt": {
+      "vertices": 1148,
+      "penetrating_estimate_over_2mm_pct": 10.71,
+      "within_3cm_pct": 68.82,
+      "3_to_10cm_pct": 31.18,
+      "over_10cm_pct": 0.0,
+      "median_clearance_cm": 2.21,
+      "p95_clearance_cm": 4.51
+    },
+    "G_WalnutTwill": {
+      "vertices": 2584,
+      "penetrating_estimate_over_2mm_pct": 22.64,
+      "within_3cm_pct": 86.76,
+      "3_to_10cm_pct": 9.67,
+      "over_10cm_pct": 3.56,
+      "median_clearance_cm": 1.51,
+      "p95_clearance_cm": 7.95
+    },
+    "H_WeltAndSole": {
+      "vertices": 160,
+      "penetrating_estimate_over_2mm_pct": 1.25,
+      "within_3cm_pct": 40.0,
+      "3_to_10cm_pct": 60.0,
+      "over_10cm_pct": 0.0,
+      "median_clearance_cm": 3.4,
+      "p95_clearance_cm": 5.32
+    }
+  }
+}

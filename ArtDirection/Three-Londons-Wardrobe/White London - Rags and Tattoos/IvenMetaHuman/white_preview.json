@@ -1,0 +1,34 @@
+[
+  {
+    "blueprint": "/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_01_Plain",
+    "base_identity": "IvenRook",
+    "outfit": "Plain",
+    "body_scale": 1.0048781792002632,
+    "height_target_cm": 183.19934085,
+    "height_method": "fitting mesh bounds estimate"
+  },
+  {
+    "blueprint": "/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_02_Cap",
+    "base_identity": "IvenRook",
+    "outfit": "Cap",
+    "body_scale": 1.0048781792002632,
+    "height_target_cm": 183.19934085,
+    "height_method": "fitting mesh bounds estimate"
+  },
+  {
+    "blueprint": "/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_03_Mantle",
+    "base_identity": "IvenRook",
+    "outfit": "Mantle",
+    "body_scale": 1.0048781792002632,
+    "height_target_cm": 183.19934085,
+    "height_method": "fitting mesh bounds estimate"
+  },
+  {
+    "blueprint": "/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_04_CapMantle",
+    "base_identity": "IvenRook",
+    "outfit": "CapMantle",
+    "body_scale": 1.0048781792002632,
+    "height_target_cm": 183.19934085,
+    "height_method": "fitting mesh bounds estimate"
+  }
+]

@@ -1,0 +1,59 @@
+{
+  "limitations": "nearest-normal estimates against open mesh, not exhaustive collision; cape un-simulated in Blender",
+  "poses": {
+    "rest": {
+      "SK_HeroSimple_Shirt": {
+        "vertices": 583,
+        "nearest_normal_inside_pct": 9.61
+      },
+      "SK_HeroSimple_Trousers": {
+        "vertices": 670,
+        "nearest_normal_inside_pct": 0.0
+      },
+      "SK_HeroSimple_Footwear": {
+        "vertices": 3054,
+        "nearest_normal_inside_pct": 4.88
+      },
+      "SK_HeroSimple_Cloak": {
+        "vertices": 3577,
+        "nearest_normal_inside_pct": 0.22
+      }
+    },
+    "stride": {
+      "SK_HeroSimple_Shirt": {
+        "vertices": 583,
+        "nearest_normal_inside_pct": 9.78
+      },
+      "SK_HeroSimple_Trousers": {
+        "vertices": 670,
+        "nearest_normal_inside_pct": 0.0
+      },
+      "SK_HeroSimple_Footwear": {
+        "vertices": 3054,
+        "nearest_normal_inside_pct": 4.88
+      },
+      "SK_HeroSimple_Cloak": {
+        "vertices": 3577,
+        "nearest_normal_inside_pct": 0.39
+      }
+    },
+    "crouch": {
+      "SK_HeroSimple_Shirt": {
+        "vertices": 583,
+        "nearest_normal_inside_pct": 9.61
+      },
+      "SK_HeroSimple_Trousers": {
+        "vertices": 670,
+        "nearest_normal_inside_pct": 0.0
+      },
+      "SK_HeroSimple_Footwear": {
+        "vertices": 3054,
+        "nearest_normal_inside_pct": 4.88
+      },
+      "SK_HeroSimple_Cloak": {
+        "vertices": 3577,
+        "nearest_normal_inside_pct": 0.28
+      }
+    }
+  }
+}

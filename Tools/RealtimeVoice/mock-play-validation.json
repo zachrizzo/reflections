@@ -1,0 +1,14 @@
+{
+  "scope": "Local mock only; no OpenAI network connection or generated speech",
+  "editor_build": "succeeded",
+  "player_controller": "PC_Sandbox_C",
+  "reactive_npc_count": 6,
+  "npc_reaction_components": 6,
+  "voice_component_attached": true,
+  "microphone_status": "Listening to microphone...",
+  "mock_received_pcm_bytes": 267360,
+  "npc_audio_component_playing_observed": true,
+  "ready_after_mock_tone": true,
+  "physical_t_key_status": "Connecting to local voice relay...",
+  "limits": "T key and mock audio were checked in separate play sessions; no live OpenAI connection tested."
+}
