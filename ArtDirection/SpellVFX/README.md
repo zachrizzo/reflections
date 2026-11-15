@@ -265,6 +265,8 @@ physics of it." npc-unify owns NPC body physics; this side owns how a hit feels 
   sweeteners at 0.8, all from the audio session.
 - **One body per NPC**: hits and blast overlaps on an NPC's hidden walker or hit proxy resolve to the NPC, so each spell
   hits each NPC once. This side never launches NPC bodies (npc-unify does, using the same Magnitude scale).
+- **Gray London start**: `AReflectionsSampleGameMode::ChoosePlayerStart` picks the PlayerStart tagged `Lanthorne`
+  (Great Tower St, placed by world-jump) over the one at the map origin. Without the tag it falls back to the default.
 
 ## Verified on train #11+12 (14 Nov, 20:03, PIE queue row 5)
 

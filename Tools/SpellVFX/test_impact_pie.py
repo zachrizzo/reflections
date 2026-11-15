@@ -234,6 +234,14 @@ async def run():
         pawn = pc.get_controlled_pawn()
         driver = pawn.get_component_by_class(unreal.ReflectionsSampleSpellDriver)
         report['map'] = world.get_name()
+        # Until the Lanthorne start fix (train #14) is in, the hero spawns at Gray London's dark origin: move it to the
+        # PlayerStart tagged Lanthorne and give streaming a few seconds.
+        start = next((s for s in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.PlayerStart)
+                      if str(s.get_editor_property('player_start_tag')) == 'Lanthorne'), None)
+        if start and (pawn.get_actor_location() - start.get_actor_location()).length() > 300.0:
+            pawn.set_actor_location(start.get_actor_location(), False, True)
+            pc.set_control_rotation(unreal.Rotator(roll=0.0, pitch=0.0, yaw=start.get_actor_rotation().yaw))
+            await asyncio.sleep(4.0)
         report['hero_start'] = pawn.get_actor_location()
         if 'strip' in CASES:
             fb = await strip(world, world_ref, pc, pawn, driver, unreal.HeroSpell.FIRESTORM, 'fireball')

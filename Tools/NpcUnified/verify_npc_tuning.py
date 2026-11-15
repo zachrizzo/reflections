@@ -84,6 +84,21 @@ else:
         await asyncio.sleep(1.5)
         console('Squads.Clear', world)
         controller = player.get_controller()
+        # Team rule (21:27): until the game puts the hero there itself, go to the start tagged 'Lanthorne' (Great
+        # Tower St) first, look the way it looks, and give the streamed city a few seconds to arrive.
+        starts = [a for a in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.PlayerStart)
+                  if str(a.get_editor_property('player_start_tag')) == 'Lanthorne']
+        result['lanthorne_start'] = bool(starts)
+        if starts:
+            player.set_actor_location(starts[0].get_actor_location(), False, True)
+            player.set_actor_rotation(unreal.Rotator(0.0, 0.0, starts[0].get_actor_rotation().yaw), False)
+            controller.set_control_rotation(starts[0].get_actor_rotation())
+            await asyncio.sleep(4.0)
+            for _ in range(20):
+                if abs(player.get_velocity().z) < 5.0:
+                    break
+                await asyncio.sleep(0.3)
+            await asyncio.sleep(0.5)
         npcs = unreal.get_world_subsystem(world, unreal.ReflectionsNpcSubsystem)
         spells = player.get_component_by_class(unreal.ReflectionsSpellCombatComponent)
         HERE = player.get_actor_location()
