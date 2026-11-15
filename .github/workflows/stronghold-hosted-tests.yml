@@ -1,0 +1,112 @@
+name: Stronghold hosted standalone tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/stronghold-hosted-tests.yml
+
+permissions:
+  contents: read
+
+jobs:
+  standalone:
+    if: ${{ github.repository == 'zachrizzo/reflections' && github.ref == 'refs/heads/main' }}
+    name: ${{ matrix.suite }} standalone tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [campaign, checkpoint]
+    steps:
+      - name: Check out only standalone test inputs
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+          lfs: false
+          submodules: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/workflows/stronghold-hosted-tests.yml
+            /Tools/CityPCG/StrongholdRuntimeCore/StrongholdCampaign.h
+            /Tools/CityPCG/StrongholdRuntimeCore/StrongholdCampaign.cpp
+            /Tools/CityPCG/StrongholdRuntimeCore/test_stronghold_campaign.cpp
+            /Tools/CityPCG/StrongholdRuntimeCore/test_checkpoint_fixture.py
+            /Tools/CityPCG/StrongholdUnrealIntegration/GrayLondonStrongholdCheckpoint.h
+            /Tools/CityPCG/StrongholdUnrealIntegration/GrayLondonStrongholdCheckpoint.cpp
+            /Tools/CityPCG/StrongholdUnrealIntegration/GrayLondonStrongholdOutcome.h
+            /Tools/CityPCG/StrongholdUnrealIntegration/GrayLondonStrongholdOutcome.cpp
+            /Tools/CityPCG/StrongholdUnrealIntegration/test_checkpoint_adapter.cpp
+            /Tools/CityPCG/StrongholdUnrealIntegration/test_stubs/CoreMinimal.h
+            /Tools/CityPCG/StrongholdUnrealIntegration/test_stubs/Engine/World.h
+            /Tools/CityPCG/StrongholdUnrealIntegration/test_stubs/GameFlow/ReflectionsGameFlowTypes.h
+            /Tools/CityPCG/StrongholdUnrealIntegration/test_stubs/UObject/Package.h
+
+      - name: Require a workflow-only single-commit push
+        if: ${{ github.event_name == 'push' }}
+        shell: bash
+        run: |
+          python3 -B - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+
+          with open(os.environ['GITHUB_EVENT_PATH'], encoding='utf-8') as source:
+              event = json.load(source)
+          before = event.get('before')
+          after = event.get('after')
+          expected = os.environ['GITHUB_SHA']
+          if (event.get('ref') != 'refs/heads/main' or event.get('deleted') is not False
+                  or event.get('forced') is not False or not isinstance(before, str)
+                  or not re.fullmatch(r'[0-9a-f]{40}', before) or before == '0' * 40
+                  or after != expected or not re.fullmatch(r'[0-9a-f]{40}', expected)):
+              raise SystemExit('Refusing an unexpected push event')
+          parents = subprocess.check_output(
+              ['git', 'rev-list', '--parents', '-n', '1', expected], text=True
+          ).split()
+          if parents != [expected, before]:
+              raise SystemExit('Push must contain exactly one non-merge commit')
+          changed = subprocess.check_output(
+              ['git', 'diff', '--no-ext-diff', '--no-renames', '--name-only', '-z', before, expected]
+          ).split(b'\0')
+          if changed != [b'.github/workflows/stronghold-hosted-tests.yml', b'']:
+              raise SystemExit('Push may change only this workflow file')
+          PY
+
+      - name: Compile and run campaign tests
+        if: ${{ matrix.suite == 'campaign' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          core="$GITHUB_WORKSPACE/Tools/CityPCG/StrongholdRuntimeCore"
+          output="$RUNNER_TEMP/stronghold-campaign"
+          mkdir -p "$output"
+          c++ -std=c++17 -Wall -Wextra -Werror \
+            "$core/StrongholdCampaign.cpp" "$core/test_stronghold_campaign.cpp" \
+            -o "$output/stronghold_campaign_tests"
+          "$output/stronghold_campaign_tests"
+          python3 -B "$core/test_checkpoint_fixture.py" -v
+
+      - name: Compile and run checkpoint and outcome tests with stubs
+        if: ${{ matrix.suite == 'checkpoint' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          core="$GITHUB_WORKSPACE/Tools/CityPCG/StrongholdRuntimeCore"
+          adapter="$GITHUB_WORKSPACE/Tools/CityPCG/StrongholdUnrealIntegration"
+          output="$RUNNER_TEMP/stronghold-checkpoint"
+          mkdir -p "$output"
+          c++ -std=c++17 -Wall -Wextra -Werror \
+            -I "$adapter/test_stubs" -I "$core" \
+            "$core/StrongholdCampaign.cpp" \
+            "$adapter/GrayLondonStrongholdCheckpoint.cpp" \
+            "$adapter/GrayLondonStrongholdOutcome.cpp" \
+            "$adapter/test_checkpoint_adapter.cpp" \
+            -o "$output/stronghold_checkpoint_tests"
+          "$output/stronghold_checkpoint_tests"
