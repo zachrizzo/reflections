@@ -12,27 +12,40 @@ from plan_facades import axis_name, coordinates, stable_int
 WALL_OFFSET_M = .035
 CORNER_INSET_M = .13
 BAY_WIDTH_M = 4.5
+NARROW_BAY_WIDTH_M = 3.0
 BAY_HEIGHT_M = 14.84
 STYLES = ("Chandler", "Mercer", "Scrivener")
 
 
-def frontage_points(row, floor_samples):
+def frontage_points(row, floor_samples, narrow_kit=False):
     identifier = row["id"]
     a, b = (coordinates(row[key], 3) for key in ("start", "end"))
     normal = coordinates(row["outward"], 2)
     norm = math.hypot(*normal)
-    height = float(row["height_m"])
+    wall_height = float(row["height_m"])
+    height = float(row.get("treatment_height_m", wall_height))
     span = math.dist(a[:2], b[:2])
-    if not (3.55 <= span <= 65 and 13.25 <= height <= 16.95 and norm > .95 and abs(a[2] - b[2]) < .3):
+    min_span = 3.02 if narrow_kit else 3.55
+    if not (min_span <= span <= 65 and 12.40 <= height <= min(wall_height, 16.95) and
+            norm > .95 and abs(a[2] - b[2]) < .3):
         return
     nx, ny = (value / norm for value in normal)
     if abs((b[0] - a[0]) * nx + (b[1] - a[1]) * ny) > span * .015:
         raise ValueError(f"Outward direction is not perpendicular to {identifier}.")
     usable = span - 2 * CORNER_INSET_M
-    count = max(1, round(usable / BAY_WIDTH_M))
+    kit_width = BAY_WIDTH_M
+    fewest = math.ceil(usable / 5.15)
+    most = math.floor(usable / 3.25)
+    if fewest <= most:
+        count = min(most, max(fewest, round(usable / BAY_WIDTH_M)))
+    else:
+        if not narrow_kit:
+            return
+        count = 1 if 2.76 <= usable <= 3.30 else 2
+        if not 2.61 <= usable / count <= 3.30:
+            return
+        kit_width = NARROW_BAY_WIDTH_M
     width = usable / count
-    if not 3.25 <= width <= 5.15:
-        return
     floor_m = min(floor_samples) / 100 if floor_samples else min(a[2], b[2])
     limit_m = min(a[2], b[2]) + height
     start_style = stable_int(identifier) % len(STYLES)
@@ -41,13 +54,14 @@ def frontage_points(row, floor_samples):
         x = a[0] + (b[0] - a[0]) * t + nx * WALL_OFFSET_M
         y = a[1] + (b[1] - a[1]) * t + ny * WALL_OFFSET_M
         identity = f"{identifier}.{i}"
+        style = "Narrow_Cellarer" if kit_width == NARROW_BAY_WIDTH_M else STYLES[(start_style + i) % len(STYLES)]
         yield {
             "id": identity,
             "building_id": identifier,
-            "mesh_id": f"SM_GLMedieval_{STYLES[(start_style + i) % len(STYLES)]}",
+            "mesh_id": f"SM_GLMedieval_{style}",
             "location_cm": [round(x * 100, 3), round(y * 100, 3), round(floor_m * 100 - .35, 3)],
             "yaw_deg": round(math.degrees(math.atan2(ny, nx)), 5),
-            "scale": [.56, round(width / BAY_WIDTH_M, 6), round((limit_m - floor_m) / BAY_HEIGHT_M, 6)],
+            "scale": [.56, round(width / kit_width, 6), round((limit_m - floor_m) / BAY_HEIGHT_M, 6)],
             "seed": stable_int(identity),
         }
 
@@ -55,7 +69,7 @@ def frontage_points(row, floor_samples):
 def represented_frontage(row, existing_points):
     a, b = row["start"], row["end"]
     span = math.dist(a[:2], b[:2])
-    if span < 3.55:
+    if span < 3.02:
         return False
     tx, ty = ((b[axis] - a[axis]) / span for axis in range(2))
     nx, ny = row["outward"]
@@ -79,14 +93,17 @@ def exclusion_points(plans):
             for point in cell["points"]:
                 x, y, _ = coordinates(point["location_cm"], 3)
                 _, scale_y, _ = coordinates(point["scale"], 3)
-                width = BAY_WIDTH_M if point["mesh_id"].startswith("SM_GLMedieval_") else 4.0
+                if point["mesh_id"].startswith("SM_GLMedieval_Narrow_"):
+                    width = NARROW_BAY_WIDTH_M
+                else:
+                    width = BAY_WIDTH_M if point["mesh_id"].startswith("SM_GLMedieval_") else 4.0
                 occupied.add((x / 100, y / 100, math.radians(point["yaw_deg"]), width * scale_y / 2 + .15))
     return SpatialBins(tuple(occupied),
                        lambda point: ((point[0] - point[3], point[1] - point[3]),
                                       (point[0] + point[3], point[1] + point[3])))
 
 
-def plan(source, verification=None, previous=(), grid_size=160, cell_budget=125):
+def plan(source, verification=None, previous=(), grid_size=160, cell_budget=125, narrow_kit=False):
     if source.get("coordinate_system") != "ue_local_m" or not source.get("protected_mesh_filters"):
         raise ValueError("Use protected frontages in Unreal local metres.")
     reports = defaultdict(list)
@@ -98,6 +115,7 @@ def plan(source, verification=None, previous=(), grid_size=160, cell_budget=125)
     cells = defaultdict(list)
     skipped = []
     already_dressed = []
+    unfit = []
     occupied = exclusion_points(previous)
     for row in sorted(source["frontages"], key=lambda value: value["id"]):
         identifier = row["id"]
@@ -113,7 +131,10 @@ def plan(source, verification=None, previous=(), grid_size=160, cell_budget=125)
         if floors and max(floors) - min(floors) > 20:
             skipped.append(identifier)
             continue
-        for point in frontage_points(row, floors):
+        points = list(frontage_points(row, floors, narrow_kit=narrow_kit))
+        if not points:
+            unfit.append(identifier)
+        for point in points:
             x, y, _ = point["location_cm"]
             key = (math.floor(x / (grid_size * 100)), math.floor(y / (grid_size * 100)))
             if len(cells[key]) >= cell_budget:
@@ -126,6 +147,7 @@ def plan(source, verification=None, previous=(), grid_size=160, cell_budget=125)
         "verified": verification is not None,
         "skipped_frontages": skipped,
         "previously_dressed_frontages": already_dressed,
+        "unfit_frontages": unfit,
         "cells": [{"id": f"Medieval_x{axis_name(x)}_y{axis_name(y)}", "points": points}
                   for (x, y), points in sorted(cells.items())],
     }
@@ -138,6 +160,7 @@ def main():
     parser.add_argument("--verification", type=Path, help="Output from verify_tile_frontages_unreal")
     parser.add_argument("--exclude-plan", type=Path, action="append", default=[],
                         help="An already placed modern or medieval facade plan. May be repeated.")
+    parser.add_argument("--narrow-kit", action="store_true", help="Use the imported 3 m Cellarer bay.")
     args = parser.parse_args()
     inputs = [args.source, *args.exclude_plan]
     if args.verification:
@@ -147,11 +170,12 @@ def main():
     source = json.loads(args.source.read_text(encoding="utf-8-sig"))
     verification = json.loads(args.verification.read_text(encoding="utf-8-sig")) if args.verification else None
     previous = [json.loads(path.read_text(encoding="utf-8-sig")) for path in args.exclude_plan]
-    result = plan(source, verification, previous)
+    result = plan(source, verification, previous, narrow_kit=args.narrow_kit)
     args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(f"{sum(len(cell['points']) for cell in result['cells'])} bays in {len(result['cells'])} cells. "
           f"{len(result['skipped_frontages'])} live-verification exclusions, "
-          f"{len(result['previously_dressed_frontages'])} already dressed.")
+          f"{len(result['previously_dressed_frontages'])} already dressed, "
+          f"{len(result['unfit_frontages'])} with no fitting bay.")
 
 
 if __name__ == "__main__":

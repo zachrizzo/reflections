@@ -1,0 +1,515 @@
+{
+  "coordinate_system": "ue_local_m",
+  "source": "Tile_p03_p00",
+  "attribution": "Base geometry: OpenStreetMap contributors, ODbL 1.0.",
+  "source_geometry": {
+    "facade_primitive": 0,
+    "origin_m": [
+      3000,
+      0,
+      0
+    ],
+    "road_primitive": 2
+  },
+  "frontages": [
+    {
+      "id": "Tile_p03_p00_9bc7af5d7e1e",
+      "start": [
+        3058.835,
+        348.997,
+        0.2
+      ],
+      "end": [
+        3060.098,
+        338.125,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.9933,
+        -0.1154
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "edwardian_brick"
+    },
+    {
+      "id": "Tile_p03_p00_396ec644a77a",
+      "start": [
+        3060.098,
+        338.125,
+        0.2
+      ],
+      "end": [
+        3061.73,
+        327.518,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.9884,
+        -0.1521
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "edwardian_brick"
+    },
+    {
+      "id": "Tile_p03_p00_91b0a016b1cc",
+      "start": [
+        3060.63,
+        382.784,
+        0.2
+      ],
+      "end": [
+        3088.438,
+        380.485,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.0824,
+        -0.9966
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "edwardian_brick"
+    },
+    {
+      "id": "Tile_p03_p00_8316110a6ea2",
+      "start": [
+        3061.203,
+        363.548,
+        0.2
+      ],
+      "end": [
+        3073.881,
+        362.555,
+        0.2
+      ],
+      "height_m": 15.8,
+      "outward": [
+        0.0781,
+        0.9969
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "edwardian_brick"
+    },
+    {
+      "id": "Tile_p03_p00_c425e9ceb729",
+      "start": [
+        3061.65,
+        322.887,
+        0.2
+      ],
+      "end": [
+        3063.32,
+        327.526,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.9409,
+        0.3387
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "edwardian_brick"
+    },
+    {
+      "id": "Tile_p03_p00_f6df3fc25c93",
+      "start": [
+        3073.881,
+        362.555,
+        0.2
+      ],
+      "end": [
+        3078.467,
+        362.186,
+        0.2
+      ],
+      "height_m": 15.8,
+      "outward": [
+        0.0802,
+        0.9968
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "edwardian_brick"
+    },
+    {
+      "id": "Tile_p03_p00_60dfb49923a3",
+      "start": [
+        3078.467,
+        362.186,
+        0.2
+      ],
+      "end": [
+        3084.179,
+        361.746,
+        0.2
+      ],
+      "height_m": 15.8,
+      "outward": [
+        0.0768,
+        0.997
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "edwardian_brick"
+    },
+    {
+      "id": "Tile_p03_p00_8b205eeb9bd0",
+      "start": [
+        3088.438,
+        380.485,
+        0.2
+      ],
+      "end": [
+        3103.64,
+        379.081,
+        0.2
+      ],
+      "height_m": 19.0,
+      "outward": [
+        -0.092,
+        -0.9958
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "stone_office",
+      "treatment_height_m": 16.95
+    },
+    {
+      "id": "Tile_p03_p00_76100f5666cc",
+      "start": [
+        3093.338,
+        331.228,
+        0.2
+      ],
+      "end": [
+        3097.214,
+        347.877,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.974,
+        -0.2267
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "edwardian_brick"
+    },
+    {
+      "id": "Tile_p03_p00_f9032f417001",
+      "start": [
+        3097.214,
+        347.877,
+        0.2
+      ],
+      "end": [
+        3099.814,
+        357.871,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.9678,
+        -0.2518
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "edwardian_brick"
+    },
+    {
+      "id": "Tile_p03_p00_63cfc7d4ffca",
+      "start": [
+        3103.905,
+        334.487,
+        0.2
+      ],
+      "end": [
+        3108.875,
+        355.215,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.9724,
+        0.2332
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "edwardian_brick"
+    },
+    {
+      "id": "Tile_p03_p00_779577e91f2a",
+      "start": [
+        3375.908,
+        422.329,
+        0.2
+      ],
+      "end": [
+        3378.029,
+        398.137,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.9962,
+        0.0873
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "stone_office"
+    },
+    {
+      "id": "Tile_p03_p00_3443bd628af2",
+      "start": [
+        3377.336,
+        385.121,
+        0.2
+      ],
+      "end": [
+        3378.746,
+        347.001,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.9993,
+        0.037
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "stone_office"
+    },
+    {
+      "id": "Tile_p03_p00_f0f771d2f576",
+      "start": [
+        3385.449,
+        423.648,
+        0.2
+      ],
+      "end": [
+        3388.187,
+        393.908,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.9958,
+        -0.0917
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "stone_office"
+    },
+    {
+      "id": "Tile_p03_p00_9bdc990f22ed",
+      "start": [
+        3388.187,
+        393.908,
+        0.2
+      ],
+      "end": [
+        3414.007,
+        396.444,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.0977,
+        -0.9952
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "stone_office"
+    },
+    {
+      "id": "Tile_p03_p00_97f52a4aeb75",
+      "start": [
+        3389.531,
+        381.068,
+        0.2
+      ],
+      "end": [
+        3390.96,
+        368.164,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.9939,
+        -0.1101
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "stone_office"
+    },
+    {
+      "id": "Tile_p03_p00_74079b7c18ac",
+      "start": [
+        3389.531,
+        381.068,
+        0.2
+      ],
+      "end": [
+        3400.512,
+        382.28,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.1097,
+        0.994
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "stone_office"
+    },
+    {
+      "id": "Tile_p03_p00_b5fce36775b6",
+      "start": [
+        3390.96,
+        368.164,
+        0.2
+      ],
+      "end": [
+        3401.948,
+        369.376,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.1096,
+        -0.994
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "stone_office"
+    },
+    {
+      "id": "Tile_p03_p00_d3826f01e05d",
+      "start": [
+        3400.512,
+        382.28,
+        0.2
+      ],
+      "end": [
+        3401.948,
+        369.376,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.9939,
+        0.1106
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "stone_office"
+    },
+    {
+      "id": "Tile_p03_p00_4211febd1a56",
+      "start": [
+        3406.332,
+        384.347,
+        0.2
+      ],
+      "end": [
+        3407.56,
+        373.841,
+        0.2
+      ],
+      "height_m": 12.6,
+      "outward": [
+        -0.9932,
+        -0.1161
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "stone_office"
+    },
+    {
+      "id": "Tile_p03_p00_e19404ea1854",
+      "start": [
+        3406.332,
+        384.347,
+        0.2
+      ],
+      "end": [
+        3417.28,
+        385.78,
+        0.2
+      ],
+      "height_m": 12.6,
+      "outward": [
+        -0.1298,
+        0.9915
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible",
+      "entrance": false,
+      "style": "stone_office"
+    }
+  ],
+  "review": {
+    "candidate_boxes_ue_m": {
+      "west": [
+        3052,
+        322,
+        3118,
+        392
+      ],
+      "east": [
+        3371,
+        327,
+        3421,
+        426
+      ]
+    },
+    "shop_overlay_excluded_ids": [],
+    "source_notes": "Verified GL_Facade only; GL_CentralFacade excluded. Anonymous shop meshes geometrically excluded. Style assignment is a district palette, not survey."
+  },
+  "protected_mesh_filters": [
+    {
+      "overlay": "AnonymousShops_Tile_p03_p00.glb",
+      "origin_m": [
+        3000.0,
+        0.0,
+        0.0
+      ],
+      "excluded_ids": []
+    }
+  ],
+  "review_scope": {
+    "name": "Neighboring blocks, replacement of the earlier modern facade pass",
+    "modern_cells": [
+      "x19_y2",
+      "x21_y2"
+    ]
+  }
+}
