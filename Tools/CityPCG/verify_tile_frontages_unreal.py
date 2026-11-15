@@ -21,6 +21,10 @@ def cast(world, start, end):
 
 def verify_frontages(path):
     document = json.loads(Path(path).read_text(encoding="utf-8"))
+    return verify_document(document)
+
+
+def verify_document(document):
     if document["coordinate_system"] != "ue_local_m":
         raise ValueError("Expected Unreal local metres.")
     if len(document["frontages"]) > 50:

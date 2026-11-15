@@ -1,0 +1,303 @@
+{
+  "coordinate_system": "ue_cm",
+  "kit": "/Game/GrayLondon/MedievalOpening/Kit",
+  "verified": true,
+  "cells": [
+    {
+      "id": "Medieval_x20_y1",
+      "points": [
+        {
+          "id": "Tile_p03_p00_1b2e3d30b0ca.0",
+          "building_id": "Tile_p03_p00_1b2e3d30b0ca",
+          "mesh_id": "SM_GLMedieval_Scrivener",
+          "location_cm": [
+            326115.657,
+            27585.28,
+            9.65
+          ],
+          "yaw_deg": 61.54867,
+          "scale": [
+            0.56,
+            0.94408,
+            1.004043
+          ],
+          "seed": 1306796571
+        },
+        {
+          "id": "Tile_p03_p00_1b2e3d30b0ca.1",
+          "building_id": "Tile_p03_p00_1b2e3d30b0ca",
+          "mesh_id": "SM_GLMedieval_Chandler",
+          "location_cm": [
+            326489.178,
+            27382.874,
+            9.65
+          ],
+          "yaw_deg": 61.54867,
+          "scale": [
+            0.56,
+            0.94408,
+            1.004043
+          ],
+          "seed": 987959949
+        },
+        {
+          "id": "Tile_p03_p00_219ba43b850a.0",
+          "building_id": "Tile_p03_p00_219ba43b850a",
+          "mesh_id": "SM_GLMedieval_Scrivener",
+          "location_cm": [
+            324565.497,
+            26762.592,
+            9.65
+          ],
+          "yaw_deg": -119.11805,
+          "scale": [
+            0.56,
+            0.985665,
+            1.004043
+          ],
+          "seed": 450365122
+        },
+        {
+          "id": "Tile_p03_p00_3461b566ea76.0",
+          "building_id": "Tile_p03_p00_3461b566ea76",
+          "mesh_id": "SM_GLMedieval_Mercer",
+          "location_cm": [
+            325792.039,
+            30638.767,
+            9.65
+          ],
+          "yaw_deg": -116.4805,
+          "scale": [
+            0.56,
+            0.901049,
+            1.071429
+          ],
+          "seed": 1671524061
+        },
+        {
+          "id": "Tile_p03_p00_460649862f10.0",
+          "building_id": "Tile_p03_p00_460649862f10",
+          "mesh_id": "SM_GLMedieval_Scrivener",
+          "location_cm": [
+            324165.377,
+            27000.343,
+            9.65
+          ],
+          "yaw_deg": -122.34551,
+          "scale": [
+            0.56,
+            0.967282,
+            1.004043
+          ],
+          "seed": 1708069165
+        },
+        {
+          "id": "Tile_p03_p00_5279fba4e154.0",
+          "building_id": "Tile_p03_p00_5279fba4e154",
+          "mesh_id": "SM_GLMedieval_Scrivener",
+          "location_cm": [
+            324962.509,
+            26546.508,
+            9.65
+          ],
+          "yaw_deg": -117.95149,
+          "scale": [
+            0.56,
+            0.907492,
+            1.004043
+          ],
+          "seed": 1557848961
+        },
+        {
+          "id": "Tile_p03_p00_65444949b015.0",
+          "building_id": "Tile_p03_p00_65444949b015",
+          "mesh_id": "SM_GLMedieval_Mercer",
+          "location_cm": [
+            321012.135,
+            30539.171,
+            27.65
+          ],
+          "yaw_deg": 60.50741,
+          "scale": [
+            0.56,
+            0.982901,
+            1.059299
+          ],
+          "seed": 2129702433
+        },
+        {
+          "id": "Tile_p03_p00_65444949b015.1",
+          "building_id": "Tile_p03_p00_65444949b015",
+          "mesh_id": "SM_GLMedieval_Scrivener",
+          "location_cm": [
+            321397.127,
+            30321.421,
+            27.65
+          ],
+          "yaw_deg": 60.50741,
+          "scale": [
+            0.56,
+            0.982901,
+            1.059299
+          ],
+          "seed": 167222967
+        },
+        {
+          "id": "Tile_p03_p00_65444949b015.2",
+          "building_id": "Tile_p03_p00_65444949b015",
+          "mesh_id": "SM_GLMedieval_Chandler",
+          "location_cm": [
+            321782.119,
+            30103.671,
+            27.65
+          ],
+          "yaw_deg": 60.50741,
+          "scale": [
+            0.56,
+            0.982901,
+            1.059299
+          ],
+          "seed": 285134605
+        },
+        {
+          "id": "Tile_p03_p00_65444949b015.3",
+          "building_id": "Tile_p03_p00_65444949b015",
+          "mesh_id": "SM_GLMedieval_Mercer",
+          "location_cm": [
+            322167.111,
+            29885.921,
+            27.65
+          ],
+          "yaw_deg": 60.50741,
+          "scale": [
+            0.56,
+            0.982901,
+            1.059299
+          ],
+          "seed": 1744437147
+        },
+        {
+          "id": "Tile_p03_p00_75b969c36aae.0",
+          "building_id": "Tile_p03_p00_75b969c36aae",
+          "mesh_id": "SM_GLMedieval_Chandler",
+          "location_cm": [
+            324912.298,
+            28394.038,
+            27.65
+          ],
+          "yaw_deg": 61.91268,
+          "scale": [
+            0.56,
+            0.843229,
+            0.991914
+          ],
+          "seed": 831915416
+        },
+        {
+          "id": "Tile_p03_p00_a173d04f6f3c.0",
+          "building_id": "Tile_p03_p00_a173d04f6f3c",
+          "mesh_id": "SM_GLMedieval_Chandler",
+          "location_cm": [
+            325775.206,
+            27903.627,
+            9.65
+          ],
+          "yaw_deg": 59.88131,
+          "scale": [
+            0.56,
+            1.007648,
+            1.004043
+          ],
+          "seed": 7610839
+        },
+        {
+          "id": "Tile_p03_p00_b5fcb5175ef3.0",
+          "building_id": "Tile_p03_p00_b5fcb5175ef3",
+          "mesh_id": "SM_GLMedieval_Mercer",
+          "location_cm": [
+            325070.243,
+            30977.167,
+            9.65
+          ],
+          "yaw_deg": -118.26156,
+          "scale": [
+            0.56,
+            0.947901,
+            1.071429
+          ],
+          "seed": 945595884
+        },
+        {
+          "id": "Tile_p03_p00_bf35b92bbdc6.0",
+          "building_id": "Tile_p03_p00_bf35b92bbdc6",
+          "mesh_id": "SM_GLMedieval_Mercer",
+          "location_cm": [
+            324539.065,
+            28594.579,
+            27.65
+          ],
+          "yaw_deg": 61.60262,
+          "scale": [
+            0.56,
+            0.924408,
+            0.991914
+          ],
+          "seed": 1013437929
+        },
+        {
+          "id": "Tile_p03_p00_dee910be9d54.0",
+          "building_id": "Tile_p03_p00_dee910be9d54",
+          "mesh_id": "SM_GLMedieval_Scrivener",
+          "location_cm": [
+            323782.616,
+            27235.039,
+            9.65
+          ],
+          "yaw_deg": -120.63752,
+          "scale": [
+            0.56,
+            0.913339,
+            1.004043
+          ],
+          "seed": 1167697350
+        },
+        {
+          "id": "Tile_p03_p00_f514fe0aa80e.0",
+          "building_id": "Tile_p03_p00_f514fe0aa80e",
+          "mesh_id": "SM_GLMedieval_Mercer",
+          "location_cm": [
+            326867.667,
+            27177.828,
+            9.65
+          ],
+          "yaw_deg": 61.56148,
+          "scale": [
+            0.56,
+            0.853535,
+            1.004043
+          ],
+          "seed": 508243755
+        }
+      ]
+    }
+  ],
+  "verification": [
+    {
+      "source": "Tile_p03_p00",
+      "scope": {
+        "bounds_m": [
+          3209,
+          263,
+          3272,
+          312
+        ],
+        "purpose": "West opening continuation, separated from the authored east and south frontage clips."
+      },
+      "rays": 117,
+      "passed": 117,
+      "wall_runs": 13,
+      "skipped_frontages": [],
+      "previously_dressed_frontages": []
+    }
+  ]
+}
