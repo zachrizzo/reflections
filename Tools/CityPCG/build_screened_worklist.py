@@ -5,6 +5,7 @@ hash-bound; their original source/overlay pins are carried forward without
 claiming that the binary exports or historic screening inputs were rechecked.
 """
 
+import argparse
 from collections import defaultdict
 import hashlib
 import json
@@ -20,7 +21,7 @@ SNAPSHOT_MANIFEST = SNAPSHOT / "snapshot_manifest.json"
 PREVIOUS = SNAPSHOT / "rollout_18_buildings_20261115.json"
 TILES = ("Tile_p03_p00", "Tile_p03_p01", "Tile_p04_p00")
 REPORTS = {tile: SNAPSHOT / f"{tile}_next_building_blocks.json" for tile in TILES}
-OUTPUT = SURVEY / "screened_worklist_from_snapshot_20261115_codex.json"
+OUTPUT = SURVEY / "screened_worklist_from_snapshot_20261115_codex_v2.json"
 MAX_MODELS_PER_BATCH = 4
 PRIVATE_PATH = re.compile(r"(^[A-Za-z]:[\\/]|^\\\\|^file:/*|^/(?!Game(?:/|$)|Script(?:/|$)))", re.IGNORECASE)
 
@@ -69,8 +70,18 @@ def checked_snapshot():
     return index_info
 
 
-def checked_output_parent():
+def output_from_basename(name):
+    """Only allow an ordinary JSON filename in the fixed Saved directory."""
+    if (not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,139}\.json", name) or
+            name.split(".", 1)[0].upper() in {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)),
+                                               *(f"LPT{i}" for i in range(1, 10))}):
+        raise ValueError("Output must be a simple non-reserved .json basename")
+    return SURVEY / name
+
+
+def checked_output_parent(output=None):
     """Create only the intended Saved subdirectories on a fresh checkout."""
+    output = OUTPUT if output is None else Path(output)
     parent = ROOT
     for name in ("Saved", "CityPCG", "MedievalSurvey"):
         directory = parent / name
@@ -79,7 +90,7 @@ def checked_output_parent():
         if directory.is_symlink() or directory.resolve(strict=True) != directory:
             raise RuntimeError("The intended Saved output directory was redirected")
         parent = directory
-    if OUTPUT.parent != parent:
+    if output.parent != parent:
         raise RuntimeError("The worklist output is not in the intended Saved directory")
     return parent
 
@@ -222,7 +233,9 @@ def make_worklist(previous, reports, inputs):
                 part_ids = set(part)
                 part_links = [link for link in links if set(link["members"]) <= part_ids]
                 parts.append({"building_ids": part, "retained_street_links": part_links,
-                              "requires_new_connectivity_evidence": len(part) == 1,
+                              "requires_new_connectivity_evidence": (len(part) == 1 or len(new) != len(members) or
+                                                                      len(part) > MAX_MODELS_PER_BATCH),
+                              "requires_current_road_revalidation": True,
                               "exceeds_four_model_batch": len(part) > MAX_MODELS_PER_BATCH})
             blocks.append({"tile": tile, "source_group_id": group["id"],
                            "status": "offline_screened_needs_revalidation",
@@ -266,6 +279,14 @@ def make_worklist(previous, reports, inputs):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", default=OUTPUT.name, metavar="BASENAME",
+                        help="Fresh .json filename under Saved/CityPCG/MedievalSurvey")
+    args = parser.parse_args()
+    try:
+        output_path = output_from_basename(args.output)
+    except ValueError as error:
+        parser.error(str(error))
     snapshot_manifest = checked_snapshot()
     previous, baseline_input = read_input(PREVIOUS)
     report_pairs = {tile: read_input(path) for tile, path in REPORTS.items()}
@@ -279,12 +300,12 @@ def main():
             raise RuntimeError("An input report changed during worklist generation")
     if sha(SNAPSHOT_MANIFEST.read_bytes()) != snapshot_manifest["sha256"]:
         raise RuntimeError("The snapshot manifest changed during worklist generation")
-    checked_output_parent()
-    with OUTPUT.open("x", encoding="utf-8", newline="\n") as output:
+    checked_output_parent(output_path)
+    with output_path.open("x", encoding="utf-8", newline="\n") as output:
         json.dump(result, output, indent=2)
         output.write("\n")
     print(f"Recorded {result['additional_screened_candidates']} additional screened candidates "
-          f"in {len(result['connected_groups'])} groups and {len(result['singletons'])} singletons: {OUTPUT}")
+          f"in {len(result['connected_groups'])} groups and {len(result['singletons'])} singletons: {output_path}")
 
 
 if __name__ == "__main__":

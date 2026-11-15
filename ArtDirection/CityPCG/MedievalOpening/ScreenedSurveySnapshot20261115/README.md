@@ -10,10 +10,12 @@ references but no machine-specific absolute paths.
 To rebuild a fresh review-only worklist from this snapshot:
 
 ```powershell
-python -B Tools/CityPCG/build_screened_worklist.py
+python -B Tools/CityPCG/build_screened_worklist.py --output screened_worklist_review_001.json
 ```
 
 The generated worklist goes to a fresh file under `Saved/CityPCG/MedievalSurvey`.
+The optional `--output` accepts only a plain `.json` filename in that directory;
+without it the builder uses `screened_worklist_from_snapshot_20261115_codex_v2.json`.
 Its builder validates every snapshot hash and refuses to overwrite an existing
 output. It records screened source face fingerprints, cumulative-baseline
 membership, original links and the connected components left after baseline

@@ -58,7 +58,7 @@ class ScreenedWorklistTests(unittest.TestCase):
                 shutil.copyfile(worklist.SNAPSHOT / name, snapshot / name)
             self.assertFalse((root / "Saved").exists())
             subprocess.run([sys.executable, "-B", str(tool)], cwd=root, check=True, capture_output=True, text=True)
-            result_path = root / "Saved/CityPCG/MedievalSurvey/screened_worklist_from_snapshot_20261115_codex.json"
+            result_path = root / "Saved/CityPCG/MedievalSurvey/screened_worklist_from_snapshot_20261115_codex_v2.json"
             result = json.loads(result_path.read_text(encoding="utf-8"))
             self.assertEqual((result["baseline_building_count"], result["additional_screened_candidates"]), (18, 52))
             self.assertEqual((len(result["connected_groups"]), len(result["singletons"])), (8, 22))
@@ -70,6 +70,26 @@ class ScreenedWorklistTests(unittest.TestCase):
                                               {"baseline": baseline, **{tile: pair[1] for tile, pair in pairs.items()}})
             result.pop("review_snapshot_manifest")
             self.assertEqual(result, expected)
+            custom = result_path.parent / "another_review.json"
+            subprocess.run([sys.executable, "-B", str(tool), "--output", custom.name], cwd=root,
+                           check=True, capture_output=True, text=True)
+            self.assertEqual(custom.read_bytes(), result_path.read_bytes())
+            before = custom.read_bytes()
+            repeated = subprocess.run([sys.executable, "-B", str(tool), "--output", custom.name], cwd=root,
+                                      capture_output=True, text=True)
+            self.assertNotEqual(repeated.returncode, 0)
+            self.assertEqual(custom.read_bytes(), before)
+            escaped = subprocess.run([sys.executable, "-B", str(tool), "--output", "../escape.json"], cwd=root,
+                                     capture_output=True, text=True)
+            self.assertNotEqual(escaped.returncode, 0)
+            self.assertFalse((result_path.parent.parent / "escape.json").exists())
+
+    def test_output_requires_a_safe_json_basename(self):
+        self.assertEqual(worklist.output_from_basename("review_002.json"), worklist.SURVEY / "review_002.json")
+        for name in ("../escape.json", "subdir/escape.json", "subdir\\escape.json", "C:/escape.json",
+                     "CON.json", "LPT1.json", ".json", "result.txt", "bad name.json"):
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                worklist.output_from_basename(name)
 
     def test_fresh_checkout_creates_only_checked_saved_output_parents(self):
         with checked_tempdir() as root:
@@ -131,6 +151,18 @@ class ScreenedWorklistTests(unittest.TestCase):
         self.assertEqual([len(row["building_ids"]) for row in parts], [1, 1])
         self.assertTrue(all(row["requires_new_connectivity_evidence"] and not row["retained_street_links"] for row in parts))
         self.assertEqual(len(result["singletons"]), 1)
+
+    def test_mixed_connected_component_still_requires_revalidation(self):
+        previous, reports, inputs = fixture()
+        tile = worklist.TILES[0]
+        group = reports[tile]["connected_groups"][0]
+        members = [row["id"] for row in reports[tile]["screened_candidates"]]
+        group["street_links"].append({"members": [members[1], members[2]], "samples": 9})
+        component, = worklist.make_worklist(previous, reports, inputs)["connected_groups"][0]["new_connected_components"]
+        self.assertEqual(len(component["building_ids"]), 2)
+        self.assertEqual(len(component["retained_street_links"]), 1)
+        self.assertTrue(component["requires_new_connectivity_evidence"])
+        self.assertTrue(component["requires_current_road_revalidation"])
 
     def test_different_ids_sharing_faces_are_not_counted_as_new_candidates(self):
         previous, reports, inputs = fixture()
