@@ -109,12 +109,7 @@ void UReflectionsSpellHudWidget::NativeOnInitialized()
 
     UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
     Panel->AddChildToVerticalBox(Row);
-    UButton* Previous = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
-    UTextBlock* PreviousLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-    PreviousLabel->SetText(FText::FromString(TEXT("<")));
-    Previous->AddChild(PreviousLabel); Row->AddChildToHorizontalBox(Previous);
-    Previous->OnClicked.AddDynamic(this, &UReflectionsSpellHudWidget::PreviousPage);
-    for (int32 Index = 0; Index < ReflectionsSpellCatalog::PageSize; ++Index)
+    for (int32 Index = 0; Index < ReflectionsSpellCatalog::PlayerSpellCount; ++Index)
     {
         UButton* Button = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
         UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
@@ -125,11 +120,6 @@ void UReflectionsSpellHudWidget::NativeOnInitialized()
         ButtonSlot->SetPadding(FMargin(3, 0));
         SpellButtons.Add(Button); SpellLabels.Add(Label);
     }
-    UButton* Next = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
-    UTextBlock* NextLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-    NextLabel->SetText(FText::FromString(TEXT(">")));
-    Next->AddChild(NextLabel); Row->AddChildToHorizontalBox(Next);
-    Next->OnClicked.AddDynamic(this, &UReflectionsSpellHudWidget::NextPage);
     SpellButtons[0]->OnClicked.AddDynamic(this, &UReflectionsSpellHudWidget::SelectFirstSlot);
     SpellButtons[1]->OnClicked.AddDynamic(this, &UReflectionsSpellHudWidget::SelectSecondSlot);
     SpellButtons[2]->OnClicked.AddDynamic(this, &UReflectionsSpellHudWidget::SelectThirdSlot);
@@ -276,15 +266,13 @@ void UReflectionsSpellHudWidget::RefreshSelection()
             : Driver->GetCastFeedback();
         FeedbackLabel->SetText(FText::FromString(Feedback));
     }
-    const int32 Selected = static_cast<int32>(Driver->GetSelectedSpell()) % ReflectionsSpellCatalog::PageSize;
-    constexpr int32 Pages = FMath::DivideAndRoundUp(ReflectionsSpellCatalog::Count, ReflectionsSpellCatalog::PageSize);
     if (Hint) Hint->SetText(FText::FromString(Driver->IsUsingGamepad()
-        ? FString::Printf(TEXT("SPELLS %d/%d     HOLD LT AIM  |  RT CAST (HOLD TO REPEAT)  |  LB / RB SPELL  |  D-PAD LEFT / RIGHT PAGE  |  L3 SPRINT"), Driver->GetSpellPage() + 1, Pages)
-        : FString::Printf(TEXT("SPELLS %d/%d     HOLD RMB AIM  |  LMB / Q CAST (HOLD TO REPEAT)  |  TAB / SHIFT+TAB SPELL  |  1-4 SELECT  |  [ ] PAGE  |  HOLD RIGHT ALT FOR MOUSE"), Driver->GetSpellPage() + 1, Pages)));
+        ? TEXT("HOLD LT AIM  |  RT CAST  |  LB / RB SELECT SPELL")
+        : TEXT("HOLD RMB AIM  |  LMB / Q CAST  |  1-4 SELECT  |  HOLD RIGHT ALT FOR MOUSE")));
     for (int32 Index = 0; Index < SpellButtons.Num(); ++Index)
     {
-        const bool bSelected = Index == Selected;
-        const EHeroSpell Spell = static_cast<EHeroSpell>(Driver->GetSpellPage() * ReflectionsSpellCatalog::PageSize + Index);
+        const EHeroSpell Spell = ReflectionsSpellCatalog::PlayerSpells[Index];
+        const bool bSelected = Spell == Driver->GetSelectedSpell();
         const float Cooldown = Driver->GetSpellCooldownRemaining(Spell);
         const FString Status = Cooldown > 0.0f ? FString::Printf(TEXT("%.1fs"), Cooldown) : FString::Printf(TEXT("%.0f mana"), Driver->GetSpellManaCost(Spell));
         SpellLabels[Index]->SetText(FText::FromString(FString::Printf(TEXT("%d  %s\n%s"), Index + 1, *Driver->GetSpellSlotName(Index), *Status)));
@@ -296,8 +284,6 @@ void UReflectionsSpellHudWidget::SelectFirstSlot() { if (Driver) Driver->SelectS
 void UReflectionsSpellHudWidget::SelectSecondSlot() { if (Driver) Driver->SelectSpellSlot(1); }
 void UReflectionsSpellHudWidget::SelectThirdSlot() { if (Driver) Driver->SelectSpellSlot(2); }
 void UReflectionsSpellHudWidget::SelectFourthSlot() { if (Driver) Driver->SelectSpellSlot(3); }
-void UReflectionsSpellHudWidget::PreviousPage() { if (Driver) Driver->ChangeSpellPage(-1); }
-void UReflectionsSpellHudWidget::NextPage() { if (Driver) Driver->ChangeSpellPage(1); }
 
 UReflectionsSpellHudComponent::UReflectionsSpellHudComponent()
 {

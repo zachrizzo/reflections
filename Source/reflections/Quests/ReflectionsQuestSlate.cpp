@@ -477,11 +477,13 @@ void SReflectionsQuestJournal::Construct(const FArguments& InArgs)
     TWeakObjectPtr<UReflectionsQuestWorldSubsystem> Weak = Owner;
     SAssignNew(List, SVerticalBox);
     SAssignNew(Details, SBox);
+    SetVisibility(TAttribute<EVisibility>::CreateLambda([Weak]() {
+        return Weak.IsValid() && Weak->IsJournalOpen() ? EVisibility::Visible : EVisibility::Collapsed;
+    }));
 
     ChildSlot
     [
         SNew(SOverlay)
-        .Visibility_Lambda([Weak]() { return Weak.IsValid() && Weak->IsJournalOpen() ? EVisibility::Visible : EVisibility::Collapsed; })
         + SOverlay::Slot()
         [
             SNew(SImage).Image(Solid()).ColorAndOpacity(FLinearColor(0.0f, 0.0f, 0.0f, 0.55f))
@@ -762,10 +764,12 @@ void SReflectionsQuestTalk::Construct(const FArguments& InArgs)
     Owner = InArgs._Owner;
     TWeakObjectPtr<UReflectionsQuestWorldSubsystem> Weak = Owner;
     SAssignNew(Options, SVerticalBox);
+    SetVisibility(TAttribute<EVisibility>::CreateLambda([Weak]() {
+        return Weak.IsValid() && Weak->IsTalkOpen() ? EVisibility::Visible : EVisibility::Collapsed;
+    }));
     ChildSlot
     [
         SNew(SOverlay)
-        .Visibility_Lambda([Weak]() { return Weak.IsValid() && Weak->IsTalkOpen() ? EVisibility::Visible : EVisibility::Collapsed; })
         + SOverlay::Slot()
         [
             SNew(SImage).Image(Solid()).ColorAndOpacity(FLinearColor(0.0f, 0.0f, 0.0f, 0.25f))
@@ -837,15 +841,15 @@ void SReflectionsQuestTalk::Rebuild()
     else
     {
         const TArray<FReflectionsTalkOption>& Opts = Self->GetTalkOptions();
-        for (int32 i = 0; i < Opts.Num(); ++i)
+        for (const FReflectionsTalkOption& Option : Opts)
         {
             TSharedPtr<SReflectionsFlowButton> Button;
             Options->AddSlot().AutoHeight().Padding(0, 0, 0, 6)
             [
                 SAssignNew(Button, SReflectionsFlowButton)
-                .Label(Opts[i].Label)
-                .Primary(Opts[i].bPrimary)
-                .OnActivated_Lambda([Weak, i]() { if (Weak.IsValid()) Weak->ChooseTalkOption(i); })
+                .Label(Option.Label)
+                .Primary(Option.bPrimary)
+                .OnActivated_Lambda([Weak, Action = Option.Action]() { if (Weak.IsValid()) Weak->ChooseTalkAction(Action); })
             ];
             Buttons.Add(Button);
         }

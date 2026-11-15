@@ -1,0 +1,27 @@
+{
+  "bounds_m": [
+    [
+      -0.2307800054550171,
+      26.07452964782715
+    ],
+    [
+      -47.128448486328125,
+      3.3541901111602783
+    ],
+    [
+      0.0,
+      12.199999809265137
+    ]
+  ],
+  "fbx_sha256": "6a1f365d71f7cf88e1df766599f323311b600cc4000e558b98a78d9e7cf6b38d",
+  "model": "SM_GLMedieval_NorthMarketDetail_east_0a73564b",
+  "placement": "local source only; no Unreal placement or gameplay context",
+  "render": "Blender Cycles CPU, 8 samples, 720x480; artificial light and background",
+  "source_world_pivot_m": [
+    3310.546,
+    522.412,
+    0.2
+  ],
+  "source_yaw_deg": 24.35984172,
+  "status": "diagnostic only: visual/game approval pending"
+}

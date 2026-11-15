@@ -1,0 +1,51 @@
+{
+  "asset": "AppleBasket",
+  "bounds_model_units": [
+    [
+      -0.47061383724212646,
+      -0.4248531758785248,
+      -0.4157038927078247
+    ],
+    [
+      0.4706946611404419,
+      0.4230842590332031,
+      0.43057501316070557
+    ]
+  ],
+  "checkpoint_sha256": "429e2c6b22a0923967459de24d67f05962b235f79cde6b032aa7ed2ffcd970ee",
+  "chunk_size": 4096,
+  "commit": "0a1269c92653db8decc9345a206f3f01bebfc728",
+  "config_sha256": "74ca708ce086bf68e97709ea6b3d91f14717921c04691e84043f0eb8fcc68e62",
+  "device": "CPU",
+  "dino_config_sha256": "b87c0270b97db085fd82cf114a761fd0f62ae7914fbd407c752a2260646b689c",
+  "faces": 44360,
+  "glb_readback": "single geometry; counts and RGB vertex colors match",
+  "input_sha256": "1764286d75c75fc24850f0818c1b483c43c75d2329a9413a42b6adae6d9eb66b",
+  "license": "MIT",
+  "limitations": [
+    "Arbitrary scale and pivot; unseen surfaces inferred.",
+    "No Unreal import, collision, navigation, visual or gameplay validation.",
+    "CPU scikit-image Lorensen adapter differs from upstream torchmcubes."
+  ],
+  "model_revision": "5b521936b01fbe1890f6f9baed0254ab6351c04a",
+  "outputs_sha256": {
+    "AppleBasket.glb": "461357fe369afc409b611bf24032209861ad4c4ecf19a10bb17ab44df89c2923",
+    "TripoSR_LICENSE.txt": "ade0a66629bdd7e01e46b3296b3851cff0fd27989bca53da470ad6e96ed620fb",
+    "conditioned.png": "97d4f98474a7a9b1367762b44ddf37146757f945dcb2c31e9aff45dd1a76f42f",
+    "diagnostic.png": "84e18294c3fdef0e22bd0838f2c8624a263a8aa98a4d038687ec5973c6a2d6ce",
+    "foreground.png": "2ca4066ce6e43cd34038c2bdba982008e48d02882430f246edb8c2eefe855f1d"
+  },
+  "provider": "TripoSR",
+  "resolution": 128,
+  "run_id": "43744477013",
+  "seconds": 23.72,
+  "seed": 1450,
+  "status": "raw_mesh_requires_review",
+  "torch": "2.2.2+cpu",
+  "upstream_commit": "107cefdc244c39106fa830359024f6a2f1c78871",
+  "vertex_color_shape": [
+    22182,
+    4
+  ],
+  "vertices": 22182
+}

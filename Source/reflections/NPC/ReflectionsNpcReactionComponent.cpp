@@ -662,13 +662,14 @@ void UReflectionsNpcReactionComponent::StartFreeze(float Seconds)
     if (ACharacter* Mover = GetMovementCharacter())
     {
         Mover->GetCharacterMovement()->StopMovementImmediately();
-        if (Mover != GetOwner()) Mover->CustomTimeDilation = 0.05f;
+        if (Mover != GetOwner() && WalkerDown == EWalkerDown::None) Mover->CustomTimeDilation = 0.05f;
     }
 }
 
 void UReflectionsNpcReactionComponent::EndFreeze()
 {
     FrozenRemaining = 0.0f;
+    bMagicFrozen = false;
     if (ACharacter* Mover = GetMovementCharacter())
         if (Mover != GetOwner()) Mover->CustomTimeDilation = 1.0f;
 }
@@ -1802,6 +1803,20 @@ void UReflectionsNpcReactionComponent::ReceiveSpellHit(const FReflectionsSpellHi
     StartHitFlash(Hit);
     // Held by a set piece: it is hurt (the damage has landed) but does not move or change its mind.
     if (IsScripted()) return;
+    if (Hit.Spell == EHeroSpell::Freeze)
+    {
+        bMagicFrozen = true;
+        FrozenAlong = (Owner->GetActorLocation() - Hit.Location).GetSafeNormal2D();
+        KnockbackVelocity = FVector::ZeroVector;
+        if (Motor) Motor->SetCombatTarget(nullptr);
+        CastWindupRemaining = 0.0f;
+        EndCastTelegraph();
+        CancelTarnishCast();
+        StartFreeze(ReflectionsSpellCatalog::FreezeDuration);
+        return;
+    }
+    // Damage still applies while frozen, but hit reactions cannot set the body in motion.
+    if (bMagicFrozen) return;
     StartPhysicalHit(Hit);
     StartFlinch(Hit);
     // A fresh hit lands with physics: a jolt through the upper body along the hit, on the hidden walker.
@@ -2502,6 +2517,7 @@ void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick
         EndCastTelegraph();
         CancelTarnishCast();
         TickWalkerKnockdown(DeltaTime);
+        if (bMagicFrozen && (FrozenRemaining -= DeltaTime) <= 0.0f) EndFreeze();
         return;
     }
     if (bShocked || FrozenRemaining > 0.0f)

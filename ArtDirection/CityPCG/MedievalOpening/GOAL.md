@@ -83,8 +83,16 @@ All four passed hosted Blender-to-FBX round trips after a targeted repair
 preserved the fourth model's authored face normals. Their review-only bundles
 and two diagnostic previews are preserved on `main`; they have not been
 imported into Unreal. The first preview is repetitive and needs more
-street-level detail. The buildings still need visual and Unreal checks,
-approved collision and a matching cumulative tile filter.
+street-level detail. A subsequent east-0a variant adds seven closed,
+decorative shop/house bays; its overlay, before/after previews and a complete
+FBX variant passed hosted Blender source and clean-reimport checks. The FBX
+bundle is preserved on `main` with a verified LFS readback. An illustrative
+street scene combines the variant with market stalls, goods and a handcart;
+its archive and two previews are also preserved on `main`. Visual review found
+that its lighting is dark and the upper facades and rooflines remain too regular.
+The scene's ground and prop positions are illustrative, and none of these
+variants has been imported or placed in Unreal. The buildings still need visual
+and Unreal checks, approved collision and a matching cumulative tile filter.
 The repaired model's sharp-edge count and resulting Unreal performance need
 measurement. All proposals remain review-only: the
 other tiles need exports, the original section mapping needs verification, and
@@ -109,8 +117,14 @@ meshes now contain the 14 models in 97 sections instead of 149; material
 binding, collision and streaming have not yet been tested in Unreal.
 
 An offline watch-gate kit provides occupied and reclaimed pennant variants.
-Its quest example, LAN visual controller and separate campaign rules are
-prototypes. A revised defender-clear capture mode and checkpoint adapter passed
+A hosted source-art review adds palisade wings, supplies, a sconce and claim
+markers, with separate occupied and reclaimed scene GLBs. Its source surfaces
+leave the measured central box clear, and both scenes passed a fresh GLB
+reimport; the review bundle and labeled previews are preserved on `main`.
+The result is a simple isolated entrance, not a finished base, and it has not
+been imported or placed in Unreal. Collision, navigation, routes and capture
+gameplay remain unverified. Its quest example, LAN visual controller and
+separate campaign rules are prototypes. A revised defender-clear capture mode and checkpoint adapter passed
 standalone C++17 checks on a hosted Linux runner, with Unreal-shaped test
 doubles for the adapter. They have not been compiled against Unreal or connected
 to the game. No reclaimable stronghold has been placed or verified in the

@@ -30,8 +30,6 @@ private:
     UFUNCTION() void SelectSecondSlot();
     UFUNCTION() void SelectThirdSlot();
     UFUNCTION() void SelectFourthSlot();
-    UFUNCTION() void PreviousPage();
-    UFUNCTION() void NextPage();
     UPROPERTY(Transient) TObjectPtr<UReflectionsSampleSpellDriver> Driver;
     UPROPERTY(Transient) TArray<TObjectPtr<UButton>> SpellButtons;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> SpellLabels;

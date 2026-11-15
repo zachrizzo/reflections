@@ -730,12 +730,7 @@ void UReflectionsQuestWorldSubsystem::PlayLines(const TArray<FReflectionsQuestLi
             if (!L.Id.IsNone() && TalkLines.ContainsByPredicate([&L](const FReflectionsQuestLine& E) { return E.Id == L.Id; })) continue;
             TalkLines.Add(L);
         }
-        if (TalkLines.Num() > FirstNew && TalkLineIndex < FirstNew && IsTalkOnLastLine())
-        {
-            // The player is reading the last line: carry on into the new ones.
-        }
-        bTalkEnding = false;
-        ++TalkRevision;
+        if (TalkLines.Num() > FirstNew) ++TalkRevision;
         return;
     }
     const UReflectionsQuestSubsystem* Quests = UReflectionsQuestSubsystem::Get(this);
@@ -780,7 +775,7 @@ float UReflectionsQuestWorldSubsystem::PlayVoiceCue(FName LineId, FName Speaker)
 
 bool UReflectionsQuestWorldSubsystem::AdvanceTalk()
 {
-    if (TalkLineIndex < TalkLines.Num() - 1)
+    if (bTalkOpen && !IsTalkOnLastLine())
     {
         ++TalkLineIndex;
         ++TalkRevision;
@@ -792,9 +787,16 @@ bool UReflectionsQuestWorldSubsystem::AdvanceTalk()
 
 void UReflectionsQuestWorldSubsystem::ChooseTalkOption(int32 Index)
 {
+    if (TalkOptions.IsValidIndex(Index)) ChooseTalkAction(TalkOptions[Index].Action);
+}
+
+void UReflectionsQuestWorldSubsystem::ChooseTalkAction(const FString& SelectedAction)
+{
     UReflectionsQuestSubsystem* Quests = UReflectionsQuestSubsystem::Get(this);
-    if (!Quests || !TalkOptions.IsValidIndex(Index)) return;
-    const FString Action = TalkOptions[Index].Action;
+    if (!bTalkOpen || !Quests || !IsTalkOnLastLine()) return;
+    // Quest events raised by an action can rebuild the options synchronously.
+    const FString Action = SelectedAction;
+    if (!TalkOptions.ContainsByPredicate([&Action](const FReflectionsTalkOption& Option) { return Option.Action == Action; })) return;
     if (Action == TEXT("goodbye"))
     {
         CloseTalk();
@@ -808,21 +810,29 @@ void UReflectionsQuestWorldSubsystem::ChooseTalkOption(int32 Index)
         FString Verb, Arg, QuestStr, ChoiceStr;
         Action.Split(TEXT(":"), &Verb, &Arg);
         Arg.Split(TEXT("."), &QuestStr, &ChoiceStr);
+        FText Response;
         FName ResponseId;
         if (const FReflectionsQuestStep* Step = Quests->GetCurrentStep(TalkChoiceQuest))
         {
             if (const FReflectionsQuestChoice* C = Step->Choices.FindByPredicate([&ChoiceStr](const FReflectionsQuestChoice& E) { return E.Id == FName(*ChoiceStr); }))
             {
-                PushTalkLine(TalkPerson, C->Response, C->ResponseId);
+                Response = C->Response;
+                ResponseId = C->ResponseId;
             }
         }
         bOk = Quests->MakeChoice(TalkChoiceQuest, FName(*ChoiceStr));
-        TalkChoiceQuest = NAME_None;
-        bTalkEnding = true;
+        if (bOk)
+        {
+            if (!Response.IsEmpty()) TalkLines.Insert(FReflectionsQuestLine{TalkPerson, Response, ResponseId}, FirstNew);
+            TalkChoiceQuest = NAME_None;
+            bTalkEnding = true;
+        }
     }
     else if (AActor* Npc = TalkNpc.Get())
     {
         // Choice replies carry their own line id (voice cue): say them as lines, not as plain text.
+        FText ChoiceResponse;
+        FName ChoiceResponseId;
         if (Action.StartsWith(TEXT("choose:")))
         {
             FString Verb, Arg, QuestStr, ChoiceStr;
@@ -832,15 +842,20 @@ void UReflectionsQuestWorldSubsystem::ChooseTalkOption(int32 Index)
             {
                 if (const FReflectionsQuestChoice* C = Step->Choices.FindByPredicate([&ChoiceStr](const FReflectionsQuestChoice& E) { return E.Id == FName(*ChoiceStr); }))
                 {
-                    PushTalkLine(TalkPerson, C->Response, C->ResponseId);
+                    ChoiceResponse = C->Response;
+                    ChoiceResponseId = C->ResponseId;
                 }
             }
         }
         const int32 LinesBefore = TalkLines.Num();
         bOk = Quests->ExecuteQuestAction(Npc, Action, Reason, Say);
-        if (Action.StartsWith(TEXT("choose:"))) Say.Reset();
+        if (bOk && Action.StartsWith(TEXT("choose:")))
+        {
+            if (!ChoiceResponse.IsEmpty()) TalkLines.Insert(FReflectionsQuestLine{TalkPerson, ChoiceResponse, ChoiceResponseId}, LinesBefore);
+            Say.Reset();
+        }
         // Accept / turn in: the quest's own lines (with ids) instead of the joined text.
-        if (const FReflectionsQuestDef* Def = Quests->FindQuest(FName(*Action.Mid(Action.Find(TEXT(":")) + 1))))
+        if (const FReflectionsQuestDef* Def = bOk ? Quests->FindQuest(FName(*Action.Mid(Action.Find(TEXT(":")) + 1))) : nullptr)
         {
             const TArray<FReflectionsQuestLineDef>* Defs = Action.StartsWith(TEXT("accept:")) ? &Def->AcceptLines
                 : Action.StartsWith(TEXT("decline:")) ? &Def->DeclineLines : Action.StartsWith(TEXT("turn_in:")) ? &Def->TurnInLines : nullptr;
@@ -851,7 +866,7 @@ void UReflectionsQuestWorldSubsystem::ChooseTalkOption(int32 Index)
                 Say.Reset();
             }
         }
-        if (Action.StartsWith(TEXT("decline:")) || Action.StartsWith(TEXT("turn_in:"))) bTalkEnding = true;
+        if (bOk && (Action.StartsWith(TEXT("decline:")) || Action.StartsWith(TEXT("turn_in:")))) bTalkEnding = true;
         if (Action.StartsWith(TEXT("turn_in:")) && bOk)
         {
             if (const FReflectionsQuestDef* Def = Quests->FindQuest(FName(*Action.Mid(8))))
@@ -863,10 +878,15 @@ void UReflectionsQuestWorldSubsystem::ChooseTalkOption(int32 Index)
             }
         }
     }
-    if (!Say.IsEmpty()) PushTalkLine(TalkPerson, FText::FromString(Say));
+    if (bOk && !Say.IsEmpty()) PushTalkLine(TalkPerson, FText::FromString(Say));
     if (!bOk && !Reason.IsEmpty())
     {
         UE_LOG(LogReflectionsQuestWorld, Warning, TEXT("Talk action %s refused: %s"), *Action, *Reason);
+    }
+    if (TalkLines.Num() == FirstNew)
+    {
+        PushTalkLine(TalkPerson, bOk ? LOCTEXT("TalkAcknowledged", "All right.") :
+            LOCTEXT("TalkUnavailable", "I can’t do that right now."));
     }
     if (TalkLines.Num() > FirstNew) TalkLineIndex = FirstNew;
     RefreshTalkOptions();
@@ -1816,7 +1836,25 @@ void UReflectionsQuestWorldSubsystem::HandleQuestEvent(FName QuestId, FName Step
 void UReflectionsQuestWorldSubsystem::HandleQuestsChanged()
 {
     ++Revision;
-    if (bTalkOpen && TalkChoiceQuest.IsNone()) RefreshTalkOptions();
+    if (bTalkOpen && TalkChoiceQuest.IsNone())
+    {
+        const TArray<FReflectionsTalkOption> Previous = TalkOptions;
+        RefreshTalkOptions();
+        if (Previous.Num() != TalkOptions.Num())
+        {
+            ++TalkRevision;
+        }
+        else
+        {
+            for (int32 Index = 0; Index < TalkOptions.Num(); ++Index)
+            {
+                if (Previous[Index].Action == TalkOptions[Index].Action && Previous[Index].bPrimary == TalkOptions[Index].bPrimary &&
+                    Previous[Index].Label.EqualTo(TalkOptions[Index].Label)) continue;
+                ++TalkRevision;
+                break;
+            }
+        }
+    }
 }
 
 void UReflectionsQuestWorldSubsystem::HandleSpellHit(const FReflectionsSpellHitData& Hit)

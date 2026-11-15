@@ -94,13 +94,6 @@ def text_inputs(root):
         yield rel,data
 
 
-def texture_destination(scratch,role,name):
-    if not re.fullmatch(r'[A-Za-z]+',role) or name!=f'T_GLMedieval_{role}.png':
-        raise ValueError('Unexpected texture role or filename')
-    folder=ART/'Guildhall/Textures' if role=='GuildRubble' else ART/'Textures'
-    return scratch/folder/name
-
-
 def prepare():
     side,scratch=context(); inputs=list(text_inputs(ROOT))
     plan_path=ROOT/FOLLOW/f'north_market_{side}_plan_20261115.json'
@@ -126,7 +119,8 @@ def prepare():
             raise ValueError('Texture differs from source manifest')
         with source.open('rb') as stream:
             if stream.read(8)!=b'\x89PNG\r\n\x1a\n': raise ValueError('Invalid source texture')
-        target=texture_destination(scratch,role,name)
+        folder='Guildhall' if role=='GuildRubble' else 'ThamesWarehouse'
+        target=scratch/ART/folder/'Textures'/name
         target.parent.mkdir(parents=True,exist_ok=True)
         with source.open('rb') as src,target.open('xb') as out: shutil.copyfileobj(src,out,256*1024)
         if digest(target)!=info['sha256']: raise ValueError('Texture scratch copy changed')

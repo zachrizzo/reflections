@@ -1,0 +1,51 @@
+{
+  "asset": "MarketWell",
+  "bounds_model_units": [
+    [
+      -0.37644681334495544,
+      -0.4298955500125885,
+      -0.47237858176231384
+    ],
+    [
+      0.49322080612182617,
+      0.4358569383621216,
+      0.5091018676757812
+    ]
+  ],
+  "checkpoint_sha256": "429e2c6b22a0923967459de24d67f05962b235f79cde6b032aa7ed2ffcd970ee",
+  "chunk_size": 4096,
+  "commit": "0a1269c92653db8decc9345a206f3f01bebfc728",
+  "config_sha256": "74ca708ce086bf68e97709ea6b3d91f14717921c04691e84043f0eb8fcc68e62",
+  "device": "CPU",
+  "dino_config_sha256": "b87c0270b97db085fd82cf114a761fd0f62ae7914fbd407c752a2260646b689c",
+  "faces": 47944,
+  "glb_readback": "single geometry; counts and RGB vertex colors match",
+  "input_sha256": "bc562d50e8b9e6cd08f445aa44ec12b266ed98e841da9829f1ca6c04b8abac3e",
+  "license": "MIT",
+  "limitations": [
+    "Arbitrary scale and pivot; unseen surfaces inferred.",
+    "No Unreal import, collision, navigation, visual or gameplay validation.",
+    "CPU scikit-image Lorensen adapter differs from upstream torchmcubes."
+  ],
+  "model_revision": "5b521936b01fbe1890f6f9baed0254ab6351c04a",
+  "outputs_sha256": {
+    "MarketWell.glb": "e5fb8cdd0adc04c4b3926f6d7e774469bf8a698810b9d34aed778e2d7b51bc3d",
+    "TripoSR_LICENSE.txt": "ade0a66629bdd7e01e46b3296b3851cff0fd27989bca53da470ad6e96ed620fb",
+    "conditioned.png": "7a83f22371aaca8eeb0b0478a5c91a7e5533df4f5d5b6d7a73db0b8c72c4b6fd",
+    "diagnostic.png": "9021a4345e0e74a088f9ceb209abcb7068089c4bc4283fbdeda6b51f4ad6e7b3",
+    "foreground.png": "5517f940be7f395b5435fb21fa229d88a74dfa5604bc076081fa65f6c102c158"
+  },
+  "provider": "TripoSR",
+  "resolution": 128,
+  "run_id": "43744477013",
+  "seconds": 27.85,
+  "seed": 1450,
+  "status": "raw_mesh_requires_review",
+  "torch": "2.2.2+cpu",
+  "upstream_commit": "107cefdc244c39106fa830359024f6a2f1c78871",
+  "vertex_color_shape": [
+    23964,
+    4
+  ],
+  "vertices": 23964
+}

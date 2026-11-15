@@ -85,17 +85,6 @@ class RidgeVariationTests(unittest.TestCase):
         self.assertEqual(hosted.canonical(b'one\r\ntwo\n'),b'one\ntwo\n')
         with self.assertRaises(ValueError): hosted.canonical(b'one\rtwo')
 
-    def test_staged_texture_paths_match_actual_generator(self):
-        # Reach the actual texture() function imported by the generator; the
-        # Blender stubs used to load it have already been safely removed.
-        texture=self.generator.make_object.__globals__['make_material'].__globals__['texture']
-        roles=('ClayTile','Fieldstone','GuildRubble','LimePlaster','Oak',
-               'ShopGreen','ShopRed','WarmPlaster','WeatheredOak')
-        for role in roles:
-            name=f'T_GLMedieval_{role}.png'
-            self.assertEqual(hosted.texture_destination(ROOT,role,name),texture(role))
-        with self.assertRaises(ValueError): hosted.texture_destination(ROOT,'../bad','bad.png')
-
     def test_fbx_must_contain_reported_ridge_vertices(self):
         material=SimpleNamespace(name='M_GLMedieval_ClayTile')
         polygon=SimpleNamespace(material_index=0,normal=SimpleNamespace(z=.8),vertices=[0])

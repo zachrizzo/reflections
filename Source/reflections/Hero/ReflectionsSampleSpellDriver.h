@@ -85,7 +85,7 @@ public:
     UFUNCTION(BlueprintCallable, Category="Hero|Spells")
     bool CastSelectedSpell() { return CastSpell(SelectedSpell); }
     UFUNCTION(BlueprintPure, Category="Hero|Spells")
-    int32 GetSpellPage() const { return SpellPage; }
+    int32 GetSpellPage() const { return 0; }
     UFUNCTION(BlueprintCallable, Category="Hero|Spells")
     void ChangeSpellPage(int32 Delta);
     UFUNCTION(BlueprintCallable, Category="Hero|Spells")
@@ -170,7 +170,6 @@ protected:
 private:
     void BindControls();
     void SelectFirstSlot(); void SelectSecondSlot(); void SelectThirdSlot(); void SelectFourthSlot();
-    void PreviousPage(); void NextPage();
     void PreviousSpell(); void NextSpell();
     void CastSelected();
     void PrimaryPressed();
@@ -198,20 +197,16 @@ private:
     UPROPERTY(Transient) TObjectPtr<UInputMappingContext> SpellContext;
     UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> SpellActions;
     UPROPERTY(Transient) TObjectPtr<USkeletalMeshComponent> Body;
-    UPROPERTY(Transient) TObjectPtr<UChildActorComponent> Visual;
     UPROPERTY(Transient) TObjectPtr<UAnimMontage> ActiveMontage;
     UPROPERTY(Transient) TObjectPtr<UAnimMontage> AimMontage;
     UPROPERTY(Transient) TSubclassOf<UAnimInstance> RetargetClass;
-    UPROPERTY(Transient) TObjectPtr<UStaticMeshComponent> Preview;
     UPROPERTY(Transient) TObjectPtr<AReflectionsHeroCharacter> SpellDefaults;
     UPROPERTY(Transient) TObjectPtr<UReflectionsSpellAimComponent> Aim;
     UPROPERTY(Transient) FHeroSpellDefinition ActiveDefinition;
     UPROPERTY(Transient) TMap<FName, TObjectPtr<UAnimSequenceBase>> CombatClips;
     TMap<EHeroSpell, int32> CastCounts;
-    FVector VisualBase = FVector::ZeroVector;
     EHeroSpell ActiveSpell = EHeroSpell::Healing;
-    EHeroSpell SelectedSpell = EHeroSpell::Fire;
-    int32 SpellPage = 0;
+    EHeroSpell SelectedSpell = EHeroSpell::Firestorm;
     float CastClock = 0.0f;
     float ReleaseClock = 0.0f;
     bool bReleased = false;
@@ -220,7 +215,6 @@ private:
     bool bMovementLocked = false;
     bool bRestorePending = false;
     bool bPrimaryHeld = false;
-    float PreviewTime = 0.0f;
     float Mana = 100.0f;
     double LastCastTime = -100.0;
     /** Out-of-combat health regen: when the hero last lost health, its last seen health, and regen not yet applied. */

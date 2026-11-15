@@ -1,0 +1,781 @@
+{
+  "blender": "4.5.3 LTS",
+  "commit": "d57edf7f327568482844e23b0137875c89df8149",
+  "fbx_evidence": {
+    "east_0a73564b": {
+      "face_check": {
+        "edges": 20157,
+        "material_polygons": {
+          "M_GLMedieval_ClayTile": 3451,
+          "M_GLMedieval_Fieldstone": 181,
+          "M_GLMedieval_GuildDressed": 108,
+          "M_GLMedieval_GuildRubble": 51,
+          "M_GLMedieval_Interior": 132,
+          "M_GLMedieval_Lead": 2052,
+          "M_GLMedieval_LeadedGlass": 240,
+          "M_GLMedieval_LimePlaster": 80,
+          "M_GLMedieval_Oak": 3367,
+          "M_GLMedieval_ShopRed": 156,
+          "M_GLMedieval_WeatheredOak": 276
+        },
+        "normal_tolerance": 0.001,
+        "polygon_triangle_count": 20126,
+        "polygons": 10094,
+        "position_tolerance_m": 3e-05,
+        "slots": [
+          "M_GLMedieval_ClayTile",
+          "M_GLMedieval_Fieldstone",
+          "M_GLMedieval_GuildDressed",
+          "M_GLMedieval_GuildRubble",
+          "M_GLMedieval_Interior",
+          "M_GLMedieval_Lead",
+          "M_GLMedieval_LeadedGlass",
+          "M_GLMedieval_LimePlaster",
+          "M_GLMedieval_Oak",
+          "M_GLMedieval_ShopRed",
+          "M_GLMedieval_WeatheredOak"
+        ],
+        "uv_corners": 40314,
+        "uv_tolerance": 3e-05,
+        "vertices": 13205
+      },
+      "textures": {
+        "M_GLMedieval_ClayTile": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_ClayTile.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "4276741826d160b3c00bd3d053eb174849b328a76ecd22caa01f1cfc3445afaf"
+        },
+        "M_GLMedieval_Fieldstone": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_Fieldstone.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "845a6082959cf5429e024eb86d05db087114b963cb1170533a4c989701cf03b1"
+        },
+        "M_GLMedieval_GuildDressed": {
+          "kd": [
+            0.36,
+            0.31,
+            0.22
+          ],
+          "kind": "solid"
+        },
+        "M_GLMedieval_GuildRubble": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_GuildRubble.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "8c8b4a1b0ab16ee92c9a8379904aadf7c561a9f220f49f5eb030ba0318e3cc17"
+        },
+        "M_GLMedieval_Interior": {
+          "kd": [
+            0.016,
+            0.012,
+            0.009
+          ],
+          "kind": "solid"
+        },
+        "M_GLMedieval_Lead": {
+          "kd": [
+            0.052,
+            0.054,
+            0.041
+          ],
+          "kind": "solid"
+        },
+        "M_GLMedieval_LeadedGlass": {
+          "kd": [
+            0.092,
+            0.125,
+            0.099
+          ],
+          "kind": "solid"
+        },
+        "M_GLMedieval_LimePlaster": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_LimePlaster.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "f5205640b07a12890c134579ca2e1814e04aeb60ee73def5019f03cafb3a62a5"
+        },
+        "M_GLMedieval_Oak": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_Oak.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "30f2d82d684242c658fdfe217b26d1c9aa680c240a187ea81cea0308ff20159a"
+        },
+        "M_GLMedieval_ShopRed": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_ShopRed.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "9e95fd428a51ab8d3d7cd98cb9d95c3dda04d7ea71cef9d8c429469e27f7dda6"
+        },
+        "M_GLMedieval_WeatheredOak": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_WeatheredOak.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "b6dd5807706308ffabb22f9afcf2e45836c4ae34c9f0951397c92989dcf46425"
+        }
+      }
+    },
+    "east_31c9ff1a": {
+      "face_check": {
+        "edges": 8647,
+        "material_polygons": {
+          "M_GLMedieval_ClayTile": 1280,
+          "M_GLMedieval_Fieldstone": 65,
+          "M_GLMedieval_GuildDressed": 6,
+          "M_GLMedieval_GuildRubble": 6,
+          "M_GLMedieval_Interior": 132,
+          "M_GLMedieval_Lead": 606,
+          "M_GLMedieval_LeadedGlass": 78,
+          "M_GLMedieval_Oak": 821,
+          "M_GLMedieval_ShopGreen": 276,
+          "M_GLMedieval_WarmPlaster": 25,
+          "M_GLMedieval_WeatheredOak": 1030
+        },
+        "normal_tolerance": 0.001,
+        "polygon_triangle_count": 8644,
+        "polygons": 4325,
+        "position_tolerance_m": 3e-05,
+        "slots": [
+          "M_GLMedieval_ClayTile",
+          "M_GLMedieval_Fieldstone",
+          "M_GLMedieval_GuildDressed",
+          "M_GLMedieval_GuildRubble",
+          "M_GLMedieval_Interior",
+          "M_GLMedieval_Lead",
+          "M_GLMedieval_LeadedGlass",
+          "M_GLMedieval_Oak",
+          "M_GLMedieval_ShopGreen",
+          "M_GLMedieval_WarmPlaster",
+          "M_GLMedieval_WeatheredOak"
+        ],
+        "uv_corners": 17294,
+        "uv_tolerance": 3e-05,
+        "vertices": 5732
+      },
+      "textures": {
+        "M_GLMedieval_ClayTile": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_ClayTile.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "4276741826d160b3c00bd3d053eb174849b328a76ecd22caa01f1cfc3445afaf"
+        },
+        "M_GLMedieval_Fieldstone": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_Fieldstone.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "845a6082959cf5429e024eb86d05db087114b963cb1170533a4c989701cf03b1"
+        },
+        "M_GLMedieval_GuildDressed": {
+          "kd": [
+            0.36,
+            0.31,
+            0.22
+          ],
+          "kind": "solid"
+        },
+        "M_GLMedieval_GuildRubble": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_GuildRubble.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "8c8b4a1b0ab16ee92c9a8379904aadf7c561a9f220f49f5eb030ba0318e3cc17"
+        },
+        "M_GLMedieval_Interior": {
+          "kd": [
+            0.016,
+            0.012,
+            0.009
+          ],
+          "kind": "solid"
+        },
+        "M_GLMedieval_Lead": {
+          "kd": [
+            0.052,
+            0.054,
+            0.041
+          ],
+          "kind": "solid"
+        },
+        "M_GLMedieval_LeadedGlass": {
+          "kd": [
+            0.092,
+            0.125,
+            0.099
+          ],
+          "kind": "solid"
+        },
+        "M_GLMedieval_Oak": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_Oak.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "30f2d82d684242c658fdfe217b26d1c9aa680c240a187ea81cea0308ff20159a"
+        },
+        "M_GLMedieval_ShopGreen": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_ShopGreen.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "28ebac7f99d7ba4932920896fd428f29b516403d69f687438b23eff89196dbff"
+        },
+        "M_GLMedieval_WarmPlaster": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_WarmPlaster.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "9e070704a80237ba6c17e35392f6060672710af53127565b066682ab246350d5"
+        },
+        "M_GLMedieval_WeatheredOak": {
+          "colorspace": "sRGB",
+          "extension": "REPEAT",
+          "file": "T_GLMedieval_WeatheredOak.png",
+          "interpolation": "Linear",
+          "kind": "texture",
+          "projection": "FLAT",
+          "sha256": "b6dd5807706308ffabb22f9afcf2e45836c4ae34c9f0951397c92989dcf46425"
+        }
+      }
+    }
+  },
+  "files": {
+    "ReusableAssets/LondonMarketProps.mtl": "5a4cf3e13d6dcadc0ca1b98f8c6396f6dedac01a72035abdf360e53d8d5ce700",
+    "ReusableAssets/Tenancies/NorthMarketDetail.mtl": "8b4485d8b96298d2586f0c0821697cc993cbf739c3ae645cb89576540ccdfec6",
+    "ReusableAssets/Tenancies/Textures/T_GLMedieval_ClayTile.png": "4276741826d160b3c00bd3d053eb174849b328a76ecd22caa01f1cfc3445afaf",
+    "ReusableAssets/Tenancies/Textures/T_GLMedieval_Fieldstone.png": "845a6082959cf5429e024eb86d05db087114b963cb1170533a4c989701cf03b1",
+    "ReusableAssets/Tenancies/Textures/T_GLMedieval_GuildRubble.png": "8c8b4a1b0ab16ee92c9a8379904aadf7c561a9f220f49f5eb030ba0318e3cc17",
+    "ReusableAssets/Tenancies/Textures/T_GLMedieval_LimePlaster.png": "f5205640b07a12890c134579ca2e1814e04aeb60ee73def5019f03cafb3a62a5",
+    "ReusableAssets/Tenancies/Textures/T_GLMedieval_Oak.png": "30f2d82d684242c658fdfe217b26d1c9aa680c240a187ea81cea0308ff20159a",
+    "ReusableAssets/Tenancies/Textures/T_GLMedieval_ShopGreen.png": "28ebac7f99d7ba4932920896fd428f29b516403d69f687438b23eff89196dbff",
+    "ReusableAssets/Tenancies/Textures/T_GLMedieval_ShopRed.png": "9e95fd428a51ab8d3d7cd98cb9d95c3dda04d7ea71cef9d8c429469e27f7dda6",
+    "ReusableAssets/Tenancies/Textures/T_GLMedieval_WarmPlaster.png": "9e070704a80237ba6c17e35392f6060672710af53127565b066682ab246350d5",
+    "ReusableAssets/Tenancies/Textures/T_GLMedieval_WeatheredOak.png": "b6dd5807706308ffabb22f9afcf2e45836c4ae34c9f0951397c92989dcf46425",
+    "ReusableAssets/Tenancies/tenancies.report.json": "d9b0363264ec702d95fbf82bce153d7d2feaf17827866ca30b542fad3a1fc539",
+    "ReusableAssets/Tenancies/tenancies_overlay.obj": "b67371709b3050ba31e2c31ad25488f5bc83cb0ef01bd050d47e62ff87da7eec",
+    "ReusableAssets/ale_stake.obj": "ee4a767dda1f3194ebf82338be8948f61fcbc1d810dde886c1644f565f10e032",
+    "ReusableAssets/bowl_a.obj": "55b2aaadec9d49e3cb3b49ddce2734ae7104cea2e4192f07c63fe8408283086e",
+    "ReusableAssets/cargo.glb": "4307780781abdba27ba8b4dab3d4219212e5723f0b4a693351523b7dbbf57f51",
+    "ReusableAssets/cask_group.glb": "5705a73c671be4881c9852d93cbe9af975996039b10b604c55980cc5d6ba767f",
+    "ReusableAssets/crate_group.glb": "b731f1c233d38f99b0c51067683511f8e869a29a67c5daff6cbb945bfa612e31",
+    "ReusableAssets/handcart.glb": "fcd2082e0d250f60d7114e04a7c5eef57a00d13fe1c40e7cd5ba781bf21f9f0b",
+    "ReusableAssets/market_stall.glb": "affb03d26c16e901d5b7b3795c968be4787608e8e9a83ab628d91bcb3732c73f",
+    "ReusableAssets/trestle.obj": "14c2b7addef06b8f9e2222f2bc848d749821cc29c37d6cdaa961fe5a3d76a612",
+    "north_market_street_review.blend": "4139c2e2536ab643c4fe420e7cf0d6299413d4744b11c80d3a3ad11a5222b905",
+    "north_market_street_review.glb": "36c0f99f20230e7e2404d491d499c9b26dfce49d1dbd434194a3c6fad97227e2",
+    "street_eye_level.png": "3d319ed0552f5faf5a56c1d65423a0c5a89eddd0322f1ff26f30a69d64e3724f",
+    "street_trestle.png": "a968270050ce9faf27b45653a0762eee2e524f68288acfbb4cda4d5a8ef10896"
+  },
+  "inputs": {
+    "ArtDirection/CityPCG/MedievalOpening/FollowOn20261115/north_market_east_plan_20261115.json": {
+      "hash_method": "sha256_lf_canonical",
+      "raw_sha256": "88ea66f0292864f8f6b9924d654a323edb37da9ce307754f7f9f57fc77fbc32f",
+      "sha256": "88ea66f0292864f8f6b9924d654a323edb37da9ce307754f7f9f57fc77fbc32f"
+    },
+    "ArtDirection/CityPCG/MedievalOpening/Ground/Source/T_GL1450_Ground_Color.png": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "ab6590f4ea1621c7b615f5d37ccab8d9b1cb6d7f4f44d414e69195499bf3a986",
+      "sha256": "ab6590f4ea1621c7b615f5d37ccab8d9b1cb6d7f4f44d414e69195499bf3a986"
+    },
+    "ArtDirection/CityPCG/MedievalOpening/Ground/Source/T_GL1450_Ground_Normal.png": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "7639ce0d61ecd4db48c91cc0eb471b2902c7a6799fbf8ab1c8e02864ee668b57",
+      "sha256": "7639ce0d61ecd4db48c91cc0eb471b2902c7a6799fbf8ab1c8e02864ee668b57"
+    },
+    "ArtDirection/CityPCG/MedievalOpening/Ground/Source/T_GL1450_Ground_Roughness.png": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "9e6c7033edb47f13fb571bf249abc2be4f9f8a4ce49557ec665ea499ad93b0a8",
+      "sha256": "9e6c7033edb47f13fb571bf249abc2be4f9f8a4ce49557ec665ea499ad93b0a8"
+    },
+    "ArtDirection/CityPCG/MedievalOpening/MarketDressingKit/build_market_dressing.py": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "7461853706acd6f31312ee87548f6a30f31ae00e83cb8bd65efbd8e43764362d",
+      "sha256": "7461853706acd6f31312ee87548f6a30f31ae00e83cb8bd65efbd8e43764362d"
+    },
+    "ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/HostedFBXReview/east_0a73564b.zip": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "3a690aade02e668b800c5d49426d7b142d18556a953d7ed00737861a5086d096",
+      "sha256": "3a690aade02e668b800c5d49426d7b142d18556a953d7ed00737861a5086d096"
+    },
+    "ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/HostedFBXReview/east_31c9ff1a.zip": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "bf30b04ea539b92e3bc518f19e75ce13566ab6ebf622285db9e9a3a271541c9b",
+      "sha256": "bf30b04ea539b92e3bc518f19e75ce13566ab6ebf622285db9e9a3a271541c9b"
+    },
+    "ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/detailed_obj_manifest.json": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "a9aeb89aab3a35914d505475b697ddfa01fb48ad43b1a98c6562bf89bdf49095",
+      "sha256": "a9aeb89aab3a35914d505475b697ddfa01fb48ad43b1a98c6562bf89bdf49095"
+    },
+    "ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/tenancies_overlay_east_0a73564b.obj": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "b67371709b3050ba31e2c31ad25488f5bc83cb0ef01bd050d47e62ff87da7eec",
+      "sha256": "b67371709b3050ba31e2c31ad25488f5bc83cb0ef01bd050d47e62ff87da7eec"
+    },
+    "ArtDirection/MedievalLondon/MarketDressing/build_market_dressing.py": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "d78c583bb31dbd34e60e981a8b4259919a3aa30634a169352d0ab32fa7ca6271",
+      "sha256": "d78c583bb31dbd34e60e981a8b4259919a3aa30634a169352d0ab32fa7ca6271"
+    },
+    "ArtDirection/MedievalLondon/QuayDressing/Source/SM_GL1450_QuayCargo.glb": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "4307780781abdba27ba8b4dab3d4219212e5723f0b4a693351523b7dbbf57f51",
+      "sha256": "4307780781abdba27ba8b4dab3d4219212e5723f0b4a693351523b7dbbf57f51"
+    },
+    "ArtDirection/MedievalLondon/QuayDressing/Source/SM_GL1450_QuayHandcart.glb": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "fcd2082e0d250f60d7114e04a7c5eef57a00d13fe1c40e7cd5ba781bf21f9f0b",
+      "sha256": "fcd2082e0d250f60d7114e04a7c5eef57a00d13fe1c40e7cd5ba781bf21f9f0b"
+    },
+    "Tools/CityPCG/north_market_hosted_blender.py": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "4d6782256cf9618aa95a40ea452c29bffeb11d3d2bd82925365dd87edaa82f75",
+      "sha256": "4d6782256cf9618aa95a40ea452c29bffeb11d3d2bd82925365dd87edaa82f75"
+    },
+    "Tools/CityPCG/north_market_roundtrip_common.py": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "02d6c54cf6d1400de23dae5c43e2e9fa69dfa45dbc10a08fc856a5fdc9da74fe",
+      "sha256": "02d6c54cf6d1400de23dae5c43e2e9fa69dfa45dbc10a08fc856a5fdc9da74fe"
+    },
+    "Tools/CityPCG/north_market_tenancies.py": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "ad2604f21589a4e96881e6d964c7fa7a0e719c7927a533deb2db801f1a993b0f",
+      "sha256": "ad2604f21589a4e96881e6d964c7fa7a0e719c7927a533deb2db801f1a993b0f"
+    },
+    "Tools/CityPCG/north_market_tenancy_preview.py": {
+      "hash_method": "sha256_raw",
+      "raw_sha256": "9602c5a97021c64674ec5839b9203949f3aaaf36db564849bb45d6957db0ccd8",
+      "sha256": "9602c5a97021c64674ec5839b9203949f3aaaf36db564849bb45d6957db0ccd8"
+    }
+  },
+  "limitations": [
+    "Props and ground are illustrative; no live-world placements or floor evidence",
+    "No Unreal import, collision, navigation, gameplay, streaming or visual approval",
+    "Ale-stake is an artistic tavern cue, not a verified historic tenancy",
+    "Tenancy overlay and original shell are visual only; the combined OBJ must not be stacked over the FBX"
+  ],
+  "mesh_object_names": [
+    "Building_east_0a73564b",
+    "Building_east_31c9ff1a",
+    "Prop_ale_stake_00",
+    "Prop_bowl_a_00",
+    "Prop_bowl_b_00",
+    "Prop_cargo_00",
+    "Prop_cask_group_00",
+    "Prop_crate_group_00",
+    "Prop_handcart_00",
+    "Prop_market_stall_00",
+    "Prop_trestle_00",
+    "ReviewGround_Illustrative",
+    "Shopfront_Overlay_east_0a"
+  ],
+  "props": {
+    "ale_stake": {
+      "materials": [
+        "M_MarketIron",
+        "M_MarketIvy",
+        "M_MarketIvyLight",
+        "M_MarketOak",
+        "M_MarketOakDark"
+      ],
+      "triangles": 396
+    },
+    "bowl_a": {
+      "materials": [
+        "M_MarketAsh"
+      ],
+      "triangles": 704
+    },
+    "bowl_b": {
+      "materials": [
+        "M_MarketAsh"
+      ],
+      "triangles": 704
+    },
+    "cargo": {
+      "facts": {
+        "bounds_m": [
+          [
+            -0.5029608607292175,
+            -0.5330076217651367,
+            0.0
+          ],
+          [
+            0.5841579437255859,
+            0.3951435387134552,
+            0.6850000023841858
+          ]
+        ],
+        "dimensions_m": [
+          1.0871188044548035,
+          0.9281511604785919,
+          0.6850000023841858
+        ],
+        "materials": [
+          "Flax Sacking.003",
+          "Hemp Binding.004",
+          "Oak Exposed.004",
+          "Oak Shadow.004",
+          "Oak Weathered.004"
+        ],
+        "meshes": 1,
+        "triangles": 2892,
+        "vertices": 3018
+      },
+      "source_sha256": "4307780781abdba27ba8b4dab3d4219212e5723f0b4a693351523b7dbbf57f51"
+    },
+    "cask_group": {
+      "facts": {
+        "bounds_m": [
+          [
+            -0.3619999885559082,
+            -0.29426032304763794,
+            0.0
+          ],
+          [
+            0.45102885365486145,
+            0.38028231263160706,
+            0.6039999723434448
+          ]
+        ],
+        "dimensions_m": [
+          0.8130288422107697,
+          0.674542635679245,
+          0.6039999723434448
+        ],
+        "materials": [
+          "Flax Sacking.001",
+          "Forged Iron",
+          "Hemp Binding.002",
+          "Oak Exposed.002",
+          "Oak Shadow.002",
+          "Oak Weathered.002"
+        ],
+        "meshes": 1,
+        "triangles": 1304,
+        "vertices": 1262
+      },
+      "source_sha256": "5705a73c671be4881c9852d93cbe9af975996039b10b604c55980cc5d6ba767f"
+    },
+    "crate_group": {
+      "facts": {
+        "bounds_m": [
+          [
+            -0.34700000286102295,
+            -0.559999942779541,
+            0.0
+          ],
+          [
+            0.3758522570133209,
+            0.31800001859664917,
+            0.6570000052452087
+          ]
+        ],
+        "dimensions_m": [
+          0.7228522598743439,
+          0.8779999613761902,
+          0.6570000052452087
+        ],
+        "materials": [
+          "Apple Green.001",
+          "Hemp Binding.001",
+          "Oak Exposed.001",
+          "Oak Shadow.001",
+          "Oak Weathered.001",
+          "Root Russet.001",
+          "Wicker.001",
+          "Yellow Fruit.001"
+        ],
+        "meshes": 1,
+        "triangles": 4108,
+        "vertices": 5628
+      },
+      "source_sha256": "b731f1c233d38f99b0c51067683511f8e869a29a67c5daff6cbb945bfa612e31"
+    },
+    "handcart": {
+      "facts": {
+        "bounds_m": [
+          [
+            -0.9290000200271606,
+            -0.8030000329017639,
+            0.0
+          ],
+          [
+            1.799147605895996,
+            0.8030000329017639,
+            1.34457528591156
+          ]
+        ],
+        "dimensions_m": [
+          2.7281476259231567,
+          1.6060000658035278,
+          1.34457528591156
+        ],
+        "materials": [
+          "Flax Sacking.002",
+          "Forged Iron.001",
+          "Hemp Binding.003",
+          "Oak Exposed.003",
+          "Oak Shadow.003",
+          "Oak Weathered.003"
+        ],
+        "meshes": 1,
+        "triangles": 9432,
+        "vertices": 14177
+      },
+      "source_sha256": "fcd2082e0d250f60d7114e04a7c5eef57a00d13fe1c40e7cd5ba781bf21f9f0b"
+    },
+    "market_stall": {
+      "facts": {
+        "bounds_m": [
+          [
+            -0.6880000829696655,
+            -1.2000000476837158,
+            -1.1920928955078125e-07
+          ],
+          [
+            0.7630001306533813,
+            1.2000000476837158,
+            2.3953471183776855
+          ]
+        ],
+        "dimensions_m": [
+          1.4510002136230469,
+          2.4000000953674316,
+          2.395347237586975
+        ],
+        "materials": [
+          "Apple Green",
+          "Apple Oxide",
+          "Apple Red",
+          "Flax Sacking",
+          "Hemp Binding",
+          "Oak Exposed",
+          "Oak Shadow",
+          "Oak Weathered",
+          "Ochre Linen",
+          "Root Russet",
+          "Undyed Linen",
+          "Wicker",
+          "Yellow Fruit"
+        ],
+        "meshes": 1,
+        "triangles": 11392,
+        "vertices": 11774
+      },
+      "source_sha256": "affb03d26c16e901d5b7b3795c968be4787608e8e9a83ab628d91bcb3732c73f"
+    },
+    "trestle": {
+      "materials": [
+        "M_MarketIron",
+        "M_MarketOak",
+        "M_MarketOakDark"
+      ],
+      "triangles": 372
+    }
+  },
+  "recipe": {
+    "entry_local_m": [
+      25.89503,
+      -21.055861
+    ],
+    "origin_world_m": [
+      3310.546,
+      522.412,
+      0.2
+    ],
+    "origin_yaw_deg": 24.35984172,
+    "prop_placements": "illustrative only; no live placement or clearance approval",
+    "props": {
+      "ale_stake": {
+        "position_m": [
+          25.9,
+          -17.5,
+          3.0
+        ],
+        "yaw_deg": 0.0
+      },
+      "bowl_a": {
+        "position_m": [
+          26.32,
+          -24.3,
+          0.7925
+        ],
+        "yaw_deg": 0.0
+      },
+      "bowl_b": {
+        "position_m": [
+          26.32,
+          -23.85,
+          0.7925
+        ],
+        "yaw_deg": 0.0
+      },
+      "cargo": {
+        "position_m": [
+          28.4,
+          -31.4,
+          0.0
+        ],
+        "yaw_deg": 0.0
+      },
+      "cask_group": {
+        "position_m": [
+          26.55,
+          -27.3,
+          0.0
+        ],
+        "yaw_deg": 0.0
+      },
+      "crate_group": {
+        "position_m": [
+          26.55,
+          -26.0,
+          0.0
+        ],
+        "yaw_deg": 0.0
+      },
+      "handcart": {
+        "position_m": [
+          29.2,
+          -29.0,
+          0.0
+        ],
+        "yaw_deg": 90.0
+      },
+      "market_stall": {
+        "position_m": [
+          26.65,
+          -17.9,
+          0.0
+        ],
+        "yaw_deg": 0.0
+      },
+      "trestle": {
+        "position_m": [
+          25.98,
+          -24.0,
+          0.0
+        ],
+        "yaw_deg": 0.0
+      }
+    },
+    "secondary_local_m": [
+      33.80728914037556,
+      4.702270619504258,
+      0.0
+    ],
+    "secondary_yaw_deg": -180.30752124999998
+  },
+  "status": "illustrative review only; not a playable or map-approved scene",
+  "tenancy_evidence": {
+    "face_check": {
+      "edges": 2556,
+      "material_polygons": {
+        "M_GLMedieval_Interior": 84,
+        "M_GLMedieval_Lead": 126,
+        "M_GLMedieval_LimePlaster": 30,
+        "M_GLMedieval_Oak": 426,
+        "M_GLMedieval_ShopGreen": 198,
+        "M_GLMedieval_ShopRed": 168,
+        "M_GLMedieval_WarmPlaster": 12,
+        "M_GLMedieval_WeatheredOak": 234
+      },
+      "normal_tolerance": 0.001,
+      "polygon_triangle_count": 2556,
+      "polygons": 1278,
+      "position_tolerance_m": 3e-05,
+      "slots": [
+        "M_GLMedieval_Interior",
+        "M_GLMedieval_Lead",
+        "M_GLMedieval_LimePlaster",
+        "M_GLMedieval_Oak",
+        "M_GLMedieval_ShopGreen",
+        "M_GLMedieval_ShopRed",
+        "M_GLMedieval_WarmPlaster",
+        "M_GLMedieval_WeatheredOak"
+      ],
+      "uv_corners": 5112,
+      "uv_tolerance": 3e-05,
+      "vertices": 1704
+    },
+    "overlay_sha256": "b67371709b3050ba31e2c31ad25488f5bc83cb0ef01bd050d47e62ff87da7eec",
+    "status": "closed visual details, review only; no Unreal or gameplay approval",
+    "textures": {
+      "M_GLMedieval_Interior": {
+        "kd": [
+          0.016,
+          0.012,
+          0.009
+        ],
+        "kind": "solid"
+      },
+      "M_GLMedieval_Lead": {
+        "kd": [
+          0.052,
+          0.054,
+          0.041
+        ],
+        "kind": "solid"
+      },
+      "M_GLMedieval_LimePlaster": {
+        "name": "T_GLMedieval_LimePlaster.png",
+        "sha256": "f5205640b07a12890c134579ca2e1814e04aeb60ee73def5019f03cafb3a62a5"
+      },
+      "M_GLMedieval_Oak": {
+        "name": "T_GLMedieval_Oak.png",
+        "sha256": "30f2d82d684242c658fdfe217b26d1c9aa680c240a187ea81cea0308ff20159a"
+      },
+      "M_GLMedieval_ShopGreen": {
+        "name": "T_GLMedieval_ShopGreen.png",
+        "sha256": "28ebac7f99d7ba4932920896fd428f29b516403d69f687438b23eff89196dbff"
+      },
+      "M_GLMedieval_ShopRed": {
+        "name": "T_GLMedieval_ShopRed.png",
+        "sha256": "9e95fd428a51ab8d3d7cd98cb9d95c3dda04d7ea71cef9d8c429469e27f7dda6"
+      },
+      "M_GLMedieval_WarmPlaster": {
+        "name": "T_GLMedieval_WarmPlaster.png",
+        "sha256": "9e070704a80237ba6c17e35392f6060672710af53127565b066682ab246350d5"
+      },
+      "M_GLMedieval_WeatheredOak": {
+        "name": "T_GLMedieval_WeatheredOak.png",
+        "sha256": "b6dd5807706308ffabb22f9afcf2e45836c4ae34c9f0951397c92989dcf46425"
+      }
+    }
+  }
+}

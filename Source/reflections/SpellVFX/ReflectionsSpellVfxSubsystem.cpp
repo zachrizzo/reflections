@@ -67,6 +67,16 @@ namespace
         return Tarnish;
     }
 
+    const FElementStyle& FireballStyle()
+    {
+        static const FElementStyle Fireball{
+            {1.0f, 0.16f, 0.015f, 1.0f}, {1.0f, 0.71f, 0.20f, 1.0f},
+            40.0f, 165.0f, 350.0f, 460.0f, 0.0f, 0.0f, 0.0f, 27.0f,
+            95.0f, -700.0f, 0.0f, 0.0f, {0.1f, 0.05f, 0.02f, 1.0f}, 17.0f,
+            {0.08f, 0.065f, 0.055f, 0.65f}, 50.0f, 0.0f, 22.0f};
+        return Fireball;
+    }
+
     const FElementStyle& StyleFor(EReflectionsSpellElement Element)
     {
         // Fire: embers rise, black smoke and a flame bloom.
@@ -357,7 +367,7 @@ void UReflectionsSpellVfxSubsystem::AttachProjectileVisual(TWeakObjectPtr<ARefle
     const EHeroSpell Spell = Projectile->GetSpell();
     if (!ReflectionsSpellCatalog::IsValid(Spell)) return;
     const FReflectionsSpellSpec& Spec = ReflectionsSpellCatalog::Get(Spell);
-    const FElementStyle& Style = StyleFor(Spec.Element);
+    const FElementStyle& Style = Spell == EHeroSpell::Firestorm ? FireballStyle() : StyleFor(Spec.Element);
     UNiagaraComponent* Visual = UNiagaraFunctionLibrary::SpawnSystemAttached(ProjectileSystem, Projectile->GetRootComponent(), NAME_None,
         FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset, true, false, ENCPoolMethod::AutoRelease, true);
     if (!Visual) return;
@@ -510,7 +520,8 @@ void UReflectionsSpellVfxSubsystem::SpawnTarnishImpact(const FVector& Location, 
 void UReflectionsSpellVfxSubsystem::SpawnImpact(EHeroSpell Spell, const FVector& Location, const FVector& Normal, float Scale, bool bMuzzle)
 {
     if (!ReflectionsSpellCatalog::IsValid(Spell)) return;
-    SpawnStyledBurst(this, ImpactSystem, StyleFor(ReflectionsSpellCatalog::Get(Spell).Element), Location, Normal, Scale, bMuzzle);
+    const FElementStyle& Style = Spell == EHeroSpell::Firestorm ? FireballStyle() : StyleFor(ReflectionsSpellCatalog::Get(Spell).Element);
+    SpawnStyledBurst(this, ImpactSystem, Style, Location, Normal, Scale, bMuzzle);
 }
 
 void UReflectionsSpellVfxSubsystem::SpawnGroundMark(EHeroSpell Spell, const FVector& Location, const FVector& Normal, float Scale)
@@ -659,10 +670,9 @@ void UReflectionsSpellVfxSubsystem::OnSupportVisual(EHeroSpell Spell, FVector Lo
             if (USoundBase* Up = JamCue(TEXT("SCue_Shield_Up"))) UGameplayStatics::PlaySoundAtLocation(this, Up, Caster->GetActorLocation());
             PlayTimedLoop(this, TEXT("SCue_Shield_Loop"), SoundRoot, 8.0f);  // UReflectionsHealthComponent shields last 8 s.
         }
-        else if (Spec.Delivery == EReflectionsSpellDelivery::Hover)
+        else if (Spec.Delivery == EReflectionsSpellDelivery::Jump)
         {
             if (USoundBase* Start = JamCue(TEXT("SCue_Levitation_Start"))) UGameplayStatics::PlaySoundAtLocation(this, Start, Caster->GetActorLocation());
-            PlayTimedLoop(this, TEXT("SCue_Levitation_Loop"), SoundRoot, 2.4f);  // Hover lasts to frame 112 of the 30 fps clip.
         }
     }
     UNiagaraSystem* System = Spec.Delivery == EReflectionsSpellDelivery::Ward ? WardSystem.Get()
@@ -793,11 +803,11 @@ UNiagaraComponent* UReflectionsSpellVfxSubsystem::AttachToBody(UNiagaraSystem* S
     return Fx;
 }
 
-void UReflectionsSpellVfxSubsystem::AfflictBody(AActor* Target, int32 Kind, float Duration, float Magnitude)
+void UReflectionsSpellVfxSubsystem::AfflictBody(AActor* Target, int32 Kind, float Duration, float Magnitude, float MaxDuration)
 {
     UWorld* World = GetWorld();
     if (!World || !BodyFxSystem || !IsValid(Target) || Duration <= 0.0f) return;
-    const double End = World->GetTimeSeconds() + FMath::Clamp(Duration, 0.3f, 5.0f);
+    const double End = World->GetTimeSeconds() + FMath::Clamp(Duration, 0.3f, MaxDuration);
     if (FBodyShock* Live = Afflictions.Find(Target))
     {
         if (Live->Kind == Kind && Live->Crackle.IsValid() && Live->Crackle->IsActive())
@@ -868,7 +878,10 @@ void UReflectionsSpellVfxSubsystem::OnSpellHit(const FReflectionsSpellHitData& H
         {
         case EReflectionsSpellReaction::Electrify: ElectrifyBody(Hit.Target, Hit.Duration, Hit.Magnitude); break;
         case EReflectionsSpellReaction::Burn: AfflictBody(Hit.Target, 0, Hit.Duration, Hit.Magnitude); break;
-        case EReflectionsSpellReaction::Freeze: AfflictBody(Hit.Target, 1, Hit.Duration, Hit.Magnitude); break;
+        case EReflectionsSpellReaction::Freeze:
+            AfflictBody(Hit.Target, 1, Hit.Duration, Hit.Magnitude,
+                Hit.Spell == EHeroSpell::Freeze ? ReflectionsSpellCatalog::FreezeDuration : 5.0f);
+            break;
         case EReflectionsSpellReaction::Push:
             if (ReflectionsSpellCatalog::IsValid(Hit.Spell) && ReflectionsSpellCatalog::Get(Hit.Spell).Element == EReflectionsSpellElement::Water)
             {

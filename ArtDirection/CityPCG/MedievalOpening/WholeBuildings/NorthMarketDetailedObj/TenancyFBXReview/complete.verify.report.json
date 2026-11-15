@@ -1,0 +1,188 @@
+{
+  "baseline_fbx_sha256": "314cbe152add14d5793bcc0070788ae60dabaa5525e8320bb39bca69c08698dc",
+  "blender_version": "4.5.3 LTS",
+  "combined_obj_sha256": "f52ba1bccfb11a986b78ced35a9924c437a6ccd350ac51dc90fef666731b2be5",
+  "facts": {
+    "edges": 22713,
+    "material_polygons": {
+      "M_GLMedieval_ClayTile": 3451,
+      "M_GLMedieval_Fieldstone": 181,
+      "M_GLMedieval_GuildDressed": 108,
+      "M_GLMedieval_GuildRubble": 51,
+      "M_GLMedieval_Interior": 216,
+      "M_GLMedieval_Lead": 2178,
+      "M_GLMedieval_LeadedGlass": 240,
+      "M_GLMedieval_LimePlaster": 110,
+      "M_GLMedieval_Oak": 3793,
+      "M_GLMedieval_ShopGreen": 198,
+      "M_GLMedieval_ShopRed": 324,
+      "M_GLMedieval_WarmPlaster": 12,
+      "M_GLMedieval_WeatheredOak": 510
+    },
+    "normal_tolerance": 0.001,
+    "polygon_triangle_count": 22682,
+    "polygons": 11372,
+    "position_tolerance_m": 3e-05,
+    "slots": [
+      "M_GLMedieval_ClayTile",
+      "M_GLMedieval_Fieldstone",
+      "M_GLMedieval_GuildDressed",
+      "M_GLMedieval_GuildRubble",
+      "M_GLMedieval_Interior",
+      "M_GLMedieval_Lead",
+      "M_GLMedieval_LeadedGlass",
+      "M_GLMedieval_LimePlaster",
+      "M_GLMedieval_Oak",
+      "M_GLMedieval_ShopGreen",
+      "M_GLMedieval_ShopRed",
+      "M_GLMedieval_WarmPlaster",
+      "M_GLMedieval_WeatheredOak"
+    ],
+    "uv_corners": 45426,
+    "uv_tolerance": 3e-05,
+    "vertices": 14909
+  },
+  "fbx_sha256": "463667e61e1307b70856487a3523da2e660473ca1fa7a122c6d657d2a4f5960d",
+  "kind": "complete",
+  "limits": [
+    "Closed decorative doors and hatches; no gameplay openings.",
+    "No Unreal import, collision, navigation, placement or gameplay validation.",
+    "Blender round-trip alone cannot prove Unreal scale, orientation, tangents or appearance."
+  ],
+  "model": "SM_NorthMarket_0a_TenancyFull",
+  "normal_repair": null,
+  "overlay_obj_sha256": "b67371709b3050ba31e2c31ad25488f5bc83cb0ef01bd050d47e62ff87da7eec",
+  "phase": "verify",
+  "preview_artifact": 14167854997,
+  "preview_run": 43731156271,
+  "scene_unit": "metres",
+  "scene_unit_scale": 1.0,
+  "source_axes": "+X entrance, +Z up",
+  "source_manifest_sha256": "a9aeb89aab3a35914d505475b697ddfa01fb48ad43b1a98c6562bf89bdf49095",
+  "source_mtl_sha256": "8b4485d8b96298d2586f0c0821697cc993cbf739c3ae645cb89576540ccdfec6",
+  "source_obj_sha256": "5ca906f6b995d50cd956d89c9382856ba464366c23db6b93f0a886dfaec1a57f",
+  "source_plan_lf_sha256": "88ea66f0292864f8f6b9924d654a323edb37da9ce307754f7f9f57fc77fbc32f",
+  "status": "review_only_no_unreal_approval",
+  "textures": {
+    "M_GLMedieval_ClayTile": {
+      "colorspace": "sRGB",
+      "extension": "REPEAT",
+      "file": "T_GLMedieval_ClayTile.png",
+      "interpolation": "Linear",
+      "kind": "texture",
+      "projection": "FLAT",
+      "sha256": "4276741826d160b3c00bd3d053eb174849b328a76ecd22caa01f1cfc3445afaf"
+    },
+    "M_GLMedieval_Fieldstone": {
+      "colorspace": "sRGB",
+      "extension": "REPEAT",
+      "file": "T_GLMedieval_Fieldstone.png",
+      "interpolation": "Linear",
+      "kind": "texture",
+      "projection": "FLAT",
+      "sha256": "845a6082959cf5429e024eb86d05db087114b963cb1170533a4c989701cf03b1"
+    },
+    "M_GLMedieval_GuildDressed": {
+      "kd": [
+        0.36,
+        0.31,
+        0.22
+      ],
+      "kind": "solid"
+    },
+    "M_GLMedieval_GuildRubble": {
+      "colorspace": "sRGB",
+      "extension": "REPEAT",
+      "file": "T_GLMedieval_GuildRubble.png",
+      "interpolation": "Linear",
+      "kind": "texture",
+      "projection": "FLAT",
+      "sha256": "8c8b4a1b0ab16ee92c9a8379904aadf7c561a9f220f49f5eb030ba0318e3cc17"
+    },
+    "M_GLMedieval_Interior": {
+      "kd": [
+        0.016,
+        0.012,
+        0.009
+      ],
+      "kind": "solid"
+    },
+    "M_GLMedieval_Lead": {
+      "kd": [
+        0.052,
+        0.054,
+        0.041
+      ],
+      "kind": "solid"
+    },
+    "M_GLMedieval_LeadedGlass": {
+      "kd": [
+        0.092,
+        0.125,
+        0.099
+      ],
+      "kind": "solid"
+    },
+    "M_GLMedieval_LimePlaster": {
+      "colorspace": "sRGB",
+      "extension": "REPEAT",
+      "file": "T_GLMedieval_LimePlaster.png",
+      "interpolation": "Linear",
+      "kind": "texture",
+      "projection": "FLAT",
+      "sha256": "f5205640b07a12890c134579ca2e1814e04aeb60ee73def5019f03cafb3a62a5"
+    },
+    "M_GLMedieval_Oak": {
+      "colorspace": "sRGB",
+      "extension": "REPEAT",
+      "file": "T_GLMedieval_Oak.png",
+      "interpolation": "Linear",
+      "kind": "texture",
+      "projection": "FLAT",
+      "sha256": "30f2d82d684242c658fdfe217b26d1c9aa680c240a187ea81cea0308ff20159a"
+    },
+    "M_GLMedieval_ShopGreen": {
+      "colorspace": "sRGB",
+      "extension": "REPEAT",
+      "file": "T_GLMedieval_ShopGreen.png",
+      "interpolation": "Linear",
+      "kind": "texture",
+      "projection": "FLAT",
+      "sha256": "28ebac7f99d7ba4932920896fd428f29b516403d69f687438b23eff89196dbff"
+    },
+    "M_GLMedieval_ShopRed": {
+      "colorspace": "sRGB",
+      "extension": "REPEAT",
+      "file": "T_GLMedieval_ShopRed.png",
+      "interpolation": "Linear",
+      "kind": "texture",
+      "projection": "FLAT",
+      "sha256": "9e95fd428a51ab8d3d7cd98cb9d95c3dda04d7ea71cef9d8c429469e27f7dda6"
+    },
+    "M_GLMedieval_WarmPlaster": {
+      "colorspace": "sRGB",
+      "extension": "REPEAT",
+      "file": "T_GLMedieval_WarmPlaster.png",
+      "interpolation": "Linear",
+      "kind": "texture",
+      "projection": "FLAT",
+      "sha256": "9e070704a80237ba6c17e35392f6060672710af53127565b066682ab246350d5"
+    },
+    "M_GLMedieval_WeatheredOak": {
+      "colorspace": "sRGB",
+      "extension": "REPEAT",
+      "file": "T_GLMedieval_WeatheredOak.png",
+      "interpolation": "Linear",
+      "kind": "texture",
+      "projection": "FLAT",
+      "sha256": "b6dd5807706308ffabb22f9afcf2e45836c4ae34c9f0951397c92989dcf46425"
+    }
+  },
+  "uv_layer": "UVMap",
+  "world_pivot_m": [
+    3310.546,
+    522.412,
+    0.2
+  ],
+  "yaw_deg": 24.35984172
+}

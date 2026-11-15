@@ -1,0 +1,51 @@
+{
+  "asset": "PottersStock",
+  "bounds_model_units": [
+    [
+      -0.37593021988868713,
+      -0.4301425814628601,
+      -0.3215588331222534
+    ],
+    [
+      0.44496822357177734,
+      0.46811187267303467,
+      0.4698714017868042
+    ]
+  ],
+  "checkpoint_sha256": "429e2c6b22a0923967459de24d67f05962b235f79cde6b032aa7ed2ffcd970ee",
+  "chunk_size": 4096,
+  "commit": "0a1269c92653db8decc9345a206f3f01bebfc728",
+  "config_sha256": "74ca708ce086bf68e97709ea6b3d91f14717921c04691e84043f0eb8fcc68e62",
+  "device": "CPU",
+  "dino_config_sha256": "b87c0270b97db085fd82cf114a761fd0f62ae7914fbd407c752a2260646b689c",
+  "faces": 30304,
+  "glb_readback": "single geometry; counts and RGB vertex colors match",
+  "input_sha256": "529e3cf097b4397c96d3ef0edb9857f19b387204fc15768fad985dc06dd53b96",
+  "license": "MIT",
+  "limitations": [
+    "Arbitrary scale and pivot; unseen surfaces inferred.",
+    "No Unreal import, collision, navigation, visual or gameplay validation.",
+    "CPU scikit-image Lorensen adapter differs from upstream torchmcubes."
+  ],
+  "model_revision": "5b521936b01fbe1890f6f9baed0254ab6351c04a",
+  "outputs_sha256": {
+    "PottersStock.glb": "a1c3316b8b530b3865cf761b3718e7ce5c12b4268376223ccb116c71b26806cf",
+    "TripoSR_LICENSE.txt": "ade0a66629bdd7e01e46b3296b3851cff0fd27989bca53da470ad6e96ed620fb",
+    "conditioned.png": "11b982ed3670055057f3ce06dac5154e9d28e52da8fd91f259e33f4bf1bfc1b2",
+    "diagnostic.png": "98499aea12b96a2832279716d2b43b3eaff023d3c83ff2bdfd28865ba76f0d77",
+    "foreground.png": "23a005ec0b40fce139ea986e041384b8bddbe5f531b5b01674b13b4bdc624d66"
+  },
+  "provider": "TripoSR",
+  "resolution": 128,
+  "run_id": "43744477013",
+  "seconds": 27.3,
+  "seed": 1450,
+  "status": "raw_mesh_requires_review",
+  "torch": "2.2.2+cpu",
+  "upstream_commit": "107cefdc244c39106fa830359024f6a2f1c78871",
+  "vertex_color_shape": [
+    15144,
+    4
+  ],
+  "vertices": 15144
+}
