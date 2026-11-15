@@ -1,0 +1,759 @@
+{
+  "status": "offline_generation_input",
+  "coordinate_system": "ue_local_m",
+  "source_tile": "Tile_p03_p01",
+  "source_export_sha256": "411a895aedeb642f0250cdd4c3e4725a1d04b73035ea4a75335f60193ca7102c",
+  "reviewed_candidate": "north_market_east_candidate_20261115.json",
+  "styles": {
+    "Tile_p03_p01_roof_0a73564b5b0ed26a": {
+      "role": "market building",
+      "eave_m": 8.1,
+      "ridge_m": 12.2,
+      "roof_ranges": 4,
+      "entry_opening_m": [
+        1.35,
+        2.3
+      ],
+      "treatment": "Surveyed closed shell with pitched clay-tile ranges, timber, lime render and stone."
+    },
+    "Tile_p03_p01_roof_31c9ff1a824fb2fd": {
+      "role": "workshop",
+      "eave_m": 6.15,
+      "ridge_m": 9.25,
+      "roof_ranges": 3,
+      "entry_opening_m": [
+        1.35,
+        2.3
+      ],
+      "treatment": "Surveyed closed shell with pitched clay-tile ranges, timber, lime render and stone."
+    }
+  },
+  "buildings": [
+    {
+      "id": "Tile_p03_p01_roof_0a73564b5b0ed26a",
+      "role": "market building",
+      "origin_m": [
+        3310.546,
+        522.412,
+        0.2
+      ],
+      "rotation_yaw_deg": 24.35984172,
+      "footprint_local_m": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          -0.042161,
+          -9.446614
+        ],
+        [
+          0.689014,
+          -11.070795
+        ],
+        [
+          0.673678,
+          -13.984904
+        ],
+        [
+          -0.230783,
+          -15.415177
+        ],
+        [
+          -0.064595,
+          -25.565365
+        ],
+        [
+          1.08113,
+          -27.134646
+        ],
+        [
+          0.963671,
+          -29.825782
+        ],
+        [
+          0.011697,
+          -31.137943
+        ],
+        [
+          0.234627,
+          -44.028502
+        ],
+        [
+          3.055859,
+          -43.805293
+        ],
+        [
+          3.063882,
+          -47.128453
+        ],
+        [
+          16.236362,
+          -47.044148
+        ],
+        [
+          16.189378,
+          -45.707798
+        ],
+        [
+          21.955008,
+          -45.217252
+        ],
+        [
+          21.850411,
+          -44.267562
+        ],
+        [
+          25.061682,
+          -44.317552
+        ],
+        [
+          25.86148,
+          -43.132983
+        ],
+        [
+          26.074526,
+          -31.139076
+        ],
+        [
+          24.914935,
+          -30.046516
+        ],
+        [
+          24.735342,
+          -27.846587
+        ],
+        [
+          25.89503,
+          -26.52419
+        ],
+        [
+          25.89503,
+          -15.587532
+        ],
+        [
+          24.611025,
+          -14.309109
+        ],
+        [
+          24.483599,
+          -11.395127
+        ],
+        [
+          25.905409,
+          -10.255081
+        ],
+        [
+          25.91498,
+          0.363294
+        ],
+        [
+          25.101128,
+          1.310288
+        ],
+        [
+          20.606159,
+          1.189562
+        ],
+        [
+          20.509379,
+          3.354191
+        ],
+        [
+          4.039824,
+          2.630934
+        ],
+        [
+          4.164248,
+          1.480164
+        ],
+        [
+          1.106476,
+          1.658245
+        ]
+      ],
+      "dimensions_x_y_m": [
+        26.305309,
+        50.482644
+      ],
+      "source_max_height_m": 14.8,
+      "surface_triangulation": {
+        "vertices_local_m": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            -0.042161,
+            -9.446614
+          ],
+          [
+            0.689014,
+            -11.070795
+          ],
+          [
+            0.673678,
+            -13.984904
+          ],
+          [
+            -0.230783,
+            -15.415177
+          ],
+          [
+            -0.064595,
+            -25.565365
+          ],
+          [
+            1.08113,
+            -27.134646
+          ],
+          [
+            0.963671,
+            -29.825782
+          ],
+          [
+            0.011697,
+            -31.137943
+          ],
+          [
+            0.234627,
+            -44.028502
+          ],
+          [
+            3.055859,
+            -43.805293
+          ],
+          [
+            3.063882,
+            -47.128453
+          ],
+          [
+            16.236362,
+            -47.044148
+          ],
+          [
+            16.189378,
+            -45.707798
+          ],
+          [
+            21.955008,
+            -45.217252
+          ],
+          [
+            21.850411,
+            -44.267562
+          ],
+          [
+            25.061682,
+            -44.317552
+          ],
+          [
+            25.86148,
+            -43.132983
+          ],
+          [
+            26.074526,
+            -31.139076
+          ],
+          [
+            24.914935,
+            -30.046516
+          ],
+          [
+            24.735342,
+            -27.846587
+          ],
+          [
+            25.89503,
+            -26.52419
+          ],
+          [
+            25.89503,
+            -15.587532
+          ],
+          [
+            24.611025,
+            -14.309109
+          ],
+          [
+            24.483599,
+            -11.395127
+          ],
+          [
+            25.905409,
+            -10.255081
+          ],
+          [
+            25.91498,
+            0.363294
+          ],
+          [
+            25.101128,
+            1.310288
+          ],
+          [
+            20.606159,
+            1.189562
+          ],
+          [
+            20.509379,
+            3.354191
+          ],
+          [
+            4.039824,
+            2.630934
+          ],
+          [
+            4.164248,
+            1.480164
+          ],
+          [
+            1.106476,
+            1.658245
+          ]
+        ],
+        "ccw_faces": [
+          [
+            29,
+            30,
+            31
+          ],
+          [
+            26,
+            27,
+            28
+          ],
+          [
+            24,
+            25,
+            28
+          ],
+          [
+            21,
+            22,
+            23
+          ],
+          [
+            17,
+            18,
+            15
+          ],
+          [
+            15,
+            16,
+            17
+          ],
+          [
+            13,
+            14,
+            15
+          ],
+          [
+            11,
+            12,
+            13
+          ],
+          [
+            8,
+            9,
+            10
+          ],
+          [
+            4,
+            5,
+            6
+          ],
+          [
+            0,
+            1,
+            31
+          ],
+          [
+            31,
+            32,
+            0
+          ],
+          [
+            28,
+            29,
+            31
+          ],
+          [
+            26,
+            28,
+            25
+          ],
+          [
+            20,
+            21,
+            23
+          ],
+          [
+            19,
+            15,
+            18
+          ],
+          [
+            13,
+            15,
+            19
+          ],
+          [
+            10,
+            11,
+            13
+          ],
+          [
+            7,
+            8,
+            10
+          ],
+          [
+            3,
+            4,
+            6
+          ],
+          [
+            2,
+            31,
+            1
+          ],
+          [
+            24,
+            28,
+            2
+          ],
+          [
+            20,
+            7,
+            19
+          ],
+          [
+            13,
+            19,
+            7
+          ],
+          [
+            7,
+            10,
+            13
+          ],
+          [
+            2,
+            3,
+            24
+          ],
+          [
+            31,
+            2,
+            28
+          ],
+          [
+            7,
+            20,
+            6
+          ],
+          [
+            23,
+            6,
+            20
+          ],
+          [
+            24,
+            3,
+            23
+          ],
+          [
+            6,
+            23,
+            3
+          ]
+        ]
+      },
+      "roof_profile_local_y_z_m": [
+        [
+          -47.128453,
+          8.1
+        ],
+        [
+          -40.818123,
+          12.2
+        ],
+        [
+          -34.507792,
+          8.1
+        ],
+        [
+          -28.197461,
+          12.2
+        ],
+        [
+          -21.887131,
+          8.1
+        ],
+        [
+          -15.576801,
+          12.2
+        ],
+        [
+          -9.26647,
+          8.1
+        ],
+        [
+          -2.956139,
+          12.2
+        ],
+        [
+          3.354191,
+          8.1
+        ]
+      ],
+      "entry": {
+        "edge": 21,
+        "center_local_xy_m": [
+          25.89503,
+          -21.055861
+        ],
+        "recessed_closed_opening_width_height_m": [
+          1.35,
+          2.3
+        ],
+        "approach_sweep_guard_profiles_m": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              3343.13,
+              513.228
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              3344.496,
+              513.847
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              3342.82,
+              513.912
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              3344.187,
+              514.53
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              3342.511,
+              514.595
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              3343.878,
+              515.213
+            ]
+          }
+        ]
+      },
+      "treatment": "Surveyed closed shell with pitched clay-tile ranges, timber, lime render and stone."
+    },
+    {
+      "id": "Tile_p03_p01_roof_31c9ff1a824fb2fd",
+      "role": "workshop",
+      "origin_m": [
+        3339.404,
+        540.64,
+        0.2
+      ],
+      "rotation_yaw_deg": -155.94767953,
+      "footprint_local_m": [
+        [
+          -0.0,
+          0.0
+        ],
+        [
+          -0.0,
+          18.391902
+        ],
+        [
+          0.001364,
+          26.450001
+        ],
+        [
+          -20.795107,
+          26.629629
+        ],
+        [
+          -20.869509,
+          0.222083
+        ]
+      ],
+      "dimensions_x_y_m": [
+        20.870873,
+        26.629629
+      ],
+      "source_max_height_m": 14.8,
+      "surface_triangulation": {
+        "vertices_local_m": [
+          [
+            -0.0,
+            0.0
+          ],
+          [
+            -0.0,
+            18.391902
+          ],
+          [
+            0.001364,
+            26.450001
+          ],
+          [
+            -20.795107,
+            26.629629
+          ],
+          [
+            -20.869509,
+            0.222083
+          ]
+        ],
+        "ccw_faces": [
+          [
+            2,
+            3,
+            1
+          ],
+          [
+            4,
+            0,
+            1
+          ],
+          [
+            4,
+            1,
+            3
+          ]
+        ]
+      },
+      "roof_profile_local_y_z_m": [
+        [
+          0.0,
+          6.15
+        ],
+        [
+          4.438271,
+          9.25
+        ],
+        [
+          8.876543,
+          6.15
+        ],
+        [
+          13.314815,
+          9.25
+        ],
+        [
+          17.753086,
+          6.15
+        ],
+        [
+          22.191357,
+          9.25
+        ],
+        [
+          26.629629,
+          6.15
+        ]
+      ],
+      "entry": {
+        "edge": 0,
+        "center_local_xy_m": [
+          -0.0,
+          9.195951
+        ],
+        "recessed_closed_opening_width_height_m": [
+          1.35,
+          2.3
+        ],
+        "approach_sweep_guard_profiles_m": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              3342.846,
+              532.927
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              3341.477,
+              532.316
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              3343.152,
+              532.243
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              3341.782,
+              531.631
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              3343.458,
+              531.558
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              3342.088,
+              530.946
+            ]
+          }
+        ]
+      },
+      "treatment": "Surveyed closed shell with pitched clay-tile ranges, timber, lime render and stone."
+    }
+  ],
+  "party_walls": [],
+  "road_sampling": {
+    "step_max_m": 0.75,
+    "offsets_m": [
+      -0.6,
+      0,
+      0.6
+    ],
+    "minimum_footprint_clearance_m": 0.35
+  },
+  "local_road_corridors": [
+    {
+      "members": [
+        "Tile_p03_p01_roof_0a73564b5b0ed26a",
+        "Tile_p03_p01_roof_31c9ff1a824fb2fd"
+      ],
+      "guide_m": [
+        [
+          3343.059,
+          517.021
+        ],
+        [
+          3347.172,
+          519.554
+        ]
+      ],
+      "length_m": 4.83,
+      "sample_count": 24,
+      "minimum_distance_to_footprint_m": 1.421
+    }
+  ],
+  "review_before_replacement": [
+    "Resolve the current source tile and protect its materials, roads and gameplay collision.",
+    "Combine every previously accepted replacement mask for this tile into the derivative from the canonical export.",
+    "Screen live authored actor descriptors and overlays including site-specific landmarks and quest actors.",
+    "Reproduce source floor and side-wall traces, capsule sweeps along road links and door approaches, and roof access checks.",
+    "Contain the replacement shells, recesses and eaves inside the original horizontal extents."
+  ]
+}
