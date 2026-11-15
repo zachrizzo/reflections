@@ -481,6 +481,15 @@ void UReflectionsNpcReactionComponent::EndFreeze()
         if (Mover != GetOwner()) Mover->CustomTimeDilation = 1.0f;
 }
 
+void UReflectionsNpcReactionComponent::ShatterIce(const FVector& Along, float Strength)
+{
+    AActor* Owner = GetOwner();
+    if (!Owner || !Subsystem.IsValid()) return;
+    if (USoundBase* Crack = Subsystem->FindJamCue(TEXT("Cues/SCue_Ice_Impact")))
+        UGameplayStatics::PlaySoundAtLocation(this, Crack, Owner->GetActorLocation() + FVector(0.0, 0.0, 90.0));
+    StartWalkerJolt(Along.IsNearlyZero() ? -Owner->GetActorForwardVector() : Along, Strength);
+}
+
 bool UReflectionsNpcReactionComponent::ReactToSpell(const FReflectionsSpellHitData& Hit)
 {
     AActor* Owner = GetOwner();
@@ -517,6 +526,13 @@ bool UReflectionsNpcReactionComponent::ReactToSpell(const FReflectionsSpellHitDa
         const float Speed = FMath::Min(static_cast<float>(FVector(Hit.Impulse.X, Hit.Impulse.Y, 0.0).Size()) * 0.5f, 260.0f);
         return bFirst && Strength >= 0.4f && Speed >= 80.0f && Throw(Along * Speed + FVector(0.0, 0.0, 40.0), true);
     };
+    // Struck while frozen: the ice breaks first, so that what the hit does happens at full speed (the frozen
+    // walker's clock is slowed, and a throw at that clock would crawl).
+    if (FrozenRemaining > 0.0f && bFirst && Hit.Reaction != EReflectionsSpellReaction::Freeze)
+    {
+        EndFreeze();
+        ShatterIce(Along, FMath::Max(Strength, 0.6f));
+    }
     switch (Hit.Reaction)
     {
     case EReflectionsSpellReaction::Explosion:
@@ -568,7 +584,9 @@ bool UReflectionsNpcReactionComponent::ReactToSpell(const FReflectionsSpellHitDa
         StartShock(Hit, bFirst);
         return false;
     case EReflectionsSpellReaction::Freeze:
-        StartFreeze(FMath::Clamp(Hit.Duration > 0.0f ? Hit.Duration : 2.0f, 1.0f, 3.0f));
+        // (Not while it is getting up: the get-up would crawl at the frozen walker's slowed clock.)
+        FrozenAlong = Along;
+        if (WalkerDown == EWalkerDown::None) StartFreeze(FMath::Clamp(Hit.Duration > 0.0f ? Hit.Duration : 2.0f, 1.0f, 3.0f));
         Say(TEXT("React_Hurt"));
         return false;
     case EReflectionsSpellReaction::Burn:
@@ -1754,6 +1772,9 @@ void UReflectionsNpcReactionComponent::OnOwnerDied(AActor* Source)
     }
     EndShock(true);
     EndBurning();
+    if (FrozenRemaining > 0.0f && Subsystem.IsValid())
+        if (USoundBase* Crack = Subsystem->FindJamCue(TEXT("Cues/SCue_Ice_Impact")))
+            UGameplayStatics::PlaySoundAtLocation(this, Crack, Owner->GetActorLocation() + FVector(0.0, 0.0, 90.0));
     EndFreeze();
     if (Subsystem.IsValid() && CVarNpcElementReactions.GetValueOnGameThread() != 0) Subsystem->PlayReaction(Owner, TEXT("React_Death"));
     ScriptedHoldRemaining = 0.0f;
@@ -2200,7 +2221,11 @@ void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick
         if (FrozenRemaining > 0.0f)
         {
             FrozenRemaining -= DeltaTime;
-            if (FrozenRemaining <= 0.0f) EndFreeze();
+            if (FrozenRemaining <= 0.0f)
+            {
+                EndFreeze();
+                ShatterIce(FrozenAlong, 0.5f);
+            }
         }
         if (bShocked)
         {

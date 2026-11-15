@@ -249,6 +249,10 @@ private:
     float BurningRemaining = 0.0f;
     float NextBurnBarkIn = 0.0f;
     float FrozenRemaining = 0.0f;
+    /** Which way the freezing hit pushed; the ice breaks that way. */
+    FVector FrozenAlong = FVector::ZeroVector;
+    /** The ice on a frozen NPC breaks: the crack of it, and a jolt through the body (walker physics permitting). */
+    void ShatterIce(const FVector& Along, float Strength);
     UPROPERTY(Transient) TObjectPtr<class UAudioComponent> ShockLoop;
     UPROPERTY(Transient) TObjectPtr<class UAudioComponent> BurnLoop;
     float CastWindupRemaining = 0.0f;

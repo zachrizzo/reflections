@@ -555,6 +555,11 @@ def loopblend(names=LOOPS, blend=12):
     return out
 
 
+def walker_name(name):
+    """The walker clip's asset name: AS_Melee_<Name>_Walker for combat, AS_<Name>_Walker for reactions and street life."""
+    return ('AS_%s_Walker' if name.startswith(('React_', 'Street_')) else 'AS_Melee_%s_Walker') % name
+
+
 def walker(only=None):
     """AS_Melee_<Move>_Walker on the walker pawn's skeleton, from the same trimmed Kimodo takes as the body clips."""
     quinn, mesh, rtg = find_asset(QUINN), find_asset(WALKER), find_asset(WALKER_RTG)
@@ -570,7 +575,7 @@ def walker(only=None):
             target_mesh=mesh, ik_retarget_asset=rtg, target_path=FOLDER, use_source_path=False,
             include_referenced_assets=False, overwrite_existing_files=True, suffix='')
         clip = unreal.IKRetargetBatchOperation.run_batch_retarget(spec)[0].get_asset()
-        final_name = ('AS_%s_Walker' if name.startswith('React_') else 'AS_Melee_%s_Walker') % name
+        final_name = walker_name(name)
         if clip.get_name() != final_name:
             if unreal.EditorAssetLibrary.does_asset_exist(FOLDER + '/' + final_name):
                 unreal.EditorAssetLibrary.delete_asset(FOLDER + '/' + final_name)
@@ -1113,6 +1118,24 @@ SHIELD = (
         'A soldier stands upright holding a sword in the right hand down at the right side, the blade pointing down and '
         'slightly forward, and the left forearm held in front of the stomach, bent at a right angle, as if carrying a '
         'shield. Steady, holding this pose.')),
+    # ---- street life for the bustling crowd (reports/Bustling London street crowds.md, rank 8). Loops on the walker,
+    # so every look gets them; crowd-react places them. kind 'carry' = upper-body hold: lower body locked to the idle's
+    # frame 0 like the march hold (for an additive over the walk) and the hands closed on a handle.
+    dict(name='Street_Vendor_Call', seed=73114, frames=120, kind='street', prompt=(
+        'A street vendor stands behind a stall calling out to passers-by: the right arm raised high, waving to draw '
+        'attention, leaning forward a little as they shout, then lowering the arm and gesturing at the goods.')),
+    dict(name='Street_Pipe_Smoke', seed=73115, frames=120, kind='street', prompt=(
+        'A person stands relaxed smoking a pipe: the right hand brings the pipe up to the mouth and holds it there '
+        'while drawing on it, then lowers the hand to the chest and breathes out, calm, weight on one leg.')),
+    dict(name='Street_Carry_Hold', seed=73116, frames=60, kind='carry', prompt=(
+        'A person stands upright carrying a basket in front of the body with both hands, the elbows bent and the '
+        'forearms level, holding it at waist height. Steady, holding this pose.')),
+    dict(name='Street_Wall_Lean', seed=73117, frames=120, kind='street', prompt=(
+        'A person leans the left shoulder against a wall, standing relaxed with the ankles crossed and the arms '
+        'folded across the chest, shifting weight slightly, idle, holding this pose.')),
+    dict(name='Street_Chat_Gesture', seed=73118, frames=120, kind='street', prompt=(
+        'A person stands talking to someone in front of them, gesturing with both hands as they speak, palms open, '
+        'small expressive hand movements, nodding now and then.')),
 )
 LOOPS = LOOPS + tuple(d['name'] for d in SHIELD)
 
@@ -1615,11 +1638,16 @@ def build_shield(names=None):
             continue
         bake(inline, 'AS_Melee_%s_Kimodo' % d['name'], 0.0, inline.get_play_length(), 1.0)
         made = walker([d['name']])
-        clip = unreal.load_object(None, '%s/AS_Melee_%s_Walker.AS_Melee_%s_Walker' % (FOLDER, d['name'], d['name']))
-        if d['name'] == 'Shield_March_Hold':
+        final = walker_name(d['name'])
+        clip = unreal.load_object(None, '%s/%s.%s' % (FOLDER, final, final))
+        kind = d.get('kind', 'shield')
+        if d['name'] == 'Shield_March_Hold' or kind == 'carry':
             made['lower_body_from_idle'] = len(match_idle_lower(clip))
-        made['arms'] = aim_sword_shield(clip, d['name'])
-        made['grip'] = grip_fingers(clip)
+        if kind == 'shield':
+            made['arms'] = aim_sword_shield(clip, d['name'])
+        if kind in ('shield', 'carry'):
+            made['grip'] = grip_fingers(clip)
+        made['clip'] = '%s/%s' % (FOLDER, final)
         mesh = find_asset(WALKER)
         made['final_right'] = clearance(clip, mesh, 'r')
         made['final_left'] = clearance(clip, mesh, 'l')
