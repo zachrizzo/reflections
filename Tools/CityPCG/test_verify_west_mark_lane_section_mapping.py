@@ -16,13 +16,13 @@ def vector(x, y, z):
     return SimpleNamespace(x=x, y=y, z=z)
 
 
-def make_glb(path, triangles):
+def make_glb(path, triangles, names=None):
     """One triangle per primitive, in GLB metres; materials intentionally repeat."""
     data = {'nodes': [{'mesh': 0}], 'meshes': [{'primitives': []}], 'accessors': [],
             'bufferViews': [], 'buffers': [{'byteLength': 0}],
-            'materials': [{'name': 'WorldGridMaterial'}]}
+            'materials': [{'name': name} for name in (names or ['WorldGridMaterial'])]}
     binary = bytearray()
-    for triangle in triangles:
+    for number, triangle in enumerate(triangles):
         position_start = len(binary)
         for point in triangle:
             binary.extend(struct.pack('<3f', *point))
@@ -37,7 +37,7 @@ def make_glb(path, triangles):
         iindex = len(data['accessors'])
         data['accessors'].append({'bufferView': iview, 'componentType': 5121, 'type': 'SCALAR', 'count': 3})
         data['meshes'][0]['primitives'].append({'attributes': {'POSITION': pindex}, 'indices': iindex,
-                                                'material': 0})
+                                                'material': number if names else 0})
     data['buffers'][0]['byteLength'] = len(binary)
     raw = json.dumps(data, separators=(',', ':')).encode()
     raw += b' ' * (-len(raw) % 4)
@@ -169,6 +169,13 @@ class SectionProofTests(unittest.TestCase):
             source.parent.mkdir(parents=True)
             points = [proof.from_unreal_cm((p.x, p.y, p.z)) for p in self.positions]
             make_glb(source, [[points[i] for i in (3, 4, 5)], [points[i] for i in (0, 1, 2)]])
+            survey = saved / 'CityPCG/MedievalSurvey'
+            survey.mkdir()
+            filtered = survey / 'Tile_p03_p00_without_three_west_shells.glb'
+            named = survey / 'SM_GLMedieval_WestBlockTile.glb'
+            make_glb(filtered, [[points[i] for i in (0, 1, 2)], [points[i] for i in (3, 4, 5)]])
+            make_glb(named, [[points[i] for i in (3, 4, 5)], [points[i] for i in (0, 1, 2)]],
+                     names=['GL_Road', 'GL_Facade'])
             self.fake.mesh.get_path_name = lambda: proof.ASSET
             self.fake.unreal.StaticMesh = SimpleNamespace
             self.fake.unreal.EditorAssetLibrary = SimpleNamespace(load_asset=lambda package: self.fake.mesh)
@@ -189,7 +196,12 @@ class SectionProofTests(unittest.TestCase):
             self.assertTrue(result['exact_signed_triangle_bijection'])
             self.assertFalse(result['activation_authorized'])
             self.assertFalse(result['road_retention_in_filtered_replacement_verified'])
-            self.assertEqual([p for p in saved.rglob('*') if p.is_file()], [source])
+            road = result['road_glb_retention']
+            self.assertEqual((road['source_primitive'], road['filtered_primitive'], road['import_primitive']), (0, 1, 0))
+            self.assertTrue(road['original_road_geometry_in_filtered_glb_verified'])
+            self.assertTrue(road['named_import_road_material_verified'])
+            self.assertFalse(road['actual_unreal_replacement_verified'])
+            self.assertEqual(set(p for p in saved.rglob('*') if p.is_file()), {source, filtered, named})
 
 
 if __name__ == '__main__':

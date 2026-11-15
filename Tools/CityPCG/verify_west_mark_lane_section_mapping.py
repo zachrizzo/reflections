@@ -284,13 +284,30 @@ def run(owner='codex-gray-london'):
     positions, triangles, ids, names = reflected_source(unreal, mesh, guard)
     source = source_sections(positions, triangles, ids, len(names))
     result = compare(source, primitives, names)
+    result.update(tile=TILE, source_asset=ASSET, source_package_hashes=initial['package_hashes'],
+                  source_glb=str(glb), source_glb_sha256=glb_hash, source_transform=transform,
+                  source_lod='SourceModel LOD0; build settings and build scale disabled',
+                  comparison='exact float32 signed triangle multisets; cyclic rotations accepted')
+    from verify_west_mark_lane_road_retention import compare_exports, integrate
+    survey = saved / 'CityPCG/MedievalSurvey'
+    filtered = survey / 'Tile_p03_p00_without_three_west_shells.glb'
+    named = survey / 'SM_GLMedieval_WestBlockTile.glb'
+    try:
+        exports = compare_exports(glb, filtered, named)
+        result['road_glb_comparison'] = exports
+        result['road_glb_retention'] = integrate(result, exports)
+    except (OSError, ValueError) as error:
+        result['road_glb_retention'] = {'status': 'glb_comparison_unavailable', 'reason': str(error),
+                                        'actual_unreal_replacement_verified': False,
+                                        'activation_authorized': False}
     guard()
     after, actor_after = identity()
     if (initial != after or lease_tools.dirty_packages(unreal) != dirty or lease_tools.sha256(glb) != glb_hash
             or lease_tools.transform_evidence(unreal, after, actor_after, mesh) != transform):
         raise RuntimeError('Source identity, transform, dirty packages, or GLB changed during comparison.')
-    result.update(tile=TILE, source_asset=ASSET, source_package_hashes=initial['package_hashes'],
-                  source_glb=str(glb), source_glb_sha256=glb_hash, source_transform=transform,
-                  source_lod='SourceModel LOD0; build settings and build scale disabled',
-                  comparison='exact float32 signed triangle multisets; cyclic rotations accepted')
+    if 'road_glb_comparison' in result:
+        exports = result['road_glb_comparison']
+        if (lease_tools.sha256(filtered) != exports['filtered_glb_sha256']
+                or lease_tools.sha256(named) != exports['named_import_glb_sha256']):
+            raise RuntimeError('Filtered or import GLB changed before the report was returned.')
     return result

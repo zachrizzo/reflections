@@ -29,6 +29,17 @@ Unreal API tests pass offline; parsing the existing source GLB found six
 primitives with 18,084, 7,622, 18,340, 348, 283, and 624 triangles. This is
 not a source-section proof.
 
+`verify_west_mark_lane_road_retention.py` independently compares the source
+GLB, the three-shell filtered GLB, and the named import GLB by signed triangle
+multisets. It searches all primitives, rather than assuming corresponding
+indices, and records file hashes and unique candidate matches. The current
+files show source primitive 2's 18,340 signed triangles exactly retained in
+the filtered and named import GLBs, whose matching named import material is
+`GL_Road`. That is still a conditional finding: only the separate live source
+section proof can establish whether source primitive 2 actually represents
+`GL_Road`. The GLB comparison detects duplicate candidates, missing triangles,
+changed winding and material-name mismatches; none authorizes activation.
+
 Only after an allocated shared-editor turn and explicit handoff in
 `Saved/PIE_QUEUE.md`, with the matching current lease in
 `Saved/PIE_LOCK.json`, Gray London Geodata open outside PIE, and the memory
@@ -54,18 +65,23 @@ checks them again around the copy and before returning. It does not save any
 package, change actor or asset properties, write a metadata file, start PIE,
 restart the editor, or enable the replacement.
 
-An `ambiguous_or_mismatch` result is a stop for manual inspection. Even a
-`geometry_match_review_required` result only identifies candidate source
-section/primitive correspondence for that exact source and GLB. It does not
-verify the filtered replacement still contains every original road triangle,
-does not validate actor placement or collision, and does not authorize pilot
-activation. Compare the returned road primitive with the original pilot
-assumption, independently verify retained road geometry in the actual filtered
-replacement, and complete the visual and gameplay checks in
+An `ambiguous_or_mismatch` result is a stop for manual inspection. If the
+source proof succeeds, the same call binds its road result to the separate
+GLB comparison in `road_glb_retention`, using the source GLB hash. A result
+may verify unchanged geometry in the two files and the named import material;
+it does **not** prove the current Unreal replacement asset was imported from
+those exact bytes, nor validate actor placement, collision or gameplay. The
+old import report has no cryptographic binding to the saved asset. Verify the
+actual replacement asset independently, and complete the visual and gameplay checks in
 `README_WEST_MARK_LANE_PILOT.md` before enabling it.
 
 Offline tests from the project root:
 
 ```text
 python Tools/CityPCG/test_verify_west_mark_lane_section_mapping.py -v
+python Tools/CityPCG/test_verify_west_mark_lane_road_retention.py -v
 ```
+
+To print the current GLB-only evidence without Unreal, run
+`python Tools/CityPCG/verify_west_mark_lane_road_retention.py`. It writes no
+files and deliberately reports `source_section_mapping_required`.
