@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "width_cm": 450,
+  "depth_cm": 800,
+  "pivot": "center of nominal footprint at ground, +X street face, +Z up",
+  "front_plane_cm": 400,
+  "meshes": {
+    "SM_GLMedieval_ThamesWarehouse": {
+      "fbx": "Source/SM_GLMedieval_ThamesWarehouse.fbx",
+      "triangles": 6748,
+      "min_cm": [
+        -429.9,
+        -246.5,
+        0.0
+      ],
+      "max_cm": [
+        528.951,
+        246.5,
+        950.981
+      ],
+      "materials": [
+        "M_GLMedieval_GuildRubble",
+        "M_GLMedieval_GuildDressed",
+        "M_GLMedieval_WeatheredOak",
+        "M_GLMedieval_Oak",
+        "M_GLMedieval_Lead",
+        "M_GLMedieval_Interior",
+        "M_GLMedieval_WarmPlaster",
+        "M_GLMedieval_ClayTile"
+      ]
+    }
+  },
+  "collision": false
+}

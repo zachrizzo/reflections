@@ -1,0 +1,669 @@
+{
+  "name": "Three old-school buildings west of Mark Lane",
+  "coordinate_system": "ue_local_m",
+  "status": "offline_candidate",
+  "source_tile": "Tile_p03_p00",
+  "source_origin_m": [
+    3000.0,
+    0.0,
+    0.0
+  ],
+  "source_tile_asset": "/Game/GrayLondon/Geodata/Tiles/Tile_p03_p00.Tile_p03_p00",
+  "source_tile_actor": "/Game/GrayLondon/Maps/GrayLondon_Geodata.GrayLondon_Geodata:PersistentLevel.StaticMeshActor_UAID_74D4DD40C7798E1403_1365249900",
+  "source_export_sha256": "5c946436fce01c086598966fcca3c379381b29776e1e03df2b37ada9fb4b08f4",
+  "anonymous_shop_export_sha256": "72cf7c8884d38a37953e1a2621a9dec8f4277b3b8bc26596f336ede183648c36",
+  "ordinary_wall_primitive": 0,
+  "roof_primitive": 1,
+  "untouched_primitives": {
+    "2": "GL_Road",
+    "3": "GL_Park",
+    "4": "GL_Water",
+    "5": "GL_CentralFacade"
+  },
+  "triangle_address": "Zero-based face indices within the exact GLB primitive. Geometry signature is SHA-256 first 20 hex chars of compact JSON of sorted per-face world-space vertices in metres rounded to 0.001; preserve unrelated UVs and material slots when resolving native asset geometry.",
+  "bounds_m": [
+    3112.438,
+    351.653,
+    3176.025,
+    405.972
+  ],
+  "source_road_z_m": 0.28,
+  "protection_sources": [
+    "lantern_row_plan.json",
+    "leadenhall_market_face_plan.json",
+    "mark_lane_conversion_plan.json",
+    "narrow_gaps_plan.json",
+    "st_katharines_way_plan.json",
+    "tower_approach_plan.json",
+    "west_district_plan.json",
+    "opening_frontage_plan.json",
+    "graylondon_markers.json",
+    "AnonymousShops_Tile_p03_p00.glb",
+    "GL_CentralFacade"
+  ],
+  "shared_party_wall": {
+    "length_m": 5.528,
+    "connects": [
+      "Tile_p03_p00_shell_d87bb24c9cdb",
+      "Tile_p03_p00_shell_3b4ea8e64fcb"
+    ],
+    "keep_sealed": true
+  },
+  "review_notes": [
+    "Candidate building types are art direction on baked source shapes. All modeled body and roof elements must fit within each horizontal footprint, including eaves, jetties and entrances. Keep any projections inside the source outline.",
+    "Existing road triangles extend under portions of two original footprints. Preserve every road triangle and the verified outward door approach strips. Live ground, sidewall and capsule sweeps remain required.",
+    "Resolve the selected primitive/signatures against a new source mesh export before implementing a visual variant. Duplicate the visual tile and suppress only these uniquely matched shell wall/roof triangles in that variant. Keep the original tile package intact and keep its collision active during a visual comparison. Restore original visibility to revert. Review roof access and collision explicitly before shipping.",
+    "Check live local actor descriptor bounds and data layers before placement. Offline inputs cover known quest markers, published PCG, known landmarks and the anonymous shop overlay."
+  ],
+  "buildings": [
+    {
+      "id": "Tile_p03_p00_shell_d87bb24c9cdb",
+      "origin_m": [
+        3112.438,
+        386.745,
+        0.2
+      ],
+      "footprint": [
+        [
+          3112.438,
+          386.745
+        ],
+        [
+          3122.677,
+          384.999
+        ],
+        [
+          3128.113,
+          383.995
+        ],
+        [
+          3135.722,
+          382.703
+        ],
+        [
+          3138.003,
+          395.805
+        ],
+        [
+          3120.809,
+          398.782
+        ],
+        [
+          3121.878,
+          404.919
+        ],
+        [
+          3115.795,
+          405.972
+        ],
+        [
+          3114.732,
+          399.913
+        ]
+      ],
+      "area_m2": 352.576,
+      "base_m": 0.2,
+      "source_roof_m": 15.0,
+      "source_wall_faces_by_edge": [
+        [
+          3968,
+          3969
+        ],
+        [
+          3970,
+          3971
+        ],
+        [
+          3972,
+          3973
+        ],
+        [
+          3974,
+          3975
+        ],
+        [
+          3976,
+          3977
+        ],
+        [
+          3978,
+          3979
+        ],
+        [
+          3980,
+          3981
+        ],
+        [
+          3982,
+          3983
+        ],
+        [
+          3966,
+          3967
+        ]
+      ],
+      "source_roof_faces": [
+        1825,
+        1826,
+        1827,
+        1828,
+        1829,
+        1830,
+        1831
+      ],
+      "wall_triangle_signature_by_edge": [
+        [
+          "7668867330a041bd3faf",
+          "7d037b46f95825381a08"
+        ],
+        [
+          "7f6ac0f84e0e0250f4f7",
+          "7c5b3bee28071b8e7e01"
+        ],
+        [
+          "5a19862ab4b45173a605",
+          "d98342240a1ba95864cf"
+        ],
+        [
+          "bf8df1f54036bfea015e",
+          "415ead2e4d7b8ab707cc"
+        ],
+        [
+          "5c6f5a0ae281f0e69c5a",
+          "3daff15f9e39135d10a9"
+        ],
+        [
+          "17fdc9b9082244ffd66e",
+          "431ea73b03966a2e9bba"
+        ],
+        [
+          "ccff5aeabc2292a0ba1c",
+          "9c5d10cfaad25dfac9a8"
+        ],
+        [
+          "2e9a876aea86c7f2719d",
+          "57a111a7e6fa2026501c"
+        ],
+        [
+          "9e42121c437c53196cf3",
+          "1970423d0d59aed28616"
+        ]
+      ],
+      "roof_triangle_signatures": [
+        "6c94cbaf2d7d0553def7",
+        "d67721eaa0f1d10ed1ab",
+        "432277d50eca4805f7f6",
+        "9f6b84fec230215f43c2",
+        "1ef72c45d6286409846d",
+        "749dd4ac29be3dd04d97",
+        "b7d703ac59d643112b2c"
+      ],
+      "entry": {
+        "edge": 4,
+        "fraction": 0.5,
+        "outward": [
+          0.170603,
+          0.98534
+        ],
+        "door": "decorative_recessed",
+        "minimum_clear_width_m": 1.5,
+        "verified_offline_approach": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              3130.145,
+              397.166
+            ],
+            "first_continuous_road_distance_m": 4.5,
+            "road_clear_to_xy_m": [
+              3131.083,
+              402.585
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              3129.406,
+              397.293
+            ],
+            "first_continuous_road_distance_m": 4.5,
+            "road_clear_to_xy_m": [
+              3130.344,
+              402.713
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              3128.667,
+              397.421
+            ],
+            "first_continuous_road_distance_m": 4.5,
+            "road_clear_to_xy_m": [
+              3129.605,
+              402.841
+            ]
+          }
+        ]
+      },
+      "clearance": {
+        "nearest_verified_pcg_point_m": 13.64,
+        "nearest_quest_marker_radius_m": 138.24,
+        "existing_road_triangles_beneath_footprint_m2": 31.74,
+        "overlapping_external_roof_triangles": 0
+      },
+      "massing_direction": "two-storey jettied merchants' building with a tiled principal gable"
+    },
+    {
+      "id": "Tile_p03_p00_shell_3b4ea8e64fcb",
+      "origin_m": [
+        3120.929,
+        375.672,
+        0.2
+      ],
+      "footprint": [
+        [
+          3120.929,
+          375.672
+        ],
+        [
+          3132.372,
+          373.546
+        ],
+        [
+          3133.036,
+          377.102
+        ],
+        [
+          3127.035,
+          378.213
+        ],
+        [
+          3128.113,
+          383.995
+        ],
+        [
+          3122.677,
+          384.999
+        ]
+      ],
+      "area_m2": 74.579,
+      "base_m": 0.2,
+      "source_roof_m": 12.8,
+      "source_wall_faces_by_edge": [
+        [
+          7506,
+          7507
+        ],
+        [
+          7508,
+          7509
+        ],
+        [
+          7510,
+          7511
+        ],
+        [
+          7512,
+          7513
+        ],
+        [
+          7514,
+          7515
+        ],
+        [
+          7504,
+          7505
+        ]
+      ],
+      "source_roof_faces": [
+        3342,
+        3343,
+        3344,
+        3345
+      ],
+      "wall_triangle_signature_by_edge": [
+        [
+          "fc637182a10e151a1ba3",
+          "ff4186b891540f338a41"
+        ],
+        [
+          "480979d6e3dd3e145882",
+          "476bc7ebc9737e1969a5"
+        ],
+        [
+          "5aea6ad79507c4fec77e",
+          "cbf05a2cbfa65a802c63"
+        ],
+        [
+          "387053c3b911446623f3",
+          "e04547610778bcd4d268"
+        ],
+        [
+          "4a289036e335d1fc12fc",
+          "80f7548ce8d8836b8c2d"
+        ],
+        [
+          "f7222a97eee4a6148004",
+          "6f7d8f9cca08ba8de9a1"
+        ]
+      ],
+      "roof_triangle_signatures": [
+        "a049596583878798bc6e",
+        "2ab9dcc6933fdce06e40",
+        "a258d5a1eda5ee4df9a1",
+        "cadf9d8de44fb7e6c5fd"
+      ],
+      "entry": {
+        "edge": 0,
+        "fraction": 0.5,
+        "outward": [
+          -0.182665,
+          -0.983175
+        ],
+        "door": "decorative_recessed",
+        "minimum_clear_width_m": 1.5,
+        "verified_offline_approach": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              3125.913,
+              374.746
+            ],
+            "first_continuous_road_distance_m": 0.75,
+            "road_clear_to_xy_m": [
+              3125.593,
+              373.025
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              3126.65,
+              374.609
+            ],
+            "first_continuous_road_distance_m": 1.0,
+            "road_clear_to_xy_m": [
+              3126.285,
+              372.643
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              3127.388,
+              374.472
+            ],
+            "first_continuous_road_distance_m": 1.25,
+            "road_clear_to_xy_m": [
+              3126.977,
+              372.26
+            ]
+          }
+        ]
+      },
+      "clearance": {
+        "nearest_verified_pcg_point_m": 20.24,
+        "nearest_quest_marker_radius_m": 145.8,
+        "existing_road_triangles_beneath_footprint_m2": 0.0,
+        "overlapping_external_roof_triangles": 0
+      },
+      "massing_direction": "narrow workshop with a steep roof and a closed recessed door"
+    },
+    {
+      "id": "Tile_p03_p00_shell_c3d845a67ca8",
+      "origin_m": [
+        3133.373,
+        369.511,
+        0.2
+      ],
+      "footprint": [
+        [
+          3133.373,
+          369.511
+        ],
+        [
+          3134.185,
+          368.742
+        ],
+        [
+          3166.199,
+          351.653
+        ],
+        [
+          3166.525,
+          352.218
+        ],
+        [
+          3168.564,
+          355.755
+        ],
+        [
+          3171.027,
+          363.787
+        ],
+        [
+          3172.94,
+          369.991
+        ],
+        [
+          3176.025,
+          394.308
+        ],
+        [
+          3146.878,
+          397.907
+        ],
+        [
+          3141.511,
+          382.254
+        ],
+        [
+          3140.676,
+          382.332
+        ],
+        [
+          3139.744,
+          382.118
+        ],
+        [
+          3133.432,
+          370.714
+        ]
+      ],
+      "area_m2": 1277.621,
+      "base_m": 0.2,
+      "source_roof_m": 15.0,
+      "source_wall_faces_by_edge": [
+        [
+          3998,
+          3999
+        ],
+        [
+          4000,
+          4001
+        ],
+        [
+          4002,
+          4003
+        ],
+        [
+          4004,
+          4005
+        ],
+        [
+          4006,
+          4007
+        ],
+        [
+          4008,
+          4009
+        ],
+        [
+          4010,
+          4011
+        ],
+        [
+          4012,
+          4013
+        ],
+        [
+          4014,
+          4015
+        ],
+        [
+          4016,
+          4017
+        ],
+        [
+          4018,
+          4019
+        ],
+        [
+          4020,
+          4021
+        ],
+        [
+          3996,
+          3997
+        ]
+      ],
+      "source_roof_faces": [
+        1836,
+        1837,
+        1838,
+        1839,
+        1840,
+        1841,
+        1842,
+        1843,
+        1844,
+        1845,
+        1846
+      ],
+      "wall_triangle_signature_by_edge": [
+        [
+          "a98f4a2334b8b5c9eb15",
+          "a760a04ba9cb3a5e2f15"
+        ],
+        [
+          "b2e8873c52f362456c55",
+          "eacf947d1ba3048f6c1e"
+        ],
+        [
+          "f9fc0b19f1c561d73bb5",
+          "7bf99aa7c5a5bd289fc6"
+        ],
+        [
+          "16b917674697d2738fe4",
+          "a9171c12099fbec491c5"
+        ],
+        [
+          "e620bcc77bc98605dbda",
+          "bbb138b77a56ab16b4bc"
+        ],
+        [
+          "fea3c10e7506ab1d06d1",
+          "98ccfabc0def7a5032cd"
+        ],
+        [
+          "f35b82cc51046ffe750f",
+          "b732e47caf908e984ee7"
+        ],
+        [
+          "882b491c47b04c5b3a31",
+          "f099f640ce6574f2e51c"
+        ],
+        [
+          "d58d7d640b85fdde8b39",
+          "7e983526998d0dae1fb9"
+        ],
+        [
+          "4948394a9d70b582f0f8",
+          "e6fbc1afdcceccb4eff7"
+        ],
+        [
+          "021c91e755e9ba15bd83",
+          "9ee47abffd7391a2037f"
+        ],
+        [
+          "74e5d0a74f949facc64b",
+          "6af27991e2198f3abb2c"
+        ],
+        [
+          "7259b60c061532c02a5b",
+          "e0f1656e1a56d003a5f2"
+        ]
+      ],
+      "roof_triangle_signatures": [
+        "58cd850a32bf44573fff",
+        "963bcba476131cf6763f",
+        "78a132679e393260e6d2",
+        "45068c76ab4c57459435",
+        "161650f27f55a7939585",
+        "43cb7dc78986e91a92da",
+        "4594c181f55a4f10ca8b",
+        "f952d8bb25f9147bb32a",
+        "3e53c386a676c3c67759",
+        "c557722e5bd51591e471",
+        "7dceda37cfd379b771e1"
+      ],
+      "entry": {
+        "edge": 7,
+        "fraction": 0.5,
+        "outward": [
+          0.122547,
+          0.992463
+        ],
+        "door": "decorative_recessed",
+        "minimum_clear_width_m": 1.5,
+        "verified_offline_approach": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              3162.196,
+              396.016
+            ],
+            "first_continuous_road_distance_m": 2.0,
+            "road_clear_to_xy_m": [
+              3162.563,
+              398.993
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              3161.452,
+              396.107
+            ],
+            "first_continuous_road_distance_m": 1.75,
+            "road_clear_to_xy_m": [
+              3161.789,
+              398.837
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              3160.707,
+              396.199
+            ],
+            "first_continuous_road_distance_m": 1.75,
+            "road_clear_to_xy_m": [
+              3161.044,
+              398.929
+            ]
+          }
+        ]
+      },
+      "clearance": {
+        "nearest_verified_pcg_point_m": 29.98,
+        "nearest_quest_marker_radius_m": 100.56,
+        "existing_road_triangles_beneath_footprint_m2": 26.59,
+        "overlapping_external_roof_triangles": 0
+      },
+      "massing_direction": "subdivide the long silhouette into adjoining pitched roof ranges around a covered yard; retain the closed street boundary"
+    }
+  ],
+  "attribution": "Base geometry: OpenStreetMap contributors, ODbL 1.0."
+}
