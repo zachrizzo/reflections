@@ -1,0 +1,47 @@
+{
+  "name": "St Katharine's Way south basin approach, east of Drifter Camp",
+  "tile": "Tile_p04_p00",
+  "bounds_m": [3920, -114, 3982, -75],
+  "protected_landmarks": [
+    {
+      "label": "Tower of London - Codriver",
+      "bounds_m": [3437, -3, 3734, 252]
+    },
+    {
+      "label": "Tower Bridge, deck and approaches",
+      "bounds_m": [3625, -256, 3735, 17]
+    },
+    {
+      "label": "Drifter Camp quest space",
+      "bounds_m": [3744, -108, 3788, -73]
+    },
+    {
+      "label": "Existing east Tower Approach treatment",
+      "bounds_m": [3482, 237, 3621, 335]
+    }
+  ],
+  "review": {
+    "status": "offline_candidate",
+    "road_guide_m": [
+      [3924, -76.5],
+      [3930, -83.25],
+      [3936, -89.25],
+      [3942, -92.0],
+      [3948, -94.0],
+      [3954, -96.5],
+      [3960, -99.0],
+      [3966, -101.5],
+      [3972, -103.5],
+      [3978, -104.75]
+    ],
+    "dry_road_check": {
+      "guide_length_m": 62.39,
+      "sample_interval_max_m": 1.0,
+      "sample_offsets_m": [-0.75, 0.0, 0.75],
+      "samples_on_baked_road_outside_water": 231,
+      "sample_count": 231
+    },
+    "purpose": "Dress ordinary facades beside the dry south basin route. Tower Wharf itself has no eligible wall runs outside the landmark mask.",
+    "required_live_check": "Verify floor and wall traces against the loaded world, including the route joins to Drifter Camp, before placement."
+  }
+}

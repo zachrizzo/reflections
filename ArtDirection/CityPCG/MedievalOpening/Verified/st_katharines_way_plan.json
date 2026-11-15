@@ -1,0 +1,510 @@
+{
+  "coordinate_system": "ue_cm",
+  "kit": "/Game/GrayLondon/MedievalOpening/Kit",
+  "verified": true,
+  "cells": [
+    {
+      "id": "Medieval_x24_ym1",
+      "points": [
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89.0",
+          "building_id": "Tile_p04_p00_c49cfdd47f89",
+          "mesh_id": "SM_GLMedieval_Scrivener",
+          "location_cm": [
+            392711.454,
+            -9082.28,
+            9.65
+          ],
+          "yaw_deg": 68.35819,
+          "scale": [
+            0.56,
+            1.051348,
+            1.071429
+          ],
+          "seed": 1001376285
+        },
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89.1",
+          "building_id": "Tile_p04_p00_c49cfdd47f89",
+          "mesh_id": "SM_GLMedieval_Chandler",
+          "location_cm": [
+            393151.212,
+            -9256.758,
+            9.65
+          ],
+          "yaw_deg": 68.35819,
+          "scale": [
+            0.56,
+            1.051348,
+            1.071429
+          ],
+          "seed": 1286142603
+        },
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89.2",
+          "building_id": "Tile_p04_p00_c49cfdd47f89",
+          "mesh_id": "SM_GLMedieval_Mercer",
+          "location_cm": [
+            393590.97,
+            -9431.236,
+            9.65
+          ],
+          "yaw_deg": 68.35819,
+          "scale": [
+            0.56,
+            1.051348,
+            1.071429
+          ],
+          "seed": 1436658481
+        },
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89.3",
+          "building_id": "Tile_p04_p00_c49cfdd47f89",
+          "mesh_id": "SM_GLMedieval_Scrivener",
+          "location_cm": [
+            394030.728,
+            -9605.714,
+            9.65
+          ],
+          "yaw_deg": 68.35819,
+          "scale": [
+            0.56,
+            1.051348,
+            1.071429
+          ],
+          "seed": 581344167
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59.0",
+          "building_id": "Tile_p04_p00_ef2955d31d59",
+          "mesh_id": "SM_GLMedieval_Mercer",
+          "location_cm": [
+            396272.415,
+            -10492.375,
+            9.65
+          ],
+          "yaw_deg": 68.24753,
+          "scale": [
+            0.56,
+            1.002702,
+            1.071429
+          ],
+          "seed": 1835408495
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59.1",
+          "building_id": "Tile_p04_p00_ef2955d31d59",
+          "mesh_id": "SM_GLMedieval_Scrivener",
+          "location_cm": [
+            396691.503,
+            -10659.591,
+            9.65
+          ],
+          "yaw_deg": 68.24753,
+          "scale": [
+            0.56,
+            1.002702,
+            1.071429
+          ],
+          "seed": 442576121
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59.2",
+          "building_id": "Tile_p04_p00_ef2955d31d59",
+          "mesh_id": "SM_GLMedieval_Chandler",
+          "location_cm": [
+            397110.591,
+            -10826.807,
+            9.65
+          ],
+          "yaw_deg": 68.24753,
+          "scale": [
+            0.56,
+            1.002702,
+            1.071429
+          ],
+          "seed": 57179459
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59.3",
+          "building_id": "Tile_p04_p00_ef2955d31d59",
+          "mesh_id": "SM_GLMedieval_Mercer",
+          "location_cm": [
+            397529.679,
+            -10994.023,
+            9.65
+          ],
+          "yaw_deg": 68.24753,
+          "scale": [
+            0.56,
+            1.002702,
+            1.071429
+          ],
+          "seed": 1953451477
+        }
+      ]
+    }
+  ],
+  "verification": [
+    {
+      "source": "Tile_p04_p00",
+      "scope": {
+        "name": "St Katharine's Way south basin approach, east of Drifter Camp",
+        "bounds_m": [
+          3920,
+          -114,
+          3982,
+          -75
+        ]
+      },
+      "rays": 18,
+      "passed": 18,
+      "wall_runs": 2,
+      "skipped_frontages": [],
+      "previously_dressed_frontages": [],
+      "unfit_frontages": [],
+      "samples": [
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89",
+          "fraction": 0.15,
+          "height_cm": 160,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89",
+          "fraction": 0.15,
+          "height_cm": 869.0,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89",
+          "fraction": 0.15,
+          "height_cm": 1422.0,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89",
+          "fraction": 0.5,
+          "height_cm": 160,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89",
+          "fraction": 0.5,
+          "height_cm": 869.0,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89",
+          "fraction": 0.5,
+          "height_cm": 1422.0,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89",
+          "fraction": 0.85,
+          "height_cm": 160,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89",
+          "fraction": 0.85,
+          "height_cm": 869.0,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_c49cfdd47f89",
+          "fraction": 0.85,
+          "height_cm": 1422.0,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59",
+          "fraction": 0.15,
+          "height_cm": 160,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59",
+          "fraction": 0.15,
+          "height_cm": 869.0,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59",
+          "fraction": 0.15,
+          "height_cm": 1422.0,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59",
+          "fraction": 0.5,
+          "height_cm": 160,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59",
+          "fraction": 0.5,
+          "height_cm": 869.0,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59",
+          "fraction": 0.5,
+          "height_cm": 1422.0,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59",
+          "fraction": 0.85,
+          "height_cm": 160,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59",
+          "fraction": 0.85,
+          "height_cm": 869.0,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        },
+        {
+          "id": "Tile_p04_p00_ef2955d31d59",
+          "fraction": 0.85,
+          "height_cm": 1422.0,
+          "actor": "OSM Tile_p04_p00",
+          "offset_cm": 0.0,
+          "normal_dot": 1.0,
+          "exterior_floor_z_cm": 10.0,
+          "passes": true
+        }
+      ]
+    }
+  ],
+  "route_review": {
+    "name": "St Katharine's Way south basin approach, east of Drifter Camp",
+    "bounds_m": [
+      3920,
+      -114,
+      3982,
+      -75
+    ],
+    "protected_landmarks": [
+      {
+        "label": "Tower of London - Codriver",
+        "bounds_m": [
+          3437,
+          -3,
+          3734,
+          252
+        ]
+      },
+      {
+        "label": "Tower Bridge, deck and approaches",
+        "bounds_m": [
+          3625,
+          -256,
+          3735,
+          17
+        ]
+      },
+      {
+        "label": "Drifter Camp quest space",
+        "bounds_m": [
+          3744,
+          -108,
+          3788,
+          -73
+        ]
+      },
+      {
+        "label": "Existing east Tower Approach treatment",
+        "bounds_m": [
+          3482,
+          237,
+          3621,
+          335
+        ]
+      }
+    ],
+    "source_tile_actor": "OSM Tile_p04_p00",
+    "source_tile_actor_package": "/Game/__ExternalActors__/GrayLondon/Maps/GrayLondon_Geodata/F/0W/Z11H7OXZNF5YKLYSP9KZYL",
+    "source_tile_actor_object": "StaticMeshActor_UAID_74D4DD40C7798E1403_1471655913",
+    "source_tile_mesh_package": "/Game/GrayLondon/Geodata/Tiles/Tile_p04_p00",
+    "road_length_m": 62.39,
+    "road_trace_count": 231,
+    "wall_trace_count": 18,
+    "wall_exterior_floor_z_cm": [
+      10.0
+    ],
+    "scope": "South basin dry road and adjacent facades within the bounds. Drifter Camp and Tower Wharf connections are outside this plan."
+  },
+  "route_ground_guards": {
+    "guide_m": [
+      [
+        3924,
+        -76.5
+      ],
+      [
+        3930,
+        -83.25
+      ],
+      [
+        3936,
+        -89.25
+      ],
+      [
+        3942,
+        -92.0
+      ],
+      [
+        3948,
+        -94.0
+      ],
+      [
+        3954,
+        -96.5
+      ],
+      [
+        3960,
+        -99.0
+      ],
+      [
+        3966,
+        -101.5
+      ],
+      [
+        3972,
+        -103.5
+      ],
+      [
+        3978,
+        -104.75
+      ]
+    ],
+    "offsets_m": [
+      -0.75,
+      0.0,
+      0.75
+    ],
+    "interval_max_m": 1.0,
+    "trace_from_z_cm": 70.0,
+    "trace_to_z_cm": -120.0,
+    "floor_z_cm": 28.0,
+    "floor_z_tolerance_cm": 0.8,
+    "minimum_normal_z": 0.98,
+    "component": "StaticMeshComponent0"
+  },
+  "route_wall_guards": {
+    "coordinate_system": "ue_local_m",
+    "source": "Tile_p04_p00",
+    "frontages": [
+      {
+        "id": "Tile_p04_p00_c49cfdd47f89",
+        "start": [
+          3924.782,
+          -89.935,
+          0.2
+        ],
+        "end": [
+          3942.614,
+          -97.01,
+          0.2
+        ],
+        "height_m": 15.8,
+        "outward": [
+          0.3688,
+          0.9295
+        ],
+        "source_primitive": 0,
+        "confidence": "rectangular_wall_road_surface_visible"
+      },
+      {
+        "id": "Tile_p04_p00_ef2955d31d59",
+        "start": [
+          3960.495,
+          -104.072,
+          0.2
+        ],
+        "end": [
+          3977.5,
+          -110.857,
+          0.2
+        ],
+        "height_m": 15.8,
+        "outward": [
+          0.3706,
+          0.9288
+        ],
+        "source_primitive": 0,
+        "confidence": "rectangular_wall_road_surface_visible"
+      }
+    ]
+  }
+}
