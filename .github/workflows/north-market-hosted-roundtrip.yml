@@ -101,6 +101,14 @@ jobs:
           python3 -B Tools/CityPCG/test_north_market_roundtrip.py -v
           python3 -O -B Tools/CityPCG/test_north_market_roundtrip.py -v
 
+      - name: Check tenancy generation geometry
+        if: ${{ matrix.model == 'SM_GLMedieval_NorthMarketDetail_east_0a73564b' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=5s 60s python3 -B Tools/CityPCG/test_north_market_tenancies.py -v
+          timeout --signal=TERM --kill-after=5s 60s python3 -O -B Tools/CityPCG/test_north_market_tenancies.py -v
+
       - name: Fetch pinned official Blender release
         shell: bash
         run: |
@@ -167,14 +175,6 @@ jobs:
           if-no-files-found: error
           retention-days: 1
           include-hidden-files: false
-
-      - name: Check tenancy generation geometry
-        if: ${{ matrix.model == 'SM_GLMedieval_NorthMarketDetail_east_0a73564b' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          timeout --signal=TERM --kill-after=5s 60s python3 -B Tools/CityPCG/test_north_market_tenancies.py -v
-          timeout --signal=TERM --kill-after=5s 60s python3 -O -B Tools/CityPCG/test_north_market_tenancies.py -v
 
       - name: Generate and render separate tenancy trial
         if: ${{ matrix.model == 'SM_GLMedieval_NorthMarketDetail_east_0a73564b' }}
