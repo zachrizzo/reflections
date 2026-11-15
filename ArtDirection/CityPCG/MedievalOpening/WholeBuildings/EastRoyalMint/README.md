@@ -5,6 +5,7 @@ plots east of Royal Mint Court. The attached plan and manifest record their
 surveyed footprints, pivots, roof profiles, materials and source/prepared
 FBX hashes. Blender round trips passed the closed-solid, winding, UV,
 material and footprint-edge checks.
+The `*_preview.png` images are Blender renders of the same audited geometry.
 
 These are **review-only source models**. Some neighboring tile and overlay
 exports are missing, and the blocks have not been imported, placed or tested
