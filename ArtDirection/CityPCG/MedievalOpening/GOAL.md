@@ -1,9 +1,10 @@
 # Gray London medieval conversion
 
-The playable Gray London map is the city to rebuild. Remove the ordinary modern
-building shells from surveyed plots and replace them with complete, varied
-late-medieval buildings, extending the approach across the playable city. Build
-whole streets and neighborhoods with reusable kits and procedural placement;
+The playable Gray London map is the only city to rebuild. Replace the ordinary
+modern building shells with complete, varied late-medieval buildings, extending
+the approach across the playable city instead of relying on edits to the old
+buildings. Build whole streets and neighborhoods with reusable kits and
+procedural placement;
 use individually authored or image-to-3D assets when they improve difficult
 landmarks. The aim is a lived-in city with distinct streets and enemy
 strongholds that players can reclaim to win back the city. The separate people
@@ -24,11 +25,12 @@ workstreams.
   remain usable. Existing source city geometry remains recoverable.
 - The medieval treatment extends beyond the opening street, with sufficient
   variation and environmental detail to make the city feel lived in.
-- Enemy-held areas are visually legible as distinct strongholds, and the
-  player can reclaim them as part of winning back the city.
+- Enemy-held areas are visually legible as distinct strongholds. Players can
+  clear defenders and reclaim the bases to win back the city, with progress
+  saved and synchronized for a LAN host and guests.
 - Work is visually inspected from the real player spawn and representative
   streets, then checked for movement, streaming and playable performance in
-  gameplay and a refreshed standalone build.
+  gameplay, a refreshed standalone build and a LAN session.
 - Verified London changes are committed and pushed to `main` incrementally.
 
 ## Current checkpoint
@@ -54,10 +56,13 @@ Blender round trips. They have not yet been imported or placed in Unreal.
 The east Royal Mint block also needs several neighboring exports before review.
 
 The cumulative rollout preflight covers 18 proposed buildings across three of
-the 117 source tile assets on disk; four of those have rough massing studies
-but no detailed building meshes yet.
-They remain review-only: the other tiles need exports, the original section
-mapping needs verification, and candidate blocks need live actor and route checks. The
+the 117 source tile assets on disk. Four additional North Market buildings
+now have detailed OBJ source meshes with timber, roofs, windows and doors;
+these were produced without Blender and are review-only, not imported Unreal
+assets. They still need Blender and Unreal checks, approved collision and a
+matching cumulative tile filter. All the proposals remain review-only: the
+other tiles need exports, the original section mapping needs verification, and
+candidate blocks need live actor and route checks. The
 three large modern shells immediately visible from the real spawn overlap
 story markers, so replacing them needs a coordinated gameplay and visual review.
 
@@ -70,10 +75,11 @@ material binding, collision and streaming have not yet been tested in Unreal.
 
 An offline watch-gate kit provides occupied and reclaimed pennant variants.
 Its quest example, LAN visual controller and separate campaign rules are
-prototypes; the standalone campaign rules pass their C++ tests, but no
-reclaimable stronghold has been placed or verified in the playable level yet.
-GameFlow needs a save preflight before those rules can be integrated without
-risking loss of stronghold progress.
+prototypes. A revised defender-clear capture mode and checkpoint adapter have
+been drafted, but the revised C++ has not yet been compiled or connected to the
+game. No reclaimable stronghold has been placed or verified in the playable
+level. GameFlow needs a save preflight before those rules can be integrated
+without risking loss of stronghold progress.
 
 The active tracked goal remains in progress. The current game and standalone
 have not yet received a verified full-building replacement; the first priority
