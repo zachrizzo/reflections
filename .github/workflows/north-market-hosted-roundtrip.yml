@@ -1,0 +1,156 @@
+name: North Market hosted FBX review
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/north-market-hosted-roundtrip.yml
+
+permissions:
+  contents: read
+
+jobs:
+  roundtrip:
+    if: ${{ github.repository == 'zachrizzo/reflections' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out only review inputs
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+          lfs: false
+          submodules: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.github/workflows/north-market-hosted-roundtrip.yml
+            /Tools/CityPCG/north_market_roundtrip_common.py
+            /Tools/CityPCG/north_market_hosted_blender.py
+            /Tools/CityPCG/north_market_hosted_preview.py
+            /Tools/CityPCG/test_north_market_roundtrip.py
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/.gitattributes
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/detailed_obj_manifest.json
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/NorthMarketDetail.mtl
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/SM_GLMedieval_NorthMarketDetail_east_0a73564b.obj
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/SM_GLMedieval_NorthMarketDetail_east_31c9ff1a.obj
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/SM_GLMedieval_NorthMarketDetail_west_736fd5c6.obj
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/SM_GLMedieval_NorthMarketDetail_west_d08bbb3b.obj
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/Textures/T_GLMedieval_ClayTile.png
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/Textures/T_GLMedieval_Fieldstone.png
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/Textures/T_GLMedieval_GuildRubble.png
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/Textures/T_GLMedieval_LimePlaster.png
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/Textures/T_GLMedieval_Oak.png
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/Textures/T_GLMedieval_ShopGreen.png
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/Textures/T_GLMedieval_ShopRed.png
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/Textures/T_GLMedieval_WarmPlaster.png
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/Textures/T_GLMedieval_WeatheredOak.png
+
+      - name: Require a workflow-only single-commit push
+        if: ${{ github.event_name == 'push' }}
+        shell: bash
+        run: |
+          python3 -B - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+
+          with open(os.environ['GITHUB_EVENT_PATH'], encoding='utf-8') as source:
+              event = json.load(source)
+          before, after, expected = event.get('before'), event.get('after'), os.environ['GITHUB_SHA']
+          if (event.get('ref') != 'refs/heads/main' or event.get('deleted') is not False
+                  or event.get('forced') is not False or not isinstance(before, str)
+                  or not re.fullmatch(r'[0-9a-f]{40}', before) or before == '0' * 40
+                  or after != expected or not re.fullmatch(r'[0-9a-f]{40}', expected)):
+              raise SystemExit('Refusing an unexpected push event')
+          parents = subprocess.check_output(
+              ['git', 'rev-list', '--parents', '-n', '1', expected], text=True
+          ).split()
+          if parents != [expected, before]:
+              raise SystemExit('Push must contain exactly one non-merge commit')
+          changed = subprocess.check_output(
+              ['git', 'diff', '--no-ext-diff', '--no-renames', '--name-only', '-z', before, expected]
+          ).split(b'\0')
+          if changed != [b'.github/workflows/north-market-hosted-roundtrip.yml', b'']:
+              raise SystemExit('Push may change only this workflow file')
+          PY
+
+      - name: Run channel-comparison tests
+        run: |
+          python3 -B Tools/CityPCG/test_north_market_roundtrip.py -v
+          python3 -O -B Tools/CityPCG/test_north_market_roundtrip.py -v
+
+      - name: Fetch pinned official Blender release
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/blender-4.5.3-linux-x64.tar.xz"
+          curl --fail --show-error --silent --location --proto '=https' --proto-redir '=https' \
+            --max-redirs 3 --connect-timeout 15 --max-time 360 --max-filesize 400000000 \
+            https://download.blender.org/release/Blender4.5/blender-4.5.3-linux-x64.tar.xz \
+            --output "$archive"
+          printf '%s  %s\n' '975c58fcb244273838534bba771e64ad87739216b0f9b39a888531a49a72d845' "$archive" | sha256sum --check --strict
+          tar -xJf "$archive" -C "$RUNNER_TEMP"
+          "$RUNNER_TEMP/blender-4.5.3-linux-x64/blender" --version
+
+      - name: Export and reimport each FBX in clean Blender processes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir "$GITHUB_WORKSPACE/ci-north-market-fbx"
+          blender="$RUNNER_TEMP/blender-4.5.3-linux-x64/blender"
+          script="$GITHUB_WORKSPACE/Tools/CityPCG/north_market_hosted_blender.py"
+          for name in \
+            SM_GLMedieval_NorthMarketDetail_east_0a73564b \
+            SM_GLMedieval_NorthMarketDetail_east_31c9ff1a \
+            SM_GLMedieval_NorthMarketDetail_west_736fd5c6 \
+            SM_GLMedieval_NorthMarketDetail_west_d08bbb3b; do
+            "$blender" --background --threads 2 --factory-startup --python-exit-code 1 --python "$script" -- export "$name"
+            "$blender" --background --threads 2 --factory-startup --python-exit-code 1 --python "$script" -- verify "$name"
+          done
+
+      - name: Attempt optional CPU-only textured views
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=10s 150s "$RUNNER_TEMP/blender-4.5.3-linux-x64/blender" --background --threads 2 --factory-startup --python-exit-code 1 \
+            --python "$GITHUB_WORKSPACE/Tools/CityPCG/north_market_hosted_preview.py"
+          bundle="$GITHUB_WORKSPACE/ci-north-market-fbx"
+          stage="$bundle/.preview-staging"
+          source="$RUNNER_TEMP/north-market-textured-preview"
+          test ! -e "$bundle/preview"
+          mkdir "$stage"
+          for name in eye_level.png three_quarter.png preview.report.json; do
+            test -f "$source/$name" && test ! -L "$source/$name" && test -s "$source/$name"
+            cp --no-clobber -- "$source/$name" "$stage/$name"
+            test -f "$stage/$name" && test -s "$stage/$name"
+          done
+          python3 -B - "$stage" "$bundle/SM_GLMedieval_NorthMarketDetail_east_0a73564b/verify.report.json" <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+
+          stage = Path(sys.argv[1])
+          for name in ('eye_level.png', 'three_quarter.png'):
+              with (stage / name).open('rb') as source:
+                  if source.read(8) != b'\x89PNG\r\n\x1a\n':
+                      raise SystemExit('Invalid preview PNG')
+          preview = json.loads((stage / 'preview.report.json').read_text(encoding='utf-8'))
+          verified = json.loads(Path(sys.argv[2]).read_text(encoding='utf-8'))
+          if preview.get('fbx_sha256') != verified.get('fbx_sha256') or not preview.get('fbx_sha256'):
+              raise SystemExit('Preview does not identify the verified FBX')
+          PY
+          mv -T -- "$stage" "$bundle/preview"
+
+      - name: Upload review-only FBX bundle
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: north-market-fbx-review
+          path: ci-north-market-fbx/
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: false
