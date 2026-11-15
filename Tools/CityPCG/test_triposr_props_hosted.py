@@ -28,5 +28,10 @@ class InputTests(unittest.TestCase):
         with mock.patch.dict(os.environ,{},clear=True):
             with self.assertRaises(RuntimeError): runner.context()
 
+    def test_pin_mismatch_identifies_only_the_input_kind(self):
+        runner.require_sha('config','a','a')
+        with self.assertRaisesRegex(ValueError,'Pinned input mismatch: config'):
+            runner.require_sha('config','a','b')
+
 
 if __name__=='__main__': unittest.main()

@@ -19,7 +19,8 @@ MODEL_REV='5b521936b01fbe1890f6f9baed0254ab6351c04a'
 CHECKPOINT_SHA='429e2c6b22a0923967459de24d67f05962b235f79cde6b032aa7ed2ffcd970ee'
 CONFIG_SHA='74ca708ce086bf68e97709ea6b3d91f14717921c04691e84043f0eb8fcc68e62'
 DINO_SHA='b87c0270b97db085fd82cf114a761fd0f62ae7914fbd407c752a2260646b689c'
-LICENSE_SHA='13aff551d7009dea9d44cc5e200f8493e0e9d5171be0ab19940e6f20f54c7e17'
+# GitHub-hosted Linux checks out the upstream Git blob with LF line endings.
+LICENSE_SHA='ade0a66629bdd7e01e46b3296b3851cff0fd27989bca53da470ad6e96ed620fb'
 
 
 def digest(path):
@@ -27,6 +28,10 @@ def digest(path):
     with Path(path).open('rb') as source:
         for block in iter(lambda:source.read(1024*1024),b''): h.update(block)
     return h.hexdigest()
+
+
+def require_sha(label,actual,expected):
+    if actual!=expected: raise ValueError('Pinned input mismatch: '+label)
 
 
 def context():
@@ -79,9 +84,13 @@ def run():
         raise ValueError('input manifest')
     source=BASE/'Inputs'/f'{name}.png'; config=BASE/'Configs/config.yaml'; dino=BASE/'Configs/dino_config.json'
     upstream=temp/'TripoSR-upstream'; modeldir=temp/'TripoSR-model'; checkpoint=modeldir/'model.ckpt'
-    if (source.is_symlink() or not source.is_file() or digest(source)!=expected or digest(config)!=CONFIG_SHA
-            or digest(dino)!=DINO_SHA or checkpoint.stat().st_size!=1677246742 or digest(checkpoint)!=CHECKPOINT_SHA
-            or digest(upstream/'LICENSE')!=LICENSE_SHA): raise ValueError('pinned source mismatch')
+    if source.is_symlink() or not source.is_file(): raise ValueError('Missing reference image')
+    require_sha('reference',digest(source),expected)
+    require_sha('config',digest(config),CONFIG_SHA)
+    require_sha('dino-config',digest(dino),DINO_SHA)
+    if checkpoint.stat().st_size!=1677246742: raise ValueError('Checkpoint size mismatch')
+    require_sha('checkpoint',digest(checkpoint),CHECKPOINT_SHA)
+    require_sha('upstream-license-lf',digest(upstream/'LICENSE'),LICENSE_SHA)
     sha=subprocess.check_output(['git','-C',str(upstream),'rev-parse','HEAD'],text=True,timeout=10).strip()
     if sha!=SOURCE_COMMIT: raise ValueError('upstream revision')
     out=ROOT/f'ci-triposr-{name.lower()}'
