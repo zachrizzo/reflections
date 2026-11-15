@@ -1,0 +1,48 @@
+newmtl M_GLMedieval_ClayTile
+Kd 0.23 0.104 0.07
+map_Kd Textures/T_GLMedieval_ClayTile.png
+
+newmtl M_GLMedieval_Fieldstone
+Kd 0.25 0.23 0.176
+map_Kd Textures/T_GLMedieval_Fieldstone.png
+
+newmtl M_GLMedieval_GuildDressed
+Kd 0.36 0.31 0.22
+
+newmtl M_GLMedieval_GuildRubble
+Kd 0.25 0.21 0.15
+map_Kd Textures/T_GLMedieval_GuildRubble.png
+
+newmtl M_GLMedieval_Interior
+Kd 0.016 0.012 0.009
+
+newmtl M_GLMedieval_Lead
+Kd 0.052 0.054 0.041
+
+newmtl M_GLMedieval_LeadedGlass
+Kd 0.092 0.125 0.099
+
+newmtl M_GLMedieval_LimePlaster
+Kd 0.57 0.5 0.36
+map_Kd Textures/T_GLMedieval_LimePlaster.png
+
+newmtl M_GLMedieval_Oak
+Kd 0.088 0.048 0.024
+map_Kd Textures/T_GLMedieval_Oak.png
+
+newmtl M_GLMedieval_ShopGreen
+Kd 0.05 0.1 0.067
+map_Kd Textures/T_GLMedieval_ShopGreen.png
+
+newmtl M_GLMedieval_ShopRed
+Kd 0.176 0.064 0.04
+map_Kd Textures/T_GLMedieval_ShopRed.png
+
+newmtl M_GLMedieval_WarmPlaster
+Kd 0.46 0.35 0.23
+map_Kd Textures/T_GLMedieval_WarmPlaster.png
+
+newmtl M_GLMedieval_WeatheredOak
+Kd 0.145 0.073 0.037
+map_Kd Textures/T_GLMedieval_WeatheredOak.png
+

@@ -1,0 +1,7 @@
+# Preserve the byte hashes recorded in detailed_obj_manifest.json.
+.gitattributes text eol=lf
+*.obj text eol=lf
+*.mtl text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.png -text

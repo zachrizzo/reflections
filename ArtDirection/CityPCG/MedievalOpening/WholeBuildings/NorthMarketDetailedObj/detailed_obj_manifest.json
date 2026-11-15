@@ -1,0 +1,411 @@
+{
+  "status": "unreviewed_detailed_obj_source",
+  "source_glb_sha256": "411a895aedeb642f0250cdd4c3e4725a1d04b73035ea4a75335f60193ca7102c",
+  "inputs": {
+    "east": {
+      "candidate": "6874c9fdc1741098b72b0f2a4b2640919a3db977a5c7e32b990ef53be6583d16",
+      "plan": "acafb36160175ef164756753481a66273e7c6e9865e79508f94fd59ea4d6b4f7",
+      "override": "4a1cde1f79fc474d08b46c7b49a9d67fe2e36c9da2642d041f1f560c2d24c7a7",
+      "source_triangles_by_primitive": {
+        "0": 76,
+        "1": 34
+      }
+    },
+    "west": {
+      "candidate": "d222fbcc76b4e89bc649c7ad6bc4a8b354e538a5f4c9669aec876469893b3295",
+      "plan": "1b809830e46080daf271935bc06c7fca0a4eb6661abed47b6380444c238dfd78",
+      "override": null,
+      "source_triangles_by_primitive": {
+        "0": 30,
+        "1": 11
+      }
+    }
+  },
+  "textures": {
+    "ClayTile": {
+      "path": "ArtDirection/CityPCG/MedievalOpening/Textures/T_GLMedieval_ClayTile.png",
+      "sha256": "4276741826d160b3c00bd3d053eb174849b328a76ecd22caa01f1cfc3445afaf"
+    },
+    "Fieldstone": {
+      "path": "ArtDirection/CityPCG/MedievalOpening/Textures/T_GLMedieval_Fieldstone.png",
+      "sha256": "845a6082959cf5429e024eb86d05db087114b963cb1170533a4c989701cf03b1"
+    },
+    "GuildRubble": {
+      "path": "ArtDirection/CityPCG/MedievalOpening/Guildhall/Textures/T_GLMedieval_GuildRubble.png",
+      "sha256": "8c8b4a1b0ab16ee92c9a8379904aadf7c561a9f220f49f5eb030ba0318e3cc17"
+    },
+    "LimePlaster": {
+      "path": "ArtDirection/CityPCG/MedievalOpening/Textures/T_GLMedieval_LimePlaster.png",
+      "sha256": "f5205640b07a12890c134579ca2e1814e04aeb60ee73def5019f03cafb3a62a5"
+    },
+    "Oak": {
+      "path": "ArtDirection/CityPCG/MedievalOpening/Textures/T_GLMedieval_Oak.png",
+      "sha256": "30f2d82d684242c658fdfe217b26d1c9aa680c240a187ea81cea0308ff20159a"
+    },
+    "ShopGreen": {
+      "path": "ArtDirection/CityPCG/MedievalOpening/Textures/T_GLMedieval_ShopGreen.png",
+      "sha256": "28ebac7f99d7ba4932920896fd428f29b516403d69f687438b23eff89196dbff"
+    },
+    "ShopRed": {
+      "path": "ArtDirection/CityPCG/MedievalOpening/Textures/T_GLMedieval_ShopRed.png",
+      "sha256": "9e95fd428a51ab8d3d7cd98cb9d95c3dda04d7ea71cef9d8c429469e27f7dda6"
+    },
+    "WarmPlaster": {
+      "path": "ArtDirection/CityPCG/MedievalOpening/Textures/T_GLMedieval_WarmPlaster.png",
+      "sha256": "9e070704a80237ba6c17e35392f6060672710af53127565b066682ab246350d5"
+    },
+    "WeatheredOak": {
+      "path": "ArtDirection/CityPCG/MedievalOpening/Textures/T_GLMedieval_WeatheredOak.png",
+      "sha256": "b6dd5807706308ffabb22f9afcf2e45836c4ae34c9f0951397c92989dcf46425"
+    }
+  },
+  "buildings": {
+    "Tile_p03_p01_roof_0a73564b5b0ed26a": {
+      "side": "east",
+      "style": "TradingRange",
+      "source_triangles": {
+        "0": 66,
+        "1": 31
+      },
+      "vertices": 13205,
+      "polygons": 10094,
+      "fan_triangle_estimate": 20126,
+      "material_polygons": {
+        "ClayTile": 3451,
+        "Fieldstone": 181,
+        "GuildDressed": 108,
+        "GuildRubble": 51,
+        "Interior": 132,
+        "Lead": 2052,
+        "LeadedGlass": 240,
+        "LimePlaster": 80,
+        "Oak": 3367,
+        "ShopRed": 156,
+        "WeatheredOak": 276
+      },
+      "roof_profile_local_y_z_m": [
+        [
+          -47.128453055861975,
+          8.1
+        ],
+        [
+          -40.818123,
+          11.130999999999998
+        ],
+        [
+          -34.507792,
+          8.1
+        ],
+        [
+          -28.197461,
+          11.730999999999998
+        ],
+        [
+          -21.887131,
+          8.1
+        ],
+        [
+          -15.576801,
+          11.411
+        ],
+        [
+          -9.26647,
+          8.1
+        ],
+        [
+          -2.956139,
+          12.110999999999999
+        ],
+        [
+          3.354191447273121,
+          8.1
+        ]
+      ],
+      "chimney_count": 3,
+      "world_pivot_m": [
+        3310.546,
+        522.412,
+        0.2
+      ],
+      "yaw_deg": 24.35984172,
+      "axis_x_world_xy": [
+        0.9109729796257242,
+        0.41246603544028937
+      ],
+      "axis_y_world_xy": [
+        -0.41246603544028937,
+        0.9109729796257242
+      ],
+      "source_artifact": {
+        "file": "SM_GLMedieval_NorthMarketDetail_east_0a73564b.obj",
+        "sha256": "5ca906f6b995d50cd956d89c9382856ba464366c23db6b93f0a886dfaec1a57f",
+        "readback": {
+          "vertices": 13205,
+          "polygons": 10094,
+          "uv_corners": 40314,
+          "max_polygon_nonplanarity_m": 5.474125765248431e-06
+        }
+      }
+    },
+    "Tile_p03_p01_roof_31c9ff1a824fb2fd": {
+      "side": "east",
+      "style": "DeepWorkshop",
+      "source_triangles": {
+        "0": 10,
+        "1": 3
+      },
+      "vertices": 5732,
+      "polygons": 4325,
+      "fan_triangle_estimate": 8644,
+      "material_polygons": {
+        "ClayTile": 1280,
+        "Fieldstone": 65,
+        "GuildDressed": 6,
+        "GuildRubble": 6,
+        "Interior": 132,
+        "Lead": 606,
+        "LeadedGlass": 78,
+        "Oak": 821,
+        "ShopGreen": 276,
+        "WarmPlaster": 25,
+        "WeatheredOak": 1030
+      },
+      "roof_profile_local_y_z_m": [
+        [
+          0.0,
+          6.15
+        ],
+        [
+          4.438271,
+          9.161
+        ],
+        [
+          8.876543,
+          6.15
+        ],
+        [
+          13.314815,
+          8.461
+        ],
+        [
+          17.753086,
+          6.15
+        ],
+        [
+          22.191357,
+          8.181
+        ],
+        [
+          26.629629233543902,
+          6.15
+        ]
+      ],
+      "chimney_count": 1,
+      "world_pivot_m": [
+        3339.404,
+        540.64,
+        0.2
+      ],
+      "yaw_deg": -155.94767953,
+      "axis_x_world_xy": [
+        -0.9131736593239108,
+        -0.40757069069914487
+      ],
+      "axis_y_world_xy": [
+        0.40757069069914487,
+        -0.9131736593239108
+      ],
+      "source_artifact": {
+        "file": "SM_GLMedieval_NorthMarketDetail_east_31c9ff1a.obj",
+        "sha256": "f9006720e26a0facfd0b4bc102624fc0ebee5c21900b8da48e632fbea454cc3a",
+        "readback": {
+          "vertices": 5732,
+          "polygons": 4325,
+          "uv_corners": 17294,
+          "max_polygon_nonplanarity_m": 3.1453208854480576e-06
+        }
+      }
+    },
+    "Tile_p03_p01_roof_736fd5c6810d71ff": {
+      "side": "west",
+      "style": "TradingRange",
+      "source_triangles": {
+        "0": 16,
+        "1": 6
+      },
+      "vertices": 10751,
+      "polygons": 8113,
+      "fan_triangle_estimate": 16214,
+      "material_polygons": {
+        "ClayTile": 3802,
+        "Fieldstone": 83,
+        "GuildDressed": 108,
+        "GuildRubble": 26,
+        "Interior": 108,
+        "Lead": 1248,
+        "LeadedGlass": 180,
+        "LimePlaster": 30,
+        "Oak": 2108,
+        "ShopRed": 204,
+        "WeatheredOak": 216
+      },
+      "roof_profile_local_y_z_m": [
+        [
+          -0.25129619548254234,
+          7.2
+        ],
+        [
+          3.965096,
+          9.961
+        ],
+        [
+          8.181488,
+          7.2
+        ],
+        [
+          12.39788,
+          10.661
+        ],
+        [
+          16.614273,
+          7.2
+        ],
+        [
+          20.830665,
+          10.280999999999999
+        ],
+        [
+          25.047057,
+          7.2
+        ],
+        [
+          29.263449,
+          9.961
+        ],
+        [
+          33.47984119111495,
+          7.2
+        ]
+      ],
+      "chimney_count": 3,
+      "world_pivot_m": [
+        3303.69,
+        623.886,
+        0.2
+      ],
+      "yaw_deg": -172.14479632,
+      "axis_x_world_xy": [
+        -0.9906166205768917,
+        -0.1366700809863616
+      ],
+      "axis_y_world_xy": [
+        0.1366700809863616,
+        -0.9906166205768917
+      ],
+      "source_artifact": {
+        "file": "SM_GLMedieval_NorthMarketDetail_west_736fd5c6.obj",
+        "sha256": "e2756bf236c9d13c2f7b5ad28aff2fc515943a7956d0f83220075da30c1fb007",
+        "readback": {
+          "vertices": 10751,
+          "polygons": 8113,
+          "uv_corners": 32440,
+          "max_polygon_nonplanarity_m": 3.398449782561674e-06
+        }
+      }
+    },
+    "Tile_p03_p01_roof_d08bbb3bd99928c5": {
+      "side": "west",
+      "style": "SteppedMarket",
+      "source_triangles": {
+        "0": 14,
+        "1": 5
+      },
+      "vertices": 8274,
+      "polygons": 6233,
+      "fan_triangle_estimate": 12456,
+      "material_polygons": {
+        "ClayTile": 3196,
+        "Fieldstone": 88,
+        "GuildDressed": 102,
+        "GuildRubble": 12,
+        "Interior": 84,
+        "Lead": 1098,
+        "LeadedGlass": 120,
+        "Oak": 1369,
+        "WarmPlaster": 20,
+        "WeatheredOak": 144
+      },
+      "roof_profile_local_y_z_m": [
+        [
+          0.0,
+          8.1
+        ],
+        [
+          3.354207,
+          12.110999999999999
+        ],
+        [
+          6.708413,
+          8.1
+        ],
+        [
+          10.06262,
+          11.730999999999998
+        ],
+        [
+          13.416827050936442,
+          8.1
+        ]
+      ],
+      "chimney_count": 2,
+      "world_pivot_m": [
+        3271.612,
+        650.62,
+        0.2
+      ],
+      "yaw_deg": -0.37553321,
+      "axis_x_world_xy": [
+        0.9999785207120031,
+        -0.006554244016960634
+      ],
+      "axis_y_world_xy": [
+        0.006554244016960634,
+        0.9999785207120031
+      ],
+      "source_artifact": {
+        "file": "SM_GLMedieval_NorthMarketDetail_west_d08bbb3b.obj",
+        "sha256": "216a12d0eee71918862bc3d4bab767845e234eba092a601e7282e101f2ad436c",
+        "readback": {
+          "vertices": 8274,
+          "polygons": 6233,
+          "uv_corners": 24922,
+          "max_polygon_nonplanarity_m": 3.4036453743581424e-06
+        }
+      }
+    }
+  },
+  "limits": [
+    "Detailed source polygons are preserved as n-gons; Blender tessellation may differ.",
+    "Python mathutils/ear-clipping shim differs from Blender and has not been round-tripped.",
+    "Face normals follow original Bay winding; Blender's bmesh normal recalculation was not run.",
+    "UVs mirror dominant-normal projection but exact Blender UV identity is not verified.",
+    "No FBX, collision, Unreal import, source-section mapping or gameplay validation."
+  ],
+  "runtime_activation_eligible": false,
+  "source_ue_section_mapping": "unverified",
+  "code_input_sha256": {
+    "Tools/CityPCG/build_whole_buildings_blender.py": "44391ea169976a3c6385c8dafcc4d51474c2647301ee177c0aa2e516fa135950",
+    "Tools/CityPCG/whole_building_styles.py": "0391e2ae76c2e363480a5ba79a483e23689c2154248b19bba501026483d68977",
+    "Tools/CityPCG/build_north_market_massing.py": "2386db757bb4305bd4c83ec89707703f64227b231b7b73dc85984d7811727260",
+    "Tools/CityPCG/preflight_north_market_details.py": "819f87bd69575fdf7420f21ee13ddb5772b802bbfbda916a0b274747a7fd41a2",
+    "Tools/CityPCG/export_north_market_detail_obj.py": "45acec6bdfd638d8c1eec08435995ee846ca55e62c34206e92013e3d7852a91c",
+    "ArtDirection/CityPCG/Kit/build_facade_kit.py": "38b8daee10bbb38d39fb55db900c0daf4a073c031362f326fac5582293716ee3",
+    "ArtDirection/CityPCG/MedievalOpening/build_medieval_facades.py": "ba170669c8e72a7349c363f8f0c2f35b51f26538b32fce01ca1f9fae3270c0f5",
+    "ArtDirection/CityPCG/MedievalOpening/WholeBuildings/build_mark_lane.py": "d41ac4ee77f04631b899d961fa966b39443b6586c5e177abe2ea44d1c38ed603",
+    "ArtDirection/CityPCG/MedievalOpening/ThamesWarehouse/build_thames_warehouse.py": "725afcec49688399cf892120b2f7aaa9171d2fa0b8268acafe825926bc649a9b",
+    "ArtDirection/CityPCG/MedievalOpening/Guildhall/build_guildhall.py": "fb73559e367d742cc3452537dcd99d4e2fba9a46dfcfef99924d9748c7d74baa"
+  },
+  "material_file": "NorthMarketDetail.mtl",
+  "material_sha256": "8b4485d8b96298d2586f0c0821697cc993cbf739c3ae645cb89576540ccdfec6",
+  "mesh_contract": "OBJ local metres; +X entrance, +Z up; pivots and yaw are in this manifest."
+}
