@@ -93,6 +93,7 @@ private:
     void OnOwnerDamaged(AActor* DamagedActor, float Damage, const UDamageType* DamageType,
         AController* Instigator, AActor* DamageCauser);
     bool CanTarget(AActor* Candidate) const;
+    bool CanReachTarget(AActor* Candidate, bool bAtImpact) const;
     ACharacter* GetDriver() const;
     void FollowTarget(ACharacter* Driver, AActor* Candidate, float DeltaTime);
     void StartAttack(ACharacter* Driver);

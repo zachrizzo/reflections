@@ -106,6 +106,7 @@ public:
     bool AdvanceTalk();
     UFUNCTION(BlueprintCallable, Category = "Quests")
     void ChooseTalkOption(int32 Index);
+    void ChooseTalkAction(const FString& Action);
     int32 GetTalkRevision() const { return TalkRevision; }
 
     // ---- HUD reads -------------------------------------------------------------------------------------------

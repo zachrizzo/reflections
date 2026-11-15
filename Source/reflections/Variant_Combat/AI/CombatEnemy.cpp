@@ -12,6 +12,8 @@
 #include "TimerManager.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Animation/AnimInstance.h"
+#include "Hero/ReflectionsSpellCombat.h"
+#include "Kismet/GameplayStatics.h"
 
 ACombatEnemy::ACombatEnemy()
 {
@@ -190,24 +192,24 @@ void ACombatEnemy::DoAttackTrace(FName DamageSourceBone)
 
 	if (GetWorld()->SweepMultiByObjectType(OutHits, TraceStart, TraceEnd, FQuat::Identity, ObjectParams, CollisionShape, QueryParams))
 	{
-		// iterate over each object hit
+		TSet<AActor*> HitPlayers;
 		for (const FHitResult& CurrentHit : OutHits)
 		{
-			/** does the actor have the player tag? */
-			if (CurrentHit.GetActor()->ActorHasTag(FName("Player")))
+			AActor* HitActor = CurrentHit.GetActor();
+			if (!IsValid(HitActor) || !HitActor->CanBeDamaged() || HitPlayers.Contains(HitActor)) continue;
+			const APawn* Pawn = Cast<APawn>(HitActor);
+			if ((!Pawn || !Pawn->IsPlayerControlled()) && !HitActor->ActorHasTag(TEXT("Player"))) continue;
+			HitPlayers.Add(HitActor);
+
+			if (ICombatDamageable* Damageable = Cast<ICombatDamageable>(HitActor))
 			{
-				// check if the actor is damageable
-				ICombatDamageable* Damageable = Cast<ICombatDamageable>(CurrentHit.GetActor());
-
-				if (Damageable)
-				{
-					// knock upwards and away from the impact normal
-					const FVector Impulse = (CurrentHit.ImpactNormal * -MeleeKnockbackImpulse) + (FVector::UpVector * MeleeLaunchImpulse);
-
-					// pass the damage event to the actor
-					Damageable->ApplyDamage(MeleeDamage, this, CurrentHit.ImpactPoint, Impulse);
-
-				}
+				const FVector Impulse = (CurrentHit.ImpactNormal * -MeleeKnockbackImpulse) + (FVector::UpVector * MeleeLaunchImpulse);
+				Damageable->ApplyDamage(MeleeDamage, this, CurrentHit.ImpactPoint, Impulse);
+			}
+			else if (HitActor->FindComponentByClass<UReflectionsHealthComponent>())
+			{
+				// The current hero uses the health component's engine damage listener.
+				UGameplayStatics::ApplyPointDamage(HitActor, MeleeDamage, GetActorForwardVector(), CurrentHit, GetController(), this, nullptr);
 			}
 		}
 	}

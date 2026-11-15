@@ -3,6 +3,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/AnimSingleNodeInstance.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "GameFramework/Character.h"
@@ -107,6 +108,20 @@ bool UReflectionsNpcCombatComponent::HasLineOfSight(AActor* Candidate) const
     return UReflectionsNpcReactionComponent::HasLineOfSight(GetOwner(), Candidate, Brain ? Brain->GetLocomotionDriver() : nullptr);
 }
 
+bool UReflectionsNpcCombatComponent::CanReachTarget(AActor* Candidate, bool bAtImpact) const
+{
+    const FVector Delta = Candidate->GetActorLocation() - GetOwner()->GetActorLocation();
+    float Reach = AttackRange;
+    // Begin the swing at the authored approach distance. At impact the blade only has to reach
+    // the outside of the target's capsule.
+    if (bAtImpact)
+    {
+        if (const ACharacter* Character = Cast<ACharacter>(Candidate))
+            Reach += Character->GetCapsuleComponent()->GetScaledCapsuleRadius();
+    }
+    return Delta.SizeSquared2D() <= FMath::Square(Reach) && FMath::Abs(Delta.Z) < 160.0f && HasLineOfSight(Candidate);
+}
+
 void UReflectionsNpcCombatComponent::FollowTarget(ACharacter* Driver, AActor* Candidate, float DeltaTime)
 {
     if (!Driver || !Candidate) return;
@@ -135,7 +150,9 @@ void UReflectionsNpcCombatComponent::FollowTarget(ACharacter* Driver, AActor* Ca
 
 void UReflectionsNpcCombatComponent::StartAttack(ACharacter* Driver)
 {
-    if (!Driver) return;
+    if (!Driver || !Target) return;
+    const FVector Facing = (Target->GetActorLocation() - Driver->GetActorLocation()).GetSafeNormal2D();
+    if (!Facing.IsNearlyZero()) Driver->SetActorRotation(Facing.Rotation());
     // A clip plays on the body when its skeleton is the body's; otherwise the strike is only timed. Among the
     // clips that fit, one at random, so a fighter does not repeat the same swing.
     UAnimSequence* Clip = nullptr;
@@ -224,19 +241,16 @@ void UReflectionsNpcCombatComponent::TickComponent(float DeltaTime, ELevelTick T
         StandDown(Driver);
         return;
     }
-    Target = Wanted;
-
     if (CombatState == EReflectionsNpcCombatState::Windup)
     {
         AttackTime += DeltaTime;
         if (!bImpactApplied && AttackTime >= ImpactTime)
         {
             bImpactApplied = true;
-            const FVector Delta = Wanted->GetActorLocation() - GetOwner()->GetActorLocation();
-            if (Delta.Size2D() <= AttackRange && FMath::Abs(Delta.Z) < 160.0f && HasLineOfSight(Wanted) && CanTarget(Wanted))
+            if (Wanted == Target && Wanted->CanBeDamaged() && CanReachTarget(Wanted, true))
             {
-                UGameplayStatics::ApplyDamage(Wanted, AttackDamage, Driver->GetController(), GetOwner(), UDamageType::StaticClass());
-                ++SuccessfulHits;
+                if (UGameplayStatics::ApplyDamage(Wanted, AttackDamage, Driver->GetController(), GetOwner(), UDamageType::StaticClass()) > 0.0f)
+                    ++SuccessfulHits;
             }
         }
         if (AttackTime >= AttackLength)
@@ -247,6 +261,7 @@ void UReflectionsNpcCombatComponent::TickComponent(float DeltaTime, ELevelTick T
         }
         return;
     }
+    Target = Wanted;
     if (CombatState == EReflectionsNpcCombatState::Recovering)
     {
         RecoveryTime -= DeltaTime;
@@ -258,8 +273,7 @@ void UReflectionsNpcCombatComponent::TickComponent(float DeltaTime, ELevelTick T
         if (RecoveryTime > 0.0f) return;
     }
 
-    const FVector Delta = Wanted->GetActorLocation() - GetOwner()->GetActorLocation();
-    if (Delta.Size2D() <= AttackRange && FMath::Abs(Delta.Z) < 160.0f && HasLineOfSight(Wanted))
+    if (CanReachTarget(Wanted, false))
         StartAttack(Driver);
     else
     {
