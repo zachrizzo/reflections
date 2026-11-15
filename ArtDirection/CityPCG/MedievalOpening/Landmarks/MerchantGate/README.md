@@ -19,9 +19,12 @@ The official [TripoSR code](https://github.com/VAST-AI-Research/TripoSR) and
 [pretrained model](https://huggingface.co/stabilityai/TripoSR) are MIT-licensed.
 The upstream project lists about 6 GB of GPU memory for its default single
 image run. This is a candidate for regions where the installed Hunyuan model's
-output terms below are unsuitable. The actual generated result and its quality,
-Windows compatibility, background removal, arch opening, UVs and Unreal
-import have not yet been tested.
+output terms below are unsuitable. Two remote TripoSR trials from the original
+reference and a [transparent square cutout](References/ImageTo3D_Cutouts/README.md)
+produced warped, fragmented gate meshes with slab-like surfaces; one also
+showed a likely blocked arch. Neither is suitable for game placement. They are
+not tests of the separate pinned local runner, which still needs its first real
+generation and Windows, UV and Unreal import checks.
 
 For a reproducible local setup, use a fresh directory under this project's
 `Saved/CityPCG/ImageTo3D` and the following pinned revisions:
