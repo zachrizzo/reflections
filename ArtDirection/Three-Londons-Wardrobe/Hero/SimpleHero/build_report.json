@@ -1,0 +1,28 @@
+{
+  "selected_faces": {
+    "Shirt": 880,
+    "Trousers": 1296,
+    "BootSkin": 1908
+  },
+  "body_vertices": 3328,
+  "body_visible_vertices": 1422,
+  "body_mask_png": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\Intermediate\\SimpleHero\\T_HeroSimple_BodyMask.png",
+  "meshes": {
+    "SK_HeroSimple_Shirt": {
+      "vertices": 583,
+      "polygons": 956
+    },
+    "SK_HeroSimple_Trousers": {
+      "vertices": 670,
+      "polygons": 1296
+    },
+    "SK_HeroSimple_Footwear": {
+      "vertices": 3054,
+      "polygons": 3752
+    },
+    "SK_HeroSimple_Cloak": {
+      "vertices": 3577,
+      "polygons": 3456
+    }
+  }
+}

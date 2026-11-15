@@ -1,0 +1,190 @@
+{
+ "checks": {
+  "playing": true,
+  "save_screen": true,
+  "save_screen_slots": true,
+  "slot1_saved": true,
+  "slot1_is_checkpoint": true,
+  "quick_save_f5": true,
+  "quick_saved": true,
+  "load_screen": true,
+  "load_screen_rows": true,
+  "load_confirm": true,
+  "slot1_reloaded": true,
+  "slot1_position": true,
+  "slot1_health": true,
+  "slot1_tarnish": true,
+  "death_screen": true,
+  "death_default_respawn": true,
+  "respawned": true,
+  "respawn_at_slot1": true,
+  "quick_loaded": true,
+  "quick_position": true,
+  "quick_tarnish_kept": true
+ },
+ "steps": [
+  {
+   "save_screen": {
+    "screen": "SAVE_GAME",
+    "focus": 0,
+    "buttons": [
+     "Slot 1",
+     "Slot 2",
+     "Slot 3",
+     "Back"
+    ],
+    "pawn": [
+     0,
+     0,
+     88
+    ],
+    "health": 70.0,
+    "tarnish": 0,
+    "checkpoint": "Start",
+    "t": 6.8
+   }
+  },
+  {
+   "saved_slot1": {
+    "screen": "SAVE_GAME",
+    "focus": 0,
+    "buttons": [
+     "Slot 1",
+     "Slot 2",
+     "Slot 3",
+     "Back"
+    ],
+    "pawn": [
+     0,
+     0,
+     88
+    ],
+    "health": 70.0,
+    "tarnish": 0,
+    "checkpoint": "Slot 1",
+    "hurt": 70.0,
+    "spot": [
+     0,
+     0,
+     88
+    ],
+    "t": 7.8
+   }
+  },
+  {
+   "quick_saved": {
+    "screen": "NONE",
+    "focus": -1,
+    "buttons": [],
+    "pawn": [
+     600,
+     0,
+     88
+    ],
+    "health": 70.0,
+    "tarnish": 2,
+    "checkpoint": "Quick save",
+    "spot": [
+     600,
+     0,
+     88
+    ],
+    "t": 9.6
+   }
+  },
+  {
+   "load_screen": {
+    "screen": "LOAD_GAME",
+    "focus": 0,
+    "buttons": [
+     "Quick save",
+     "Autosave",
+     "Slot 1",
+     "Slot 2",
+     "Slot 3",
+     "Back"
+    ],
+    "pawn": [
+     1500,
+     0,
+     88
+    ],
+    "health": 70.0,
+    "tarnish": 2,
+    "checkpoint": "Quick save",
+    "t": 10.2
+   }
+  },
+  {
+   "after_load_slot1": {
+    "screen": "NONE",
+    "focus": -1,
+    "buttons": [],
+    "pawn": [
+     0,
+     0,
+     88
+    ],
+    "health": 70.0,
+    "tarnish": 0,
+    "checkpoint": "Slot 1",
+    "t": 13.8
+   }
+  },
+  {
+   "death_screen": {
+    "screen": "DEATH",
+    "focus": 0,
+    "buttons": [
+     "Respawn at last save",
+     "Load last save (Slot 1)",
+     "Load Game",
+     "Quit to title"
+    ],
+    "pawn": [
+     0,
+     0,
+     88
+    ],
+    "health": 0.0,
+    "tarnish": 0,
+    "checkpoint": "Slot 1",
+    "t": 15.8
+   }
+  },
+  {
+   "respawned": {
+    "screen": "NONE",
+    "focus": -1,
+    "buttons": [],
+    "pawn": [
+     0,
+     0,
+     88
+    ],
+    "health": 100.0,
+    "tarnish": 0,
+    "checkpoint": "Slot 1",
+    "t": 17.2
+   }
+  },
+  {
+   "after_quick_load": {
+    "screen": "NONE",
+    "focus": -1,
+    "buttons": [],
+    "pawn": [
+     600,
+     0,
+     88
+    ],
+    "health": 70.0,
+    "tarnish": 2,
+    "checkpoint": "Quick save",
+    "t": 18.9
+   }
+  }
+ ],
+ "backed_up": [],
+ "seconds": 19.3
+}

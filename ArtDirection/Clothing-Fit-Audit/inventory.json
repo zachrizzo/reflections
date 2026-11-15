@@ -1,0 +1,822 @@
+{
+  "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\Three-Londons-Wardrobe\\Merchant\\Merchant.blend": [
+    {
+      "name": "Armature",
+      "type": "ARMATURE",
+      "v": null,
+      "modifiers": []
+    },
+    {
+      "name": "Native MetaHuman fitting body",
+      "type": "MESH",
+      "v": 7622,
+      "modifiers": [
+        [
+          "root",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "Native MetaHuman fitting face",
+      "type": "MESH",
+      "v": 3789,
+      "modifiers": []
+    },
+    {
+      "name": "SK_Merchant_Belt",
+      "type": "MESH",
+      "v": 296,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Boots",
+      "type": "MESH",
+      "v": 1512,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_BrassScales",
+      "type": "MESH",
+      "v": 1374,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Coat",
+      "type": "MESH",
+      "v": 6838,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_CoinPouch",
+      "type": "MESH",
+      "v": 489,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Ledger",
+      "type": "MESH",
+      "v": 276,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Trousers",
+      "type": "MESH",
+      "v": 1944,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Waistcoat",
+      "type": "MESH",
+      "v": 6550,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    }
+  ],
+  "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\Three-Londons-Wardrobe\\Red London\\FerryPilot\\FerryPilot_Outfit.blend": [
+    {
+      "name": "Armature",
+      "type": "ARMATURE",
+      "v": null,
+      "modifiers": []
+    },
+    {
+      "name": "MetaHuman body fitting reference",
+      "type": "MESH",
+      "v": 3328,
+      "modifiers": [
+        [
+          "root",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "MetaHuman face fitting reference",
+      "type": "MESH",
+      "v": 788,
+      "modifiers": []
+    },
+    {
+      "name": "SK_FerryPilot_HandCoil",
+      "type": "MESH",
+      "v": 7170,
+      "modifiers": [
+        [
+          "MetaHuman skin weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FerryPilot_LeatherCapelet",
+      "type": "MESH",
+      "v": 4345,
+      "modifiers": [
+        [
+          "MetaHuman skin weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FerryPilot_Neckerchief",
+      "type": "MESH",
+      "v": 1098,
+      "modifiers": [
+        [
+          "MetaHuman skin weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FerryPilot_RidingBoots",
+      "type": "MESH",
+      "v": 6872,
+      "modifiers": [
+        [
+          "MetaHuman skin weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FerryPilot_RopeBelt",
+      "type": "MESH",
+      "v": 2790,
+      "modifiers": [
+        [
+          "MetaHuman skin weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FerryPilot_StripedTunic",
+      "type": "MESH",
+      "v": 6174,
+      "modifiers": [
+        [
+          "MetaHuman skin weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FerryPilot_Trousers",
+      "type": "MESH",
+      "v": 6528,
+      "modifiers": [
+        [
+          "MetaHuman skin weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FerryPilot_WideBrimHat",
+      "type": "MESH",
+      "v": 3542,
+      "modifiers": [
+        [
+          "MetaHuman skin weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    }
+  ],
+  "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\Three-Londons-Wardrobe\\Red London\\Bridge Guard\\BridgeGuard-Outfit.blend": [
+    {
+      "name": "Armature",
+      "type": "ARMATURE",
+      "v": null,
+      "modifiers": []
+    },
+    {
+      "name": "MetaHuman body fitting reference",
+      "type": "MESH",
+      "v": 7622,
+      "modifiers": [
+        [
+          "root",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "MetaHuman head fitting reference",
+      "type": "MESH",
+      "v": 3789,
+      "modifiers": []
+    },
+    {
+      "name": "SK_BridgeGuard_Armor",
+      "type": "MESH",
+      "v": 7428,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_BridgeGuard_Boots",
+      "type": "MESH",
+      "v": 15096,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_BridgeGuard_Gambeson",
+      "type": "MESH",
+      "v": 17856,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_BridgeGuard_RoundShield",
+      "type": "MESH",
+      "v": 5660,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_BridgeGuard_Sash",
+      "type": "MESH",
+      "v": 3366,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_BridgeGuard_Trousers",
+      "type": "MESH",
+      "v": 4410,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    }
+  ],
+  "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\Three-Londons-Wardrobe\\Red London\\Festival Drummer\\FestivalDrummer-Outfit.blend": [
+    {
+      "name": "Armature",
+      "type": "ARMATURE",
+      "v": null,
+      "modifiers": []
+    },
+    {
+      "name": "MetaHuman body fitting reference",
+      "type": "MESH",
+      "v": 3328,
+      "modifiers": [
+        [
+          "root",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "MetaHuman head fitting reference",
+      "type": "MESH",
+      "v": 788,
+      "modifiers": []
+    },
+    {
+      "name": "SK_FestivalDrummer_Beaters",
+      "type": "MESH",
+      "v": 748,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FestivalDrummer_Belt",
+      "type": "MESH",
+      "v": 2188,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FestivalDrummer_Blouse",
+      "type": "MESH",
+      "v": 7786,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FestivalDrummer_Boots",
+      "type": "MESH",
+      "v": 11596,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FestivalDrummer_Capelet",
+      "type": "MESH",
+      "v": 7856,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FestivalDrummer_DrumHarness",
+      "type": "MESH",
+      "v": 1010,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FestivalDrummer_RopeDrum",
+      "type": "MESH",
+      "v": 6692,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FestivalDrummer_Sash",
+      "type": "MESH",
+      "v": 11541,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FestivalDrummer_Skirt",
+      "type": "MESH",
+      "v": 9345,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_FestivalDrummer_Trousers",
+      "type": "MESH",
+      "v": 3510,
+      "modifiers": [
+        [
+          "MetaHuman deformation",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    }
+  ],
+  "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\Three-Londons-Wardrobe\\Red London\\Archive Apprentice\\ArchiveApprentice.blend": [
+    {
+      "name": "Armature",
+      "type": "ARMATURE",
+      "v": null,
+      "modifiers": []
+    },
+    {
+      "name": "Native MetaHuman fitting body",
+      "type": "MESH",
+      "v": 3328,
+      "modifiers": [
+        [
+          "root",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "Native MetaHuman fitting face",
+      "type": "MESH",
+      "v": 788,
+      "modifiers": []
+    },
+    {
+      "name": "SK_Merchant_Boots",
+      "type": "MESH",
+      "v": 1512,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Coat",
+      "type": "MESH",
+      "v": 6602,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Ledger",
+      "type": "MESH",
+      "v": 276,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Satchel",
+      "type": "MESH",
+      "v": 104,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Trousers",
+      "type": "MESH",
+      "v": 1944,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Waistcoat",
+      "type": "MESH",
+      "v": 6200,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    }
+  ],
+  "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\Three-Londons-Wardrobe\\Red London\\Glass Artisan\\GlassArtisan.blend": [
+    {
+      "name": "Armature",
+      "type": "ARMATURE",
+      "v": null,
+      "modifiers": []
+    },
+    {
+      "name": "Native MetaHuman fitting body",
+      "type": "MESH",
+      "v": 3328,
+      "modifiers": [
+        [
+          "root",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "Native MetaHuman fitting face",
+      "type": "MESH",
+      "v": 788,
+      "modifiers": []
+    },
+    {
+      "name": "SK_Merchant_Boots",
+      "type": "MESH",
+      "v": 1512,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Coat",
+      "type": "MESH",
+      "v": 6602,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Glass",
+      "type": "MESH",
+      "v": 532,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Trousers",
+      "type": "MESH",
+      "v": 1944,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_Waistcoat",
+      "type": "MESH",
+      "v": 6200,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Merchant_WorkApron",
+      "type": "MESH",
+      "v": 898,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    }
+  ],
+  "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\Three-Londons-Wardrobe\\White London - Rags and Tattoos\\IvenMetaHuman\\IvenRook_MetaHuman_Outfit.blend": [
+    {
+      "name": "Armature",
+      "type": "ARMATURE",
+      "v": null,
+      "modifiers": []
+    },
+    {
+      "name": "MetaHuman fitting body",
+      "type": "MESH",
+      "v": 7622,
+      "modifiers": [
+        [
+          "root",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "MetaHuman fitting head",
+      "type": "MESH",
+      "v": 3789,
+      "modifiers": []
+    },
+    {
+      "name": "SK_Iven_ChestGlyph",
+      "type": "MESH",
+      "v": 92,
+      "modifiers": [
+        [
+          "MetaHuman body weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Iven_RagSkirt",
+      "type": "MESH",
+      "v": 12844,
+      "modifiers": [
+        [
+          "MetaHuman body weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Iven_Sandals",
+      "type": "MESH",
+      "v": 18956,
+      "modifiers": [
+        [
+          "MetaHuman body weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Iven_Tattoos",
+      "type": "MESH",
+      "v": 2096,
+      "modifiers": [
+        [
+          "MetaHuman body weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_Iven_WorkTunic",
+      "type": "MESH",
+      "v": 17368,
+      "modifiers": [
+        [
+          "MetaHuman body weights",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    }
+  ],
+  "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\Three-Londons-Wardrobe\\Hero\\Hero_Wardrobe.blend": [
+    {
+      "name": "Armature",
+      "type": "ARMATURE",
+      "v": null,
+      "modifiers": []
+    },
+    {
+      "name": "Native MetaHuman fitting body",
+      "type": "MESH",
+      "v": 3328,
+      "modifiers": [
+        [
+          "root",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "Native MetaHuman fitting face",
+      "type": "MESH",
+      "v": 788,
+      "modifiers": []
+    },
+    {
+      "name": "SK_HeroCoat",
+      "type": "MESH",
+      "v": 16214,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    },
+    {
+      "name": "SK_HeroTails",
+      "type": "MESH",
+      "v": 3388,
+      "modifiers": [
+        [
+          "MetaHuman Body",
+          "ARMATURE",
+          "Armature"
+        ]
+      ]
+    }
+  ]
+}

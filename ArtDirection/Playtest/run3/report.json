@@ -1,0 +1,1077 @@
+{
+  "open_sequence_at_play": "/Game/Combat/Melee/Source/LS_Melee_Kimodo.LS_Melee_Kimodo",
+  "started_local": "19:03:26",
+  "step0": {
+    "start_map": "/Game/Characters/Hero/Sample/UEDPIE_0_Lvl_HeroSampleCrowd.Lvl_HeroSampleCrowd",
+    "screen_at_play": "<ReflectionsFlowScreen.TITLE: 1>",
+    "has_checkpoint": true,
+    "shots": [
+      "r3-01-title.png"
+    ],
+    "after_enter_world": "/Game/MockCity/UEDPIE_0_Lvl_MockCity.Lvl_MockCity",
+    "after_enter_screen": "<ReflectionsFlowScreen.NONE: 0>"
+  },
+  "step1": {
+    "map": "/Game/MockCity/UEDPIE_0_Lvl_MockCity.Lvl_MockCity",
+    "intro_playing": true,
+    "shots": [
+      "r3-02-intro.png",
+      "r3-03-giltside-start.png"
+    ],
+    "camera_above_hero_cm": 89,
+    "camera_dist_cm": 196,
+    "state": {
+      "t": 11.9,
+      "loc": [
+        146200,
+        1100,
+        88
+      ],
+      "health": 100.0,
+      "mana": 100.0,
+      "jump_component": true,
+      "side": "RED: 1>",
+      "coins": {
+        "gray": 0,
+        "red": 0,
+        "white": 0
+      },
+      "pages": [],
+      "keys": [],
+      "book": false,
+      "screen": "NONE: 0>",
+      "run_live": true,
+      "tarnish": "0/20",
+      "move_ignored": false
+    },
+    "tracker": "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Find Ilse Varrow on Lantern Row\nPointer: Lantern Row at V(X=157000.00, Y=3500.00), 111 m\nMarks: 0, prompt: E   Speak with Jory Pell\n",
+    "villain": {
+      "possession_running": true
+    },
+    "pickups": {
+      "coins": 13,
+      "pages": 3,
+      "keys": 1,
+      "doors": 1
+    },
+    "ring": {
+      "count": 12,
+      "dist_m": [
+        24,
+        25,
+        29,
+        34,
+        35,
+        36,
+        36,
+        37,
+        40,
+        44,
+        46,
+        51
+      ],
+      "moving": 0
+    }
+  },
+  "cutscenes": [
+    "Intro @intro",
+    "FirstPage @page 1",
+    "GiltTower @gilt tower",
+    "MirrorWhole @mirror whole"
+  ],
+  "step2": {
+    "shard_legs": [],
+    "after_shards": {
+      "t": 21.0,
+      "loc": [
+        146200,
+        1100,
+        88
+      ],
+      "health": 100.0,
+      "mana": 100.0,
+      "jump_component": true,
+      "side": "RED: 1>",
+      "coins": {
+        "gray": 0,
+        "red": 0,
+        "white": 0
+      },
+      "pages": [],
+      "keys": [],
+      "book": false,
+      "screen": "NONE: 0>",
+      "run_live": true,
+      "tarnish": "0/20",
+      "move_ignored": false
+    },
+    "ilse_at": [
+      157496,
+      3394,
+      0
+    ],
+    "walk_ilse": {
+      "leg": "to Ilse on Lantern Row",
+      "from": [
+        146200,
+        1100,
+        88
+      ],
+      "to": [
+        157280,
+        3350,
+        0
+      ],
+      "straight_m": 113.1,
+      "nav_points": 7,
+      "nav_partial": false,
+      "result": "STUCK",
+      "game_s": 6.6,
+      "stuck_at": [
+        146261,
+        1534,
+        88
+      ],
+      "left_m": 111.7,
+      "teleported_rest": true
+    },
+    "dist_to_ilse_cm": 610,
+    "talk_open_after_E": false,
+    "talk_ui": [
+      "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Find Ilse Varrow on Lantern Row\nPointer: Lantern Row at V(X=157000.00, Y=3500.00), 3 m\nMarks: 1, prompt: \n"
+    ],
+    "talk_open_end": false,
+    "after_talk": {
+      "t": 29.7,
+      "loc": [
+        157280,
+        3350,
+        88
+      ],
+      "health": 100.0,
+      "mana": 100.0,
+      "jump_component": true,
+      "side": "RED: 1>",
+      "coins": {
+        "gray": 0,
+        "red": 0,
+        "white": 0
+      },
+      "pages": [],
+      "keys": [],
+      "book": false,
+      "screen": "NONE: 0>",
+      "run_live": true,
+      "tarnish": "0/20",
+      "move_ignored": false
+    },
+    "shots": [
+      "r3-04-talk-ilse.png"
+    ],
+    "retry": {
+      "move_both": {
+        "moved_cm": 621,
+        "game_s": 1.59,
+        "speed_now": 500
+      },
+      "move_Input/IA_Move": {
+        "moved_cm": 693,
+        "game_s": 1.73,
+        "speed_now": 500
+      },
+      "move_Input/Actions/IA_Move": {
+        "moved_cm": 53,
+        "game_s": 1.57,
+        "speed_now": 0
+      },
+      "dist_cm": 174,
+      "ui_before_E": "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Find Ilse Varrow on Lantern Row\nPointer: Lantern Row at V(X=157000.00, Y=3500.00), 5 m\nMarks: 1, prompt: E   Speak with Ilse Varrow\n",
+      "talk_open": true,
+      "talk_lines": [
+        "HUD hidden | journal closed | talk open\nTracked: The Mirror Made Whole\n  [ ] Cast a spell\nPointer: Lantern Row at V(X=157000.00, Y=3500.00), 5 m\nMarks: 1, prompt: \nTalk: Ilse Varrow: \"You're late, and you're limping. Which first?\" (1/4)\n  > Goodbye [goodbye]\n",
+        "HUD hidden | journal closed | talk open\nTracked: The Mirror Made Whole\n  [ ] Cast a spell\nPointer: Lantern Row at V(X=157000.00, Y=3500.00), 5 m\nMarks: 1, prompt: \nTalk: Wren: \"Neither. I came the long way.\" (2/4)\n  > Goodbye [goodbye]\n",
+        "HUD hidden | journal closed | talk open\nTracked: The Mirror Made Whole\n  [ ] Cast a spell\nPointer: Lantern Row at V(X=157000.00, Y=3500.00), 5 m\nMarks: 1, prompt: \nTalk: Ilse Varrow: \"Mm. Show me your hands. Aim at the lamp post.\" (3/4)\n  > Goodbye [goodbye]\n",
+        "HUD hidden | journal closed | talk open\nTracked: The Mirror Made Whole\n  [ ] Cast a spell\nPointer: Lantern Row at V(X=157000.00, Y=3500.00), 5 m\nMarks: 1, prompt: \nTalk: Ilse Varrow: \"Light's the only thing it hates. Cast like you mean it.\" (4/4)\n  > Goodbye [goodbye]\n"
+      ],
+      "talk_open_end": false,
+      "after": "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Cast a spell\nPointer: Lantern Row at V(X=157000.00, Y=3500.00), 5 m\nMarks: 1, prompt: E   Speak with Ilse Varrow\n"
+    }
+  },
+  "step3": {
+    "spawned": [
+      "BP_Look_GiltBridgeGuard_C_1"
+    ],
+    "casts": 8,
+    "mana_start": 100.0,
+    "guard_down": false,
+    "shots": [
+      "r3-05-guard-spell-kill.png"
+    ],
+    "tracker": "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Find the burning eyes\nPointer: Bell Square at V(X=143500.00, Y=700.00), 140 m\nMarks: 1, prompt: E   Speak with Gen Bc058f90\n",
+    "ring": [
+      {
+        "count": 12,
+        "dist_m": [
+          15,
+          31,
+          48,
+          94,
+          96,
+          111,
+          111,
+          113,
+          114,
+          124,
+          1570,
+          1596
+        ],
+        "moving": 0
+      },
+      {
+        "count": 12,
+        "dist_m": [
+          19,
+          29,
+          44,
+          94,
+          96,
+          111,
+          111,
+          111,
+          113,
+          129,
+          1534,
+          1551
+        ],
+        "moving": 0
+      }
+    ],
+    "state": {
+      "t": 77.3,
+      "loc": [
+        157290,
+        3091,
+        88
+      ],
+      "health": 40.0,
+      "mana": 100.0,
+      "jump_component": true,
+      "side": "RED: 1>",
+      "coins": {
+        "gray": 0,
+        "red": 0,
+        "white": 0
+      },
+      "pages": [],
+      "keys": [],
+      "book": false,
+      "screen": "NONE: 0>",
+      "run_live": true,
+      "tarnish": "3/20",
+      "move_ignored": false
+    }
+  },
+  "step4": {
+    "host_at_start": "BP_Look_GiltGlassman_C_1",
+    "walk_bell_square": {
+      "leg": "to Bell Square (burning eyes)",
+      "from": [
+        157290,
+        3091,
+        88
+      ],
+      "to": [
+        143500,
+        1000,
+        88
+      ],
+      "straight_m": 139.5,
+      "nav_points": 7,
+      "nav_partial": false,
+      "result": "TIMEOUT",
+      "game_s": 22.4,
+      "at": [
+        146820,
+        3135,
+        88
+      ],
+      "left_m": 39.5,
+      "teleported_rest": true
+    },
+    "host": "BP_Look_GiltGlassman_C_0",
+    "possessed_npcs": [
+      "BP_Look_FrostWen_C_0",
+      "BP_Look_GiltGlassman_C_0",
+      "BP_Look_GiltGlassman_C_1",
+      "BP_Look_GiltCoinClerk_C_0",
+      "BP_Look_GiltFerryman_C_0",
+      "BP_Look_GiltGlassman_C_2",
+      "BP_Look_GiltCoinClerk_C_2",
+      "BP_Look_GiltBarnaby_C_2"
+    ],
+    "casts_at_host": 4,
+    "tarnish": "8/20",
+    "tracker": "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Find the burning eyes\nPointer: Bell Square at V(X=143500.00, Y=700.00), 41 m\nMarks: 0, prompt: \n"
+  },
+  "step5": {
+    "gray_shards_in_giltside": [
+      [
+        146250,
+        600,
+        100
+      ],
+      [
+        146150,
+        350,
+        100
+      ],
+      [
+        144000,
+        600,
+        100
+      ]
+    ],
+    "shard_legs": [
+      {
+        "leg": "Pewterside shard in Giltside",
+        "from": [
+          146767,
+          3135,
+          88
+        ],
+        "to": [
+          146250,
+          600,
+          100
+        ],
+        "straight_m": 25.9,
+        "nav_points": 6,
+        "nav_partial": false,
+        "result": "STUCK",
+        "game_s": 8.4,
+        "stuck_at": [
+          146286,
+          1622,
+          88
+        ],
+        "left_m": 10.2,
+        "teleported_rest": true
+      },
+      {
+        "leg": "Pewterside shard in Giltside",
+        "from": [
+          146250,
+          600,
+          88
+        ],
+        "to": [
+          146150,
+          350,
+          100
+        ],
+        "straight_m": 2.7,
+        "nav_points": 2,
+        "nav_partial": false,
+        "result": "arrived",
+        "game_s": 0.8
+      }
+    ],
+    "coins_before_jump": {
+      "gray": 2,
+      "red": 0,
+      "white": 0
+    },
+    "jump_down": {
+      "can_jump_before": "(Text(\"\"), <ReflectionsWorld.GRAY: 0>)",
+      "key": "Z",
+      "changed_side": true,
+      "before": {
+        "t": 159.6,
+        "loc": [
+          146159,
+          373,
+          88
+        ],
+        "health": 16.0,
+        "mana": 100.0,
+        "jump_component": true,
+        "side": "RED: 1>",
+        "coins": {
+          "gray": 2,
+          "red": 0,
+          "white": 0
+        },
+        "pages": [],
+        "keys": [],
+        "book": false,
+        "screen": "NONE: 0>",
+        "run_live": true,
+        "tarnish": "10/20",
+        "move_ignored": false
+      },
+      "after": {
+        "t": 161.2,
+        "loc": [
+          -3841,
+          373,
+          88
+        ],
+        "health": 16.0,
+        "mana": 24.4,
+        "jump_component": true,
+        "side": "GRAY: 0>",
+        "coins": {
+          "gray": 1,
+          "red": 0,
+          "white": 0
+        },
+        "pages": [],
+        "keys": [],
+        "book": false,
+        "screen": "NONE: 0>",
+        "run_live": true,
+        "tarnish": "10/20",
+        "move_ignored": false
+      }
+    },
+    "shots": [
+      "r3-07-pewterside.png",
+      "r3-08-weighhouse-roof.png"
+    ],
+    "page1_at": [
+      -8550,
+      -150,
+      1100
+    ],
+    "walk_page1": {
+      "leg": "Weigh-House stair to roof page",
+      "from": [
+        -3841,
+        373,
+        88
+      ],
+      "to": [
+        -8550,
+        -150,
+        1100
+      ],
+      "straight_m": 48.5,
+      "nav_points": 3,
+      "nav_partial": true,
+      "result": "PATH_END_SHORT",
+      "game_s": 9.0,
+      "at": [
+        -7920,
+        -144,
+        88
+      ],
+      "left_m": 11.9,
+      "teleported_rest": true
+    },
+    "walk_roof_shard": {
+      "leg": "roof Giltside shard",
+      "from": [
+        -8900,
+        -150,
+        1088
+      ],
+      "to": [
+        -8950,
+        50,
+        1100
+      ],
+      "straight_m": 2.1,
+      "nav_points": 2,
+      "nav_partial": false,
+      "result": "arrived",
+      "game_s": 0.8
+    },
+    "state": {
+      "t": 173.9,
+      "loc": [
+        -8950,
+        50,
+        1088
+      ],
+      "health": 16.0,
+      "mana": 100.0,
+      "jump_component": true,
+      "side": "GRAY: 0>",
+      "coins": {
+        "gray": 1,
+        "red": 1,
+        "white": 0
+      },
+      "pages": [
+        "WeighHousePage"
+      ],
+      "keys": [],
+      "book": false,
+      "screen": "NONE: 0>",
+      "run_live": true,
+      "tarnish": "10/20",
+      "move_ignored": false
+    },
+    "tracker": "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Find the burning eyes\nPointer: Bell Square at V(X=143500.00, Y=700.00), 1525 m (other side)\nMarks: 0, prompt: \n"
+  },
+  "step6": {
+    "jump_up": {
+      "can_jump_before": "(Text(\"\"), <ReflectionsWorld.RED: 1>)",
+      "key": "X",
+      "changed_side": true,
+      "before": {
+        "t": 179.9,
+        "loc": [
+          -8962,
+          99,
+          1088
+        ],
+        "health": 16.0,
+        "mana": 100.0,
+        "jump_component": true,
+        "side": "GRAY: 0>",
+        "coins": {
+          "gray": 1,
+          "red": 1,
+          "white": 0
+        },
+        "pages": [
+          "WeighHousePage"
+        ],
+        "keys": [],
+        "book": false,
+        "screen": "NONE: 0>",
+        "run_live": true,
+        "tarnish": "10/20",
+        "move_ignored": false
+      },
+      "after": {
+        "t": 181.5,
+        "loc": [
+          141038,
+          99,
+          1088
+        ],
+        "health": 16.0,
+        "mana": 24.6,
+        "jump_component": true,
+        "side": "RED: 1>",
+        "coins": {
+          "gray": 1,
+          "red": 0,
+          "white": 0
+        },
+        "pages": [
+          "WeighHousePage"
+        ],
+        "keys": [],
+        "book": false,
+        "screen": "NONE: 0>",
+        "run_live": true,
+        "tarnish": "10/20",
+        "move_ignored": false
+      }
+    },
+    "key_pickups": [
+      [
+        163950,
+        3700,
+        160
+      ]
+    ],
+    "walk_down_and_to_key": {
+      "leg": "Weigh-House roof -> Lantern Gate key",
+      "from": [
+        141038,
+        99,
+        1088
+      ],
+      "to": [
+        163950,
+        3700,
+        160
+      ],
+      "straight_m": 232.1,
+      "nav_points": 0,
+      "nav_partial": false,
+      "no_nav_path": true,
+      "result": "STUCK",
+      "game_s": 6.4,
+      "stuck_at": [
+        141930,
+        312,
+        1088
+      ],
+      "left_m": 223.0,
+      "teleported_rest": true
+    },
+    "tarnished_near_gate": [],
+    "state": {
+      "t": 189.6,
+      "loc": [
+        163950,
+        3706,
+        188
+      ],
+      "health": 16.0,
+      "mana": 89.0,
+      "jump_component": true,
+      "side": "RED: 1>",
+      "coins": {
+        "gray": 1,
+        "red": 0,
+        "white": 0
+      },
+      "pages": [
+        "WeighHousePage"
+      ],
+      "keys": [
+        "GiltTowerKey"
+      ],
+      "book": false,
+      "screen": "NONE: 0>",
+      "run_live": true,
+      "tarnish": "10/20",
+      "move_ignored": false
+    },
+    "tracker": "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Find the burning eyes\nPointer: Bell Square at V(X=143500.00, Y=700.00), 207 m\nMarks: 0, prompt: \n",
+    "shots": [
+      "r3-09-lantern-gate-key.png"
+    ]
+  },
+  "step7": {
+    "door_at": [
+      150000,
+      6340,
+      0
+    ],
+    "walk_door": {
+      "leg": "to the Gilt Tower door",
+      "from": [
+        163950,
+        3706,
+        188
+      ],
+      "to": [
+        150000,
+        6340,
+        0
+      ],
+      "straight_m": 142.0,
+      "nav_points": 0,
+      "nav_partial": false,
+      "no_nav_path": true,
+      "result": "STUCK",
+      "game_s": 14.8,
+      "stuck_at": [
+        160590,
+        4486,
+        88
+      ],
+      "left_m": 107.5,
+      "teleported_rest": true
+    },
+    "door_open": true,
+    "shots": [
+      "r3-10-gilt-tower-cutscene.png",
+      "r3-11-inside-gilt-tower.png"
+    ],
+    "walk_page2": {
+      "leg": "inside the Gilt Tower to page 2",
+      "from": [
+        150000,
+        6150,
+        88
+      ],
+      "to": [
+        150200,
+        7200,
+        100
+      ],
+      "straight_m": 10.7,
+      "nav_points": 3,
+      "nav_partial": false,
+      "result": "arrived",
+      "game_s": 2.4
+    },
+    "walk_frost_shard": {
+      "leg": "Frostside shard in the tower",
+      "from": [
+        150210,
+        7183,
+        88
+      ],
+      "to": [
+        149750,
+        7250,
+        100
+      ],
+      "straight_m": 4.6,
+      "nav_points": 2,
+      "nav_partial": false,
+      "result": "arrived",
+      "game_s": 1.2
+    },
+    "state": {
+      "t": 221.0,
+      "loc": [
+        149815,
+        7241,
+        88
+      ],
+      "health": 16.0,
+      "mana": 100.0,
+      "jump_component": true,
+      "side": "RED: 1>",
+      "coins": {
+        "gray": 1,
+        "red": 0,
+        "white": 1
+      },
+      "pages": [
+        "WeighHousePage",
+        "GiltTowerPage"
+      ],
+      "keys": [
+        "GiltTowerKey"
+      ],
+      "book": false,
+      "screen": "NONE: 0>",
+      "run_live": true,
+      "tarnish": "13/20",
+      "move_ignored": false
+    },
+    "tracker": "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Find the burning eyes\nPointer: Bell Square at V(X=143500.00, Y=700.00), 91 m\nMarks: 0, prompt: \n"
+  },
+  "step8": {
+    "jump_up": {
+      "can_jump_before": "(Text(\"\"), <ReflectionsWorld.WHITE: 2>)",
+      "key": "X",
+      "changed_side": true,
+      "before": {
+        "t": 226.7,
+        "loc": [
+          149765,
+          7248,
+          88
+        ],
+        "health": 16.0,
+        "mana": 100.0,
+        "jump_component": true,
+        "side": "RED: 1>",
+        "coins": {
+          "gray": 1,
+          "red": 0,
+          "white": 1
+        },
+        "pages": [
+          "WeighHousePage",
+          "GiltTowerPage"
+        ],
+        "keys": [
+          "GiltTowerKey"
+        ],
+        "book": false,
+        "screen": "NONE: 0>",
+        "run_live": true,
+        "tarnish": "13/20",
+        "move_ignored": false
+      },
+      "after": {
+        "t": 228.3,
+        "loc": [
+          299765,
+          7248,
+          88
+        ],
+        "health": 16.0,
+        "mana": 24.8,
+        "jump_component": true,
+        "side": "WHITE: 2>",
+        "coins": {
+          "gray": 1,
+          "red": 0,
+          "white": 0
+        },
+        "pages": [
+          "WeighHousePage",
+          "GiltTowerPage"
+        ],
+        "keys": [
+          "GiltTowerKey"
+        ],
+        "book": false,
+        "screen": "NONE: 0>",
+        "run_live": true,
+        "tarnish": "13/20",
+        "move_ignored": false
+      }
+    },
+    "shots": [
+      "r3-12-frost-tower-inside.png",
+      "r3-13-mirror-whole.png"
+    ],
+    "walk_page3": {
+      "leg": "inside the Frost Tower to page 3",
+      "from": [
+        299765,
+        7248,
+        88
+      ],
+      "to": [
+        300100,
+        7100,
+        100
+      ],
+      "straight_m": 3.7,
+      "nav_points": 2,
+      "nav_partial": false,
+      "result": "arrived",
+      "game_s": 1.3
+    },
+    "final_spell_given": true,
+    "boss": [
+      [
+        "ReflectionsVillainBoss_0",
+        [
+          301300,
+          7000,
+          2575
+        ],
+        "<ReflectionsVillainBossState.DORMANT: 0>"
+      ]
+    ],
+    "state": {
+      "t": 235.3,
+      "loc": [
+        300100,
+        7100,
+        88
+      ],
+      "health": 16.0,
+      "mana": 49.6,
+      "jump_component": true,
+      "side": "WHITE: 2>",
+      "coins": {
+        "gray": 1,
+        "red": 0,
+        "white": 0
+      },
+      "pages": [
+        "WeighHousePage",
+        "GiltTowerPage",
+        "FrostTowerPage"
+      ],
+      "keys": [
+        "GiltTowerKey"
+      ],
+      "book": true,
+      "screen": "NONE: 0>",
+      "run_live": true,
+      "tarnish": "12/20",
+      "move_ignored": false
+    },
+    "tracker": "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Find the burning eyes\nPointer: Bell Square at V(X=143500.00, Y=700.00), 1567 m (other side)\nMarks: 0, prompt: \n"
+  },
+  "step9": {
+    "walk_ramps": {
+      "leg": "Frost Tower ramps to the crown",
+      "from": [
+        300100,
+        7100,
+        88
+      ],
+      "to": [
+        300800,
+        7800,
+        2500
+      ],
+      "straight_m": 26.1,
+      "nav_points": 22,
+      "nav_partial": false,
+      "result": "arrived",
+      "game_s": 20.8
+    },
+    "boss_state": "<ReflectionsVillainBossState.FIGHTING: 2>",
+    "boss_health": 1000.0,
+    "shots": [
+      "r3-14-crown-boss.png"
+    ],
+    "state": {
+      "t": 264.4,
+      "loc": [
+        300684,
+        7644,
+        2488
+      ],
+      "health": 16.0,
+      "mana": 100.0,
+      "jump_component": true,
+      "side": "WHITE: 2>",
+      "coins": {
+        "gray": 1,
+        "red": 1,
+        "white": 0
+      },
+      "pages": [
+        "WeighHousePage",
+        "GiltTowerPage",
+        "FrostTowerPage"
+      ],
+      "keys": [
+        "GiltTowerKey"
+      ],
+      "book": true,
+      "screen": "NONE: 0>",
+      "run_live": true,
+      "tarnish": "12/20",
+      "move_ignored": false
+    },
+    "tracker": "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Find the burning eyes\nPointer: Bell Square at V(X=143500.00, Y=700.00), 1574 m (other side)\nMarks: 0, prompt: \n"
+  },
+  "stopped_local": "19:11:09",
+  "finale_started_local": "19:09:37",
+  "stepf0": {
+    "screen": "<ReflectionsFlowScreen.TITLE: 1>",
+    "has_checkpoint": true,
+    "after_enter_world": "/Game/MockCity/UEDPIE_0_Lvl_MockCity.Lvl_MockCity"
+  },
+  "stepf1": {
+    "map": "/Game/MockCity/UEDPIE_0_Lvl_MockCity.Lvl_MockCity",
+    "restored": {
+      "t": 5.3,
+      "loc": [
+        300100,
+        7100,
+        88
+      ],
+      "health": 100.0,
+      "mana": 100.0,
+      "jump_component": true,
+      "side": "WHITE: 2>",
+      "coins": {
+        "gray": 1,
+        "red": 0,
+        "white": 0
+      },
+      "pages": [
+        "WeighHousePage",
+        "GiltTowerPage",
+        "FrostTowerPage"
+      ],
+      "keys": [
+        "GiltTowerKey"
+      ],
+      "book": true,
+      "screen": "NONE: 0>",
+      "run_live": true,
+      "tarnish": "0/20",
+      "move_ignored": false
+    },
+    "health_after_heals": [
+      100.0,
+      100.0,
+      100.0
+    ],
+    "walk_ramps": {
+      "leg": "Frost Tower ramps to the crown (re-run)",
+      "from": [
+        300100,
+        7100,
+        88
+      ],
+      "to": [
+        300800,
+        7800,
+        2500
+      ],
+      "straight_m": 26.1,
+      "nav_points": 22,
+      "nav_partial": false,
+      "result": "arrived",
+      "game_s": 20.0
+    },
+    "boss": [
+      [
+        "ReflectionsVillainBoss_0",
+        "<ReflectionsVillainBossState.FIGHTING: 2>",
+        1000
+      ]
+    ],
+    "state": {
+      "t": 32.5,
+      "loc": [
+        300579,
+        7935,
+        2488
+      ],
+      "health": 86.0,
+      "mana": 100.0,
+      "jump_component": true,
+      "side": "WHITE: 2>",
+      "coins": {
+        "gray": 1,
+        "red": 0,
+        "white": 0
+      },
+      "pages": [
+        "WeighHousePage",
+        "GiltTowerPage",
+        "FrostTowerPage"
+      ],
+      "keys": [
+        "GiltTowerKey"
+      ],
+      "book": true,
+      "screen": "NONE: 0>",
+      "run_live": true,
+      "tarnish": "0/20",
+      "move_ignored": false
+    }
+  },
+  "step10_run1": {
+    "shots": [
+      "r3-15-final-spell.png",
+      "r3-16-ending.png",
+      "r3-17-victory.png"
+    ],
+    "f_presses": 2,
+    "boss_health_trace": [
+      875,
+      875
+    ],
+    "hero_health": 0.0,
+    "victory": false,
+    "screen": "<ReflectionsFlowScreen.NONE: 0>",
+    "tracker": "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Find the burning eyes\nPointer: Bell Square at V(X=143500.00, Y=700.00), 1567 m (other side)\nMarks: 0, prompt: \n"
+  },
+  "finale_step": {
+    "shots": [
+      "r3-15-final-spell.png",
+      "r3-16-ending.png",
+      "r3-17-victory.png"
+    ],
+    "f_presses": 15,
+    "boss_health_trace": [
+      875,
+      875,
+      750,
+      750,
+      625,
+      625,
+      625,
+      500,
+      500,
+      500,
+      500,
+      500,
+      375,
+      375,
+      375
+    ],
+    "hero_health": 0.0,
+    "victory": false,
+    "screen": "<ReflectionsFlowScreen.NONE: 0>",
+    "tracker": "HUD shown | journal closed | talk closed\nTracked: The Mirror Made Whole\n  [ ] Find the burning eyes\nPointer: Bell Square at V(X=143500.00, Y=700.00), 1567 m (other side)\nMarks: 0, prompt: \n"
+  }
+}

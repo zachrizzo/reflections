@@ -1,0 +1,13 @@
+{
+  "t": 0.915715403854847,
+  "hp_before": 5.0,
+  "ragdoll_enabled": true,
+  "hp_after": 0.0,
+  "reaction": "<ReflectionsNpcReaction.INCAPACITATED: 6>",
+  "body_simulating": true,
+  "body_velocity": [
+    -46.085994720458984,
+    71.94233703613281,
+    -116.37720489501953
+  ]
+}

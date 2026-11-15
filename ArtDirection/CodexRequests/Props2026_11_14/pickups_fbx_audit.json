@@ -1,0 +1,332 @@
+{
+  "summary": {
+    "files": 6,
+    "mesh_objects": 6,
+    "meshes_with_uvs": 6,
+    "meshes_with_materials": 6,
+    "identity_transform_violations": 0,
+    "violations": 0,
+    "note": "Semantic +X facing requires visual verification in Unreal."
+  },
+  "assets": [
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_FrostsideCoin.fbx",
+      "object": "SM_FrostsideCoin",
+      "mesh": "SM_FrostsideCoin_Mesh",
+      "vertices": 6252,
+      "polygons": 12500,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_FrostsideCoin"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "FrostsideCoin.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_FrostsideCoin.fbm\\T_FrostsideCoin_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "FrostsideCoin.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_FrostsideCoin.fbm\\T_FrostsideCoin_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_GiltsideCoin.fbx",
+      "object": "SM_GiltsideCoin",
+      "mesh": "SM_GiltsideCoin_Mesh",
+      "vertices": 6266,
+      "polygons": 12500,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_GiltsideCoin"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "GiltsideCoin.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_GiltsideCoin.fbm\\T_GiltsideCoin_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "GiltsideCoin.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_GiltsideCoin.fbm\\T_GiltsideCoin_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_GiltTowerKey.fbx",
+      "object": "SM_GiltTowerKey",
+      "mesh": "SM_GiltTowerKey_Mesh",
+      "vertices": 6238,
+      "polygons": 12499,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_GiltTowerKey"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "GiltTowerKey.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_GiltTowerKey.fbm\\T_GiltTowerKey_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "GiltTowerKey.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_GiltTowerKey.fbm\\T_GiltTowerKey_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_MirrorPage.fbx",
+      "object": "SM_MirrorPage",
+      "mesh": "SM_MirrorPage_Mesh",
+      "vertices": 6252,
+      "polygons": 12500,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_MirrorPage"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "MirrorPage.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_MirrorPage.fbm\\T_MirrorPage_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "MirrorPage.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_MirrorPage.fbm\\T_MirrorPage_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_MirrorShard.fbx",
+      "object": "SM_MirrorShard",
+      "mesh": "SM_MirrorShard_Mesh",
+      "vertices": 6252,
+      "polygons": 12500,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_MirrorShard"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "MirrorShard.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_MirrorShard.fbm\\T_MirrorShard_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "MirrorShard.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_MirrorShard.fbm\\T_MirrorShard_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_PewtersideCoin.fbx",
+      "object": "SM_PewtersideCoin",
+      "mesh": "SM_PewtersideCoin_Mesh",
+      "vertices": 6252,
+      "polygons": 12500,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_PewtersideCoin"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "PewtersideCoin.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_PewtersideCoin.fbm\\T_PewtersideCoin_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "PewtersideCoin.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_PewtersideCoin.fbm\\T_PewtersideCoin_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    }
+  ],
+  "violations": []
+}

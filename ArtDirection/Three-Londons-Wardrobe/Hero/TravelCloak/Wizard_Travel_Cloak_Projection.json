@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "ArtDirection/Three-Londons-Wardrobe/Hero/TravelCloak/Wizard_Travel_Cloak_Reference.png",
+  "output": "ArtDirection\\Three-Londons-Wardrobe\\Hero\\TravelCloak\\Wizard_Travel_Cloak_Projection.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 30,
+  "resolution": 384,
+  "seed": 41689,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 333801,
+  "faces": 667590,
+  "seconds": 109.4,
+  "bounds": [
+    [
+      -0.7457327246665955,
+      -0.9998841881752014,
+      -0.338911235332489
+    ],
+    [
+      0.7409325838088989,
+      0.9944791197776794,
+      0.3435512185096741
+    ]
+  ]
+}

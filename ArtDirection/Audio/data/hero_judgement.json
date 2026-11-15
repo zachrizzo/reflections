@@ -1,0 +1,38 @@
+{
+ "scores": {
+  "A": {
+   "distinctive": 7,
+   "warm": 7,
+   "wry": 7,
+   "range": 8,
+   "natural": 8,
+   "note": "Solid acting across the prompts with good dynamic control, though slightly dramatic and theatrical rather than effortlessly grounded."
+  },
+  "B": {
+   "distinctive": 8,
+   "warm": 9,
+   "wry": 8,
+   "range": 9,
+   "natural": 9,
+   "note": "Hits the mid-twenties archetype perfectly. Warm, conversational, and genuinely emotional without sounding over-rehearsed; easy on the ears for long play sessions."
+  },
+  "C": {
+   "distinctive": 8,
+   "warm": 7,
+   "wry": 8,
+   "range": 8,
+   "natural": 8,
+   "note": "Rich, resonant, and cinematic delivery, but the timbre leans slightly older and more rugged than the intended young, vulnerable protagonist."
+  },
+  "D": {
+   "distinctive": 6,
+   "warm": 7,
+   "wry": 6,
+   "range": 7,
+   "natural": 7,
+   "note": "Capable reads with believable panic in line 2, but overall feels a little thin and less memorable compared to the others."
+  }
+ },
+ "pick": "B",
+ "why": "Candidate B strikes the exact balance required for a long-form protagonist: a naturally warm, youthful tone that feels relatable and steady. His wry delivery sounds conversational rather than forced, his panic in the shout is immediate, and his tearful final line carries an unforced, heartfelt vulnerability that will keep players emotionally invested."
+}

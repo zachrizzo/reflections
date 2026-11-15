@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\References\\LampOilBarrel.png",
+  "output": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\RawHunyuan\\LampOilBarrel.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 20,
+  "resolution": 256,
+  "seed": 14112026,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 208988,
+  "faces": 417968,
+  "seconds": 31.3,
+  "bounds": [
+    [
+      -0.6929897665977478,
+      -0.9983682036399841,
+      -0.8123940229415894
+    ],
+    [
+      0.6891474723815918,
+      0.9896366000175476,
+      0.8066158890724182
+    ]
+  ]
+}

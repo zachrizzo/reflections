@@ -1,0 +1,2322 @@
+{
+ "_readme": "Story quests for the quest system, built by ArtDirection/Story/tools/build_quests.py from main-quest.md and side-quests.md. Every line is {id, speaker, text}; its voice cue is /Game/Audio/Jam/Voice/Cues/SCue_VO_<id>. Fields beyond the README format (cutscene*, lines*On*, ifInfected, startsTarnished, scriptedHold, afterLine, giveItems, rewardOnComplete, failIfDies, ordered, optional, requireInfected/cure) are story intent: support what's cheap, ignore the rest, and the quest still works. Person ids are people.json ids (actor tag Person_<id>); markers use the Story Marker names in people.json -> markers.story_names.",
+ "_cutsceneTriggers": {
+  "Intro": "new game (game flow's PlayNewGameIntro; the quest only waits, 4 s timeout)",
+  "BurningEyes": "main.first_face goTo complete",
+  "FirstPage": "first PageFound of any side",
+  "GiltTower": "the Gilt Tower sealed door's OnOpened",
+  "MirrorWhole": "BookComplete (played by the cutscene/game side, not the quest)",
+  "Ending": "villain-finale calls it after the dissolve"
+ },
+ "items": [
+  {
+   "id": "Letter",
+   "name": "Nell's letter to her mother"
+  },
+  {
+   "id": "TicketStub",
+   "name": "A fourteen-year-old tram ticket stub"
+  },
+  {
+   "id": "Fiddle",
+   "name": "Jory's fiddle"
+  },
+  {
+   "id": "Eyeglass",
+   "name": "The Glazier's eyeglass"
+  },
+  {
+   "id": "LampOil",
+   "name": "A small barrel of real lamp oil"
+  },
+  {
+   "id": "Wool",
+   "name": "A bolt of wool with a gold selvedge"
+  },
+  {
+   "id": "Shears",
+   "name": "Barnaby's first shears"
+  }
+ ],
+ "quests": [
+  {
+   "id": "main",
+   "main": true,
+   "title": "The Mirror Made Whole",
+   "summary": "Bring the three mirror pages together, make the mirror whole, and burn the Tarnish out of Lanthorne.",
+   "side": "Giltside",
+   "steps": [
+    {
+     "id": "intro",
+     "title": "Lantern Law",
+     "description": "Dusk bell. The Lamp Companies are marching again, and Ilse wants me on Lantern Row.",
+     "objectives": [
+      {
+       "type": "event",
+       "text": "Watch",
+       "target": "CutsceneDone",
+       "arg": "Intro",
+       "timeout": 4
+      }
+     ]
+    },
+    {
+     "id": "lantern_row",
+     "title": "Lantern Row",
+     "description": "Ilse made me cast at a lamp post like I was twelve again. She's frightened. She doesn't get frightened.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Find Ilse Varrow on Lantern Row",
+       "target": "ilse_varrow",
+       "marker": "Spot_LanternRow"
+      }
+     ],
+     "lines": [
+      {
+       "id": "MQ01_01",
+       "speaker": "ilse_varrow",
+       "text": "You're late, and you're limping. Which first?"
+      },
+      {
+       "id": "MQ01_02",
+       "speaker": "wren_hale",
+       "text": "Neither. I came the long way."
+      },
+      {
+       "id": "MQ01_03",
+       "speaker": "ilse_varrow",
+       "text": "Mm. Show me your hands. Aim at the lamp post."
+      },
+      {
+       "id": "MQ01_04",
+       "speaker": "ilse_varrow",
+       "text": "Light's the only thing it hates. Cast like you mean it."
+      }
+     ],
+     "speaker": "ilse_varrow"
+    },
+    {
+     "id": "cast",
+     "title": "Lantern Row",
+     "description": "Light's the only thing it hates.",
+     "objectives": [
+      {
+       "type": "spellHit",
+       "text": "Cast a spell",
+       "spell": "Any",
+       "target": "Spot_LanternRow",
+       "radius": 2500
+      }
+     ],
+     "lines": [
+      {
+       "id": "MQ01_05",
+       "speaker": "ilse_varrow",
+       "text": "Better. Now keep that hand ready. It's close tonight."
+      }
+     ],
+     "speaker": "ilse_varrow",
+     "linesOn": "complete"
+    },
+    {
+     "id": "first_face",
+     "title": "The First Face",
+     "description": "It took Jory in the middle of Bell Square. Light brought him back. I didn't know it could.",
+     "objectives": [
+      {
+       "type": "goTo",
+       "text": "Find the burning eyes",
+       "target": "Spot_BellSquare",
+       "radius": 1200
+      }
+     ],
+     "lines": [
+      {
+       "id": "MQ02_01",
+       "speaker": "wren_hale",
+       "text": "Somebody's wearing the Tarnish. Find them."
+      }
+     ],
+     "speaker": "wren_hale",
+     "startOn": {
+      "event": "VillainFirstHost"
+     },
+     "cutsceneOnComplete": "BurningEyes"
+    },
+    {
+     "id": "cure_jory",
+     "title": "The First Face",
+     "description": "Light burns it out, if you're quick.",
+     "objectives": [
+      {
+       "type": "spellHit",
+       "text": "Burn the Tarnish out of Jory",
+       "target": "jory_pell",
+       "requireInfected": true,
+       "cure": true,
+       "fallbackText": "Burn the Tarnish out of them",
+       "fallbackTarget": "Infected"
+      }
+     ],
+     "lines": [
+      {
+       "id": "MQ02_02",
+       "speaker": "the_tarnish",
+       "text": "Your friend hums when he's frightened. We like the tune."
+      },
+      {
+       "id": "MQ02_03",
+       "speaker": "wren_hale",
+       "text": "Hold on, Jory. This is going to sting."
+      }
+     ],
+     "linesOnComplete": [
+      {
+       "id": "MQ02_05",
+       "speaker": "wren_hale",
+       "text": "You're out. Breathe. It's gone from you."
+      },
+      {
+       "id": "MQ02_06",
+       "speaker": "ilse_varrow",
+       "text": "So light does burn it out. Good. Now you know."
+      }
+     ],
+     "linesOnFail": [
+      {
+       "id": "MQ02_07",
+       "speaker": "wren_hale",
+       "text": "No. No, I was quick. I was quick."
+      }
+     ]
+    },
+    {
+     "id": "through_glass",
+     "title": "Through the Glass",
+     "description": "One page in each side. The first is in Pewterside. I'm going down through the glass.",
+     "objectives": [
+      {
+       "type": "event",
+       "text": "Find a Pewterside shard",
+       "target": "ShardCollected",
+       "arg": "Pewterside",
+       "hints": [
+        "Drifters bring them through. Ask under the Lantern Gate."
+       ]
+      },
+      {
+       "type": "worldJump",
+       "text": "Step down into Pewterside",
+       "side": "Pewterside"
+      }
+     ],
+     "lines": [
+      {
+       "id": "MQ03_01",
+       "speaker": "ilse_varrow",
+       "text": "It wants the pages. So we want them first."
+      },
+      {
+       "id": "MQ03_02",
+       "speaker": "ilse_varrow",
+       "text": "One's on the Weigh-House roof, down in Pewterside."
+      },
+      {
+       "id": "MQ03_03",
+       "speaker": "wren_hale",
+       "text": "Then I need a Pewterside shard."
+      },
+      {
+       "id": "MQ03_04",
+       "speaker": "ilse_varrow",
+       "text": "Drifters bring them through. Ask under the Lantern Gate."
+      }
+     ],
+     "speaker": "ilse_varrow",
+     "ordered": true,
+     "optionalTalk": {
+      "kit_marrow": [
+       {
+        "id": "MQ03_05",
+        "speaker": "kit_marrow",
+        "text": "Grey ones wash up here sometimes. Found one by the pillar. Yours."
+       }
+      ],
+      "jory_pell": [
+       {
+        "id": "MQ02_04",
+        "speaker": "jory_pell",
+        "text": "Ren? It was in my mouth. It was singing."
+       }
+      ]
+     },
+     "linesOnObjective": {
+      "0": [
+       {
+        "id": "MQ03_06",
+        "speaker": "wren_hale",
+        "text": "Grey glass. Pewterside, then."
+       }
+      ]
+     }
+    },
+    {
+     "id": "dull_as_ever",
+     "title": "Dull as Ever",
+     "description": "Pewterside's grey as a spoon and twice as stubborn. The first page was on the Weigh-House roof, under eleven years of pigeons.",
+     "objectives": [
+      {
+       "type": "goTo",
+       "text": "Find the Old Weigh-House",
+       "target": "Spot_WeighHouseCorner",
+       "radius": 1500,
+       "optional": true
+      },
+      {
+       "type": "event",
+       "text": "Climb to the Weigh-House roof",
+       "target": "PageFound",
+       "arg": "Pewterside",
+       "marker": "Tower_Pewterside"
+      }
+     ],
+     "optionalTalk": {
+      "ivy_harker": [
+       {
+        "id": "MQ04_01",
+        "speaker": "ivy_harker",
+        "text": "For the record, the roof's been glowing. Is that yours? Lawfully?"
+       },
+       {
+        "id": "MQ04_02",
+        "speaker": "wren_hale",
+        "text": "It will be. Which way up?"
+       }
+      ],
+      "winnie_cobb": [
+       {
+        "id": "MQ04_03",
+        "speaker": "winnie_cobb",
+        "text": "Round the back, love, the stair by the drainpipe. Mind the third step."
+       }
+      ],
+      "horace_pratt": [
+       {
+        "id": "MQ04_04",
+        "speaker": "horace_pratt",
+        "text": "Nobody's been up there in eleven years. Mark my words, it'll be the death of you."
+       }
+      ]
+     },
+     "cutsceneOnFirstPage": "FirstPage"
+    },
+    {
+     "id": "hold_line",
+     "title": "Hold the Line",
+     "description": "We held the Lantern Gate. Three people walked away with their own eyes. Maud didn't say thank you, which means she meant it.",
+     "objectives": [
+      {
+       "type": "worldJump",
+       "text": "Step back up into Giltside",
+       "side": "Giltside"
+      },
+      {
+       "type": "spellHit",
+       "text": "Hold the Lantern Gate: burn the Tarnish out of 3 people",
+       "target": "Infected",
+       "cure": true,
+       "count": 3,
+       "marker": "Spot_LanternGate",
+       "radius": 4000,
+       "spawn": "Infected",
+       "spawnCount": 3
+      }
+     ],
+     "lines": [
+      {
+       "id": "MQ05_03",
+       "speaker": "maud_kettering",
+       "text": "Silverer. You picked a busy night to come home. Hold here with us."
+      }
+     ],
+     "speaker": "maud_kettering",
+     "ordered": true,
+     "progressLines": {
+      "1": [
+       {
+        "id": "MQ05_04",
+        "speaker": "nell_bramley",
+        "text": "It came out of them! Sergeant, it came right out!"
+       }
+      ],
+      "2": [
+       {
+        "id": "MQ05_05",
+        "speaker": "hollis_greave",
+        "text": "Course you can do that. Course you can. Keep going."
+       }
+      ]
+     },
+     "meterLines": {
+      "0.75": [
+       {
+        "id": "MQ05_06",
+        "speaker": "maud_kettering",
+        "text": "We're losing faces faster than we save them. Faster, Silverer!"
+       }
+      ]
+     },
+     "squadLines": [
+      {
+       "id": "MQ05_07",
+       "speaker": "sela_brask",
+       "text": "Third Company, by the gate. Silverer, keep your light off my line."
+      }
+     ],
+     "ifCutsceneSkipped": {
+      "FirstPage": [
+       {
+        "id": "MQ05_01",
+        "speaker": "the_tarnish",
+        "text": "You moved a page, Silverer. We felt it in every face."
+       },
+       {
+        "id": "MQ05_02",
+        "speaker": "wren_hale",
+        "text": "Good. Feel the next one too."
+       }
+      ]
+     }
+    },
+    {
+     "id": "key",
+     "title": "The Key Where Light Won't Go Out",
+     "description": "Maud hid the tower key under a lamp that never goes out. She's been guarding it from her own captain's face.",
+     "objectives": [
+      {
+       "type": "event",
+       "text": "Find the Gilt Tower key",
+       "target": "KeyFound",
+       "arg": "GiltTowerKey"
+      }
+     ],
+     "lines": [
+      {
+       "id": "MQ06_01",
+       "speaker": "maud_kettering",
+       "text": "You want the Gilt Tower. I sealed it. I hid the key."
+      },
+      {
+       "id": "MQ06_02",
+       "speaker": "maud_kettering",
+       "text": "A tarnished came for it wearing my captain's face. I trust nobody's face now."
+      },
+      {
+       "id": "MQ06_03",
+       "speaker": "wren_hale",
+       "text": "Then trust what I just did."
+      },
+      {
+       "id": "MQ06_04",
+       "speaker": "maud_kettering",
+       "text": "Noted. It's where the light never goes out. Go and look."
+      }
+     ],
+     "speaker": "maud_kettering",
+     "linesOnComplete": [
+      {
+       "id": "MQ06_05",
+       "speaker": "wren_hale",
+       "text": "Brass and warm. Maud, you sentimental thing."
+      }
+     ]
+    },
+    {
+     "id": "gilt_tower",
+     "title": "The Gilt Tower",
+     "description": "The second page was in the Gilt Tower, where it's always been. The Tarnish says I'm building it a door.",
+     "objectives": [
+      {
+       "type": "goTo",
+       "text": "Open the Gilt Tower",
+       "target": "Tower_Giltside",
+       "radius": 400
+      },
+      {
+       "type": "event",
+       "text": "Take the page inside the tower",
+       "target": "PageFound",
+       "arg": "Giltside"
+      }
+     ],
+     "ordered": true,
+     "cutsceneOnDoorOpened": "GiltTower",
+     "linesOnObjective": {
+      "1": [
+       {
+        "id": "MQ07_01",
+        "speaker": "wren_hale",
+        "text": "Second leaf. It's warm, like it's been waiting."
+       }
+      ]
+     }
+    },
+    {
+     "id": "cracked_crown",
+     "title": "The Cracked Crown",
+     "description": "Third leaf, in the cracked tower. The mirror is whole. Now it burns.",
+     "objectives": [
+      {
+       "type": "worldJump",
+       "text": "Step up into Frostside from inside the tower",
+       "side": "Frostside"
+      },
+      {
+       "type": "event",
+       "text": "Take the last page",
+       "target": "BookComplete"
+      }
+     ],
+     "lines": [
+      {
+       "id": "MQ08_01",
+       "speaker": "ilse_varrow",
+       "text": "The last leaf is above you, boy. Same tower, colder light."
+      },
+      {
+       "id": "MQ08_02",
+       "speaker": "ilse_varrow",
+       "text": "Your mother went that way. Come back from it."
+      },
+      {
+       "id": "MQ08_03",
+       "speaker": "wren_hale",
+       "text": "That's the plan. It's always been the plan."
+      }
+     ],
+     "speaker": "ilse_varrow",
+     "ordered": true,
+     "linesOnObjective": {
+      "0": [
+       {
+        "id": "MQ08_04",
+        "speaker": "wren_hale",
+        "text": "Cracks everywhere. It's been clawing at these walls."
+       },
+       {
+        "id": "MQ08_05",
+        "speaker": "the_tarnish",
+        "text": "She stood just there, your mother. Right where you are."
+       }
+      ]
+     }
+    },
+    {
+     "id": "let_the_light_through",
+     "title": "Let the Light Through",
+     "description": "It's gone. I looked into the whole mirror, and the only face in it was mine.",
+     "objectives": [
+      {
+       "type": "event",
+       "text": "Climb to the top of the Frost Tower",
+       "target": "FinaleStarted",
+       "marker": "Tower_Frostside"
+      },
+      {
+       "type": "event",
+       "text": "Burn out the Tarnish with the Final Spell",
+       "target": "BossDefeated"
+      }
+     ],
+     "ordered": true
+    }
+   ]
+  },
+  {
+   "id": "sq1_cellar",
+   "title": "The Cellar at the Lamplight",
+   "summary": "Goldie has kept her tarnished husband chained in the inn's cellar for nine days.",
+   "giver": "goldie_fairweather",
+   "side": "Giltside",
+   "offer": [
+    {
+     "id": "SQ1_01",
+     "speaker": "goldie_fairweather",
+     "text": "Sweetling. Is it true you can bring them back? Truly?"
+    },
+    {
+     "id": "SQ1_02",
+     "speaker": "goldie_fairweather",
+     "text": "Hal's in the cellar. Nine days. Don't you dare tell Maud."
+    },
+    {
+     "id": "SQ1_03",
+     "speaker": "wren_hale",
+     "text": "I won't. Give me the key."
+    }
+   ],
+   "reward": {
+    "coins": 1,
+    "coinSide": "Pewterside",
+    "reputation": {
+     "goldie_fairweather": 15
+    },
+    "unlocks": [
+     "Hal_Home"
+    ]
+   },
+   "steps": [
+    {
+     "id": "cellar",
+     "title": "Down the Stairs",
+     "description": "Hal's been in the cellar nine days. Goldie feeds him through a hatch.",
+     "objectives": [
+      {
+       "type": "goTo",
+       "text": "Go down to the Lamplight's cellar",
+       "target": "Spot_LamplightCellar",
+       "radius": 400
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ1_04",
+       "speaker": "hal_fairweather",
+       "text": "Marigold... we are so cold down here."
+      }
+     ],
+     "speaker": "hal_fairweather",
+     "linesAt": "arrive"
+    },
+    {
+     "id": "cure",
+     "title": "Hal",
+     "description": "The chain gave.",
+     "objectives": [
+      {
+       "type": "spellHit",
+       "text": "Burn the Tarnish out of Hal",
+       "target": "hal_fairweather",
+       "requireInfected": true,
+       "cure": true
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ1_05",
+       "speaker": "hal_fairweather",
+       "text": "Open the hatch. We only want to see you."
+      }
+     ],
+     "speaker": "hal_fairweather",
+     "endHoldOnStart": "hal_fairweather",
+     "linesOnComplete": [
+      {
+       "id": "SQ1_06",
+       "speaker": "wren_hale",
+       "text": "Hal. Hal, look at me. Your own eyes."
+      },
+      {
+       "id": "SQ1_07",
+       "speaker": "hal_fairweather",
+       "text": "Nine days in the dark, and you brought me up."
+      }
+     ],
+     "failIfDies": "hal_fairweather"
+    }
+   ],
+   "turnInLines": [
+    {
+     "id": "SQ1_08",
+     "speaker": "goldie_fairweather",
+     "text": "I fed him through a hatch like a dog. Nine days. Nine."
+    },
+    {
+     "id": "SQ1_09",
+     "speaker": "goldie_fairweather",
+     "text": "Take this. Hal kept it from the bridge. It's grey glass."
+    }
+   ],
+   "requiresUnlocks": [
+    "Quest_main.first_face"
+   ],
+   "fail": [
+    {
+     "id": "SQ1_F1",
+     "speaker": "goldie_fairweather",
+     "text": "Don't. Don't say anything. Just go upstairs, Wren."
+    }
+   ],
+   "afterLine": [
+    {
+     "id": "SQ1_10",
+     "speaker": "goldie_fairweather",
+     "text": "Hal's complaining about the ale again. Isn't it wonderful?"
+    }
+   ],
+   "startsTarnished": [
+    "hal_fairweather"
+   ],
+   "scriptedHold": [
+    "hal_fairweather"
+   ]
+  },
+  {
+   "id": "sq2_humming",
+   "title": "After the Humming",
+   "summary": "Jory can't play. His fiddle is lying in Bell Square, and two tarnished stand over it.",
+   "giver": "jory_pell",
+   "side": "Giltside",
+   "offer": [
+    {
+     "id": "SQ2_01",
+     "speaker": "jory_pell",
+     "text": "I keep reaching for my fiddle, Ren. I left it in the square."
+    },
+    {
+     "id": "SQ2_02",
+     "speaker": "jory_pell",
+     "text": "Every tune I think of, there's something humming under it."
+    }
+   ],
+   "reward": {
+    "reputation": {
+     "jory_pell": 15
+    },
+    "unlocks": [
+     "Jory_Plays"
+    ]
+   },
+   "steps": [
+    {
+     "id": "fiddle",
+     "title": "Bell Square",
+     "description": "Someone's standing over it. Two someones.",
+     "objectives": [
+      {
+       "type": "spellHit",
+       "text": "Burn the Tarnish out of the people by the fiddle",
+       "target": "Infected",
+       "cure": true,
+       "count": 2,
+       "marker": "Spot_BellSquare",
+       "radius": 1500,
+       "spawn": "Infected",
+       "spawnCount": 2
+      },
+      {
+       "type": "collect",
+       "text": "Pick up Jory's fiddle",
+       "target": "Fiddle",
+       "marker": "Item_Fiddle"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ2_03",
+       "speaker": "wren_hale",
+       "text": "Someone's standing over it. Two someones."
+      }
+     ],
+     "speaker": "wren_hale",
+     "linesOnComplete": [
+      {
+       "id": "SQ2_04",
+       "speaker": "wren_hale",
+       "text": "Bridge is cracked. Strings are fine. He'll live."
+      }
+     ]
+    },
+    {
+     "id": "bring",
+     "title": "Bring It Home",
+     "description": "Bridge is cracked. Strings are fine.",
+     "objectives": [
+      {
+       "type": "deliver",
+       "text": "Bring the fiddle to Jory",
+       "item": "Fiddle",
+       "target": "jory_pell"
+      }
+     ]
+    }
+   ],
+   "turnInLines": [
+    {
+     "id": "SQ2_05",
+     "speaker": "jory_pell",
+     "text": "You found it. Oh, you beauty. Hold still, let me try."
+    },
+    {
+     "id": "SQ2_06",
+     "speaker": "jory_pell",
+     "text": "It's still humming. But I'm louder. I'm louder than it."
+    }
+   ],
+   "requiresUnlocks": [
+    "Quest_main.cure_jory"
+   ],
+   "requiresAlive": [
+    "jory_pell"
+   ]
+  },
+  {
+   "id": "sq3_letters",
+   "title": "Letters Through the Glass",
+   "summary": "Nell, a guard who hides that she's a drifter, writes to the mother she lost through a rift.",
+   "giver": "nell_bramley",
+   "side": "Giltside",
+   "offer": [
+    {
+     "id": "SQ3_01",
+     "speaker": "nell_bramley",
+     "text": "Sorry, I mean, this is nothing. It's a letter. To Pewterside."
+    },
+    {
+     "id": "SQ3_02",
+     "speaker": "nell_bramley",
+     "text": "Coal Lane. Edie Bramley. She'd be old now. If she's... if."
+    },
+    {
+     "id": "SQ3_03",
+     "speaker": "wren_hale",
+     "text": "I'll find her. What do I tell her?"
+    }
+   ],
+   "reward": {
+    "reputation": {
+     "nell_bramley": 15,
+     "edie_bramley": 15
+    },
+    "unlocks": [
+     "Nell_Letter"
+    ]
+   },
+   "steps": [
+    {
+     "id": "deliver",
+     "title": "Coal Lane",
+     "description": "Edie Bramley. She'd be old now.",
+     "objectives": [
+      {
+       "type": "worldJump",
+       "text": "Step down into Pewterside",
+       "side": "Pewterside"
+      },
+      {
+       "type": "deliver",
+       "text": "Give Edie Bramley the letter at the Coal Lane tram stop",
+       "item": "Letter",
+       "target": "edie_bramley",
+       "marker": "Spot_CoalLaneStop"
+      }
+     ],
+     "ordered": true,
+     "giveItems": [
+      "Letter"
+     ],
+     "linesOnComplete": [
+      {
+       "id": "SQ3_04",
+       "speaker": "edie_bramley",
+       "text": "That's her hand. That's her writing. Nine years old, she was."
+      },
+      {
+       "id": "SQ3_05",
+       "speaker": "edie_bramley",
+       "text": "Give her this. The stub from that day. And this glass came through when she went. Take it."
+      }
+     ],
+     "linesIfTargetWasCured": [
+      {
+       "id": "SQ3_06",
+       "speaker": "edie_bramley",
+       "text": "My head's full of other people's voices. You've got a letter? For me?"
+      }
+     ],
+     "rewardOnComplete": {
+      "coins": 1,
+      "coinSide": "Giltside",
+      "items": [
+       "TicketStub"
+      ]
+     }
+    },
+    {
+     "id": "return",
+     "title": "Two Tickets",
+     "description": "She kept the ticket. Fourteen years.",
+     "objectives": [
+      {
+       "type": "deliver",
+       "text": "Bring the ticket to Nell",
+       "item": "TicketStub",
+       "target": "nell_bramley"
+      }
+     ]
+    }
+   ],
+   "turnInLines": [
+    {
+     "id": "SQ3_07",
+     "speaker": "nell_bramley",
+     "text": "She kept the ticket. Fourteen years. Steady, Nell. Steady."
+    }
+   ],
+   "requiresUnlocks": [
+    "Quest_main.through_glass"
+   ],
+   "afterLine": [
+    {
+     "id": "SQ3_08",
+     "speaker": "nell_bramley",
+     "text": "Next stop, Coal Lane. Mum used to say that. Funny."
+    },
+    {
+     "id": "SQ3_09",
+     "speaker": "edie_bramley",
+     "text": "Two tickets, please. One's for my girl. She's on the gold side."
+    }
+   ]
+  },
+  {
+   "id": "sq4_queen",
+   "title": "The Queen of Coal Lane",
+   "summary": "Hester won't go indoors until her subjects are home, and the tarnished are coming down Coal Lane.",
+   "giver": "hester_quaile",
+   "side": "Pewterside",
+   "offer": [
+    {
+     "id": "SQ4_01",
+     "speaker": "hester_quaile",
+     "text": "My subjects are out after dark, young man. I won't go in till they're home."
+    },
+    {
+     "id": "SQ4_02",
+     "speaker": "hester_quaile",
+     "text": "Something's coming down the lane. I can hear its feet. Wrong feet."
+    },
+    {
+     "id": "SQ4_03",
+     "speaker": "wren_hale",
+     "text": "Stay on the step, Your Majesty. I've got the lane."
+    }
+   ],
+   "reward": {
+    "reputation": {
+     "hester_quaile": 20,
+     "walter_dunmore": 10,
+     "sid_kettle": 10
+    },
+    "unlocks": [
+     "Coal_Lane_Safe"
+    ]
+   },
+   "steps": [
+    {
+     "id": "defend",
+     "title": "Wrong Feet",
+     "description": "Something's coming down the lane.",
+     "objectives": [
+      {
+       "type": "protect",
+       "text": "Defend Coal Lane: keep the tarnished off Hester's doorstep",
+       "target": "Spot_HesterDoorstep",
+       "radius": 800,
+       "seconds": 60,
+       "spawn": "Infected",
+       "spawnCount": 4
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ4_04",
+       "speaker": "sid_kettle",
+       "text": "Right. Nan stays behind me. Right."
+      }
+     ],
+     "speaker": "sid_kettle",
+     "linesAt": {
+      "30": [
+       {
+        "id": "SQ4_05",
+        "speaker": "walter_dunmore",
+        "text": "That's check, you blasted things! Check!"
+       }
+      ]
+     },
+     "ifInfected": {
+      "hester_quaile": {
+       "text": "Burn the Tarnish out of Hester",
+       "linesOnCure": [
+        {
+         "id": "SQ4_06",
+         "speaker": "hester_quaile",
+         "text": "Was I... no. Don't tell me. The Queen was never gone."
+        }
+       ]
+      }
+     },
+     "linesOnComplete": [
+      {
+       "id": "SQ4_07",
+       "speaker": "hester_quaile",
+       "text": "My subjects are home. Every one. You may go."
+      }
+     ],
+     "failIfDies": "hester_quaile"
+    },
+    {
+     "id": "walter",
+     "title": "Fifty-One Years",
+     "description": "Walter has carried a ring for fifty-one years.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Talk to Walter",
+       "target": "walter_dunmore"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ4_08",
+       "speaker": "walter_dunmore",
+       "text": "Hester. Fifty-one years I've carried this. Will you blasted well have it?"
+      },
+      {
+       "id": "SQ4_09",
+       "speaker": "hester_quaile",
+       "text": "Walter Dunmore. I can't see the ring. I can hear you shaking. Yes."
+      }
+     ]
+    }
+   ],
+   "turnIn": false,
+   "fail": [
+    {
+     "id": "SQ4_F1",
+     "speaker": "sid_kettle",
+     "text": "Nan. Nan? Right. Right. Right."
+    }
+   ],
+   "afterLine": [
+    {
+     "id": "SQ4_10",
+     "speaker": "hester_quaile",
+     "text": "Our royal Silverer. Walter, curtsey. Oh, don't, your knee."
+    }
+   ],
+   "autoOffer": {
+    "onFirstWorldJump": "Pewterside",
+    "orInfectionBand": "spreading"
+   }
+  },
+  {
+   "id": "sq5_eyeglass",
+   "title": "The Glazier's Eyeglass",
+   "summary": "Professor Quell needs the Glazier's lens. An old woman in Pewterside has it, and wants only to be listened to.",
+   "giver": "tobias_quell",
+   "side": "Giltside",
+   "offer": [
+    {
+     "id": "SQ5_01",
+     "speaker": "tobias_quell",
+     "text": "The Glazier ground a lens to read silvered script. Which is to say, the pages."
+    },
+    {
+     "id": "SQ5_02",
+     "speaker": "tobias_quell",
+     "text": "A family in Pewterside kept it. Pollard. Find it, and I'll read what the pages say."
+    }
+   ],
+   "reward": {
+    "reputation": {
+     "tobias_quell": 10,
+     "ada_pollard": 20
+    },
+    "unlocks": [
+     "Eyeglass"
+    ]
+   },
+   "steps": [
+    {
+     "id": "find_ada",
+     "title": "The Fish Steps",
+     "description": "A family in Pewterside kept it. Pollard.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Find Ada Pollard on the Fish Steps in Pewterside",
+       "target": "ada_pollard",
+       "marker": "Spot_FishSteps"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ5_03",
+       "speaker": "ada_pollard",
+       "text": "The eyeglass? Oh, dearie. Sit down. It's a long story, isn't it, Arthur?"
+      }
+     ],
+     "speaker": "ada_pollard",
+     "linesOn": "complete"
+    },
+    {
+     "id": "listen",
+     "title": "The Whole Story",
+     "description": "Nobody ever hears the end of one of Ada's stories.",
+     "objectives": [
+      {
+       "type": "protect",
+       "text": "Listen to Ada's story",
+       "target": "ada_pollard",
+       "radius": 400,
+       "seconds": 25
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ5_04",
+       "speaker": "ada_pollard",
+       "text": "My granny's granny swept the Glazier's floor. Every morning, glass dust."
+      },
+      {
+       "id": "SQ5_05",
+       "speaker": "ada_pollard",
+       "text": "The night of the cut, the Glazier put this in her apron and said, keep it from the dark."
+      },
+      {
+       "id": "SQ5_06",
+       "speaker": "ada_pollard",
+       "text": "Nine of us have kept it. In a sugar tin, mostly. Arthur thought it was a button."
+      }
+     ],
+     "speaker": "ada_pollard",
+     "pauseLinesWhenOutside": true,
+     "linesOnComplete": [
+      {
+       "id": "SQ5_07",
+       "speaker": "ada_pollard",
+       "text": "You listened to the end. Nobody does. Here. Take it, dearie."
+      }
+     ],
+     "rewardOnComplete": {
+      "items": [
+       "Eyeglass"
+      ]
+     }
+    },
+    {
+     "id": "bring",
+     "title": "Into, Not At",
+     "description": "The last page asks the Silverer to look into the whole mirror.",
+     "objectives": [
+      {
+       "type": "deliver",
+       "text": "Bring the eyeglass to Professor Quell",
+       "item": "Eyeglass",
+       "target": "tobias_quell"
+      }
+     ]
+    }
+   ],
+   "turnInLines": [
+    {
+     "id": "SQ5_08",
+     "speaker": "tobias_quell",
+     "text": "Remarkable. With this, the script reads plain. Each page has a line, and the last one..."
+    },
+    {
+     "id": "SQ5_09",
+     "speaker": "tobias_quell",
+     "text": "...says a Silverer must look into the whole mirror. Into it, not at it. I don't know what that costs."
+    },
+    {
+     "id": "SQ5_10",
+     "speaker": "wren_hale",
+     "text": "Nine years of not looking. Seems about due."
+    }
+   ],
+   "requiresUnlocks": [
+    "Quest_main.through_glass"
+   ],
+   "afterLine": [
+    {
+     "id": "SQ5_11",
+     "speaker": "ada_pollard",
+     "text": "There's my good listener. Arthur, it's the Silverer. Sit, sit."
+    }
+   ]
+  },
+  {
+   "id": "sq6_whole",
+   "title": "Something Whole",
+   "summary": "At the dusk bell the Third Company will push the drifters back into the canal rift. Something is coming through it tonight.",
+   "giver": "kit_marrow",
+   "side": "Giltside",
+   "offer": [
+    {
+     "id": "SQ6_01",
+     "speaker": "kit_marrow",
+     "text": "Dusk bell, they send us back. Fen says she'll go in the canal first."
+    },
+    {
+     "id": "SQ6_02",
+     "speaker": "fen_lowry",
+     "text": "Says who? I'm not going back. It's warm here. Warm."
+    }
+   ],
+   "reward": {
+    "coins": 1,
+    "coinSide": "Frostside",
+    "reputation": {
+     "kit_marrow": 15,
+     "fen_lowry": 15,
+     "sela_brask": 10
+    },
+    "unlocks": [
+     "Drifters_Stay"
+    ]
+   },
+   "steps": [
+    {
+     "id": "ros",
+     "title": "The Rift Post",
+     "description": "Rift's humming loud tonight.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Talk to Ros at the canal rift post",
+       "target": "ros_thrale",
+       "marker": "Spot_CanalRift"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ6_03",
+       "speaker": "ros_thrale",
+       "text": "Orders are orders, glass-boy. I've been losing count of who goes past me."
+      },
+      {
+       "id": "SQ6_04",
+       "speaker": "ros_thrale",
+       "text": "Rift's humming loud tonight. Something's coming through with the drifters."
+      }
+     ],
+     "speaker": "ros_thrale",
+     "linesOn": "complete"
+    },
+    {
+     "id": "defend",
+     "title": "Under the Gate",
+     "description": "Nobody's going in the canal.",
+     "objectives": [
+      {
+       "type": "protect",
+       "text": "Defend the drifters' camp",
+       "target": "Spot_DrifterCamp",
+       "radius": 1200,
+       "seconds": 90,
+       "spawn": "Infected",
+       "spawnCount": 4,
+       "spawnMarker": "Spot_CanalRift"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ6_05",
+       "speaker": "wren_hale",
+       "text": "Nobody's going in the canal. Hold here with me."
+      }
+     ],
+     "speaker": "wren_hale",
+     "linesAt": {
+      "45": [
+       {
+        "id": "SQ6_06",
+        "speaker": "fen_lowry",
+        "text": "It knows my name. It says it's warm where it is."
+       },
+       {
+        "id": "SQ6_07",
+        "speaker": "kit_marrow",
+        "text": "Fen, don't! Don't answer it!"
+       }
+      ]
+     },
+     "ifInfected": {
+      "fen_lowry": {
+       "text": "Burn the Tarnish out of Fen",
+       "linesOnCure": [
+        {
+         "id": "SQ6_08",
+         "speaker": "fen_lowry",
+         "text": "It lied. It wasn't warm. It was nothing."
+        }
+       ]
+      }
+     }
+    },
+    {
+     "id": "brask",
+     "title": "New Orders",
+     "description": "They held the gate with us.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Talk to Captain Brask",
+       "target": "sela_brask",
+       "marker": "Spot_DrifterCamp"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ6_09",
+       "speaker": "sela_brask",
+       "text": "They held the gate with us. They stay. That's the new order."
+      }
+     ],
+     "speaker": "sela_brask",
+     "linesOn": "complete"
+    }
+   ],
+   "turnInLines": [
+    {
+     "id": "SQ6_10",
+     "speaker": "kit_marrow",
+     "text": "Here. It's whole, look. Not a crack in it. Frostside glass."
+    }
+   ],
+   "requiresUnlocks": [
+    "Quest_main.hold_line"
+   ],
+   "fail": [
+    {
+     "id": "SQ6_F1",
+     "speaker": "kit_marrow",
+     "text": "We came all this way. All this way for the cold to find us."
+    }
+   ],
+   "failNote": "Kit or Fen dying does not fail the quest; the survivor says SQ6_F1 and the reward is still given.",
+   "afterLine": [
+    {
+     "id": "SQ6_11",
+     "speaker": "sela_brask",
+     "text": "Drifters on the gate roster. Never thought I'd write that."
+    }
+   ]
+  },
+  {
+   "id": "sq7_lamps",
+   "title": "The Lamps on Bell Lane",
+   "summary": "Corin promised his dying father Bell Lane would never go dark. He's been watering the oil.",
+   "giver": "corin_ashby",
+   "side": "Giltside",
+   "offer": [
+    {
+     "id": "SQ7_01",
+     "speaker": "corin_ashby",
+     "text": "Three lamps on Bell Lane won't take. I've trimmed them. I've prayed over them."
+    },
+    {
+     "id": "SQ7_02",
+     "speaker": "corin_ashby",
+     "text": "You carry fire in your hands, Silverer. Would you lend it to them?"
+    }
+   ],
+   "reward": {
+    "reputation": {
+     "corin_ashby": 15,
+     "dov_merriman": 5
+    },
+    "unlocks": [
+     "Bell_Lane_Lit"
+    ]
+   },
+   "steps": [
+    {
+     "id": "relight",
+     "title": "Three Lamps",
+     "description": "Three lamps on Bell Lane won't take.",
+     "objectives": [
+      {
+       "type": "spellHit",
+       "text": "Relight the failing lamps on Bell Lane",
+       "spell": "Fire",
+       "target": "Spot_BellLaneLamp1",
+       "radius": 300
+      },
+      {
+       "type": "spellHit",
+       "text": "Relight the failing lamps on Bell Lane",
+       "spell": "Fire",
+       "target": "Spot_BellLaneLamp2",
+       "radius": 300
+      },
+      {
+       "type": "spellHit",
+       "text": "Relight the failing lamps on Bell Lane",
+       "spell": "Fire",
+       "target": "Spot_BellLaneLamp3",
+       "radius": 300
+      }
+     ],
+     "linesOnObjective": {
+      "0": [
+       {
+        "id": "SQ7_03",
+        "speaker": "wren_hale",
+        "text": "There. Burn, you stubborn thing."
+       }
+      ]
+     },
+     "spawnAfterObjective": {
+      "1": {
+       "spawn": "Infected",
+       "spawnCount": 1
+      }
+     }
+    },
+    {
+     "id": "confess",
+     "title": "Watered Oil",
+     "description": "He's been watering the oil.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Talk to Corin",
+       "target": "corin_ashby"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ7_04",
+       "speaker": "corin_ashby",
+       "text": "They'll fail again. I've been watering the oil. Father would weep."
+      }
+     ],
+     "speaker": "corin_ashby"
+    },
+    {
+     "id": "oil",
+     "title": "Real Oil",
+     "description": "Dov has oil. Corin never asked.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Ask Dov for lamp oil",
+       "target": "dov_merriman",
+       "marker": "Spot_LanternRow"
+      },
+      {
+       "type": "deliver",
+       "text": "Bring the oil to Corin",
+       "item": "LampOil",
+       "target": "corin_ashby"
+      }
+     ],
+     "ordered": true,
+     "linesOnObjective": {
+      "0": [
+       {
+        "id": "SQ7_05",
+        "speaker": "dov_merriman",
+        "text": "Oil for Corin? By the furnace, why didn't the fool ask? Take the barrel."
+       }
+      ]
+     },
+     "giveItemsOnObjective": {
+      "0": [
+       "LampOil"
+      ]
+     }
+    }
+   ],
+   "turnInLines": [
+    {
+     "id": "SQ7_06",
+     "speaker": "corin_ashby",
+     "text": "Real oil. Bell Lane will hold till dawn. Light holds. It holds."
+    }
+   ],
+   "requiresUnlocks": [
+    "Quest_main.lantern_row"
+   ],
+   "afterLine": [
+    {
+     "id": "SQ7_07",
+     "speaker": "corin_ashby",
+     "text": "Not one flicker all night, Silverer. Not one."
+    }
+   ]
+  },
+  {
+   "id": "sq8_shed",
+   "title": "Sorrel's Shed",
+   "summary": "A Frostside healer keeps three tarnished tied in her shed. One is a Giltside dancer who fell through a rift.",
+   "giver": "sorrel_vey",
+   "side": "Frostside",
+   "offer": [
+    {
+     "id": "SQ8_01",
+     "speaker": "sorrel_vey",
+     "text": "You burn it out with light. I've seen you. My shed. Now."
+    }
+   ],
+   "reward": {
+    "reputation": {
+     "sorrel_vey": 15,
+     "petra_lisle": 20,
+     "lucan_marlowe": 20
+    },
+    "unlocks": [
+     "Petra_Found"
+    ]
+   },
+   "steps": [
+    {
+     "id": "shed",
+     "title": "The Shed",
+     "description": "Three of them. Tied, fed, alive.",
+     "objectives": [
+      {
+       "type": "goTo",
+       "text": "Go to Sorrel's shed",
+       "target": "Spot_SorrelShed",
+       "radius": 500
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ8_02",
+       "speaker": "sorrel_vey",
+       "text": "Three of them. Tied, fed, alive. Don't look at me like that."
+      }
+     ],
+     "speaker": "sorrel_vey",
+     "linesAt": "arrive"
+    },
+    {
+     "id": "cure",
+     "title": "Patients",
+     "description": "Light is the only thing that's ever worked.",
+     "objectives": [
+      {
+       "type": "spellHit",
+       "text": "Burn the Tarnish out of Sorrel's patients",
+       "target": "Infected",
+       "marker": "Spot_SorrelShed",
+       "radius": 800,
+       "cure": true,
+       "count": 3,
+       "spawn": "Infected",
+       "spawnCount": 2,
+       "includePerson": "petra_lisle",
+       "scriptedHold": true
+      }
+     ],
+     "progressLines": {
+      "1": [
+       {
+        "id": "SQ8_03",
+        "speaker": "sorrel_vey",
+        "text": "Show me again. Slower. Again."
+       }
+      ]
+     }
+    },
+    {
+     "id": "petra",
+     "title": "Gold in Your Coat",
+     "description": "Petra kept dancing, in her head, the whole time.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Talk to Petra",
+       "target": "petra_lisle"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ8_04",
+       "speaker": "petra_lisle",
+       "text": "Gold. Your coat's got gold in it. Am I home? Am I near home?"
+      },
+      {
+       "id": "SQ8_05",
+       "speaker": "petra_lisle",
+       "text": "Lucan. Tell Lucan I kept dancing. In my head. The whole time."
+      }
+     ],
+     "speaker": "petra_lisle"
+    },
+    {
+     "id": "lucan",
+     "title": "She's Alive",
+     "description": "Lucan needs to hear it.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Tell Lucan that Petra is alive",
+       "target": "lucan_marlowe",
+       "marker": "Spot_ArchiveSteps"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ8_06",
+       "speaker": "lucan_marlowe",
+       "text": "Alive? She's... Lucan can't... I can't breathe. Say it again."
+      },
+      {
+       "id": "SQ8_07",
+       "speaker": "lucan_marlowe",
+       "text": "Then I'll learn to walk through glass if it kills me."
+      }
+     ],
+     "speaker": "lucan_marlowe",
+     "linesOn": "complete"
+    }
+   ],
+   "turnIn": false,
+   "afterLine": [
+    {
+     "id": "SQ8_08",
+     "speaker": "lucan_marlowe",
+     "text": "She's alive. Five, six, seven, eight. She's alive."
+    }
+   ],
+   "startsTarnished": [
+    "petra_lisle"
+   ],
+   "availability": "Only when the hero is in Frostside's streets (not inside the sealed Frost Tower). Skip if the map has no Frostside streets."
+  },
+  {
+   "id": "sq9_unsigned",
+   "title": "Unsigned",
+   "summary": "For fifty years someone has left wool on Barnaby's doorstep, unsigned.",
+   "giver": "barnaby_thrale",
+   "side": "Giltside",
+   "offer": [
+    {
+     "id": "SQ9_01",
+     "speaker": "barnaby_thrale",
+     "text": "Wool on the doorstep again, Silverer. Good wool. No name. Now then, who?"
+    }
+   ],
+   "reward": {
+    "reputation": {
+     "barnaby_thrale": 10,
+     "odette_vane": 10
+    },
+    "unlocks": [
+     "Seam_Held"
+    ]
+   },
+   "steps": [
+    {
+     "id": "odette",
+     "title": "A Customer",
+     "description": "Good wool. No name.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Ask Odette Vane about the wool",
+       "target": "odette_vane",
+       "marker": "Spot_ArchiveSteps"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ9_02",
+       "speaker": "odette_vane",
+       "text": "Wool? Darling, I don't give wool away. Take this one to him. From a customer."
+      }
+     ],
+     "speaker": "odette_vane",
+     "linesOn": "complete",
+     "rewardOnComplete": {
+      "items": [
+       "Wool"
+      ]
+     }
+    },
+    {
+     "id": "wool",
+     "title": "Gold Selvedge",
+     "description": "Only one hand hems like that.",
+     "objectives": [
+      {
+       "type": "deliver",
+       "text": "Bring the wool to Barnaby",
+       "item": "Wool",
+       "target": "barnaby_thrale"
+      }
+     ],
+     "linesOnComplete": [
+      {
+       "id": "SQ9_03",
+       "speaker": "barnaby_thrale",
+       "text": "From a customer. With a gold selvedge. Only one hand hems like that."
+      },
+      {
+       "id": "SQ9_04",
+       "speaker": "barnaby_thrale",
+       "text": "Give her these. My first shears. She always wanted them. Tell her... tell her the seam held."
+      }
+     ],
+     "rewardOnComplete": {
+      "items": [
+       "Shears"
+      ]
+     }
+    },
+    {
+     "id": "shears",
+     "title": "The Seam Held",
+     "description": "Barnaby's first shears.",
+     "objectives": [
+      {
+       "type": "deliver",
+       "text": "Bring the shears to Odette",
+       "item": "Shears",
+       "target": "odette_vane"
+      }
+     ],
+     "linesOnComplete": [
+      {
+       "id": "SQ9_05",
+       "speaker": "odette_vane",
+       "text": "His shears. The old... Barnaby. He remembered the seam."
+      },
+      {
+       "id": "SQ9_06",
+       "speaker": "odette_vane",
+       "text": "Go away, darling. Nobody sees me like this. Thank you. Go."
+      }
+     ]
+    }
+   ],
+   "turnIn": false,
+   "requiresUnlocks": [
+    "Quest_main.lantern_row"
+   ],
+   "afterLine": [
+    {
+     "id": "SQ9_07",
+     "speaker": "odette_vane",
+     "text": "Silverer. I'm sewing with the old man on Thursdays. Don't."
+    }
+   ]
+  },
+  {
+   "id": "sq10_watch_book",
+   "title": "The Watch Book",
+   "summary": "Maud keeps a page on every Silverer. Wren's has marks on it.",
+   "giver": "maud_kettering",
+   "side": "Giltside",
+   "offer": [
+    {
+     "id": "SQ10_01",
+     "speaker": "maud_kettering",
+     "text": "Every Silverer gets a page in the Watch book, citizen. Yours has marks. Noted."
+    },
+    {
+     "id": "SQ10_02",
+     "speaker": "maud_kettering",
+     "text": "Folk who saw your light go wrong. A gate can't hold if the crowd fears the one behind it."
+    }
+   ],
+   "reward": {
+    "reputation": {
+     "maud_kettering": 10,
+     "nell_bramley": 5
+    },
+    "unlocks": [
+     "Silverer_RecordClean"
+    ]
+   },
+   "steps": [
+    {
+     "id": "good_marks",
+     "title": "Good Marks",
+     "description": "Two faces back at the gate, and Nell to speak for me.",
+     "objectives": [
+      {
+       "type": "spellHit",
+       "text": "Burn the Tarnish out of 2 people at the Lantern Gate",
+       "target": "Infected",
+       "cure": true,
+       "count": 2,
+       "marker": "Spot_LanternGate",
+       "radius": 4000,
+       "spawn": "Infected",
+       "spawnCount": 2
+      },
+      {
+       "type": "talkTo",
+       "text": "Ask Nell Bramley to vouch for you",
+       "target": "nell_bramley",
+       "marker": "Spot_LanternGate"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ10_04",
+       "speaker": "maud_kettering",
+       "text": "Good marks first. Two faces back from the Tarnish, here at my gate. Then Bramley speaks for you."
+      }
+     ],
+     "speaker": "maud_kettering",
+     "linesOnObjective": {
+      "1": [
+       {
+        "id": "SQ10_05",
+        "speaker": "nell_bramley",
+        "text": "I'll vouch, Sergeant! Sorry, I mean, I'd like to vouch. Properly."
+       }
+      ]
+     },
+     "linesOnComplete": [
+      {
+       "id": "SQ10_06",
+       "speaker": "maud_kettering",
+       "text": "Two. Noted. Now the bad marks. Corporal Greave holds the statements on Bell Lane."
+      }
+     ]
+    },
+    {
+     "id": "bad_marks",
+     "title": "Bad Marks",
+     "description": "Hollis has eleven statements about me. Eleven.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Find Corporal Greave on Bell Lane",
+       "target": "hollis_greave",
+       "marker": "Spot_BellLane"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ10_07",
+       "speaker": "hollis_greave",
+       "text": "Statements. Eleven of them. Course there are. Want them read, or want them lost?"
+      }
+     ],
+     "speaker": "hollis_greave",
+     "choicePerson": "hollis_greave",
+     "choices": [
+      {
+       "id": "read",
+       "text": "Read them to me. All of them.",
+       "response": {
+        "id": "SQ10_08",
+        "speaker": "hollis_greave",
+        "text": "Your call. A spell through a window. A man knocked flat on Lantern Row. It goes on a while."
+       },
+       "next": "End",
+       "reward": {
+        "reputation": {
+         "maud_kettering": 10
+        }
+       },
+       "journal": "Hollis read me every one. I'd rather have the bruise than the page."
+      },
+      {
+       "id": "lose",
+       "text": "Lose the page, Hollis.",
+       "response": {
+        "id": "SQ10_09",
+        "speaker": "hollis_greave",
+        "text": "Page fell in the canal. Shame. You owe me a flask of tea."
+       },
+       "next": "End",
+       "reward": {
+        "reputation": {
+         "maud_kettering": -10,
+         "hollis_greave": 5
+        },
+        "unlocks": [
+         "Watch_Page_Lost"
+        ]
+       },
+       "journal": "The page went in the canal. Maud will know. Maud always knows."
+      }
+     ]
+    }
+   ],
+   "turnInLines": [
+    {
+     "id": "SQ10_10",
+     "speaker": "maud_kettering",
+     "text": "Clean page. Noted. Don't make me open the book again."
+    }
+   ],
+   "requiresUnlocks": [
+    "Quest_main.key"
+   ],
+   "accept": [
+    {
+     "id": "SQ10_03",
+     "speaker": "wren_hale",
+     "text": "Then tell me how to clean it."
+    }
+   ],
+   "afterLine": [
+    {
+     "id": "SQ10_11",
+     "speaker": "maud_kettering",
+     "text": "Your page is still clean, citizen. I check it every morning."
+    }
+   ],
+   "availability": "Best offered when the Silverer has heat (any witnessed crime); otherwise offer after main.key. On Unlocked Silverer_RecordClean: reset the Silverer's heat, let witnesses' crime memories fade, stop guards hunting."
+  },
+  {
+   "id": "sq11_shield_and_lamp",
+   "title": "Shield and Lamp",
+   "summary": "The Third Lamp Company walks the canal rift tonight, and the Sergeant wants the Silverer in the middle of the line.",
+   "giver": "aldric_mayne",
+   "side": "Giltside",
+   "offer": [
+    {
+     "id": "SQ11_01",
+     "speaker": "aldric_mayne",
+     "text": "Silverer. The Third walks the canal rift tonight. The Captain won't ask you. I'm asking, charmingly."
+    },
+    {
+     "id": "SQ11_02",
+     "speaker": "aldric_mayne",
+     "text": "Steel pins them, you burn them clean. Nobody we cut down comes back. That's the Captain's word, not mine."
+    }
+   ],
+   "reward": {
+    "coins": 1,
+    "coinSide": "Giltside",
+    "reputation": {
+     "sela_brask": 15,
+     "aldric_mayne": 10
+    }
+   },
+   "steps": [
+    {
+     "id": "muster",
+     "title": "The Third Marches",
+     "description": "Mayne, Bram, Damaris with the lantern, Emeric with the horn, and Cosmo, first week.",
+     "objectives": [
+      {
+       "type": "goTo",
+       "text": "Muster with the Third Company at the canal rift",
+       "target": "Spot_CanalRift",
+       "radius": 1500
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ11_03",
+       "speaker": "damaris_hobb",
+       "text": "Lantern's lit, chicks. Silverer in the middle, where it's bright."
+      }
+     ],
+     "speaker": "damaris_hobb",
+     "linesOnComplete": [
+      {
+       "id": "SQ11_04",
+       "speaker": "emeric_dunstan",
+       "text": "One long blast and we march! HA! Fine night for a tale!"
+      }
+     ],
+     "squadNote": "If squads are live, the Third Company squad (Brask's soldiers: aldric_mayne, bram_tolley, cosmo_fennick, damaris_hobb, emeric_dunstan) forms at Spot_CanalRift as the hero's ally for steps muster to pinned."
+    },
+    {
+     "id": "hold",
+     "title": "Steel and Light",
+     "description": "Steel pins them. I burn them clean.",
+     "objectives": [
+      {
+       "type": "protect",
+       "text": "Hold the canal rift with the Third (60 s)",
+       "target": "Spot_CanalRift",
+       "radius": 1200,
+       "seconds": 60,
+       "spawn": "Infected",
+       "spawnCount": 4
+      },
+      {
+       "type": "spellHit",
+       "text": "Burn the Tarnish out of 3 people",
+       "target": "Infected",
+       "cure": true,
+       "count": 3,
+       "marker": "Spot_CanalRift",
+       "radius": 3000,
+       "progressLines": {
+        "1": [
+         {
+          "id": "SQ11_06",
+          "speaker": "bram_tolley",
+          "text": "That's one back. Behind me, you. You're safe now."
+         }
+        ],
+        "2": [
+         {
+          "id": "SQ11_07",
+          "speaker": "cosmo_fennick",
+          "text": "Two back! Sarge, are you counting? I'm counting!"
+         }
+        ]
+       }
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ11_05",
+       "speaker": "wren_hale",
+       "text": "Hold them still. I'll do the rest."
+      }
+     ],
+     "speaker": "wren_hale",
+     "failIfDies": "cosmo_fennick"
+    },
+    {
+     "id": "pinned",
+     "title": "Pinned",
+     "description": "Bram had one on his shield. It wasn't fighting. It was looking at Cosmo.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Talk to Captain Brask",
+       "target": "sela_brask",
+       "marker": "Spot_CanalRift",
+       "spawn": "Infected",
+       "spawnCount": 1
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ11_08",
+       "speaker": "bram_tolley",
+       "text": "Got one on the shield. It's not fighting. It's looking at Cosmo."
+      },
+      {
+       "id": "SQ11_09",
+       "speaker": "cosmo_fennick",
+       "text": "Wat? Wat, it's me. Sarge, that's my brother. That's Wat!"
+      },
+      {
+       "id": "SQ11_10",
+       "speaker": "sela_brask",
+       "text": "Silverer. It's pinned. Burn it out or I cut it down. Choose."
+      }
+     ],
+     "choicePerson": "sela_brask",
+     "failIfDies": "cosmo_fennick",
+     "choices": [
+      {
+       "id": "burn",
+       "text": "Hold him. I'll burn it out.",
+       "response": {
+        "id": "SQ11_11",
+        "speaker": "sela_brask",
+        "text": "Thirty seconds. Tolley, hold."
+       },
+       "next": "cure_wat",
+       "journal": "Thirty seconds, Brask said."
+      },
+      {
+       "id": "cut",
+       "text": "Cut it down.",
+       "response": {
+        "id": "SQ11_12",
+        "speaker": "sela_brask",
+        "text": "Then you do it. My people have done enough of this."
+       },
+       "next": "cut_wat",
+       "journal": "Brask wouldn't let her people do it. So it was me."
+      }
+     ]
+    },
+    {
+     "id": "cure_wat",
+     "title": "Wat",
+     "description": "Wat Fennick, back with his own eyes. His mother is going to scream.",
+     "objectives": [
+      {
+       "type": "spellHit",
+       "text": "Burn the Tarnish out of Wat",
+       "target": "Infected",
+       "cure": true,
+       "count": 1,
+       "marker": "Spot_CanalRift",
+       "radius": 3000
+      }
+     ],
+     "linesOnComplete": [
+      {
+       "id": "SQ11_13",
+       "speaker": "cosmo_fennick",
+       "text": "Wat. Your eyes. Your eyes are yours. Mum's going to scream."
+      },
+      {
+       "id": "SQ11_14",
+       "speaker": "aldric_mayne",
+       "text": "Charming. Truly. I'll put that one on the roll as found."
+      }
+     ],
+     "next": "End",
+     "ifKilledNext": "cut_wat"
+    },
+    {
+     "id": "cut_wat",
+     "title": "Wat",
+     "description": "He knew Cosmo. Right up to the end, he knew him.",
+     "objectives": [
+      {
+       "type": "defeat",
+       "text": "Cut down the pinned tarnished",
+       "target": "Infected",
+       "count": 1,
+       "marker": "Spot_CanalRift",
+       "radius": 3000
+      }
+     ],
+     "linesOnComplete": [
+      {
+       "id": "SQ11_15",
+       "speaker": "cosmo_fennick",
+       "text": "No. No, no, he was looking at me. He knew me."
+      },
+      {
+       "id": "SQ11_16",
+       "speaker": "bram_tolley",
+       "text": "I had him. I had him still. I'm sorry, Cosmo."
+      }
+     ],
+     "next": "End"
+    }
+   ],
+   "turnInLines": [
+    {
+     "id": "SQ11_17",
+     "speaker": "aldric_mayne",
+     "text": "The Third thanks you. The Captain will nod at you once. Treasure it."
+    }
+   ],
+   "requiresUnlocks": [
+    "Quest_main.hold_line"
+   ],
+   "fail": [
+    {
+     "id": "SQ11_F1",
+     "speaker": "aldric_mayne",
+     "text": "Fennick's down. First week. I'll write to his mother myself."
+    }
+   ],
+   "afterLine": [
+    {
+     "id": "SQ11_18",
+     "speaker": "sela_brask",
+     "text": "You fought on my line, Silverer. You can stand on it again."
+    }
+   ],
+   "offerIfWanted": [
+    {
+     "id": "SQ11_W1",
+     "speaker": "aldric_mayne",
+     "text": "Not while the Watch has your name in its book. Clean the page first, Silverer."
+    }
+   ],
+   "availability": "Refuse with offerIfWanted (SQ11_W1) while the Silverer is wanted (heat high, or a witnessed crime and no Silverer_RecordClean). Otherwise offer after main.hold_line."
+  },
+  {
+   "id": "sq12_empty_chair",
+   "title": "The Empty Chair",
+   "summary": "Cosmo's chair at the Third Company's table is empty, and the canal fog is talking in his brother's voice.",
+   "giver": "damaris_hobb",
+   "side": "Giltside",
+   "offer": [
+    {
+     "id": "SQ12_01",
+     "speaker": "damaris_hobb",
+     "text": "Cosmo's gone, dear. Took Wat's cap and his spear. Mercy, I know where."
+    },
+    {
+     "id": "SQ12_02",
+     "speaker": "damaris_hobb",
+     "text": "The canal. He says the fog's still calling in his brother's voice. Bring him back to us."
+    }
+   ],
+   "reward": {
+    "reputation": {
+     "damaris_hobb": 10
+    }
+   },
+   "steps": [
+    {
+     "id": "canal",
+     "title": "The Edge",
+     "description": "Cosmo took Wat's cap and his spear and went to the canal.",
+     "objectives": [
+      {
+       "type": "goTo",
+       "text": "Find Cosmo at the canal rift",
+       "target": "Spot_CanalRift",
+       "radius": 1500
+      },
+      {
+       "type": "talkTo",
+       "text": "Talk to Cosmo",
+       "target": "cosmo_fennick",
+       "marker": "Spot_CanalRift"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ12_03",
+       "speaker": "wren_hale",
+       "text": "Cosmo! Step back from the edge."
+      }
+     ],
+     "speaker": "wren_hale",
+     "ordered": true,
+     "linesOnObjective": {
+      "0": [
+       {
+        "id": "SQ12_05",
+        "speaker": "the_tarnish",
+        "text": "Come and look, little brother. Your Silverer spends people like coins."
+       }
+      ],
+      "1": [
+       {
+        "id": "SQ12_04",
+        "speaker": "cosmo_fennick",
+        "text": "It talks like him. In the fog. It says Wat's still in there and you burned nothing."
+       }
+      ]
+     },
+     "choicePerson": "cosmo_fennick",
+     "failIfDies": "cosmo_fennick",
+     "choices": [
+      {
+       "id": "own",
+       "text": "I did it. Hate me. Not yourself.",
+       "response": {
+        "id": "SQ12_06",
+        "speaker": "cosmo_fennick",
+        "text": "I do. I do hate you. Help me up anyway."
+       },
+       "next": "mother",
+       "reward": {
+        "reputation": {
+         "cosmo_fennick": -10,
+         "sela_brask": 10
+        }
+       },
+       "journal": "He hates me. He let me help him up anyway."
+      },
+      {
+       "id": "gone",
+       "text": "He was gone before the shield touched him.",
+       "response": {
+        "id": "SQ12_07",
+        "speaker": "cosmo_fennick",
+        "text": "You didn't know him. You didn't. Take me home anyway."
+       },
+       "next": "mother",
+       "journal": "I told him Wat was already gone. Neither of us believed it."
+      }
+     ]
+    },
+    {
+     "id": "mother",
+     "title": "Marjory",
+     "description": "Somebody has to tell their mother. It should be me.",
+     "objectives": [
+      {
+       "type": "talkTo",
+       "text": "Tell Marjory Fennick on Lantern Row",
+       "target": "marjory_fennick",
+       "marker": "Spot_LanternRow"
+      }
+     ],
+     "lines": [
+      {
+       "id": "SQ12_08",
+       "speaker": "marjory_fennick",
+       "text": "You're the Silverer who was at the canal. Cosmo won't look at me. Tell me."
+      }
+     ],
+     "speaker": "marjory_fennick",
+     "choicePerson": "marjory_fennick",
+     "choices": [
+      {
+       "id": "truth",
+       "text": "I cut him down. It was my call.",
+       "response": {
+        "id": "SQ12_09",
+        "speaker": "marjory_fennick",
+        "text": "Then you'll carry him. Every day. Get away from my barrow."
+       },
+       "next": "End",
+       "reward": {
+        "reputation": {
+         "marjory_fennick": -25
+        },
+        "unlocks": [
+         "Fennick_Truth"
+        ]
+       },
+       "journal": "I told her the truth. She told me to get away from her barrow."
+      },
+      {
+       "id": "lie",
+       "text": "The Tarnish took him. We couldn't reach him.",
+       "response": {
+        "id": "SQ12_10",
+        "speaker": "marjory_fennick",
+        "text": "Thank you for bringing my other boy home. Thank you."
+       },
+       "next": "End",
+       "reward": {
+        "reputation": {
+         "marjory_fennick": 10
+        },
+        "unlocks": [
+         "Fennick_Lie"
+        ]
+       },
+       "journal": "I lied to her, and she thanked me for it. Cosmo heard every word."
+      }
+     ]
+    }
+   ],
+   "turnInLines": [
+    {
+     "id": "SQ12_11",
+     "speaker": "damaris_hobb",
+     "text": "He's at the table. He's not talking. That's a start, dear."
+    }
+   ],
+   "requiresUnlocks": [
+    "Quest_sq11_shield_and_lamp.cut_wat"
+   ],
+   "fail": [
+    {
+     "id": "SQ12_F1",
+     "speaker": "damaris_hobb",
+     "text": "The fog took both Fennick boys. No lantern tonight."
+    }
+   ],
+   "afterLine": [
+    {
+     "id": "SQ12_12",
+     "speaker": "cosmo_fennick",
+     "text": "I keep Wat's cap in my helmet now. For luck. It doesn't work."
+    }
+   ],
+   "availability": "Only after SQ11 ended with cut_wat. A player who burned Wat clean never sees this quest."
+  }
+ ]
+}

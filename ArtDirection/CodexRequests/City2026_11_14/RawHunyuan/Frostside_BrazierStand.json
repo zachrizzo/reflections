@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "ArtDirection\\CodexRequests\\City2026_11_14\\References\\Frostside_BrazierStand_Reference.png",
+  "output": "ArtDirection\\CodexRequests\\City2026_11_14\\RawHunyuan\\Frostside_BrazierStand.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 20,
+  "resolution": 256,
+  "seed": 423,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 56890,
+  "faces": 113800,
+  "seconds": 24.0,
+  "bounds": [
+    [
+      -0.3020133972167969,
+      -0.9980316758155823,
+      -0.29151830077171326
+    ],
+    [
+      0.2938096821308136,
+      0.988712728023529,
+      0.2832821011543274
+    ]
+  ]
+}

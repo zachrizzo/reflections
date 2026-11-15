@@ -1,0 +1,30 @@
+{
+  "standing": {
+    "body_material": "/Game/Characters/Hero/SimplePreview/Materials/MI_HeroSimple_Skin_1.MI_HeroSimple_Skin_1",
+    "face_mesh": "/Game/Characters/Hero/Assembled/Hero/Face/SKM_MHC_Hero_FaceMesh.SKM_MHC_Hero_FaceMesh",
+    "face_visible": true,
+    "hair": [
+      {
+        "name": "Hair",
+        "visible": true,
+        "binding": "<Object '/Game/Characters/Hero/Assembled/Hero/Grooms/Hair_S_Messy_Binding.Hair_S_Messy_Binding' (0x00000240D5716000) Class 'GroomBindingAsset'>"
+      }
+    ],
+    "old_coat_visible": false,
+    "old_tails_visible": false,
+    "cloths": 1,
+    "dynamic_vertices": 3094,
+    "pinned_vertices": 483,
+    "animation": "ABP_HeroSampleRetarget_C"
+  },
+  "running": {
+    "speed": 350.0,
+    "position": "<Struct 'Vector' (0x0000023C888602E8) {x: 0.000000, y: -519.206743, z: 88.149996}>",
+    "hair_location": "<Struct 'Vector' (0x0000023C888602E8) {x: 54.628270, y: -507.498401, z: 10.885163}>",
+    "face_location": "<Struct 'Vector' (0x0000023C888602E8) {x: 0.000000, y: -519.206743, z: 0.149996}>"
+  },
+  "jump": {
+    "velocity": "<Struct 'Vector' (0x0000023C888601A8) {x: 0.000000, y: -350.000000, z: 13.996342}>",
+    "position": "<Struct 'Vector' (0x0000023C888601A8) {x: 0.000000, y: -903.810618, z: 215.601068}>"
+  }
+}

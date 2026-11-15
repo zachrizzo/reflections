@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "ArtDirection\\CodexRequests\\City2026_11_14\\References\\Pewterside_FacadeKit_Reference.png",
+  "output": "ArtDirection\\CodexRequests\\City2026_11_14\\RawHunyuan\\Pewterside_FacadeKit.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 20,
+  "resolution": 256,
+  "seed": 411,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 166718,
+  "faces": 333428,
+  "seconds": 28.6,
+  "bounds": [
+    [
+      -0.9983786344528198,
+      -0.8862290978431702,
+      -0.2805228531360626
+    ],
+    [
+      0.9903871417045593,
+      0.8791564702987671,
+      0.3268466293811798
+    ]
+  ]
+}

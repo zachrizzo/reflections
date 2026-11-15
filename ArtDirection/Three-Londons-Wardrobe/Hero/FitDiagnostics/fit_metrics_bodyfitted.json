@@ -1,0 +1,98 @@
+{
+  "legend": {
+    "red": "estimated more than 2 mm inside skin; inspect in context",
+    "green": "0\u20133 cm from skin",
+    "yellow": "3\u201310 cm from skin",
+    "blue": "over 10 cm from skin; normal for flowing cloak"
+  },
+  "limitations": "Vertex-weighted samples and nearest-normal sign against open meshes; not definitive closed-volume collision tests. Ignores clothing-to-clothing collisions, facial movement, and physics simulation.",
+  "poses": {
+    "rest": {
+      "SK_HeroCoat": {
+        "vertices": 13630,
+        "penetrating_estimate_over_2mm_pct": 9.96,
+        "within_3cm_pct": 45.39,
+        "3_to_10cm_pct": 54.43,
+        "over_10cm_pct": 0.18,
+        "median_clearance_cm": 3.23,
+        "p95_clearance_cm": 6.81
+      },
+      "SK_HeroBodyFittedTrousers": {
+        "vertices": 620,
+        "penetrating_estimate_over_2mm_pct": 0.0,
+        "within_3cm_pct": 100.0,
+        "3_to_10cm_pct": 0.0,
+        "over_10cm_pct": 0.0,
+        "median_clearance_cm": 1.0,
+        "p95_clearance_cm": 1.0
+      },
+      "SK_HeroCloakV8": {
+        "vertices": 3577,
+        "penetrating_estimate_over_2mm_pct": 0.0,
+        "within_3cm_pct": 0.28,
+        "3_to_10cm_pct": 8.11,
+        "over_10cm_pct": 91.61,
+        "median_clearance_cm": 22.72,
+        "p95_clearance_cm": 36.08
+      }
+    },
+    "stride": {
+      "SK_HeroCoat": {
+        "vertices": 13630,
+        "penetrating_estimate_over_2mm_pct": 10.04,
+        "within_3cm_pct": 44.63,
+        "3_to_10cm_pct": 55.22,
+        "over_10cm_pct": 0.15,
+        "median_clearance_cm": 3.26,
+        "p95_clearance_cm": 6.96
+      },
+      "SK_HeroBodyFittedTrousers": {
+        "vertices": 620,
+        "penetrating_estimate_over_2mm_pct": 0.0,
+        "within_3cm_pct": 100.0,
+        "3_to_10cm_pct": 0.0,
+        "over_10cm_pct": 0.0,
+        "median_clearance_cm": 1.0,
+        "p95_clearance_cm": 1.0
+      },
+      "SK_HeroCloakV8": {
+        "vertices": 3577,
+        "penetrating_estimate_over_2mm_pct": 0.0,
+        "within_3cm_pct": 0.42,
+        "3_to_10cm_pct": 7.63,
+        "over_10cm_pct": 91.95,
+        "median_clearance_cm": 20.25,
+        "p95_clearance_cm": 39.68
+      }
+    },
+    "crouch": {
+      "SK_HeroCoat": {
+        "vertices": 13630,
+        "penetrating_estimate_over_2mm_pct": 9.98,
+        "within_3cm_pct": 44.86,
+        "3_to_10cm_pct": 54.98,
+        "over_10cm_pct": 0.16,
+        "median_clearance_cm": 3.26,
+        "p95_clearance_cm": 7.16
+      },
+      "SK_HeroBodyFittedTrousers": {
+        "vertices": 620,
+        "penetrating_estimate_over_2mm_pct": 0.0,
+        "within_3cm_pct": 100.0,
+        "3_to_10cm_pct": 0.0,
+        "over_10cm_pct": 0.0,
+        "median_clearance_cm": 0.99,
+        "p95_clearance_cm": 1.0
+      },
+      "SK_HeroCloakV8": {
+        "vertices": 3577,
+        "penetrating_estimate_over_2mm_pct": 0.0,
+        "within_3cm_pct": 0.36,
+        "3_to_10cm_pct": 8.02,
+        "over_10cm_pct": 91.61,
+        "median_clearance_cm": 23.62,
+        "p95_clearance_cm": 49.7
+      }
+    }
+  }
+}

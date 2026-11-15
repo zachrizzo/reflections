@@ -1,0 +1,2709 @@
+[
+ {
+  "name": "Mk_Frost_Cistern",
+  "side": "Frostside",
+  "kind": "Cistern",
+  "place": "Cistern",
+  "aliases": [
+   "Spot_Cistern"
+  ],
+  "used_by": [
+   "people.json",
+   "story_names->Spot_Cistern"
+  ],
+  "note": "Named place used by people markers",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Frost_Gate_FrozenGate",
+  "side": "Frostside",
+  "kind": "Gate",
+  "place": "FrozenGate",
+  "aliases": [
+   "Spot_FrozenGate"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "2 people markers",
+   "story_names->Spot_FrozenGate"
+  ],
+  "note": "The gate that won't close.",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Frost_Home_Barracks",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "Barracks",
+  "aliases": [
+   "Spot_FrostBarracks"
+  ],
+  "used_by": [
+   "people.json",
+   "2 people markers",
+   "story_names->Spot_FrostBarracks"
+  ],
+  "note": "Named place used by people markers",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Frost_Home_Rook",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "Rook",
+  "aliases": [],
+  "used_by": [
+   "people.json",
+   "2 people markers"
+  ],
+  "note": "Named place used by people markers",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Frost_Market_BoneMarket",
+  "side": "Frostside",
+  "kind": "Market",
+  "place": "BoneMarket",
+  "aliases": [
+   "Spot_BoneMarket"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "4 people markers",
+   "story_names->Spot_BoneMarket"
+  ],
+  "note": "The Bone Market (clique bone_market).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Frost_Shed_Sorrel",
+  "side": "Frostside",
+  "kind": "Shed",
+  "place": "Sorrel",
+  "aliases": [
+   "Spot_SorrelShed"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "3 people markers",
+   "story_names->Spot_SorrelShed"
+  ],
+  "note": "Sorrel's shed (SQ8).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Frost_Shelter_LongShelter",
+  "side": "Frostside",
+  "kind": "Shelter",
+  "place": "LongShelter",
+  "aliases": [
+   "Spot_LongShelter"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "8 people markers",
+   "story_names->Spot_LongShelter"
+  ],
+  "note": "The Long Shelter (clique long_shelter).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Frost_Stair_IceStairs",
+  "side": "Frostside",
+  "kind": "Stair",
+  "place": "IceStairs",
+  "aliases": [
+   "Spot_IceStairs"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "4 people markers",
+   "story_names->Spot_IceStairs"
+  ],
+  "note": "The Ice Stairs (clique ice_stairs).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Frost_Tower_FrostTower",
+  "side": "Frostside",
+  "kind": "Tower",
+  "place": "FrostTower",
+  "aliases": [
+   "Tower_Frostside"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "story_names->Tower_Frostside"
+  ],
+  "note": "Inside the sealed Frost Tower (the Gilt Tower's reflection).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Frost_Wall_IceWall",
+  "side": "Frostside",
+  "kind": "Wall",
+  "place": "IceWall",
+  "aliases": [
+   "Spot_IceWall"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "2 people markers",
+   "story_names->Spot_IceWall"
+  ],
+  "note": "The ice wall.",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Camp_UnderGate",
+  "side": "Giltside",
+  "kind": "Camp",
+  "place": "UnderGate",
+  "aliases": [
+   "Spot_DrifterCamp"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "4 people markers",
+   "story_names->Spot_DrifterCamp"
+  ],
+  "note": "The drifters' camp under the Lantern Gate (clique drifters_camp).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Cellar_Lamplight",
+  "side": "Giltside",
+  "kind": "Cellar",
+  "place": "Lamplight",
+  "aliases": [
+   "Spot_LamplightCellar"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "2 people markers",
+   "story_names->Spot_LamplightCellar"
+  ],
+  "note": "The inn's cellar, where Hal is hidden (SQ1).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Gate_LanternGate",
+  "side": "Giltside",
+  "kind": "Gate",
+  "place": "LanternGate",
+  "aliases": [
+   "Spot_LanternGate"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "5 people markers",
+   "story_names->Spot_LanternGate"
+  ],
+  "note": "The Lantern Gate and its bridge (clique lantern_gate).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Home_Barracks",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Barracks",
+  "aliases": [
+   "Spot_GiltBarracks"
+  ],
+  "used_by": [
+   "people.json",
+   "1 people markers",
+   "story_names->Spot_GiltBarracks"
+  ],
+  "note": "Named place used by people markers",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Home_IlseAttic",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "IlseAttic",
+  "aliases": [],
+  "used_by": [
+   "people.json",
+   "1 people markers"
+  ],
+  "note": "Named place used by people markers",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Home_ThraleShop",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "ThraleShop",
+  "aliases": [],
+  "used_by": [
+   "people.json",
+   "2 people markers"
+  ],
+  "note": "Named place used by people markers",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Home_WatchBarracks",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "WatchBarracks",
+  "aliases": [
+   "Spot_WatchBarracks"
+  ],
+  "used_by": [
+   "people.json",
+   "1 people markers",
+   "story_names->Spot_WatchBarracks"
+  ],
+  "note": "Named place used by people markers",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Inn_Lamplight",
+  "side": "Giltside",
+  "kind": "Inn",
+  "place": "Lamplight",
+  "aliases": [
+   "Spot_Lamplight"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "6 people markers",
+   "story_names->Spot_Lamplight"
+  ],
+  "note": "The Lamplight inn; Wren lodges upstairs (clique lamplight).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Lane_BellLane",
+  "side": "Giltside",
+  "kind": "Lane",
+  "place": "BellLane",
+  "aliases": [
+   "Spot_BellLane"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "5 people markers",
+   "story_names->Spot_BellLane"
+  ],
+  "note": "Bell Lane, where the lamps are failing (clique bell_lane, SQ7).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Market_LanternRow",
+  "side": "Giltside",
+  "kind": "Market",
+  "place": "LanternRow",
+  "aliases": [
+   "Spot_LanternRow"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "6 people markers",
+   "story_names->Spot_LanternRow"
+  ],
+  "note": "Lantern Row, the candle-and-glass market (clique lantern_row).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Rift_Canal",
+  "side": "Giltside",
+  "kind": "Rift",
+  "place": "Canal",
+  "aliases": [
+   "Spot_CanalRift"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "2 people markers",
+   "story_names->Spot_CanalRift"
+  ],
+  "note": "The canal rift post (SQ6).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Square_BellSquare",
+  "side": "Giltside",
+  "kind": "Square",
+  "place": "BellSquare",
+  "aliases": [
+   "Spot_BellSquare"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "5 people markers",
+   "story_names->Spot_BellSquare"
+  ],
+  "note": "Giltside's central square with the dry fountain. Intro and first-conversion spot.",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Steps_Archive",
+  "side": "Giltside",
+  "kind": "Steps",
+  "place": "Archive",
+  "aliases": [
+   "Spot_ArchiveSteps"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "3 people markers",
+   "story_names->Spot_ArchiveSteps"
+  ],
+  "note": "The Archive steps (clique archive_steps).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Tower_GiltTower",
+  "side": "Giltside",
+  "kind": "Tower",
+  "place": "GiltTower",
+  "aliases": [
+   "Tower_Giltside"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "1 people markers",
+   "story_names->Tower_Giltside"
+  ],
+  "note": "The Gilt Tower's sealed door.",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Workshop_Furnace",
+  "side": "Giltside",
+  "kind": "Workshop",
+  "place": "Furnace",
+  "aliases": [
+   "Spot_Furnace"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "1 people markers",
+   "story_names->Spot_Furnace"
+  ],
+  "note": "Dov's glass furnace.",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Workshop_ThraleShop",
+  "side": "Giltside",
+  "kind": "Workshop",
+  "place": "ThraleShop",
+  "aliases": [
+   "Spot_ThraleShop"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "1 people markers",
+   "story_names->Spot_ThraleShop"
+  ],
+  "note": "Barnaby's tailoring shop.",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Workshop_Vane",
+  "side": "Giltside",
+  "kind": "Workshop",
+  "place": "Vane",
+  "aliases": [
+   "Spot_VaneAtelier"
+  ],
+  "used_by": [
+   "people.json",
+   "1 people markers",
+   "story_names->Spot_VaneAtelier"
+  ],
+  "note": "Named place used by people markers",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Gilt_Yard_Muster",
+  "side": "Giltside",
+  "kind": "Yard",
+  "place": "Muster",
+  "aliases": [
+   "Spot_MusterYard"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "2 people markers",
+   "story_names->Spot_MusterYard"
+  ],
+  "note": "The Lamp Companies' muster yard (clique muster_yard).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Pew_Doorstep_Hester",
+  "side": "Pewterside",
+  "kind": "Doorstep",
+  "place": "Hester",
+  "aliases": [
+   "Spot_HesterDoorstep"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "4 people markers",
+   "story_names->Spot_HesterDoorstep"
+  ],
+  "note": "Hester's doorstep on Coal Lane (SQ4).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Pew_Home_Ada",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Ada",
+  "aliases": [],
+  "used_by": [
+   "people.json",
+   "1 people markers"
+  ],
+  "note": "Named place used by people markers",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Pew_Home_PrattShop",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "PrattShop",
+  "aliases": [],
+  "used_by": [
+   "people.json",
+   "1 people markers"
+  ],
+  "note": "Named place used by people markers",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Pew_Infirmary_WickStreet",
+  "side": "Pewterside",
+  "kind": "Infirmary",
+  "place": "WickStreet",
+  "aliases": [
+   "Spot_WickStreetInfirmary"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "1 people markers",
+   "story_names->Spot_WickStreetInfirmary"
+  ],
+  "note": "The Wick Street infirmary.",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Pew_Laundry_CoalLane",
+  "side": "Pewterside",
+  "kind": "Laundry",
+  "place": "CoalLane",
+  "aliases": [
+   "Spot_CoalLaneLaundry"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "2 people markers",
+   "story_names->Spot_CoalLaneLaundry"
+  ],
+  "note": "The Coal Lane steam laundry.",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Pew_Square_WeighHouse",
+  "side": "Pewterside",
+  "kind": "Square",
+  "place": "WeighHouse",
+  "aliases": [
+   "Spot_WeighHouseCorner"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "5 people markers",
+   "story_names->Spot_WeighHouseCorner"
+  ],
+  "note": "Weigh-House Corner (clique weigh_house_corner).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Pew_Stair_WeighHouse",
+  "side": "Pewterside",
+  "kind": "Stair",
+  "place": "WeighHouse",
+  "aliases": [
+   "Tower_Pewterside"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "story_names->Tower_Pewterside"
+  ],
+  "note": "Foot of the Old Weigh-House stair up to the first page.",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Pew_Steps_FishSteps",
+  "side": "Pewterside",
+  "kind": "Steps",
+  "place": "FishSteps",
+  "aliases": [
+   "Spot_FishSteps"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "6 people markers",
+   "story_names->Spot_FishSteps"
+  ],
+  "note": "The Fish Steps market by the river (clique fish_steps).",
+  "canonical": true
+ },
+ {
+  "name": "Mk_Pew_Stop_CoalLane",
+  "side": "Pewterside",
+  "kind": "Stop",
+  "place": "CoalLane",
+  "aliases": [
+   "Spot_CoalLaneStop"
+  ],
+  "used_by": [
+   "people.json markers.named_places",
+   "8 people markers",
+   "story_names->Spot_CoalLaneStop"
+  ],
+  "note": "The Coal Lane tram stop (clique coal_lane_stop).",
+  "canonical": true
+ },
+ {
+  "name": "Spot_BellSquare",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "BellSquare",
+  "aliases": [
+   "Mk_Gilt_Square_BellSquare"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "main goto: Find the burning eyes",
+   "sq2_humming spellhit: Burn the Tarnish out of the people by the fiddle"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Square_BellSquare",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Square_BellSquare"
+ },
+ {
+  "name": "Spot_LanternRow",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "LanternRow",
+  "aliases": [
+   "Mk_Gilt_Market_LanternRow"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "main talkto: Find Ilse Varrow on Lantern Row",
+   "sq7_lamps talkto: Ask Dov for lamp oil"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Market_LanternRow",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Market_LanternRow"
+ },
+ {
+  "name": "Spot_LanternGate",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "LanternGate",
+  "aliases": [
+   "Mk_Gilt_Gate_LanternGate"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "main spellhit: Hold the Lantern Gate: burn the Tarnish out of 3 people"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Gate_LanternGate",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Gate_LanternGate"
+ },
+ {
+  "name": "Spot_DrifterCamp",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "UnderGate",
+  "aliases": [
+   "Mk_Gilt_Camp_UnderGate"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "sq6_whole protect: Defend the drifters' camp"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Camp_UnderGate",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Camp_UnderGate"
+ },
+ {
+  "name": "Spot_Lamplight",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "Lamplight",
+  "aliases": [
+   "Mk_Gilt_Inn_Lamplight"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Inn_Lamplight",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Inn_Lamplight"
+ },
+ {
+  "name": "Spot_LamplightCellar",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "Lamplight",
+  "aliases": [
+   "Mk_Gilt_Cellar_Lamplight"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "sq1_cellar goto: Go down to the Lamplight's cellar"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Cellar_Lamplight",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Cellar_Lamplight"
+ },
+ {
+  "name": "Spot_ArchiveSteps",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "Archive",
+  "aliases": [
+   "Mk_Gilt_Steps_Archive"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "sq8_shed talkto: Tell Lucan that Petra is alive",
+   "sq9_unsigned talkto: Ask Odette Vane about the wool"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Steps_Archive",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Steps_Archive"
+ },
+ {
+  "name": "Spot_MusterYard",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "Muster",
+  "aliases": [
+   "Mk_Gilt_Yard_Muster"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Yard_Muster",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Yard_Muster"
+ },
+ {
+  "name": "Spot_BellLane",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "BellLane",
+  "aliases": [
+   "Mk_Gilt_Lane_BellLane"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Lane_BellLane",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Lane_BellLane"
+ },
+ {
+  "name": "Spot_CanalRift",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "Canal",
+  "aliases": [
+   "Mk_Gilt_Rift_Canal"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "sq6_whole talkto: Talk to Ros at the canal rift post"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Rift_Canal",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Rift_Canal"
+ },
+ {
+  "name": "Tower_Giltside",
+  "side": "Giltside",
+  "kind": "Tower",
+  "place": "GiltTower",
+  "aliases": [
+   "Mk_Gilt_Tower_GiltTower"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "main goto: Open the Gilt Tower"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Tower_GiltTower",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Tower_GiltTower"
+ },
+ {
+  "name": "Spot_Furnace",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "Furnace",
+  "aliases": [
+   "Mk_Gilt_Workshop_Furnace"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Workshop_Furnace",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Workshop_Furnace"
+ },
+ {
+  "name": "Spot_ThraleShop",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "ThraleShop",
+  "aliases": [
+   "Mk_Gilt_Workshop_ThraleShop"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Workshop_ThraleShop",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Workshop_ThraleShop"
+ },
+ {
+  "name": "Spot_VaneAtelier",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "Vane",
+  "aliases": [
+   "Mk_Gilt_Workshop_Vane"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Workshop_Vane",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Workshop_Vane"
+ },
+ {
+  "name": "Spot_GiltBarracks",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "Barracks",
+  "aliases": [
+   "Mk_Gilt_Home_Barracks"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Home_Barracks",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Home_Barracks"
+ },
+ {
+  "name": "Spot_WatchBarracks",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "WatchBarracks",
+  "aliases": [
+   "Mk_Gilt_Home_WatchBarracks"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Gilt_Home_WatchBarracks",
+  "canonical": false,
+  "alias_of": "Mk_Gilt_Home_WatchBarracks"
+ },
+ {
+  "name": "Spot_CoalLaneStop",
+  "side": "Pewterside",
+  "kind": "Spot",
+  "place": "CoalLane",
+  "aliases": [
+   "Mk_Pew_Stop_CoalLane"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "sq3_letters deliver: Give Edie Bramley the letter at the Coal Lane tram stop"
+  ],
+  "note": "Quest-system name of Mk_Pew_Stop_CoalLane",
+  "canonical": false,
+  "alias_of": "Mk_Pew_Stop_CoalLane"
+ },
+ {
+  "name": "Spot_HesterDoorstep",
+  "side": "Pewterside",
+  "kind": "Spot",
+  "place": "Hester",
+  "aliases": [
+   "Mk_Pew_Doorstep_Hester"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "sq4_queen protect: Defend Coal Lane: keep the tarnished off Hester's doorstep"
+  ],
+  "note": "Quest-system name of Mk_Pew_Doorstep_Hester",
+  "canonical": false,
+  "alias_of": "Mk_Pew_Doorstep_Hester"
+ },
+ {
+  "name": "Spot_FishSteps",
+  "side": "Pewterside",
+  "kind": "Spot",
+  "place": "FishSteps",
+  "aliases": [
+   "Mk_Pew_Steps_FishSteps"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "sq5_eyeglass talkto: Find Ada Pollard on the Fish Steps in Pewterside"
+  ],
+  "note": "Quest-system name of Mk_Pew_Steps_FishSteps",
+  "canonical": false,
+  "alias_of": "Mk_Pew_Steps_FishSteps"
+ },
+ {
+  "name": "Spot_WeighHouseCorner",
+  "side": "Pewterside",
+  "kind": "Spot",
+  "place": "WeighHouse",
+  "aliases": [
+   "Mk_Pew_Square_WeighHouse"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "main goto: Find the Old Weigh-House"
+  ],
+  "note": "Quest-system name of Mk_Pew_Square_WeighHouse",
+  "canonical": false,
+  "alias_of": "Mk_Pew_Square_WeighHouse"
+ },
+ {
+  "name": "Tower_Pewterside",
+  "side": "Pewterside",
+  "kind": "Tower",
+  "place": "WeighHouse",
+  "aliases": [
+   "Mk_Pew_Stair_WeighHouse"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "main event: Climb to the Weigh-House roof"
+  ],
+  "note": "Quest-system name of Mk_Pew_Stair_WeighHouse",
+  "canonical": false,
+  "alias_of": "Mk_Pew_Stair_WeighHouse"
+ },
+ {
+  "name": "Spot_WickStreetInfirmary",
+  "side": "Pewterside",
+  "kind": "Spot",
+  "place": "WickStreet",
+  "aliases": [
+   "Mk_Pew_Infirmary_WickStreet"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Pew_Infirmary_WickStreet",
+  "canonical": false,
+  "alias_of": "Mk_Pew_Infirmary_WickStreet"
+ },
+ {
+  "name": "Spot_CoalLaneLaundry",
+  "side": "Pewterside",
+  "kind": "Spot",
+  "place": "CoalLane",
+  "aliases": [
+   "Mk_Pew_Laundry_CoalLane"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Pew_Laundry_CoalLane",
+  "canonical": false,
+  "alias_of": "Mk_Pew_Laundry_CoalLane"
+ },
+ {
+  "name": "Spot_IceStairs",
+  "side": "Frostside",
+  "kind": "Spot",
+  "place": "IceStairs",
+  "aliases": [
+   "Mk_Frost_Stair_IceStairs"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Frost_Stair_IceStairs",
+  "canonical": false,
+  "alias_of": "Mk_Frost_Stair_IceStairs"
+ },
+ {
+  "name": "Spot_BoneMarket",
+  "side": "Frostside",
+  "kind": "Spot",
+  "place": "BoneMarket",
+  "aliases": [
+   "Mk_Frost_Market_BoneMarket"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Frost_Market_BoneMarket",
+  "canonical": false,
+  "alias_of": "Mk_Frost_Market_BoneMarket"
+ },
+ {
+  "name": "Spot_LongShelter",
+  "side": "Frostside",
+  "kind": "Spot",
+  "place": "LongShelter",
+  "aliases": [
+   "Mk_Frost_Shelter_LongShelter"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Frost_Shelter_LongShelter",
+  "canonical": false,
+  "alias_of": "Mk_Frost_Shelter_LongShelter"
+ },
+ {
+  "name": "Spot_FrozenGate",
+  "side": "Frostside",
+  "kind": "Spot",
+  "place": "FrozenGate",
+  "aliases": [
+   "Mk_Frost_Gate_FrozenGate"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Frost_Gate_FrozenGate",
+  "canonical": false,
+  "alias_of": "Mk_Frost_Gate_FrozenGate"
+ },
+ {
+  "name": "Spot_IceWall",
+  "side": "Frostside",
+  "kind": "Spot",
+  "place": "IceWall",
+  "aliases": [
+   "Mk_Frost_Wall_IceWall"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Frost_Wall_IceWall",
+  "canonical": false,
+  "alias_of": "Mk_Frost_Wall_IceWall"
+ },
+ {
+  "name": "Spot_SorrelShed",
+  "side": "Frostside",
+  "kind": "Spot",
+  "place": "Sorrel",
+  "aliases": [
+   "Mk_Frost_Shed_Sorrel"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "sq8_shed goto: Go to Sorrel's shed"
+  ],
+  "note": "Quest-system name of Mk_Frost_Shed_Sorrel",
+  "canonical": false,
+  "alias_of": "Mk_Frost_Shed_Sorrel"
+ },
+ {
+  "name": "Tower_Frostside",
+  "side": "Frostside",
+  "kind": "Tower",
+  "place": "FrostTower",
+  "aliases": [
+   "Mk_Frost_Tower_FrostTower"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name",
+   "markers-needed.md",
+   "main event: Climb to the top of the Frost Tower"
+  ],
+  "note": "Quest-system name of Mk_Frost_Tower_FrostTower",
+  "canonical": false,
+  "alias_of": "Mk_Frost_Tower_FrostTower"
+ },
+ {
+  "name": "Spot_FrostBarracks",
+  "side": "Frostside",
+  "kind": "Spot",
+  "place": "Barracks",
+  "aliases": [
+   "Mk_Frost_Home_Barracks"
+  ],
+  "used_by": [
+   "people.json markers.story_names",
+   "quest system name"
+  ],
+  "note": "Quest-system name of Mk_Frost_Home_Barracks",
+  "canonical": false,
+  "alias_of": "Mk_Frost_Home_Barracks"
+ },
+ {
+  "name": "QuestGiver_ilse_varrow",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "IlseAttic",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "main where ilse_varrow can be found"
+  ],
+  "note": "Where Ilse Varrow waits for the hero",
+  "canonical": true,
+  "near": "LanternRow",
+  "person": "ilse_varrow"
+ },
+ {
+  "name": "QuestGiver_goldie_fairweather",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "Lamplight",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq1_cellar where goldie_fairweather waits with the quest"
+  ],
+  "note": "Where Marigold \"Goldie\" Fairweather waits for the hero",
+  "canonical": true,
+  "near": "Lamplight",
+  "person": "goldie_fairweather"
+ },
+ {
+  "name": "QuestGiver_jory_pell",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "Homes",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq2_humming where jory_pell waits with the quest"
+  ],
+  "note": "Where Jory Pell waits for the hero",
+  "canonical": true,
+  "near": "Lamplight",
+  "person": "jory_pell"
+ },
+ {
+  "name": "Item_Fiddle",
+  "side": "Giltside",
+  "kind": "Item",
+  "place": "BellSquare",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq2_humming collect: Pick up Jory's fiddle"
+  ],
+  "note": "Jory's fiddle lies in Bell Square (SQ2); two tarnished stand near it",
+  "canonical": true
+ },
+ {
+  "name": "QuestGiver_nell_bramley",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "WatchBarracks",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq3_letters where nell_bramley waits with the quest"
+  ],
+  "note": "Where Nell Bramley waits for the hero",
+  "canonical": true,
+  "near": "LanternGate",
+  "person": "nell_bramley"
+ },
+ {
+  "name": "QuestGiver_edie_bramley",
+  "side": "Pewterside",
+  "kind": "QuestGiver",
+  "place": "Homes",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq3_letters where edie_bramley can be found"
+  ],
+  "note": "Where Edie Bramley waits for the hero",
+  "canonical": true,
+  "near": "CoalLane",
+  "person": "edie_bramley"
+ },
+ {
+  "name": "QuestGiver_hester_quaile",
+  "side": "Pewterside",
+  "kind": "QuestGiver",
+  "place": "Hester",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq4_queen where hester_quaile waits with the quest"
+  ],
+  "note": "Where Hester Quaile, \"the Queen of Coal Lane\" waits for the hero",
+  "canonical": true,
+  "near": "Hester",
+  "person": "hester_quaile"
+ },
+ {
+  "name": "QuestGiver_walter_dunmore",
+  "side": "Pewterside",
+  "kind": "QuestGiver",
+  "place": "Homes",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq4_queen where walter_dunmore can be found"
+  ],
+  "note": "Where Walter Dunmore waits for the hero",
+  "canonical": true,
+  "near": "CoalLane",
+  "person": "walter_dunmore"
+ },
+ {
+  "name": "QuestGiver_tobias_quell",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "Homes",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq5_eyeglass where tobias_quell waits with the quest"
+  ],
+  "note": "Where Professor Tobias Quell waits for the hero",
+  "canonical": true,
+  "near": "Archive",
+  "person": "tobias_quell"
+ },
+ {
+  "name": "QuestGiver_ada_pollard",
+  "side": "Pewterside",
+  "kind": "QuestGiver",
+  "place": "Ada",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq5_eyeglass where ada_pollard can be found"
+  ],
+  "note": "Where Ada Pollard waits for the hero",
+  "canonical": true,
+  "near": "FishSteps",
+  "person": "ada_pollard"
+ },
+ {
+  "name": "QuestGiver_kit_marrow",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "UnderGate",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq6_whole where kit_marrow waits with the quest"
+  ],
+  "note": "Where Kit Marrow waits for the hero",
+  "canonical": true,
+  "near": "UnderGate",
+  "person": "kit_marrow"
+ },
+ {
+  "name": "QuestGiver_ros_thrale",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "ThraleShop",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq6_whole where ros_thrale can be found"
+  ],
+  "note": "Where Ros Thrale waits for the hero",
+  "canonical": true,
+  "near": "Canal",
+  "person": "ros_thrale"
+ },
+ {
+  "name": "QuestGiver_sela_brask",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "Barracks",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq6_whole where sela_brask can be found"
+  ],
+  "note": "Where Captain Sela Brask waits for the hero",
+  "canonical": true,
+  "near": "Muster",
+  "person": "sela_brask"
+ },
+ {
+  "name": "QuestGiver_corin_ashby",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "Homes",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq7_lamps where corin_ashby waits with the quest"
+  ],
+  "note": "Where Corin Ashby waits for the hero",
+  "canonical": true,
+  "near": "BellLane",
+  "person": "corin_ashby"
+ },
+ {
+  "name": "Spot_BellLaneLamp1",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "BellLane",
+  "aliases": [
+   "Mk_Gilt_Lane_BellLane_Lamp1"
+  ],
+  "used_by": [
+   "markers-needed.md",
+   "sq7_lamps spellhit: Relight the failing lamps on Bell Lane"
+  ],
+  "note": "Failing lamp 1 on Bell Lane; fire spell within 3 m; space about 8 m apart along the lane",
+  "canonical": true
+ },
+ {
+  "name": "Spot_BellLaneLamp2",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "BellLane",
+  "aliases": [
+   "Mk_Gilt_Lane_BellLane_Lamp2"
+  ],
+  "used_by": [
+   "markers-needed.md",
+   "sq7_lamps spellhit: Relight the failing lamps on Bell Lane"
+  ],
+  "note": "Failing lamp 2 on Bell Lane; fire spell within 3 m; space about 8 m apart along the lane",
+  "canonical": true
+ },
+ {
+  "name": "Spot_BellLaneLamp3",
+  "side": "Giltside",
+  "kind": "Spot",
+  "place": "BellLane",
+  "aliases": [
+   "Mk_Gilt_Lane_BellLane_Lamp3"
+  ],
+  "used_by": [
+   "markers-needed.md",
+   "sq7_lamps spellhit: Relight the failing lamps on Bell Lane"
+  ],
+  "note": "Failing lamp 3 on Bell Lane; fire spell within 3 m; space about 8 m apart along the lane",
+  "canonical": true
+ },
+ {
+  "name": "QuestGiver_dov_merriman",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "Homes",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq7_lamps where dov_merriman can be found"
+  ],
+  "note": "Where Dov Merriman waits for the hero",
+  "canonical": true,
+  "near": "Furnace",
+  "person": "dov_merriman"
+ },
+ {
+  "name": "QuestGiver_sorrel_vey",
+  "side": "Frostside",
+  "kind": "QuestGiver",
+  "place": "Sorrel",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq8_shed where sorrel_vey waits with the quest"
+  ],
+  "note": "Where Sorrel Vey waits for the hero",
+  "canonical": true,
+  "near": "BoneMarket",
+  "person": "sorrel_vey"
+ },
+ {
+  "name": "QuestGiver_petra_lisle",
+  "side": "Frostside",
+  "kind": "QuestGiver",
+  "place": "Sorrel",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq8_shed where petra_lisle can be found"
+  ],
+  "note": "Where Petra Lisle waits for the hero",
+  "canonical": true,
+  "near": "Sorrel",
+  "person": "petra_lisle"
+ },
+ {
+  "name": "QuestGiver_lucan_marlowe",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "Homes",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq8_shed where lucan_marlowe can be found"
+  ],
+  "note": "Where Lucan Marlowe waits for the hero",
+  "canonical": true,
+  "near": "BellSquare",
+  "person": "lucan_marlowe"
+ },
+ {
+  "name": "QuestGiver_barnaby_thrale",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "ThraleShop",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq9_unsigned where barnaby_thrale waits with the quest"
+  ],
+  "note": "Where Barnaby Thrale waits for the hero",
+  "canonical": true,
+  "near": "ThraleShop",
+  "person": "barnaby_thrale"
+ },
+ {
+  "name": "QuestGiver_odette_vane",
+  "side": "Giltside",
+  "kind": "QuestGiver",
+  "place": "Homes",
+  "aliases": [],
+  "used_by": [
+   "markers-needed.md",
+   "sq9_unsigned where odette_vane can be found"
+  ],
+  "note": "Where Odette Vane waits for the hero",
+  "canonical": true,
+  "near": "Vane",
+  "person": "odette_vane"
+ },
+ {
+  "name": "Mk_Gilt_Lane_BellLane_Lamp1",
+  "side": "Giltside",
+  "kind": "Lane",
+  "place": "BellLane",
+  "aliases": [
+   "Spot_BellLaneLamp1"
+  ],
+  "used_by": [
+   "Quests/data/story_quests.json",
+   "side-quests.md SQ7"
+  ],
+  "note": "Same lamp as Spot_BellLaneLamp1",
+  "canonical": false,
+  "alias_of": "Spot_BellLaneLamp1"
+ },
+ {
+  "name": "Mk_Gilt_Lane_BellLane_Lamp2",
+  "side": "Giltside",
+  "kind": "Lane",
+  "place": "BellLane",
+  "aliases": [
+   "Spot_BellLaneLamp2"
+  ],
+  "used_by": [
+   "Quests/data/story_quests.json",
+   "side-quests.md SQ7"
+  ],
+  "note": "Same lamp as Spot_BellLaneLamp2",
+  "canonical": false,
+  "alias_of": "Spot_BellLaneLamp2"
+ },
+ {
+  "name": "Mk_Gilt_Lane_BellLane_Lamp3",
+  "side": "Giltside",
+  "kind": "Lane",
+  "place": "BellLane",
+  "aliases": [
+   "Spot_BellLaneLamp3"
+  ],
+  "used_by": [
+   "Quests/data/story_quests.json",
+   "side-quests.md SQ7"
+  ],
+  "note": "Same lamp as Spot_BellLaneLamp3",
+  "canonical": false,
+  "alias_of": "Spot_BellLaneLamp3"
+ },
+ {
+  "name": "Home_ilse_varrow",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "IlseAttic",
+  "aliases": [
+   "Mk_Gilt_Home_IlseAttic"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Ilse Varrow (retired Silverer)",
+  "canonical": true,
+  "near": "LanternRow",
+  "person": "ilse_varrow"
+ },
+ {
+  "name": "Home_barnaby_thrale",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "ThraleShop",
+  "aliases": [
+   "Mk_Gilt_Home_ThraleShop"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Barnaby Thrale (master tailor)",
+  "canonical": true,
+  "near": "ThraleShop",
+  "person": "barnaby_thrale"
+ },
+ {
+  "name": "Home_dov_merriman",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Gilt_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Dov Merriman (glassblower)",
+  "canonical": true,
+  "near": "Furnace",
+  "person": "dov_merriman"
+ },
+ {
+  "name": "Home_amos_saffery",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Gilt_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Amos Saffery (spice trader)",
+  "canonical": true,
+  "near": "LanternRow",
+  "person": "amos_saffery"
+ },
+ {
+  "name": "Home_maud_kettering",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Gilt_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Sergeant Maud Kettering (sergeant of the Lantern Watch at the Lantern Gate)",
+  "canonical": true,
+  "near": "LanternGate",
+  "person": "maud_kettering"
+ },
+ {
+  "name": "Home_nell_bramley",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "WatchBarracks",
+  "aliases": [
+   "Mk_Gilt_Home_WatchBarracks"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Nell Bramley (bridge guard of the Lantern Watch)",
+  "canonical": true,
+  "near": "LanternGate",
+  "person": "nell_bramley"
+ },
+ {
+  "name": "Home_goldie_fairweather",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Lamplight",
+  "aliases": [
+   "Mk_Gilt_Inn_Lamplight"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Marigold \"Goldie\" Fairweather (keeper of the Lamplight inn)",
+  "canonical": true,
+  "near": "Lamplight",
+  "person": "goldie_fairweather"
+ },
+ {
+  "name": "Home_hal_fairweather",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Lamplight",
+  "aliases": [
+   "Mk_Gilt_Cellar_Lamplight"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Hal Fairweather (retired bridge guard)",
+  "canonical": true,
+  "near": "Lamplight",
+  "person": "hal_fairweather"
+ },
+ {
+  "name": "Home_jory_pell",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Gilt_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Jory Pell (fiddler)",
+  "canonical": true,
+  "near": "Lamplight",
+  "person": "jory_pell"
+ },
+ {
+  "name": "Home_corin_ashby",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Gilt_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Corin Ashby (lantern maker)",
+  "canonical": true,
+  "near": "BellLane",
+  "person": "corin_ashby"
+ },
+ {
+  "name": "Home_tobias_quell",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Gilt_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Professor Tobias Quell (scholar of the Glazier)",
+  "canonical": true,
+  "near": "Archive",
+  "person": "tobias_quell"
+ },
+ {
+  "name": "Home_odette_vane",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Gilt_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Odette Vane (couturier)",
+  "canonical": true,
+  "near": "Vane",
+  "person": "odette_vane"
+ },
+ {
+  "name": "Home_lucan_marlowe",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Gilt_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Lucan Marlowe (dancer)",
+  "canonical": true,
+  "near": "BellSquare",
+  "person": "lucan_marlowe"
+ },
+ {
+  "name": "Home_sela_brask",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Barracks",
+  "aliases": [
+   "Mk_Gilt_Home_Barracks"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Captain Sela Brask (captain of the Third Lamp Company)",
+  "canonical": true,
+  "near": "Muster",
+  "person": "sela_brask"
+ },
+ {
+  "name": "Home_ros_thrale",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "ThraleShop",
+  "aliases": [
+   "Mk_Gilt_Home_ThraleShop"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Ros Thrale (spear soldier, Third Lamp Company)",
+  "canonical": true,
+  "near": "Canal",
+  "person": "ros_thrale"
+ },
+ {
+  "name": "Home_pim_ashgrove",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Gilt_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Pim Ashgrove (bell-ringer's apprentice)",
+  "canonical": true,
+  "near": "GiltTower",
+  "person": "pim_ashgrove"
+ },
+ {
+  "name": "Home_tobin_lark",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Gilt_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Tobin Lark (candle seller on Bell Lane)",
+  "canonical": true,
+  "near": "BellLane",
+  "person": "tobin_lark"
+ },
+ {
+  "name": "Home_hollis_greave",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Gilt_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Hollis Greave (bridge guard of the Lantern Watch)",
+  "canonical": true,
+  "near": "LanternGate",
+  "person": "hollis_greave"
+ },
+ {
+  "name": "Home_edie_bramley",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Pew_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Edie Bramley (tram conductor on the Coal Lane line)",
+  "canonical": true,
+  "near": "CoalLane",
+  "person": "edie_bramley"
+ },
+ {
+  "name": "Home_hester_quaile",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Hester",
+  "aliases": [
+   "Mk_Pew_Doorstep_Hester"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Hester Quaile, \"the Queen of Coal Lane\" (pensioner)",
+  "canonical": true,
+  "near": "Hester",
+  "person": "hester_quaile"
+ },
+ {
+  "name": "Home_walter_dunmore",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Pew_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Walter Dunmore (pensioner)",
+  "canonical": true,
+  "near": "CoalLane",
+  "person": "walter_dunmore"
+ },
+ {
+  "name": "Home_sid_kettle",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Hester",
+  "aliases": [
+   "Mk_Pew_Doorstep_Hester"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Sid Kettle (laundryman at the Coal Lane steam laundry)",
+  "canonical": true,
+  "near": "CoalLane",
+  "person": "sid_kettle"
+ },
+ {
+  "name": "Home_bet_crawley",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Pew_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Bet Crawley (fishmonger on the Fish Steps)",
+  "canonical": true,
+  "near": "FishSteps",
+  "person": "bet_crawley"
+ },
+ {
+  "name": "Home_agnes_moth",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Pew_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Agnes Moth (night nurse at the Wick Street infirmary)",
+  "canonical": true,
+  "near": "WickStreet",
+  "person": "agnes_moth"
+ },
+ {
+  "name": "Home_ada_pollard",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Ada",
+  "aliases": [
+   "Mk_Pew_Home_Ada"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Ada Pollard (pensioner)",
+  "canonical": true,
+  "near": "FishSteps",
+  "person": "ada_pollard"
+ },
+ {
+  "name": "Home_ned_lusk",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Pew_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Ned Lusk (seamstress)",
+  "canonical": true,
+  "near": "CoalLane",
+  "person": "ned_lusk"
+ },
+ {
+  "name": "Home_ivy_harker",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Pew_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Constable Ivy Harker (watch constable posted at the Old Weigh-House)",
+  "canonical": true,
+  "near": "WeighHouse",
+  "person": "ivy_harker"
+ },
+ {
+  "name": "Home_horace_pratt",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "PrattShop",
+  "aliases": [
+   "Mk_Pew_Home_PrattShop"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Horace Pratt (ironmonger at Weigh-House Corner)",
+  "canonical": true,
+  "near": "WeighHouse",
+  "person": "horace_pratt"
+ },
+ {
+  "name": "Home_winnie_cobb",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Pew_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Winnie Cobb (keeps the tea stall at Weigh-House Corner)",
+  "canonical": true,
+  "near": "WeighHouse",
+  "person": "winnie_cobb"
+ },
+ {
+  "name": "Home_frank_dunning",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Pew_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Frank Dunning (newspaper seller)",
+  "canonical": true,
+  "near": "WeighHouse",
+  "person": "frank_dunning"
+ },
+ {
+  "name": "Home_gunnar_skarre",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Frost_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Gunnar Skarre (ice-cutter on the Ice Stairs)",
+  "canonical": true,
+  "near": "IceStairs",
+  "person": "gunnar_skarre"
+ },
+ {
+  "name": "Home_mother_rook",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "Rook",
+  "aliases": [
+   "Mk_Frost_Home_Rook"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Agathe Rook, \"Mother Rook\" (elder)",
+  "canonical": true,
+  "near": "IceStairs",
+  "person": "mother_rook"
+ },
+ {
+  "name": "Home_tilly_frane",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "Rook",
+  "aliases": [
+   "Mk_Frost_Home_Rook"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Tilly Frane (broth seller on the Ice Stairs)",
+  "canonical": true,
+  "near": "IceStairs",
+  "person": "tilly_frane"
+ },
+ {
+  "name": "Home_greta_holm",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Frost_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Greta Holm (bone carver at the Bone Market)",
+  "canonical": true,
+  "near": "BoneMarket",
+  "person": "greta_holm"
+ },
+ {
+  "name": "Home_brenna_cold",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "Barracks",
+  "aliases": [
+   "Mk_Frost_Home_Barracks"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Brenna Cold (defender of the ice wall, Wall Company)",
+  "canonical": true,
+  "near": "IceWall",
+  "person": "brenna_cold"
+ },
+ {
+  "name": "Home_sorrel_vey",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "Sorrel",
+  "aliases": [
+   "Mk_Frost_Shed_Sorrel"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Sorrel Vey (hedge healer)",
+  "canonical": true,
+  "near": "BoneMarket",
+  "person": "sorrel_vey"
+ },
+ {
+  "name": "Home_kit_marrow",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "UnderGate",
+  "aliases": [
+   "Mk_Gilt_Camp_UnderGate"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Kit Marrow (scavenger)",
+  "canonical": true,
+  "near": "UnderGate",
+  "person": "kit_marrow"
+ },
+ {
+  "name": "Home_fen_lowry",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "UnderGate",
+  "aliases": [
+   "Mk_Gilt_Camp_UnderGate"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Fen Lowry (street orphan)",
+  "canonical": true,
+  "near": "UnderGate",
+  "person": "fen_lowry"
+ },
+ {
+  "name": "Home_marta_quarry",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "LongShelter",
+  "aliases": [
+   "Mk_Frost_Shelter_LongShelter"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Marta Quarry (keeper of the Long Shelter)",
+  "canonical": true,
+  "near": "LongShelter",
+  "person": "marta_quarry"
+ },
+ {
+  "name": "Home_dagny_thorn",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [
+   "Mk_Frost_Home"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Dagny Thorn (guard at the gate that won't close)",
+  "canonical": true,
+  "near": "FrozenGate",
+  "person": "dagny_thorn"
+ },
+ {
+  "name": "Home_eskil_varn",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "Barracks",
+  "aliases": [
+   "Mk_Frost_Home_Barracks"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Eskil Varn (soldier of the Wall Company)",
+  "canonical": true,
+  "near": "IceWall",
+  "person": "eskil_varn"
+ },
+ {
+  "name": "Home_petra_lisle",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "Sorrel",
+  "aliases": [
+   "Mk_Frost_Shed_Sorrel"
+  ],
+  "used_by": [
+   "people.json markers_story.home",
+   "Lives schedules (home step)"
+  ],
+  "note": "Home of Petra Lisle (dancer)",
+  "canonical": true,
+  "near": "Sorrel",
+  "person": "petra_lisle"
+ },
+ {
+  "name": "Mk_Pew_Home",
+  "side": "Pewterside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [],
+  "used_by": [
+   "Lives fallback (generic kind)",
+   "people.json markers.home (8 people)"
+  ],
+  "note": "Generic home spot for people without a named home and the generated crowd; one actor is enough",
+  "optional": true
+ },
+ {
+  "name": "Mk_Pew_Square",
+  "side": "Pewterside",
+  "kind": "Square",
+  "place": "GenericSquare",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic square for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Pew_Market",
+  "side": "Pewterside",
+  "kind": "Market",
+  "place": "GenericMarket",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic market for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Pew_Gate",
+  "side": "Pewterside",
+  "kind": "Gate",
+  "place": "GenericGate",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic gate for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Pew_Inn",
+  "side": "Pewterside",
+  "kind": "Inn",
+  "place": "GenericInn",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic inn for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Pew_Workshop",
+  "side": "Pewterside",
+  "kind": "Workshop",
+  "place": "GenericWorkshop",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic workshop for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Pew_Stop",
+  "side": "Pewterside",
+  "kind": "Stop",
+  "place": "GenericStop",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic stop for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Pew_Laundry",
+  "side": "Pewterside",
+  "kind": "Laundry",
+  "place": "GenericLaundry",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic laundry for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Pew_Infirmary",
+  "side": "Pewterside",
+  "kind": "Infirmary",
+  "place": "GenericInfirmary",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic infirmary for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Gilt_Home",
+  "side": "Giltside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [],
+  "used_by": [
+   "Lives fallback (generic kind)",
+   "people.json markers.home (11 people)"
+  ],
+  "note": "Generic home spot for people without a named home and the generated crowd; one actor is enough",
+  "optional": true
+ },
+ {
+  "name": "Mk_Gilt_Square",
+  "side": "Giltside",
+  "kind": "Square",
+  "place": "GenericSquare",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic square for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Gilt_Market",
+  "side": "Giltside",
+  "kind": "Market",
+  "place": "GenericMarket",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic market for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Gilt_Gate",
+  "side": "Giltside",
+  "kind": "Gate",
+  "place": "GenericGate",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic gate for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Gilt_Inn",
+  "side": "Giltside",
+  "kind": "Inn",
+  "place": "GenericInn",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic inn for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Gilt_Workshop",
+  "side": "Giltside",
+  "kind": "Workshop",
+  "place": "GenericWorkshop",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic workshop for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Gilt_Stop",
+  "side": "Giltside",
+  "kind": "Stop",
+  "place": "GenericStop",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic stop for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Gilt_Laundry",
+  "side": "Giltside",
+  "kind": "Laundry",
+  "place": "GenericLaundry",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic laundry for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Gilt_Infirmary",
+  "side": "Giltside",
+  "kind": "Infirmary",
+  "place": "GenericInfirmary",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic infirmary for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Frost_Home",
+  "side": "Frostside",
+  "kind": "Home",
+  "place": "Homes",
+  "aliases": [],
+  "used_by": [
+   "Lives fallback (generic kind)",
+   "people.json markers.home (3 people)"
+  ],
+  "note": "Generic home spot for people without a named home and the generated crowd; one actor is enough",
+  "optional": true
+ },
+ {
+  "name": "Mk_Frost_Square",
+  "side": "Frostside",
+  "kind": "Square",
+  "place": "GenericSquare",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic square for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Frost_Market",
+  "side": "Frostside",
+  "kind": "Market",
+  "place": "GenericMarket",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic market for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Frost_Gate",
+  "side": "Frostside",
+  "kind": "Gate",
+  "place": "GenericGate",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic gate for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Frost_Inn",
+  "side": "Frostside",
+  "kind": "Inn",
+  "place": "GenericInn",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic inn for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Frost_Workshop",
+  "side": "Frostside",
+  "kind": "Workshop",
+  "place": "GenericWorkshop",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic workshop for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Frost_Stop",
+  "side": "Frostside",
+  "kind": "Stop",
+  "place": "GenericStop",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic stop for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Frost_Laundry",
+  "side": "Frostside",
+  "kind": "Laundry",
+  "place": "GenericLaundry",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic laundry for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "Mk_Frost_Infirmary",
+  "side": "Frostside",
+  "kind": "Infirmary",
+  "place": "GenericInfirmary",
+  "aliases": [],
+  "used_by": [
+   "PeopleBook generated-crowd work kind"
+  ],
+  "note": "Generic infirmary for the generated crowd; optional (falls back to a nav point near the side anchor)",
+  "optional": true
+ },
+ {
+  "name": "CutsceneAnchor_Intro",
+  "side": "Giltside",
+  "kind": "CutsceneAnchor",
+  "place": "Lamplight",
+  "aliases": [],
+  "used_by": [
+   "cutscenes.md",
+   "Cinematics FindAnchor"
+  ],
+  "note": "Wren start, outside the Lamplight inn, facing the skyline; CS01 intro, Jory and Goldie nearby",
+  "canonical": true,
+  "optional": false
+ },
+ {
+  "name": "CutsceneAnchor_BurningEyes",
+  "side": "Giltside",
+  "kind": "CutsceneAnchor",
+  "place": "BellSquare",
+  "aliases": [],
+  "used_by": [
+   "cutscenes.md",
+   "Cinematics FindAnchor"
+  ],
+  "note": "Bell Square, about 6 m from where Jory stands, facing the dry fountain; CS02 Jory is tackled and turned",
+  "canonical": true,
+  "optional": false
+ },
+ {
+  "name": "CutsceneAnchor_FirstPage",
+  "side": "any",
+  "kind": "CutsceneAnchor",
+  "place": "FirstPage",
+  "aliases": [],
+  "used_by": [
+   "cutscenes.md",
+   "Cinematics FindAnchor"
+  ],
+  "note": "Optional; plays where the first page was picked up (usually Weigh-House roof, Pewterside); CS03",
+  "canonical": true,
+  "optional": true
+ },
+ {
+  "name": "CutsceneAnchor_GiltTower",
+  "side": "Giltside",
+  "kind": "CutsceneAnchor",
+  "place": "GiltTower",
+  "aliases": [],
+  "used_by": [
+   "cutscenes.md",
+   "Cinematics FindAnchor"
+  ],
+  "note": "Threshold of the sealed Gilt Tower door, facing in; CS04 with Pim",
+  "canonical": true,
+  "optional": true
+ },
+ {
+  "name": "CutsceneAnchor_MirrorWhole",
+  "side": "Frostside",
+  "kind": "CutsceneAnchor",
+  "place": "FrostTower",
+  "aliases": [],
+  "used_by": [
+   "cutscenes.md",
+   "Cinematics FindAnchor"
+  ],
+  "note": "Optional; inside the Frost Tower at the third page spot, facing up toward the arena; CS05",
+  "canonical": true,
+  "optional": true
+ },
+ {
+  "name": "CutsceneAnchor_Ending",
+  "side": "Frostside",
+  "kind": "CutsceneAnchor",
+  "place": "FrostTower",
+  "aliases": [],
+  "used_by": [
+   "cutscenes.md",
+   "Cinematics FindAnchor"
+  ],
+  "note": "Optional; villain arena centre atop the Frost Tower, facing out over the city; CS06",
+  "canonical": true,
+  "optional": true
+ },
+ {
+  "name": "VillainArena",
+  "side": "Frostside",
+  "kind": "VillainArena",
+  "place": "FrostTower",
+  "aliases": [
+   "Tower_Frostside"
+  ],
+  "used_by": [
+   "Quest builtins (main boss)",
+   "QuestWorldSubsystem"
+  ],
+  "note": "Not a story marker: place a Reflections Villain Arena actor atop the Frost Tower (radius about 14 m); falls back to Tower_Frostside",
+  "canonical": true,
+  "actor_class": "AReflectionsVillainArena"
+ },
+ {
+  "name": "Item_TestLedger",
+  "side": "any",
+  "kind": "Item",
+  "place": "Test",
+  "aliases": [],
+  "used_by": [
+   "QuestBuiltins test quest"
+  ],
+  "note": "Test quest only; skip for the real city",
+  "optional": true
+ },
+ {
+  "name": "Spot_TestBrazier",
+  "side": "any",
+  "kind": "Spot",
+  "place": "Test",
+  "aliases": [],
+  "used_by": [
+   "QuestBuiltins test quest"
+  ],
+  "note": "Test quest only; skip for the real city",
+  "optional": true
+ },
+ {
+  "name": "Haunt_Square",
+  "side": "any",
+  "kind": "Haunt",
+  "place": "GenericSquare",
+  "aliases": [],
+  "used_by": [
+   "Lives/people_stub.json only + Lives default"
+  ],
+  "note": "Fallback haunt for the old stub book; not used by the real people.json",
+  "optional": true
+ },
+ {
+  "name": "Haunt_Market",
+  "side": "any",
+  "kind": "Haunt",
+  "place": "GenericMarket",
+  "aliases": [],
+  "used_by": [
+   "Lives/people_stub.json only"
+  ],
+  "note": "Fallback haunt for the old stub book; not used by the real people.json",
+  "optional": true
+ },
+ {
+  "name": "Haunt_Tavern",
+  "side": "any",
+  "kind": "Haunt",
+  "place": "GenericTavern",
+  "aliases": [],
+  "used_by": [
+   "Lives/people_stub.json only"
+  ],
+  "note": "Fallback haunt for the old stub book; not used by the real people.json",
+  "optional": true
+ },
+ {
+  "name": "Haunt_Bridge",
+  "side": "any",
+  "kind": "Haunt",
+  "place": "GenericBridge",
+  "aliases": [],
+  "used_by": [
+   "Lives/people_stub.json only"
+  ],
+  "note": "Fallback haunt for the old stub book; not used by the real people.json",
+  "optional": true
+ }
+]

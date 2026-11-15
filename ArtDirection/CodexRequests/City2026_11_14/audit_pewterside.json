@@ -1,0 +1,217 @@
+{
+  "summary": {
+    "files": 5,
+    "mesh_objects": 5,
+    "meshes_with_uvs": 5,
+    "meshes_with_materials": 5,
+    "identity_transform_violations": 0,
+    "violations": 0,
+    "note": "Semantic +X facing requires visual verification in Unreal."
+  },
+  "assets": [
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Pewterside\\City\\SM_Pewterside_FacadeCorner.fbx",
+      "object": "SM_Pewterside_FacadeCorner",
+      "mesh": "SM_Pewterside_FacadeCorner_Mesh",
+      "vertices": 64,
+      "polygons": 48,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Pewterside_Facade_Wall",
+        "M_Pewterside_Facade_Trim",
+        "M_Pewterside_Facade_Glass"
+      ],
+      "used_material_indices": [
+        0,
+        1,
+        2
+      ],
+      "material_indices_valid": true,
+      "textures": [],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Pewterside\\City\\SM_Pewterside_FacadeCornice.fbx",
+      "object": "SM_Pewterside_FacadeCornice",
+      "mesh": "SM_Pewterside_FacadeCornice_Mesh",
+      "vertices": 64,
+      "polygons": 48,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Pewterside_Facade_Wall",
+        "M_Pewterside_Facade_Trim"
+      ],
+      "used_material_indices": [
+        0,
+        1
+      ],
+      "material_indices_valid": true,
+      "textures": [],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Pewterside\\City\\SM_Pewterside_FacadeGround.fbx",
+      "object": "SM_Pewterside_FacadeGround",
+      "mesh": "SM_Pewterside_FacadeGround_Mesh",
+      "vertices": 72,
+      "polygons": 54,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Pewterside_Facade_Wall",
+        "M_Pewterside_Facade_Trim",
+        "M_Pewterside_Facade_Accent"
+      ],
+      "used_material_indices": [
+        0,
+        1,
+        2
+      ],
+      "material_indices_valid": true,
+      "textures": [],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Pewterside\\City\\SM_Pewterside_FacadeUpper.fbx",
+      "object": "SM_Pewterside_FacadeUpper",
+      "mesh": "SM_Pewterside_FacadeUpper_Mesh",
+      "vertices": 120,
+      "polygons": 90,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Pewterside_Facade_Wall",
+        "M_Pewterside_Facade_Trim",
+        "M_Pewterside_Facade_Glass"
+      ],
+      "used_material_indices": [
+        0,
+        1,
+        2
+      ],
+      "material_indices_valid": true,
+      "textures": [],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Pewterside\\City\\SM_Pewterside_GasLamp.fbx",
+      "object": "SM_Pewterside_GasLamp",
+      "mesh": "SM_Pewterside_GasLamp_Mesh",
+      "vertices": 1990,
+      "polygons": 4000,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Pewterside_CityLamp"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "Pewterside_GasLamp_Reference.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Pewterside\\City\\SM_Pewterside_GasLamp.fbm\\T_Pewterside_GasLamp_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    }
+  ],
+  "violations": []
+}

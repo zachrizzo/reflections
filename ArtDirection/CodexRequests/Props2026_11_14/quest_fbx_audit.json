@@ -1,0 +1,385 @@
+{
+  "summary": {
+    "files": 7,
+    "mesh_objects": 7,
+    "meshes_with_uvs": 7,
+    "meshes_with_materials": 7,
+    "identity_transform_violations": 0,
+    "violations": 0,
+    "note": "Semantic +X facing requires visual verification in Unreal."
+  },
+  "assets": [
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_BarnabysShears.fbx",
+      "object": "SM_BarnabysShears",
+      "mesh": "SM_BarnabysShears_Mesh",
+      "vertices": 6248,
+      "polygons": 12500,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_BarnabysShears"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "BarnabysShears.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_BarnabysShears.fbm\\T_BarnabysShears_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "BarnabysShears.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_BarnabysShears.fbm\\T_BarnabysShears_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_BoltOfWool.fbx",
+      "object": "SM_BoltOfWool",
+      "mesh": "SM_BoltOfWool_Mesh",
+      "vertices": 6252,
+      "polygons": 12499,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_BoltOfWool"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "BoltOfWool.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_BoltOfWool.fbm\\T_BoltOfWool_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "BoltOfWool.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_BoltOfWool.fbm\\T_BoltOfWool_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_GlaziersEyeglass.fbx",
+      "object": "SM_GlaziersEyeglass",
+      "mesh": "SM_GlaziersEyeglass_Mesh",
+      "vertices": 6248,
+      "polygons": 12499,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_GlaziersEyeglass"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "GlaziersEyeglass.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_GlaziersEyeglass.fbm\\T_GlaziersEyeglass_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "GlaziersEyeglass.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_GlaziersEyeglass.fbm\\T_GlaziersEyeglass_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_JorysFiddle.fbx",
+      "object": "SM_JorysFiddle",
+      "mesh": "SM_JorysFiddle_Mesh",
+      "vertices": 6210,
+      "polygons": 12500,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_JorysFiddle"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "JorysFiddle.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_JorysFiddle.fbm\\T_JorysFiddle_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "JorysFiddle.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_JorysFiddle.fbm\\T_JorysFiddle_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_LampOilBarrel.fbx",
+      "object": "SM_LampOilBarrel",
+      "mesh": "SM_LampOilBarrel_Mesh",
+      "vertices": 6254,
+      "polygons": 12500,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_LampOilBarrel"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "LampOilBarrel.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_LampOilBarrel.fbm\\T_LampOilBarrel_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "LampOilBarrel.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_LampOilBarrel.fbm\\T_LampOilBarrel_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_NellsLetter.fbx",
+      "object": "SM_NellsLetter",
+      "mesh": "SM_NellsLetter_Mesh",
+      "vertices": 6261,
+      "polygons": 12496,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_NellsLetter"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "NellsLetter.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_NellsLetter.fbm\\T_NellsLetter_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "NellsLetter.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_NellsLetter.fbm\\T_NellsLetter_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_TramTicket.fbx",
+      "object": "SM_TramTicket",
+      "mesh": "SM_TramTicket_Mesh",
+      "vertices": 6240,
+      "polygons": 12500,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_TramTicket"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "TramTicket.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_TramTicket.fbm\\T_TramTicket_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        },
+        {
+          "image": "TramTicket.png.001",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_TramTicket.fbm\\T_TramTicket_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    }
+  ],
+  "violations": []
+}

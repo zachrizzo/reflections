@@ -1,0 +1,71 @@
+{
+  "legend": {
+    "red": "estimated >2 mm inside skin",
+    "green": "0-3 cm",
+    "yellow": "3-10 cm",
+    "blue": ">10 cm, expected for loose cloth"
+  },
+  "limitations": "Vertex-weighted nearest-normal estimates against open meshes, including possible incorrect signs around seams and face/eyes/mouth; not full collision or area measurement. No cloth-to-cloth checks, skin changes or physics.",
+  "poses": {
+    "rest": {
+      "SK_HeroCoat": {
+        "vertices": 16214,
+        "penetrating_estimate_over_2mm_pct": 12.69,
+        "within_3cm_pct": 52.65,
+        "3_to_10cm_pct": 47.03,
+        "over_10cm_pct": 0.32,
+        "median_clearance_cm": 2.9,
+        "p95_clearance_cm": 6.72
+      },
+      "SK_HeroTails": {
+        "vertices": 3388,
+        "penetrating_estimate_over_2mm_pct": 0.0,
+        "within_3cm_pct": 15.58,
+        "3_to_10cm_pct": 26.0,
+        "over_10cm_pct": 58.41,
+        "median_clearance_cm": 12.32,
+        "p95_clearance_cm": 25.1
+      }
+    },
+    "stride": {
+      "SK_HeroCoat": {
+        "vertices": 16214,
+        "penetrating_estimate_over_2mm_pct": 12.05,
+        "within_3cm_pct": 51.34,
+        "3_to_10cm_pct": 47.96,
+        "over_10cm_pct": 0.7,
+        "median_clearance_cm": 2.94,
+        "p95_clearance_cm": 6.99
+      },
+      "SK_HeroTails": {
+        "vertices": 3388,
+        "penetrating_estimate_over_2mm_pct": 3.01,
+        "within_3cm_pct": 21.99,
+        "3_to_10cm_pct": 32.91,
+        "over_10cm_pct": 45.1,
+        "median_clearance_cm": 8.67,
+        "p95_clearance_cm": 32.04
+      }
+    },
+    "crouch": {
+      "SK_HeroCoat": {
+        "vertices": 16214,
+        "penetrating_estimate_over_2mm_pct": 11.93,
+        "within_3cm_pct": 51.86,
+        "3_to_10cm_pct": 47.9,
+        "over_10cm_pct": 0.24,
+        "median_clearance_cm": 2.92,
+        "p95_clearance_cm": 7.03
+      },
+      "SK_HeroTails": {
+        "vertices": 3388,
+        "penetrating_estimate_over_2mm_pct": 12.96,
+        "within_3cm_pct": 22.11,
+        "3_to_10cm_pct": 24.94,
+        "over_10cm_pct": 52.95,
+        "median_clearance_cm": 11.59,
+        "p95_clearance_cm": 31.06
+      }
+    }
+  }
+}

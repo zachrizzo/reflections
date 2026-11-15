@@ -1,0 +1,1144 @@
+{
+  "method": "Evaluated Blender world-space garment vertices to nearest triangle of body and, in rest pose, separate head/neck proxy. mm; nearest-normal sign is only a screening estimate, not robust inside/outside. Synthetic posed tests use armature transforms; head proxy is static and omitted in poses.",
+  "characters": {
+    "Coin Clerk": {
+      "source": "ArtDirection\\Three-Londons-Wardrobe\\Merchant\\Merchant.blend",
+      "body_vertices": 7622,
+      "head_vertices": 3789,
+      "poses": {
+        "rest": {
+          "surfaces": [
+            "body",
+            "head"
+          ],
+          "objects": {
+            "SK_Merchant_Coat": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 6838,
+              "median_distance_mm": 42.27,
+              "p95_distance_mm": 126.84,
+              "max_distance_mm": 190.28,
+              "nearest_head_vertices": 268,
+              "bins": {
+                "0-5mm": 72,
+                "5-30mm": 1751,
+                "30-60mm": 3002,
+                "over-60mm": 2013,
+                "possible-inside-over-2mm": 815
+              }
+            },
+            "SK_Merchant_Waistcoat": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 6550,
+              "median_distance_mm": 20.68,
+              "p95_distance_mm": 55.79,
+              "max_distance_mm": 119.68,
+              "nearest_head_vertices": 298,
+              "bins": {
+                "0-5mm": 256,
+                "5-30mm": 3763,
+                "30-60mm": 2274,
+                "over-60mm": 257,
+                "possible-inside-over-2mm": 885
+              }
+            },
+            "SK_Merchant_Belt": {
+              "category": "accessory or rigid prop",
+              "vertices": 296,
+              "median_distance_mm": 32.92,
+              "p95_distance_mm": 67.8,
+              "max_distance_mm": 77.78,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 44,
+                "5-30mm": 98,
+                "30-60mm": 117,
+                "over-60mm": 37,
+                "possible-inside-over-2mm": 34
+              }
+            },
+            "SK_Merchant_Trousers": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 1944,
+              "median_distance_mm": 16.2,
+              "p95_distance_mm": 61.14,
+              "max_distance_mm": 156.36,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 20,
+                "5-30mm": 1546,
+                "30-60mm": 278,
+                "over-60mm": 100,
+                "possible-inside-over-2mm": 300
+              }
+            },
+            "SK_Merchant_Boots": {
+              "category": "footwear",
+              "vertices": 1512,
+              "median_distance_mm": 24.78,
+              "p95_distance_mm": 66.29,
+              "max_distance_mm": 97.75,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 74,
+                "5-30mm": 934,
+                "30-60mm": 377,
+                "over-60mm": 127,
+                "possible-inside-over-2mm": 22
+              }
+            },
+            "SK_Merchant_Ledger": {
+              "category": "accessory or rigid prop",
+              "vertices": 276,
+              "median_distance_mm": 111.25,
+              "p95_distance_mm": 172.58,
+              "max_distance_mm": 196.75,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 5,
+                "5-30mm": 64,
+                "30-60mm": 7,
+                "over-60mm": 200,
+                "possible-inside-over-2mm": 34
+              }
+            },
+            "SK_Merchant_BrassScales": {
+              "category": "accessory or rigid prop",
+              "vertices": 1374,
+              "median_distance_mm": 150.55,
+              "p95_distance_mm": 203.04,
+              "max_distance_mm": 219.62,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 0,
+                "30-60mm": 0,
+                "over-60mm": 1374,
+                "possible-inside-over-2mm": 0
+              }
+            },
+            "SK_Merchant_CoinPouch": {
+              "category": "accessory or rigid prop",
+              "vertices": 489,
+              "median_distance_mm": 106.65,
+              "p95_distance_mm": 134.25,
+              "max_distance_mm": 139.39,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 0,
+                "30-60mm": 0,
+                "over-60mm": 489,
+                "possible-inside-over-2mm": 0
+              }
+            }
+          }
+        },
+        "reach": {
+          "surfaces": [
+            "body"
+          ],
+          "objects": {
+            "SK_Merchant_Coat": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 6838,
+              "median_distance_mm": 42.98,
+              "p95_distance_mm": 126.16,
+              "max_distance_mm": 190.28,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 58,
+                "5-30mm": 1696,
+                "30-60mm": 2998,
+                "over-60mm": 2086,
+                "possible-inside-over-2mm": 828
+              }
+            },
+            "SK_Merchant_Waistcoat": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 6550,
+              "median_distance_mm": 22.23,
+              "p95_distance_mm": 65.82,
+              "max_distance_mm": 119.68,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 202,
+                "5-30mm": 3680,
+                "30-60mm": 2272,
+                "over-60mm": 396,
+                "possible-inside-over-2mm": 912
+              }
+            },
+            "SK_Merchant_Belt": {
+              "category": "accessory or rigid prop",
+              "vertices": 296,
+              "median_distance_mm": 32.92,
+              "p95_distance_mm": 67.8,
+              "max_distance_mm": 77.78,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 44,
+                "5-30mm": 98,
+                "30-60mm": 117,
+                "over-60mm": 37,
+                "possible-inside-over-2mm": 34
+              }
+            },
+            "SK_Merchant_Trousers": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 1944,
+              "median_distance_mm": 16.2,
+              "p95_distance_mm": 61.14,
+              "max_distance_mm": 156.36,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 20,
+                "5-30mm": 1546,
+                "30-60mm": 278,
+                "over-60mm": 100,
+                "possible-inside-over-2mm": 300
+              }
+            },
+            "SK_Merchant_Boots": {
+              "category": "footwear",
+              "vertices": 1512,
+              "median_distance_mm": 24.78,
+              "p95_distance_mm": 66.29,
+              "max_distance_mm": 97.75,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 74,
+                "5-30mm": 934,
+                "30-60mm": 377,
+                "over-60mm": 127,
+                "possible-inside-over-2mm": 22
+              }
+            },
+            "SK_Merchant_Ledger": {
+              "category": "accessory or rigid prop",
+              "vertices": 276,
+              "median_distance_mm": 111.25,
+              "p95_distance_mm": 172.58,
+              "max_distance_mm": 196.75,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 5,
+                "5-30mm": 64,
+                "30-60mm": 7,
+                "over-60mm": 200,
+                "possible-inside-over-2mm": 34
+              }
+            },
+            "SK_Merchant_BrassScales": {
+              "category": "accessory or rigid prop",
+              "vertices": 1374,
+              "median_distance_mm": 150.55,
+              "p95_distance_mm": 203.04,
+              "max_distance_mm": 219.62,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 0,
+                "30-60mm": 0,
+                "over-60mm": 1374,
+                "possible-inside-over-2mm": 0
+              }
+            },
+            "SK_Merchant_CoinPouch": {
+              "category": "accessory or rigid prop",
+              "vertices": 489,
+              "median_distance_mm": 106.65,
+              "p95_distance_mm": 134.25,
+              "max_distance_mm": 139.39,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 0,
+                "30-60mm": 0,
+                "over-60mm": 489,
+                "possible-inside-over-2mm": 0
+              }
+            }
+          }
+        },
+        "stride": {
+          "surfaces": [
+            "body"
+          ],
+          "objects": {
+            "SK_Merchant_Coat": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 6838,
+              "median_distance_mm": 42.74,
+              "p95_distance_mm": 125.96,
+              "max_distance_mm": 171.77,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 85,
+                "5-30mm": 1677,
+                "30-60mm": 2981,
+                "over-60mm": 2095,
+                "possible-inside-over-2mm": 840
+              }
+            },
+            "SK_Merchant_Waistcoat": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 6550,
+              "median_distance_mm": 23.14,
+              "p95_distance_mm": 66.51,
+              "max_distance_mm": 116.07,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 220,
+                "5-30mm": 3581,
+                "30-60mm": 2302,
+                "over-60mm": 447,
+                "possible-inside-over-2mm": 898
+              }
+            },
+            "SK_Merchant_Belt": {
+              "category": "accessory or rigid prop",
+              "vertices": 296,
+              "median_distance_mm": 32.5,
+              "p95_distance_mm": 68.57,
+              "max_distance_mm": 76.21,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 39,
+                "5-30mm": 105,
+                "30-60mm": 113,
+                "over-60mm": 39,
+                "possible-inside-over-2mm": 34
+              }
+            },
+            "SK_Merchant_Trousers": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 1944,
+              "median_distance_mm": 16.45,
+              "p95_distance_mm": 57.79,
+              "max_distance_mm": 151.31,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 46,
+                "5-30mm": 1524,
+                "30-60mm": 280,
+                "over-60mm": 94,
+                "possible-inside-over-2mm": 274
+              }
+            },
+            "SK_Merchant_Boots": {
+              "category": "footwear",
+              "vertices": 1512,
+              "median_distance_mm": 24.78,
+              "p95_distance_mm": 66.29,
+              "max_distance_mm": 97.75,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 74,
+                "5-30mm": 934,
+                "30-60mm": 377,
+                "over-60mm": 127,
+                "possible-inside-over-2mm": 22
+              }
+            },
+            "SK_Merchant_Ledger": {
+              "category": "accessory or rigid prop",
+              "vertices": 276,
+              "median_distance_mm": 111.25,
+              "p95_distance_mm": 172.58,
+              "max_distance_mm": 196.75,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 5,
+                "5-30mm": 64,
+                "30-60mm": 7,
+                "over-60mm": 200,
+                "possible-inside-over-2mm": 34
+              }
+            },
+            "SK_Merchant_BrassScales": {
+              "category": "accessory or rigid prop",
+              "vertices": 1374,
+              "median_distance_mm": 151.03,
+              "p95_distance_mm": 201.63,
+              "max_distance_mm": 215.62,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 0,
+                "30-60mm": 0,
+                "over-60mm": 1374,
+                "possible-inside-over-2mm": 0
+              }
+            },
+            "SK_Merchant_CoinPouch": {
+              "category": "accessory or rigid prop",
+              "vertices": 489,
+              "median_distance_mm": 112.3,
+              "p95_distance_mm": 138.18,
+              "max_distance_mm": 144.07,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 0,
+                "30-60mm": 0,
+                "over-60mm": 489,
+                "possible-inside-over-2mm": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "Ferry Pilot": {
+      "source": "ArtDirection\\Three-Londons-Wardrobe\\Red London\\FerryPilot\\FerryPilot_Outfit.blend",
+      "body_vertices": 3328,
+      "head_vertices": 788,
+      "poses": {
+        "rest": {
+          "surfaces": [
+            "body",
+            "head"
+          ],
+          "objects": {
+            "SK_FerryPilot_StripedTunic": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 6174,
+              "median_distance_mm": 21.27,
+              "p95_distance_mm": 79.88,
+              "max_distance_mm": 136.29,
+              "nearest_head_vertices": 423,
+              "bins": {
+                "0-5mm": 138,
+                "5-30mm": 3890,
+                "30-60mm": 1599,
+                "over-60mm": 547,
+                "possible-inside-over-2mm": 560
+              }
+            },
+            "SK_FerryPilot_LeatherCapelet": {
+              "category": "loose or layered clothing",
+              "vertices": 4345,
+              "median_distance_mm": 43.32,
+              "p95_distance_mm": 87.08,
+              "max_distance_mm": 112.32,
+              "nearest_head_vertices": 2030,
+              "bins": {
+                "0-5mm": 160,
+                "5-30mm": 1094,
+                "30-60mm": 1681,
+                "over-60mm": 1410,
+                "possible-inside-over-2mm": 809
+              }
+            },
+            "SK_FerryPilot_Trousers": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 6528,
+              "median_distance_mm": 17.61,
+              "p95_distance_mm": 51.13,
+              "max_distance_mm": 119.99,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 209,
+                "5-30mm": 5009,
+                "30-60mm": 1074,
+                "over-60mm": 236,
+                "possible-inside-over-2mm": 932
+              }
+            },
+            "SK_FerryPilot_RidingBoots": {
+              "category": "footwear",
+              "vertices": 6872,
+              "median_distance_mm": 12.99,
+              "p95_distance_mm": 41.7,
+              "max_distance_mm": 52.02,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 1266,
+                "5-30mm": 4884,
+                "30-60mm": 722,
+                "over-60mm": 0,
+                "possible-inside-over-2mm": 324
+              }
+            },
+            "SK_FerryPilot_WideBrimHat": {
+              "category": "accessory or rigid prop",
+              "vertices": 3542,
+              "median_distance_mm": 34.62,
+              "p95_distance_mm": 103.11,
+              "max_distance_mm": 112.62,
+              "nearest_head_vertices": 3542,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 1408,
+                "30-60mm": 1100,
+                "over-60mm": 1034,
+                "possible-inside-over-2mm": 0
+              }
+            },
+            "SK_FerryPilot_Neckerchief": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 1098,
+              "median_distance_mm": 20.51,
+              "p95_distance_mm": 63.59,
+              "max_distance_mm": 70.15,
+              "nearest_head_vertices": 915,
+              "bins": {
+                "0-5mm": 136,
+                "5-30mm": 588,
+                "30-60mm": 251,
+                "over-60mm": 123,
+                "possible-inside-over-2mm": 456
+              }
+            },
+            "SK_FerryPilot_RopeBelt": {
+              "category": "accessory or rigid prop",
+              "vertices": 2790,
+              "median_distance_mm": 35.48,
+              "p95_distance_mm": 62.09,
+              "max_distance_mm": 75.67,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 79,
+                "5-30mm": 888,
+                "30-60mm": 1642,
+                "over-60mm": 181,
+                "possible-inside-over-2mm": 9
+              }
+            },
+            "SK_FerryPilot_HandCoil": {
+              "category": "accessory or rigid prop",
+              "vertices": 7170,
+              "median_distance_mm": 90.8,
+              "p95_distance_mm": 262.4,
+              "max_distance_mm": 305.09,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 422,
+                "5-30mm": 1553,
+                "30-60mm": 961,
+                "over-60mm": 4234,
+                "possible-inside-over-2mm": 542
+              }
+            }
+          }
+        }
+      }
+    },
+    "Bridge Guard": {
+      "source": "ArtDirection\\Three-Londons-Wardrobe\\Red London\\Bridge Guard\\BridgeGuard-Outfit.blend",
+      "body_vertices": 7622,
+      "head_vertices": 3789,
+      "poses": {
+        "rest": {
+          "surfaces": [
+            "body",
+            "head"
+          ],
+          "objects": {
+            "SK_BridgeGuard_Gambeson": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 17856,
+              "median_distance_mm": 24.48,
+              "p95_distance_mm": 80.82,
+              "max_distance_mm": 159.46,
+              "nearest_head_vertices": 1250,
+              "bins": {
+                "0-5mm": 673,
+                "5-30mm": 11309,
+                "30-60mm": 3531,
+                "over-60mm": 2343,
+                "possible-inside-over-2mm": 1231
+              }
+            },
+            "SK_BridgeGuard_Trousers": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 4410,
+              "median_distance_mm": 10.92,
+              "p95_distance_mm": 29.73,
+              "max_distance_mm": 83.03,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 38,
+                "5-30mm": 4159,
+                "30-60mm": 190,
+                "over-60mm": 23,
+                "possible-inside-over-2mm": 146
+              }
+            },
+            "SK_BridgeGuard_Boots": {
+              "category": "footwear",
+              "vertices": 15096,
+              "median_distance_mm": 18.14,
+              "p95_distance_mm": 42.35,
+              "max_distance_mm": 55.5,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 3086,
+                "5-30mm": 7919,
+                "30-60mm": 4091,
+                "over-60mm": 0,
+                "possible-inside-over-2mm": 1862
+              }
+            },
+            "SK_BridgeGuard_Armor": {
+              "category": "accessory or rigid prop",
+              "vertices": 7428,
+              "median_distance_mm": 29.39,
+              "p95_distance_mm": 61.08,
+              "max_distance_mm": 74.12,
+              "nearest_head_vertices": 15,
+              "bins": {
+                "0-5mm": 112,
+                "5-30mm": 3720,
+                "30-60mm": 3183,
+                "over-60mm": 413,
+                "possible-inside-over-2mm": 408
+              }
+            },
+            "SK_BridgeGuard_Sash": {
+              "category": "accessory or rigid prop",
+              "vertices": 3366,
+              "median_distance_mm": 52.09,
+              "p95_distance_mm": 101.2,
+              "max_distance_mm": 115.67,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 495,
+                "30-60mm": 1348,
+                "over-60mm": 1523,
+                "possible-inside-over-2mm": 0
+              }
+            },
+            "SK_BridgeGuard_RoundShield": {
+              "category": "accessory or rigid prop",
+              "vertices": 5660,
+              "median_distance_mm": 202.93,
+              "p95_distance_mm": 385.04,
+              "max_distance_mm": 438.5,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 11,
+                "5-30mm": 201,
+                "30-60mm": 239,
+                "over-60mm": 5209,
+                "possible-inside-over-2mm": 5
+              }
+            }
+          }
+        }
+      }
+    },
+    "Festival Drummer": {
+      "source": "ArtDirection\\Three-Londons-Wardrobe\\Red London\\Festival Drummer\\FestivalDrummer-Outfit.blend",
+      "body_vertices": 3328,
+      "head_vertices": 788,
+      "poses": {
+        "rest": {
+          "surfaces": [
+            "body",
+            "head"
+          ],
+          "objects": {
+            "SK_FestivalDrummer_Blouse": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 7786,
+              "median_distance_mm": 18.6,
+              "p95_distance_mm": 43.35,
+              "max_distance_mm": 69.04,
+              "nearest_head_vertices": 934,
+              "bins": {
+                "0-5mm": 245,
+                "5-30mm": 5765,
+                "30-60mm": 1758,
+                "over-60mm": 18,
+                "possible-inside-over-2mm": 443
+              }
+            },
+            "SK_FestivalDrummer_Capelet": {
+              "category": "loose or layered clothing",
+              "vertices": 7856,
+              "median_distance_mm": 46.03,
+              "p95_distance_mm": 77.2,
+              "max_distance_mm": 94.84,
+              "nearest_head_vertices": 1451,
+              "bins": {
+                "0-5mm": 305,
+                "5-30mm": 2732,
+                "30-60mm": 2398,
+                "over-60mm": 2421,
+                "possible-inside-over-2mm": 305
+              }
+            },
+            "SK_FestivalDrummer_Trousers": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 3510,
+              "median_distance_mm": 15.25,
+              "p95_distance_mm": 35.84,
+              "max_distance_mm": 86.71,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 619,
+                "5-30mm": 2435,
+                "30-60mm": 434,
+                "over-60mm": 22,
+                "possible-inside-over-2mm": 594
+              }
+            },
+            "SK_FestivalDrummer_Boots": {
+              "category": "footwear",
+              "vertices": 11596,
+              "median_distance_mm": 15.2,
+              "p95_distance_mm": 35.92,
+              "max_distance_mm": 46.2,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 2001,
+                "5-30mm": 8166,
+                "30-60mm": 1429,
+                "over-60mm": 0,
+                "possible-inside-over-2mm": 1320
+              }
+            },
+            "SK_FestivalDrummer_Skirt": {
+              "category": "loose or layered clothing",
+              "vertices": 9345,
+              "median_distance_mm": 110.44,
+              "p95_distance_mm": 207.99,
+              "max_distance_mm": 249.73,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 31,
+                "30-60mm": 1973,
+                "over-60mm": 7341,
+                "possible-inside-over-2mm": 0
+              }
+            },
+            "SK_FestivalDrummer_Sash": {
+              "category": "accessory or rigid prop",
+              "vertices": 11541,
+              "median_distance_mm": 50.95,
+              "p95_distance_mm": 103.71,
+              "max_distance_mm": 129.84,
+              "nearest_head_vertices": 2146,
+              "bins": {
+                "0-5mm": 542,
+                "5-30mm": 2897,
+                "30-60mm": 4314,
+                "over-60mm": 3788,
+                "possible-inside-over-2mm": 1152
+              }
+            },
+            "SK_FestivalDrummer_Belt": {
+              "category": "accessory or rigid prop",
+              "vertices": 2188,
+              "median_distance_mm": 51.39,
+              "p95_distance_mm": 73.96,
+              "max_distance_mm": 93.41,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 0,
+                "30-60mm": 1851,
+                "over-60mm": 337,
+                "possible-inside-over-2mm": 0
+              }
+            },
+            "SK_FestivalDrummer_RopeDrum": {
+              "category": "accessory or rigid prop",
+              "vertices": 6692,
+              "median_distance_mm": 97.77,
+              "p95_distance_mm": 204.94,
+              "max_distance_mm": 249.41,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 129,
+                "5-30mm": 1058,
+                "30-60mm": 1016,
+                "over-60mm": 4489,
+                "possible-inside-over-2mm": 222
+              }
+            },
+            "SK_FestivalDrummer_DrumHarness": {
+              "category": "accessory or rigid prop",
+              "vertices": 1010,
+              "median_distance_mm": 63.9,
+              "p95_distance_mm": 113.29,
+              "max_distance_mm": 155.43,
+              "nearest_head_vertices": 161,
+              "bins": {
+                "0-5mm": 18,
+                "5-30mm": 31,
+                "30-60mm": 358,
+                "over-60mm": 603,
+                "possible-inside-over-2mm": 18
+              }
+            },
+            "SK_FestivalDrummer_Beaters": {
+              "category": "accessory or rigid prop",
+              "vertices": 748,
+              "median_distance_mm": 53.95,
+              "p95_distance_mm": 188.42,
+              "max_distance_mm": 195.49,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 110,
+                "5-30mm": 190,
+                "30-60mm": 77,
+                "over-60mm": 371,
+                "possible-inside-over-2mm": 113
+              }
+            }
+          }
+        }
+      }
+    },
+    "Archive Apprentice": {
+      "source": "ArtDirection\\Three-Londons-Wardrobe\\Red London\\Archive Apprentice\\ArchiveApprentice.blend",
+      "body_vertices": 3328,
+      "head_vertices": 788,
+      "poses": {
+        "rest": {
+          "surfaces": [
+            "body",
+            "head"
+          ],
+          "objects": {
+            "SK_Merchant_Coat": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 6602,
+              "median_distance_mm": 39.54,
+              "p95_distance_mm": 78.58,
+              "max_distance_mm": 160.0,
+              "nearest_head_vertices": 292,
+              "bins": {
+                "0-5mm": 103,
+                "5-30mm": 1803,
+                "30-60mm": 3951,
+                "over-60mm": 745,
+                "possible-inside-over-2mm": 559
+              }
+            },
+            "SK_Merchant_Waistcoat": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 6200,
+              "median_distance_mm": 15.59,
+              "p95_distance_mm": 44.13,
+              "max_distance_mm": 115.38,
+              "nearest_head_vertices": 47,
+              "bins": {
+                "0-5mm": 231,
+                "5-30mm": 4156,
+                "30-60mm": 1722,
+                "over-60mm": 91,
+                "possible-inside-over-2mm": 468
+              }
+            },
+            "SK_Merchant_Trousers": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 1944,
+              "median_distance_mm": 19.03,
+              "p95_distance_mm": 48.92,
+              "max_distance_mm": 111.33,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 42,
+                "5-30mm": 1372,
+                "30-60mm": 488,
+                "over-60mm": 42,
+                "possible-inside-over-2mm": 132
+              }
+            },
+            "SK_Merchant_Boots": {
+              "category": "footwear",
+              "vertices": 1512,
+              "median_distance_mm": 31.14,
+              "p95_distance_mm": 69.72,
+              "max_distance_mm": 82.35,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 12,
+                "5-30mm": 689,
+                "30-60mm": 696,
+                "over-60mm": 115,
+                "possible-inside-over-2mm": 15
+              }
+            },
+            "SK_Merchant_Ledger": {
+              "category": "accessory or rigid prop",
+              "vertices": 276,
+              "median_distance_mm": 111.05,
+              "p95_distance_mm": 169.62,
+              "max_distance_mm": 192.87,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 8,
+                "5-30mm": 49,
+                "30-60mm": 20,
+                "over-60mm": 199,
+                "possible-inside-over-2mm": 30
+              }
+            },
+            "SK_Merchant_Satchel": {
+              "category": "accessory or rigid prop",
+              "vertices": 104,
+              "median_distance_mm": 79.47,
+              "p95_distance_mm": 108.21,
+              "max_distance_mm": 127.42,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 6,
+                "5-30mm": 10,
+                "30-60mm": 6,
+                "over-60mm": 82,
+                "possible-inside-over-2mm": 10
+              }
+            }
+          }
+        }
+      }
+    },
+    "Glass Artisan": {
+      "source": "ArtDirection\\Three-Londons-Wardrobe\\Red London\\Glass Artisan\\GlassArtisan.blend",
+      "body_vertices": 3328,
+      "head_vertices": 788,
+      "poses": {
+        "rest": {
+          "surfaces": [
+            "body",
+            "head"
+          ],
+          "objects": {
+            "SK_Merchant_Coat": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 6602,
+              "median_distance_mm": 32.07,
+              "p95_distance_mm": 55.82,
+              "max_distance_mm": 133.56,
+              "nearest_head_vertices": 283,
+              "bins": {
+                "0-5mm": 145,
+                "5-30mm": 2848,
+                "30-60mm": 3381,
+                "over-60mm": 228,
+                "possible-inside-over-2mm": 778
+              }
+            },
+            "SK_Merchant_Waistcoat": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 6200,
+              "median_distance_mm": 15.76,
+              "p95_distance_mm": 48.49,
+              "max_distance_mm": 128.94,
+              "nearest_head_vertices": 8,
+              "bins": {
+                "0-5mm": 263,
+                "5-30mm": 3950,
+                "30-60mm": 1802,
+                "over-60mm": 185,
+                "possible-inside-over-2mm": 644
+              }
+            },
+            "SK_Merchant_Trousers": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 1944,
+              "median_distance_mm": 15.77,
+              "p95_distance_mm": 49.31,
+              "max_distance_mm": 145.25,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 31,
+                "5-30mm": 1586,
+                "30-60mm": 248,
+                "over-60mm": 79,
+                "possible-inside-over-2mm": 255
+              }
+            },
+            "SK_Merchant_Boots": {
+              "category": "footwear",
+              "vertices": 1512,
+              "median_distance_mm": 21.12,
+              "p95_distance_mm": 68.24,
+              "max_distance_mm": 86.45,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 133,
+                "5-30mm": 981,
+                "30-60mm": 286,
+                "over-60mm": 112,
+                "possible-inside-over-2mm": 39
+              }
+            },
+            "SK_Merchant_WorkApron": {
+              "category": "loose or layered clothing",
+              "vertices": 898,
+              "median_distance_mm": 95.77,
+              "p95_distance_mm": 199.23,
+              "max_distance_mm": 230.37,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 0,
+                "30-60mm": 38,
+                "over-60mm": 860,
+                "possible-inside-over-2mm": 0
+              }
+            },
+            "SK_Merchant_Glass": {
+              "category": "accessory or rigid prop",
+              "vertices": 532,
+              "median_distance_mm": 29.62,
+              "p95_distance_mm": 72.31,
+              "max_distance_mm": 80.0,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 78,
+                "5-30mm": 190,
+                "30-60mm": 188,
+                "over-60mm": 76,
+                "possible-inside-over-2mm": 32
+              }
+            }
+          }
+        }
+      }
+    },
+    "Iven": {
+      "source": "ArtDirection\\Three-Londons-Wardrobe\\White London - Rags and Tattoos\\IvenMetaHuman\\IvenRook_MetaHuman_Outfit.blend",
+      "body_vertices": 7622,
+      "head_vertices": 3789,
+      "poses": {
+        "rest": {
+          "surfaces": [
+            "body",
+            "head"
+          ],
+          "objects": {
+            "SK_Iven_RagSkirt": {
+              "category": "loose or layered clothing",
+              "vertices": 12844,
+              "median_distance_mm": 60.16,
+              "p95_distance_mm": 111.52,
+              "max_distance_mm": 147.18,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 2623,
+                "30-60mm": 3780,
+                "over-60mm": 6441,
+                "possible-inside-over-2mm": 0
+              }
+            },
+            "SK_Iven_Sandals": {
+              "category": "footwear",
+              "vertices": 18956,
+              "median_distance_mm": 10.24,
+              "p95_distance_mm": 26.74,
+              "max_distance_mm": 36.72,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 4155,
+                "5-30mm": 14316,
+                "30-60mm": 485,
+                "over-60mm": 0,
+                "possible-inside-over-2mm": 3725
+              }
+            },
+            "SK_Iven_WorkTunic": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 17368,
+              "median_distance_mm": 26.5,
+              "p95_distance_mm": 46.87,
+              "max_distance_mm": 71.32,
+              "nearest_head_vertices": 1076,
+              "bins": {
+                "0-5mm": 451,
+                "5-30mm": 9876,
+                "30-60mm": 6925,
+                "over-60mm": 116,
+                "possible-inside-over-2mm": 702
+              }
+            },
+            "SK_Iven_Tattoos": {
+              "category": "accessory or rigid prop",
+              "vertices": 2096,
+              "median_distance_mm": 1.8,
+              "p95_distance_mm": 1.8,
+              "max_distance_mm": 1.8,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 2096,
+                "5-30mm": 0,
+                "30-60mm": 0,
+                "over-60mm": 0,
+                "possible-inside-over-2mm": 0
+              }
+            },
+            "SK_Iven_ChestGlyph": {
+              "category": "accessory or rigid prop",
+              "vertices": 92,
+              "median_distance_mm": 1.8,
+              "p95_distance_mm": 1.8,
+              "max_distance_mm": 1.8,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 92,
+                "5-30mm": 0,
+                "30-60mm": 0,
+                "over-60mm": 0,
+                "possible-inside-over-2mm": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "Hero": {
+      "source": "ArtDirection\\Three-Londons-Wardrobe\\Hero\\Hero_Wardrobe.blend",
+      "body_vertices": 3328,
+      "head_vertices": 788,
+      "poses": {
+        "rest": {
+          "surfaces": [
+            "body",
+            "head"
+          ],
+          "objects": {
+            "SK_HeroCoat": {
+              "category": "fitted clothing or outer layer",
+              "vertices": 16214,
+              "median_distance_mm": 28.96,
+              "p95_distance_mm": 67.17,
+              "max_distance_mm": 122.61,
+              "nearest_head_vertices": 1314,
+              "bins": {
+                "0-5mm": 582,
+                "5-30mm": 7955,
+                "30-60mm": 6277,
+                "over-60mm": 1400,
+                "possible-inside-over-2mm": 2057
+              }
+            },
+            "SK_HeroTails": {
+              "category": "loose or layered clothing",
+              "vertices": 3388,
+              "median_distance_mm": 123.21,
+              "p95_distance_mm": 251.0,
+              "max_distance_mm": 329.14,
+              "nearest_head_vertices": 0,
+              "bins": {
+                "0-5mm": 0,
+                "5-30mm": 528,
+                "30-60mm": 443,
+                "over-60mm": 2417,
+                "possible-inside-over-2mm": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

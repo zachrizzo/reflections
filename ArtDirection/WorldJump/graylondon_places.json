@@ -1,0 +1,298 @@
+{
+ "Intro": {
+  "spot": "Great Tower Street, outside the inn",
+  "lat": 51.51003,
+  "lon": -0.0807,
+  "east_m": 3282.9,
+  "north_m": 310.9,
+  "note": "game start; the hero arrives here"
+ },
+ "Lamplight": {
+  "spot": "Corner building, Great Tower St / Mark Lane",
+  "lat": 51.5101,
+  "lon": -0.08045,
+  "east_m": 3300.1,
+  "north_m": 319.2,
+  "note": "the inn (Long Shelter in Frostside); no real pub name in game"
+ },
+ "LamplightCellar": {
+  "spot": "Mark Lane, side door",
+  "lat": 51.5104,
+  "lon": -0.0806,
+  "east_m": 3288.8,
+  "north_m": 352.2,
+  "note": ""
+ },
+ "BellLane": {
+  "spot": "Byward Street",
+  "lat": 51.50985,
+  "lon": -0.07985,
+  "east_m": 3342.4,
+  "north_m": 292.4,
+  "note": "three failing lamps"
+ },
+ "BellSquare": {
+  "spot": "All Hallows by the Tower churchyard",
+  "lat": 51.5097,
+  "lon": -0.07955,
+  "east_m": 3363.7,
+  "north_m": 276.3,
+  "note": "square with the church bells; first conversion"
+ },
+ "Fountain": {
+  "spot": "All Hallows churchyard, centre",
+  "lat": 51.50978,
+  "lon": -0.0794,
+  "east_m": 3373.9,
+  "north_m": 285.5,
+  "note": "dry fountain / Cistern: a set piece here"
+ },
+ "Square_Cistern": {
+  "spot": "All Hallows churchyard, centre",
+  "lat": 51.50978,
+  "lon": -0.0794,
+  "east_m": 3373.9,
+  "north_m": 285.5,
+  "note": ""
+ },
+ "WeighHouseCorner": {
+  "spot": "Seething Lane Garden, south-east corner",
+  "lat": 51.50995,
+  "lon": -0.0799,
+  "east_m": 3338.7,
+  "north_m": 303.5,
+  "note": "Pewterside page: set piece Weigh-House"
+ },
+ "WeighHouseStair": {
+  "spot": "Seething Lane Garden, west side",
+  "lat": 51.51,
+  "lon": -0.08015,
+  "east_m": 3321.2,
+  "north_m": 308.6,
+  "note": ""
+ },
+ "WeighHouseRoof": {
+  "spot": "Seething Lane Garden (set piece roof)",
+  "lat": 51.51005,
+  "lon": -0.08,
+  "east_m": 3331.5,
+  "north_m": 314.4,
+  "note": "z = set piece roof"
+ },
+ "TowerPlaza": {
+  "spot": "Trinity Square Gardens",
+  "lat": 51.50985,
+  "lon": -0.0773,
+  "east_m": 3519.4,
+  "north_m": 297.1,
+  "note": "open lawn on Tower Hill"
+ },
+ "TowerFoot": {
+  "spot": "Trinity Square Gardens, south lawn",
+  "lat": 51.50965,
+  "lon": -0.07725,
+  "east_m": 3523.4,
+  "north_m": 274.9,
+  "note": "the mirror tower set piece (all sides)"
+ },
+ "ArchiveSteps": {
+  "spot": "Trinity House steps",
+  "lat": 51.5101,
+  "lon": -0.07745,
+  "east_m": 3508.2,
+  "north_m": 324.6,
+  "note": "Ice Stairs in Frostside"
+ },
+ "ArchiveTerrace": {
+  "spot": "Trinity House portico",
+  "lat": 51.51015,
+  "lon": -0.0775,
+  "east_m": 3504.6,
+  "north_m": 330.1,
+  "note": ""
+ },
+ "IceWall": {
+  "spot": "London Wall (Roman), Tower Hill",
+  "lat": 51.51035,
+  "lon": -0.07605,
+  "east_m": 3604.6,
+  "north_m": 355.0,
+  "note": "Frostside wall"
+ },
+ "LanternRow": {
+  "spot": "Leadenhall Market, central crossing",
+  "lat": 51.5127,
+  "lon": -0.0836,
+  "east_m": 3074.0,
+  "north_m": 602.5,
+  "note": "market stalls; Bone Market in Frostside"
+ },
+ "LanternRowEast": {
+  "spot": "Leadenhall Market, Whittington Avenue",
+  "lat": 51.51275,
+  "lon": -0.0829,
+  "east_m": 3122.4,
+  "north_m": 609.3,
+  "note": ""
+ },
+ "Furnace": {
+  "spot": "Lime Street",
+  "lat": 51.51235,
+  "lon": -0.0828,
+  "east_m": 3130.5,
+  "north_m": 565.1,
+  "note": ""
+ },
+ "ThraleShop": {
+  "spot": "Gracechurch Street, east side",
+  "lat": 51.5124,
+  "lon": -0.0844,
+  "east_m": 3019.3,
+  "north_m": 567.7,
+  "note": ""
+ },
+ "VaneAtelier": {
+  "spot": "Leadenhall Place",
+  "lat": 51.513,
+  "lon": -0.083,
+  "east_m": 3114.7,
+  "north_m": 637.0,
+  "note": ""
+ },
+ "LanternGate": {
+  "spot": "Tower Bridge, north tower",
+  "lat": 51.5058,
+  "lon": -0.07545,
+  "east_m": 3659.6,
+  "north_m": -149.9,
+  "note": "the gate; hold it"
+ },
+ "GateBridge": {
+  "spot": "Tower Bridge, deck",
+  "lat": 51.5055,
+  "lon": -0.0754,
+  "east_m": 3663.9,
+  "north_m": -183.1,
+  "note": ""
+ },
+ "WatchPost": {
+  "spot": "Tower Bridge Approach, north end",
+  "lat": 51.5068,
+  "lon": -0.0748,
+  "east_m": 3701.8,
+  "north_m": -37.5,
+  "note": "Gilt Tower key pedestal"
+ },
+ "DrifterCamp": {
+  "spot": "St Katharine's Way, under the approach",
+  "lat": 51.5063,
+  "lon": -0.0739,
+  "east_m": 3765.7,
+  "north_m": -91.4,
+  "note": "drifters under the gate"
+ },
+ "CanalRift": {
+  "spot": "Tower Wharf, riverside",
+  "lat": 51.5067,
+  "lon": -0.0779,
+  "east_m": 3486.9,
+  "north_m": -54.3,
+  "note": "the river edge"
+ },
+ "FishSteps": {
+  "spot": "Old Billingsgate Walk, river stairs",
+  "lat": 51.5088,
+  "lon": -0.0837,
+  "east_m": 3078.4,
+  "north_m": 168.7,
+  "note": "old fish market"
+ },
+ "MusterYard": {
+  "spot": "Royal Mint Court, courtyard",
+  "lat": 51.5095,
+  "lon": -0.0723,
+  "east_m": 3867.3,
+  "north_m": 267.3,
+  "note": "walled yard"
+ },
+ "BarracksWest": {
+  "spot": "10 Trinity Square, frontage",
+  "lat": 51.5099,
+  "lon": -0.0786,
+  "east_m": 3429.0,
+  "north_m": 300.3,
+  "note": "Watch barracks"
+ },
+ "BarracksEast": {
+  "spot": "Royal Mint Court, east block",
+  "lat": 51.5094,
+  "lon": -0.0716,
+  "east_m": 3916.2,
+  "north_m": 257.5,
+  "note": "Wall Company barracks"
+ },
+ "CoalLaneStop": {
+  "spot": "Fenchurch Street station forecourt",
+  "lat": 51.5115,
+  "lon": -0.0785,
+  "east_m": 3431.3,
+  "north_m": 478.4,
+  "note": "the stop"
+ },
+ "HesterDoorstep": {
+  "spot": "Crutched Friars",
+  "lat": 51.511,
+  "lon": -0.0774,
+  "east_m": 3509.1,
+  "north_m": 424.8,
+  "note": ""
+ },
+ "CoalLaneLaundry": {
+  "spot": "Cooper's Row",
+  "lat": 51.5106,
+  "lon": -0.0765,
+  "east_m": 3572.7,
+  "north_m": 381.9,
+  "note": ""
+ },
+ "WickStreet": {
+  "spot": "Mark Lane, north",
+  "lat": 51.5109,
+  "lon": -0.0807,
+  "east_m": 3280.4,
+  "north_m": 407.6,
+  "note": "infirmary"
+ },
+ "Yard": {
+  "spot": "Cooper's Row, wall courtyard",
+  "lat": 51.5107,
+  "lon": -0.0762,
+  "east_m": 3593.2,
+  "north_m": 393.6,
+  "note": "Sorrel's yard"
+ },
+ "Shed": {
+  "spot": "Cooper's Row, wall courtyard shed",
+  "lat": 51.51075,
+  "lon": -0.0763,
+  "east_m": 3586.1,
+  "north_m": 399.0,
+  "note": ""
+ },
+ "Ref_TowerOfLondon": {
+  "spot": "Tower of London, precinct centre (White Tower)",
+  "lat": 51.5081,
+  "lon": -0.0761,
+  "east_m": 3607.7,
+  "north_m": 104.7,
+  "note": "calibration"
+ },
+ "Ref_TowerBridge": {
+  "spot": "Tower Bridge, centre span",
+  "lat": 51.5055,
+  "lon": -0.0754,
+  "east_m": 3663.9,
+  "north_m": -183.1,
+  "note": "calibration"
+ }
+}

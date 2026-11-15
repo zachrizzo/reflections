@@ -1,0 +1,304 @@
+{
+  "summary": {
+    "files": 6,
+    "mesh_objects": 6,
+    "meshes_with_uvs": 6,
+    "meshes_with_materials": 6,
+    "identity_transform_violations": 0,
+    "violations": 0,
+    "note": "Semantic +X facing requires visual verification in Unreal."
+  },
+  "assets": [
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\Caster_M_Feet.fbx",
+      "object": "Caster_M_Feet",
+      "mesh": "Caster_M_Feet_Mesh",
+      "vertices": 9004,
+      "polygons": 18000,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Caster_M_Feet_Front",
+        "M_Caster_M_Feet_Back",
+        "M_Caster_M_Feet_Sleeves"
+      ],
+      "used_material_indices": [
+        0,
+        1
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "Caster_M_Feet.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\Caster_M_Feet.fbm\\T_Caster_M_Feet_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\Caster_M_Lower.fbx",
+      "object": "Caster_M_Lower",
+      "mesh": "Caster_M_Lower_Mesh",
+      "vertices": 9002,
+      "polygons": 18000,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Caster_M_Lower_Front",
+        "M_Caster_M_Lower_Back",
+        "M_Caster_M_Lower_Sleeves"
+      ],
+      "used_material_indices": [
+        0,
+        1
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "Caster_M_Lower.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\Caster_M_Lower.fbm\\T_Caster_M_Lower_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\Caster_M_Upper.fbx",
+      "object": "Caster_M_Upper",
+      "mesh": "Caster_M_Upper_Mesh",
+      "vertices": 8994,
+      "polygons": 18000,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Caster_M_Upper_Front",
+        "M_Caster_M_Upper_Back",
+        "M_Caster_M_Upper_Sleeves"
+      ],
+      "used_material_indices": [
+        0,
+        1,
+        2
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "Caster_M_Upper.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\Caster_M_Upper.fbm\\T_Caster_M_Upper_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\Soldier_M_Feet.fbx",
+      "object": "Soldier_M_Feet",
+      "mesh": "Soldier_M_Feet_Mesh",
+      "vertices": 9004,
+      "polygons": 18000,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Soldier_M_Feet_Front",
+        "M_Soldier_M_Feet_Back",
+        "M_Soldier_M_Feet_Sleeves"
+      ],
+      "used_material_indices": [
+        0,
+        1
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "Soldier_M_Feet.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\Soldier_M_Feet.fbm\\T_Soldier_M_Feet_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\Soldier_M_Lower.fbx",
+      "object": "Soldier_M_Lower",
+      "mesh": "Soldier_M_Lower_Mesh",
+      "vertices": 9002,
+      "polygons": 18000,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Soldier_M_Lower_Front",
+        "M_Soldier_M_Lower_Back",
+        "M_Soldier_M_Lower_Sleeves"
+      ],
+      "used_material_indices": [
+        0,
+        1
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "Soldier_M_Lower.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\Soldier_M_Lower.fbm\\T_Soldier_M_Lower_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\Soldier_M_Upper.fbx",
+      "object": "Soldier_M_Upper",
+      "mesh": "Soldier_M_Upper_Mesh",
+      "vertices": 9072,
+      "polygons": 17994,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Soldier_M_Upper_Front",
+        "M_Soldier_M_Upper_Back",
+        "M_Soldier_M_Upper_Sleeves"
+      ],
+      "used_material_indices": [
+        0,
+        1,
+        2
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "Soldier_M_Upper.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\Soldier_M_Upper.fbm\\T_Soldier_M_Upper_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    }
+  ],
+  "violations": []
+}

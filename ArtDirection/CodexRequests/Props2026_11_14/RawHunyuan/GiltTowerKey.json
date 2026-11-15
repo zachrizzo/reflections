@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\References\\GiltTowerKey.png",
+  "output": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\RawHunyuan\\GiltTowerKey.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 20,
+  "resolution": 256,
+  "seed": 14112026,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 30644,
+  "faces": 61312,
+  "seconds": 35.0,
+  "bounds": [
+    [
+      -0.39545881748199463,
+      -0.9965517520904541,
+      -0.08649272471666336
+    ],
+    [
+      0.38702213764190674,
+      0.9894522428512573,
+      0.07929807156324387
+    ]
+  ]
+}

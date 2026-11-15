@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "ArtDirection\\CodexRequests\\Clothing2026_11_14\\Giltside\\References\\MedievalSoldier_M_Upper.png",
+  "output": "ArtDirection\\CodexRequests\\Clothing2026_11_14\\Giltside\\RawHunyuan\\MedievalSoldier_M_Upper.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 12,
+  "resolution": 256,
+  "seed": 701,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 217692,
+  "faces": 435392,
+  "seconds": 32.5,
+  "bounds": [
+    [
+      -0.9977490901947021,
+      -0.7992534637451172,
+      -0.33815833926200867
+    ],
+    [
+      0.9899849891662598,
+      0.7948129177093506,
+      0.3203456699848175
+    ]
+  ]
+}

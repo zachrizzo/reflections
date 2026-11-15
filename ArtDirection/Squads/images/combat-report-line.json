@@ -1,0 +1,65 @@
+{
+ "steps": [
+  {
+   "spot": "<Struct 'Vector' (0x00000249D116E408) {x: -250.000000, y: 165.839032, z: 90.000000}>",
+   "state": "MARCHING",
+   "melee_dist": [
+    703,
+    828,
+    579
+   ],
+   "step": "before",
+   "t": 10.8
+  },
+  {
+   "state": "ENGAGED",
+   "melee_dist": [
+    170,
+    166,
+    164
+   ],
+   "motor": [
+    [
+     "WINDUP",
+     4,
+     3
+    ],
+    [
+     "CHASING",
+     3,
+     3
+    ],
+    [
+     "WINDUP",
+     4,
+     4
+    ]
+   ],
+   "casts": [
+    0,
+    0,
+    0,
+    2,
+    1
+   ],
+   "projectile_seen": true,
+   "shot": "../../../../../../Users/zachc/Documents/Unreal Projects/reflections/Saved/SquadsTest\\5_spell_in_flight_1.png",
+   "hero_health": 82.0,
+   "step": "fight",
+   "t": 21.2
+  },
+  {
+   "state": "MARCHING",
+   "members": [
+    "IN_FORMATION",
+    "IN_FORMATION",
+    "IN_FORMATION",
+    "IN_FORMATION",
+    "IN_FORMATION"
+   ],
+   "step": "reform",
+   "t": 30.2
+  }
+ ],
+ "melee_shot": "../../../../../../Users/zachc/Documents/Unreal Projects/reflections/Saved/SquadsTest\\6_melee_closing_in_1.png"
+}

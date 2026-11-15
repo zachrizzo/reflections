@@ -7,6 +7,9 @@ public class reflections : ModuleRules
 	public reflections(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		// Jam: compile every .cpp on its own. Each session proves its files with -SingleFile, and unity blobs
+		// let one file's file-scope "using namespace" leak into another (GameFlowSlate vs CutsceneSlate, train #13).
+		bUseUnity = false;
 
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core",
@@ -15,13 +18,27 @@ public class reflections : ModuleRules
 			"InputCore",
 			"EnhancedInput",
 			"AIModule",
+			"NavigationSystem",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate"
+			"Slate",
+			"SlateCore",
+			"PhysicsCore"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime", "MassSpawner", "MassActors", "MassEntity", "MassCore", "MetaHumanCrowd", "Niagara", "WebSockets", "AudioCaptureCore", "AudioCapture", "Json" });
+		// City crowd on Mass + ZoneGraph (Crowd/*); all plugins already enabled in the .uproject.
+		PrivateDependencyModuleNames.AddRange(new string[] { "MassCommon", "MassMovement", "MassNavigation", "MassZoneGraphNavigation", "MassRepresentation", "MassLOD", "MassSignals", "MassCrowd", "ZoneGraph", "ZoneGraphAnnotations", "MassAIBehavior" });
+		// Cutscene player (Cinematics/*): Level Sequences with runtime bindings and a transform origin.
+		PrivateDependencyModuleNames.AddRange(new string[] { "LevelSequence", "MovieScene", "MovieSceneTracks" });
+		if (Target.bBuildEditor)
+		{
+			PrivateDependencyModuleNames.AddRange(new string[] {
+				"ClothingSystemEditor", "ClothingSystemEditorInterface",
+				"ClothingSystemRuntimeCommon", "ClothingSystemRuntimeInterface"
+			});
+		}
 
 		PublicIncludePaths.AddRange(new string[] {
 			"reflections",
@@ -49,3 +66,7 @@ public class reflections : ModuleRules
 		// To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
 	}
 }
+
+
+
+

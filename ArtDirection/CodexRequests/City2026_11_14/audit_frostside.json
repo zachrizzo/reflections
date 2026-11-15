@@ -1,0 +1,217 @@
+{
+  "summary": {
+    "files": 5,
+    "mesh_objects": 5,
+    "meshes_with_uvs": 5,
+    "meshes_with_materials": 5,
+    "identity_transform_violations": 0,
+    "violations": 0,
+    "note": "Semantic +X facing requires visual verification in Unreal."
+  },
+  "assets": [
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Frostside\\City\\SM_Frostside_BrazierStand.fbx",
+      "object": "SM_Frostside_BrazierStand",
+      "mesh": "SM_Frostside_BrazierStand_Mesh",
+      "vertices": 1990,
+      "polygons": 3998,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Frostside_CityLamp"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "Frostside_BrazierStand_Reference.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Frostside\\City\\SM_Frostside_BrazierStand.fbm\\T_Frostside_BrazierStand_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Frostside\\City\\SM_Frostside_FacadeCorner.fbx",
+      "object": "SM_Frostside_FacadeCorner",
+      "mesh": "SM_Frostside_FacadeCorner_Mesh",
+      "vertices": 64,
+      "polygons": 48,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Frostside_Facade_Wall",
+        "M_Frostside_Facade_Trim",
+        "M_Frostside_Facade_Glass"
+      ],
+      "used_material_indices": [
+        0,
+        1,
+        2
+      ],
+      "material_indices_valid": true,
+      "textures": [],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Frostside\\City\\SM_Frostside_FacadeCornice.fbx",
+      "object": "SM_Frostside_FacadeCornice",
+      "mesh": "SM_Frostside_FacadeCornice_Mesh",
+      "vertices": 64,
+      "polygons": 48,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Frostside_Facade_Wall",
+        "M_Frostside_Facade_Trim"
+      ],
+      "used_material_indices": [
+        0,
+        1
+      ],
+      "material_indices_valid": true,
+      "textures": [],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Frostside\\City\\SM_Frostside_FacadeGround.fbx",
+      "object": "SM_Frostside_FacadeGround",
+      "mesh": "SM_Frostside_FacadeGround_Mesh",
+      "vertices": 72,
+      "polygons": 54,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Frostside_Facade_Wall",
+        "M_Frostside_Facade_Trim",
+        "M_Frostside_Facade_Accent"
+      ],
+      "used_material_indices": [
+        0,
+        1,
+        2
+      ],
+      "material_indices_valid": true,
+      "textures": [],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Frostside\\City\\SM_Frostside_FacadeUpper.fbx",
+      "object": "SM_Frostside_FacadeUpper",
+      "mesh": "SM_Frostside_FacadeUpper_Mesh",
+      "vertices": 120,
+      "polygons": 90,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Frostside_Facade_Wall",
+        "M_Frostside_Facade_Trim",
+        "M_Frostside_Facade_Glass"
+      ],
+      "used_material_indices": [
+        0,
+        1,
+        2
+      ],
+      "material_indices_valid": true,
+      "textures": [],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    }
+  ],
+  "violations": []
+}

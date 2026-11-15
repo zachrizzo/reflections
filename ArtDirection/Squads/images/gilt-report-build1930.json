@@ -1,0 +1,198 @@
+{
+ "steps": [
+  {
+   "state": "MARCHING",
+   "events": [],
+   "step": "idle_beside_gilt",
+   "t": 28.7
+  },
+  {
+   "state": "ENGAGED",
+   "events": [
+    [
+     29.2,
+     "ReflectionsSquad_0",
+     "ENGAGED",
+     "BP_Look_GiltCoinClerk_C_0"
+    ]
+   ],
+   "step": "tarnished",
+   "t": 35.0
+  },
+  {
+   "gilt_state": "ENGAGED",
+   "frost_states": [
+    "ENGAGED"
+   ],
+   "gilt_alive": 5,
+   "frost_alive": [
+    5
+   ],
+   "frost_roster": [
+    [
+     {
+      "look": "BP_Look_GiltBridgeGuard_C",
+      "role": "MELEE",
+      "archetype": "Soldier",
+      "shield_parts": [
+       "BridgeGuard_RoundShield"
+      ],
+      "props": [
+       "SM_Frostside_MirrorSword"
+      ]
+     },
+     {
+      "look": "BP_Look_GiltRowena_C",
+      "role": "MELEE",
+      "archetype": "Soldier",
+      "shield_parts": [
+       "BridgeGuard_RoundShield"
+      ],
+      "props": [
+       "SM_Frostside_MirrorSword"
+      ]
+     },
+     {
+      "look": "BP_Look_GiltBridgeGuard_C",
+      "role": "MELEE",
+      "archetype": "Soldier",
+      "shield_parts": [
+       "BridgeGuard_RoundShield"
+      ],
+      "props": [
+       "SM_Frostside_MirrorSword"
+      ]
+     },
+     {
+      "look": "BP_Look_GiltBridgeGuard_C",
+      "role": "CASTER",
+      "archetype": "SoldierCaster",
+      "shield_parts": [
+       "BridgeGuard_RoundShield"
+      ],
+      "props": [
+       "SM_Pewterside_ReaderWand"
+      ]
+     },
+     {
+      "look": "BP_Look_GiltRowena_C",
+      "role": "CASTER",
+      "archetype": "SoldierCaster",
+      "shield_parts": [
+       "BridgeGuard_RoundShield"
+      ],
+      "props": [
+       "SM_Pewterside_ReaderWand"
+      ]
+     }
+    ]
+   ],
+   "events": [
+    [
+     29.2,
+     "ReflectionsSquad_0",
+     "ENGAGED",
+     "BP_Look_GiltCoinClerk_C_0"
+    ],
+    [
+     43.8,
+     "ReflectionsSquad_0",
+     "REFORMING",
+     null
+    ],
+    [
+     44.0,
+     "ReflectionsSquad_0",
+     "ENGAGED",
+     "BP_Look_GiltRowena_C_4"
+    ]
+   ],
+   "shot": "../../../../../../Users/zachc/Documents/Unreal Projects/reflections/Saved/SquadsTest\\g2_gilt_fight.png",
+   "hero_health": 92.0,
+   "step": "frost",
+   "t": 45.7
+  }
+ ],
+ "errors": [],
+ "gilt": {
+  "faction": "GILT",
+  "sight": 2200.0,
+  "roster": [
+   {
+    "look": "BP_Look_GiltRowena_C",
+    "role": "MELEE",
+    "archetype": "AlliedSoldier",
+    "shield_parts": [
+     "BridgeGuard_RoundShield"
+    ],
+    "props": [
+     "SM_Frostside_MirrorSword"
+    ]
+   },
+   {
+    "look": "BP_Look_GiltBridgeGuard_C",
+    "role": "MELEE",
+    "archetype": "AlliedSoldier",
+    "shield_parts": [
+     "BridgeGuard_RoundShield"
+    ],
+    "props": [
+     "SM_Frostside_MirrorSword"
+    ]
+   },
+   {
+    "look": "BP_Look_GiltRowena_C",
+    "role": "MELEE",
+    "archetype": "AlliedSoldier",
+    "shield_parts": [
+     "BridgeGuard_RoundShield"
+    ],
+    "props": [
+     "SM_Frostside_MirrorSword"
+    ]
+   },
+   {
+    "look": "BP_Look_GiltBridgeGuard_C",
+    "role": "MELEE",
+    "archetype": "AlliedSoldier",
+    "shield_parts": [
+     "BridgeGuard_RoundShield"
+    ],
+    "props": [
+     "SM_Frostside_MirrorSword"
+    ]
+   },
+   {
+    "look": "BP_Look_GiltFerryman_C",
+    "role": "CASTER",
+    "archetype": "AlliedSoldier",
+    "shield_parts": [],
+    "props": [
+     "SM_Frostside_MirrorSword"
+    ]
+   }
+  ]
+ },
+ "gilt_march": "../../../../../../Users/zachc/Documents/Unreal Projects/reflections/Saved/SquadsTest\\g1_gilt_march.png",
+ "took": 46.3,
+ "events": [
+  [
+   29.2,
+   "ReflectionsSquad_0",
+   "ENGAGED",
+   "BP_Look_GiltCoinClerk_C_0"
+  ],
+  [
+   43.8,
+   "ReflectionsSquad_0",
+   "REFORMING",
+   null
+  ],
+  [
+   44.0,
+   "ReflectionsSquad_0",
+   "ENGAGED",
+   "BP_Look_GiltRowena_C_4"
+  ]
+ ]
+}

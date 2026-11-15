@@ -1,0 +1,30 @@
+{
+  "Shirt": {
+    "vertices": 583,
+    "faces": 956,
+    "uv_layers": 1,
+    "material_slots": 1,
+    "unweighted": 0
+  },
+  "Trousers": {
+    "vertices": 670,
+    "faces": 1296,
+    "uv_layers": 1,
+    "material_slots": 1,
+    "unweighted": 0
+  },
+  "Footwear": {
+    "vertices": 3054,
+    "faces": 3752,
+    "uv_layers": 2,
+    "material_slots": 1,
+    "unweighted": 0
+  },
+  "Cloak": {
+    "vertices": 3577,
+    "faces": 3456,
+    "uv_layers": 1,
+    "material_slots": 1,
+    "unweighted": 0
+  }
+}

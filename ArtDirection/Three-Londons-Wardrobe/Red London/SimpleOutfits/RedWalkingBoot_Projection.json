@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\Three-Londons-Wardrobe\\Red London\\SimpleOutfits/RedWalkingBoot_Reference.png",
+  "output": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\Three-Londons-Wardrobe\\Red London\\SimpleOutfits\\RedWalkingBoot_Projection.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 30,
+  "resolution": 384,
+  "seed": 5618,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 374157,
+  "faces": 748314,
+  "seconds": 59.7,
+  "bounds": [
+    [
+      -0.9998263120651245,
+      -0.5638414025306702,
+      -0.3736100494861603
+    ],
+    [
+      0.993646502494812,
+      0.5570968389511108,
+      0.35939812660217285
+    ]
+  ]
+}
