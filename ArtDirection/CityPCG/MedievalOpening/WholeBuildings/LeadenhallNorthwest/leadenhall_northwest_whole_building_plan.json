@@ -1,0 +1,1223 @@
+{
+  "status": "offline_generation_input",
+  "coordinate_system": "ue_local_m",
+  "source_tile": "Tile_p03_p01",
+  "source_export_sha256": "411a895aedeb642f0250cdd4c3e4725a1d04b73035ea4a75335f60193ca7102c",
+  "reviewed_candidate": "leadenhall_northwest_whole_buildings_candidate.json",
+  "styles": {
+    "Tile_p03_p01_roof_06ebfe6ef6b61e42": {
+      "role": "workshop",
+      "eave_m": 6.15,
+      "ridge_m": 9.25,
+      "roof_ranges": 3,
+      "entry_opening_m": [
+        1.35,
+        2.3
+      ],
+      "treatment": "Surveyed closed shell with pitched clay-tile ranges, timber, lime render and stone."
+    },
+    "Tile_p03_p01_roof_9059607ec79664f6": {
+      "role": "workshop",
+      "eave_m": 6.15,
+      "ridge_m": 9.25,
+      "roof_ranges": 2,
+      "entry_opening_m": [
+        1.35,
+        2.3
+      ],
+      "treatment": "Surveyed closed shell with pitched clay-tile ranges, timber, lime render and stone."
+    },
+    "Tile_p03_p01_roof_99e572dd8e67f0cc": {
+      "role": "market building",
+      "eave_m": 8.1,
+      "ridge_m": 12.2,
+      "roof_ranges": 2,
+      "entry_opening_m": [
+        1.35,
+        2.3
+      ],
+      "treatment": "Surveyed closed shell with pitched clay-tile ranges, timber, lime render and stone."
+    },
+    "Tile_p03_p01_roof_ee3443afee1e1296": {
+      "role": "merchant house",
+      "eave_m": 7.2,
+      "ridge_m": 10.75,
+      "roof_ranges": 3,
+      "entry_opening_m": [
+        1.35,
+        2.3
+      ],
+      "treatment": "Surveyed closed shell with pitched clay-tile ranges, timber, lime render and stone."
+    }
+  },
+  "buildings": [
+    {
+      "id": "Tile_p03_p01_roof_06ebfe6ef6b61e42",
+      "role": "workshop",
+      "origin_m": [
+        2987.646,
+        657.101,
+        0.2
+      ],
+      "rotation_yaw_deg": -12.65900275,
+      "footprint_local_m": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          23.638906,
+          0.98435
+        ],
+        [
+          33.34073,
+          1.883339
+        ],
+        [
+          33.34073,
+          17.635243
+        ],
+        [
+          33.542288,
+          23.445656
+        ],
+        [
+          32.207462,
+          24.565349
+        ],
+        [
+          23.476455,
+          22.259924
+        ],
+        [
+          20.755799,
+          21.550451
+        ],
+        [
+          21.249251,
+          16.615633
+        ],
+        [
+          11.394451,
+          15.7817
+        ],
+        [
+          6.214801,
+          15.347023
+        ],
+        [
+          6.300675,
+          12.591869
+        ],
+        [
+          -0.426161,
+          11.790209
+        ]
+      ],
+      "dimensions_x_y_m": [
+        33.968449,
+        24.565349
+      ],
+      "source_max_height_m": 14.8,
+      "surface_triangulation": {
+        "vertices_local_m": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            23.638906,
+            0.98435
+          ],
+          [
+            33.34073,
+            1.883339
+          ],
+          [
+            33.34073,
+            17.635243
+          ],
+          [
+            33.542288,
+            23.445656
+          ],
+          [
+            32.207462,
+            24.565349
+          ],
+          [
+            23.476455,
+            22.259924
+          ],
+          [
+            20.755799,
+            21.550451
+          ],
+          [
+            21.249251,
+            16.615633
+          ],
+          [
+            11.394451,
+            15.7817
+          ],
+          [
+            6.214801,
+            15.347023
+          ],
+          [
+            6.300675,
+            12.591869
+          ],
+          [
+            -0.426161,
+            11.790209
+          ],
+          [
+            24.033142,
+            16.84735
+          ]
+        ],
+        "ccw_faces": [
+          [
+            9,
+            10,
+            11
+          ],
+          [
+            13,
+            8,
+            1
+          ],
+          [
+            2,
+            3,
+            13
+          ],
+          [
+            0,
+            1,
+            11
+          ],
+          [
+            11,
+            12,
+            0
+          ],
+          [
+            8,
+            9,
+            1
+          ],
+          [
+            2,
+            13,
+            1
+          ],
+          [
+            11,
+            1,
+            9
+          ],
+          [
+            4,
+            5,
+            3
+          ],
+          [
+            13,
+            3,
+            6
+          ],
+          [
+            7,
+            8,
+            13
+          ],
+          [
+            5,
+            6,
+            3
+          ],
+          [
+            7,
+            13,
+            6
+          ]
+        ]
+      },
+      "roof_profile_local_y_z_m": [
+        [
+          0.0,
+          6.15
+        ],
+        [
+          4.094225,
+          9.25
+        ],
+        [
+          8.18845,
+          6.15
+        ],
+        [
+          12.282675,
+          9.25
+        ],
+        [
+          16.376899,
+          6.15
+        ],
+        [
+          20.471124,
+          9.25
+        ],
+        [
+          24.565349,
+          6.15
+        ]
+      ],
+      "entry": {
+        "edge": 2,
+        "center_local_xy_m": [
+          33.34073,
+          9.759291
+        ],
+        "recessed_closed_opening_width_height_m": [
+          1.35,
+          2.3
+        ],
+        "approach_sweep_guard_profiles_m": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              3022.151,
+              658.585
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              3023.614,
+              658.256
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              3022.315,
+              659.316
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              3023.779,
+              658.988
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              3022.479,
+              660.048
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              3023.943,
+              659.72
+            ]
+          }
+        ]
+      },
+      "treatment": "Surveyed closed shell with pitched clay-tile ranges, timber, lime render and stone."
+    },
+    {
+      "id": "Tile_p03_p01_roof_9059607ec79664f6",
+      "role": "workshop",
+      "origin_m": [
+        2959.982,
+        670.699,
+        0.2
+      ],
+      "rotation_yaw_deg": 94.66530444,
+      "footprint_local_m": [
+        [
+          0.0,
+          -0.0
+        ],
+        [
+          -6.579186,
+          -1.123605
+        ],
+        [
+          -10.895956,
+          -1.621149
+        ],
+        [
+          -19.953278,
+          -1.600403
+        ],
+        [
+          -23.339971,
+          -1.593925
+        ],
+        [
+          -26.167328,
+          -1.360188
+        ],
+        [
+          -26.440271,
+          -3.069651
+        ],
+        [
+          -28.55447,
+          -2.813846
+        ],
+        [
+          -29.073289,
+          -4.536354
+        ],
+        [
+          -29.099972,
+          -10.666494
+        ],
+        [
+          -29.120491,
+          -13.856394
+        ],
+        [
+          -29.965872,
+          -17.256902
+        ],
+        [
+          -20.893814,
+          -18.412606
+        ],
+        [
+          -20.515518,
+          -14.797397
+        ],
+        [
+          -18.913317,
+          -14.02415
+        ],
+        [
+          -11.639497,
+          -13.843167
+        ],
+        [
+          0.0,
+          -13.499727
+        ]
+      ],
+      "dimensions_x_y_m": [
+        29.965872,
+        18.412606
+      ],
+      "source_max_height_m": 12.6,
+      "surface_triangulation": {
+        "vertices_local_m": [
+          [
+            0.0,
+            -0.0
+          ],
+          [
+            -6.579186,
+            -1.123605
+          ],
+          [
+            -10.895956,
+            -1.621149
+          ],
+          [
+            -19.953278,
+            -1.600403
+          ],
+          [
+            -23.339971,
+            -1.593925
+          ],
+          [
+            -26.167328,
+            -1.360188
+          ],
+          [
+            -26.440271,
+            -3.069651
+          ],
+          [
+            -28.55447,
+            -2.813846
+          ],
+          [
+            -29.073289,
+            -4.536354
+          ],
+          [
+            -29.099972,
+            -10.666494
+          ],
+          [
+            -29.120491,
+            -13.856394
+          ],
+          [
+            -29.965872,
+            -17.256902
+          ],
+          [
+            -20.893814,
+            -18.412606
+          ],
+          [
+            -20.515518,
+            -14.797397
+          ],
+          [
+            -18.913317,
+            -14.02415
+          ],
+          [
+            -11.639497,
+            -13.843167
+          ],
+          [
+            0.0,
+            -13.499727
+          ]
+        ],
+        "ccw_faces": [
+          [
+            9,
+            13,
+            6
+          ],
+          [
+            11,
+            12,
+            10
+          ],
+          [
+            7,
+            8,
+            6
+          ],
+          [
+            4,
+            5,
+            6
+          ],
+          [
+            2,
+            3,
+            14
+          ],
+          [
+            16,
+            0,
+            1
+          ],
+          [
+            13,
+            10,
+            12
+          ],
+          [
+            9,
+            6,
+            8
+          ],
+          [
+            3,
+            4,
+            14
+          ],
+          [
+            16,
+            1,
+            15
+          ],
+          [
+            10,
+            13,
+            9
+          ],
+          [
+            4,
+            6,
+            14
+          ],
+          [
+            2,
+            15,
+            1
+          ],
+          [
+            14,
+            6,
+            13
+          ],
+          [
+            15,
+            2,
+            14
+          ]
+        ]
+      },
+      "roof_profile_local_y_z_m": [
+        [
+          -18.412606,
+          6.15
+        ],
+        [
+          -13.809455,
+          9.25
+        ],
+        [
+          -9.206303,
+          6.15
+        ],
+        [
+          -4.603151,
+          9.25
+        ],
+        [
+          0.0,
+          6.15
+        ]
+      ],
+      "entry": {
+        "edge": 16,
+        "center_local_xy_m": [
+          0.0,
+          -6.749863
+        ],
+        "recessed_closed_opening_width_height_m": [
+          1.35,
+          2.3
+        ],
+        "approach_sweep_guard_profiles_m": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              2967.457,
+              671.309
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2967.335,
+              672.804
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              2966.709,
+              671.248
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2966.587,
+              672.743
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              2965.962,
+              671.187
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2965.84,
+              672.682
+            ]
+          }
+        ]
+      },
+      "treatment": "Surveyed closed shell with pitched clay-tile ranges, timber, lime render and stone."
+    },
+    {
+      "id": "Tile_p03_p01_roof_99e572dd8e67f0cc",
+      "role": "market building",
+      "origin_m": [
+        2936.576,
+        662.464,
+        0.2
+      ],
+      "rotation_yaw_deg": 93.99406761,
+      "footprint_local_m": [
+        [
+          0.0,
+          -0.0
+        ],
+        [
+          -0.300035,
+          -18.898
+        ],
+        [
+          6.434189,
+          -18.684542
+        ],
+        [
+          6.434189,
+          -1.829605
+        ],
+        [
+          4.724189,
+          -0.449146
+        ]
+      ],
+      "dimensions_x_y_m": [
+        6.734224,
+        18.898
+      ],
+      "source_max_height_m": 19.0,
+      "surface_triangulation": {
+        "vertices_local_m": [
+          [
+            0.0,
+            -0.0
+          ],
+          [
+            -0.300035,
+            -18.898
+          ],
+          [
+            6.434189,
+            -18.684542
+          ],
+          [
+            6.434189,
+            -1.829605
+          ],
+          [
+            4.724189,
+            -0.449146
+          ]
+        ],
+        "ccw_faces": [
+          [
+            2,
+            3,
+            1
+          ],
+          [
+            0,
+            1,
+            3
+          ],
+          [
+            4,
+            0,
+            3
+          ]
+        ]
+      },
+      "roof_profile_local_y_z_m": [
+        [
+          -18.898,
+          8.1
+        ],
+        [
+          -14.1735,
+          12.2
+        ],
+        [
+          -9.449,
+          8.1
+        ],
+        [
+          -4.7245,
+          12.2
+        ],
+        [
+          0.0,
+          8.1
+        ]
+      ],
+      "entry": {
+        "edge": 2,
+        "center_local_xy_m": [
+          6.434189,
+          -10.257073
+        ],
+        "recessed_closed_opening_width_height_m": [
+          1.35,
+          2.3
+        ],
+        "approach_sweep_guard_profiles_m": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              2947.108,
+              669.649
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2947.004,
+              671.146
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              2946.36,
+              669.597
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2946.256,
+              671.093
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              2945.612,
+              669.545
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2945.507,
+              671.041
+            ]
+          }
+        ]
+      },
+      "treatment": "Surveyed closed shell with pitched clay-tile ranges, timber, lime render and stone."
+    },
+    {
+      "id": "Tile_p03_p01_roof_ee3443afee1e1296",
+      "role": "merchant house",
+      "origin_m": [
+        2973.437,
+        671.797,
+        0.2
+      ],
+      "rotation_yaw_deg": -8.29672134,
+      "footprint_local_m": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          2.945488,
+          -11.265875
+        ],
+        [
+          4.753416,
+          -18.313755
+        ],
+        [
+          5.866342,
+          -19.701686
+        ],
+        [
+          9.474285,
+          -19.259433
+        ],
+        [
+          10.829151,
+          -18.009848
+        ],
+        [
+          12.384099,
+          -15.145492
+        ],
+        [
+          13.426364,
+          -9.839562
+        ],
+        [
+          13.426364,
+          -1.475019
+        ],
+        [
+          16.652783,
+          -0.703372
+        ],
+        [
+          16.800253,
+          3.295763
+        ],
+        [
+          4.095807,
+          0.797368
+        ]
+      ],
+      "dimensions_x_y_m": [
+        16.800253,
+        22.997449
+      ],
+      "source_max_height_m": 19.0,
+      "surface_triangulation": {
+        "vertices_local_m": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            2.945488,
+            -11.265875
+          ],
+          [
+            4.753416,
+            -18.313755
+          ],
+          [
+            5.866342,
+            -19.701686
+          ],
+          [
+            9.474285,
+            -19.259433
+          ],
+          [
+            10.829151,
+            -18.009848
+          ],
+          [
+            12.384099,
+            -15.145492
+          ],
+          [
+            13.426364,
+            -9.839562
+          ],
+          [
+            13.426364,
+            -1.475019
+          ],
+          [
+            16.652783,
+            -0.703372
+          ],
+          [
+            16.800253,
+            3.295763
+          ],
+          [
+            4.095807,
+            0.797368
+          ]
+        ],
+        "ccw_faces": [
+          [
+            9,
+            10,
+            8
+          ],
+          [
+            5,
+            6,
+            2
+          ],
+          [
+            4,
+            5,
+            2
+          ],
+          [
+            2,
+            3,
+            4
+          ],
+          [
+            11,
+            0,
+            1
+          ],
+          [
+            11,
+            8,
+            10
+          ],
+          [
+            7,
+            1,
+            6
+          ],
+          [
+            1,
+            2,
+            6
+          ],
+          [
+            8,
+            11,
+            1
+          ],
+          [
+            8,
+            1,
+            7
+          ]
+        ]
+      },
+      "roof_profile_local_y_z_m": [
+        [
+          -19.701686,
+          7.2
+        ],
+        [
+          -15.868778,
+          10.75
+        ],
+        [
+          -12.03587,
+          7.2
+        ],
+        [
+          -8.202961,
+          10.75
+        ],
+        [
+          -4.370053,
+          7.2
+        ],
+        [
+          -0.537145,
+          10.75
+        ],
+        [
+          3.295763,
+          7.2
+        ]
+      ],
+      "entry": {
+        "edge": 7,
+        "center_local_xy_m": [
+          13.426364,
+          -5.65729
+        ],
+        "recessed_closed_opening_width_height_m": [
+          1.35,
+          2.3
+        ],
+        "approach_sweep_guard_profiles_m": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              2985.798,
+              663.519
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2987.283,
+              663.303
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              2985.907,
+              664.262
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2987.391,
+              664.045
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              2986.015,
+              665.004
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2987.499,
+              664.787
+            ]
+          }
+        ]
+      },
+      "treatment": "Surveyed closed shell with pitched clay-tile ranges, timber, lime render and stone."
+    }
+  ],
+  "party_walls": [
+    {
+      "keep_sealed": true,
+      "world_segment_m": [
+        [
+          2980.033,
+          651.372
+        ],
+        [
+          2976.399,
+          651.455
+        ]
+      ],
+      "length_m": 3.635,
+      "edges": {
+        "Tile_p03_p01_roof_9059607ec79664f6": 12,
+        "Tile_p03_p01_roof_ee3443afee1e1296": 3
+      }
+    },
+    {
+      "keep_sealed": true,
+      "world_segment_m": [
+        [
+          2976.399,
+          651.455
+        ],
+        [
+          2975.498,
+          652.989
+        ]
+      ],
+      "length_m": 1.779,
+      "edges": {
+        "Tile_p03_p01_roof_9059607ec79664f6": 13,
+        "Tile_p03_p01_roof_ee3443afee1e1296": 2
+      }
+    },
+    {
+      "keep_sealed": true,
+      "world_segment_m": [
+        [
+          2975.498,
+          652.989
+        ],
+        [
+          2974.726,
+          660.224
+        ]
+      ],
+      "length_m": 7.276,
+      "edges": {
+        "Tile_p03_p01_roof_9059607ec79664f6": 14,
+        "Tile_p03_p01_roof_ee3443afee1e1296": 1
+      }
+    },
+    {
+      "keep_sealed": true,
+      "world_segment_m": [
+        [
+          2974.726,
+          660.224
+        ],
+        [
+          2973.437,
+          671.797
+        ]
+      ],
+      "length_m": 11.645,
+      "edges": {
+        "Tile_p03_p01_roof_9059607ec79664f6": 15,
+        "Tile_p03_p01_roof_ee3443afee1e1296": 0
+      }
+    }
+  ],
+  "road_sampling": {
+    "step_max_m": 0.75,
+    "offsets_m": [
+      -0.6,
+      0,
+      0.6
+    ],
+    "minimum_footprint_clearance_m": 0.35
+  },
+  "local_road_corridors": [
+    {
+      "members": [
+        "Tile_p03_p01_roof_06ebfe6ef6b61e42",
+        "Tile_p03_p01_roof_9059607ec79664f6"
+      ],
+      "guide_m": [
+        [
+          2987.256,
+          663.175
+        ],
+        [
+          2983.676,
+          648.918
+        ]
+      ],
+      "length_m": 14.7,
+      "sample_count": 63,
+      "minimum_distance_to_footprint_m": 0.571
+    },
+    {
+      "members": [
+        "Tile_p03_p01_roof_06ebfe6ef6b61e42",
+        "Tile_p03_p01_roof_ee3443afee1e1296"
+      ],
+      "guide_m": [
+        [
+          2987.256,
+          663.175
+        ],
+        [
+          2987.391,
+          664.045
+        ]
+      ],
+      "length_m": 0.88,
+      "sample_count": 9,
+      "minimum_distance_to_footprint_m": 0.892
+    },
+    {
+      "members": [
+        "Tile_p03_p01_roof_9059607ec79664f6",
+        "Tile_p03_p01_roof_99e572dd8e67f0cc"
+      ],
+      "guide_m": [
+        [
+          2963.224,
+          672.469
+        ],
+        [
+          2950.459,
+          671.387
+        ]
+      ],
+      "length_m": 12.811,
+      "sample_count": 57,
+      "minimum_distance_to_footprint_m": 0.892
+    },
+    {
+      "members": [
+        "Tile_p03_p01_roof_9059607ec79664f6",
+        "Tile_p03_p01_roof_ee3443afee1e1296"
+      ],
+      "guide_m": [
+        [
+          2969.951,
+          673.018
+        ],
+        [
+          2975.45,
+          673.394
+        ]
+      ],
+      "length_m": 5.512,
+      "sample_count": 27,
+      "minimum_distance_to_footprint_m": 0.857
+    },
+    {
+      "members": [
+        "Tile_p03_p01_roof_99e572dd8e67f0cc",
+        "Tile_p03_p01_roof_ee3443afee1e1296"
+      ],
+      "guide_m": [
+        [
+          2950.459,
+          671.387
+        ],
+        [
+          2975.45,
+          673.394
+        ]
+      ],
+      "length_m": 25.071,
+      "sample_count": 105,
+      "minimum_distance_to_footprint_m": 0.831
+    }
+  ],
+  "review_before_replacement": [
+    "Resolve the current source tile and protect its materials, roads and gameplay collision.",
+    "Combine every previously accepted replacement mask for this tile into the derivative from the canonical export.",
+    "Screen live authored actor descriptors and overlays including site-specific landmarks and quest actors.",
+    "Reproduce source floor and side-wall traces, capsule sweeps along road links and door approaches, and roof access checks.",
+    "Contain the replacement shells, recesses and eaves inside the original horizontal extents."
+  ]
+}

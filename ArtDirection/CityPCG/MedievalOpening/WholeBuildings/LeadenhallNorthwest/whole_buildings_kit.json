@@ -1,0 +1,952 @@
+{
+  "schema": 1,
+  "source_tile": "Tile_p03_p01",
+  "pivot": "survey origin at ground; +X entrance; +Z up",
+  "candidate_sha256": "9cc7c5cb07051c3fba93f54e39ea7aeb64c1e68b44a210550ba8d8a421868f7e",
+  "plan_sha256": "e1b72935ac351b78ee4c0b5f13f9fa561ec06ef9e2b817efb6f4d3255b208534",
+  "buildings": {
+    "Tile_p03_p01_roof_06ebfe6ef6b61e42": {
+      "bounds_cm": [
+        [
+          -42.616,
+          0.0,
+          0.0
+        ],
+        [
+          3354.229,
+          2456.535,
+          925.0
+        ]
+      ],
+      "materials": [
+        "M_GLMedieval_Fieldstone",
+        "M_GLMedieval_GuildRubble",
+        "M_GLMedieval_LimePlaster",
+        "M_GLMedieval_Oak",
+        "M_GLMedieval_ClayTile",
+        "M_GLMedieval_Interior",
+        "M_GLMedieval_LeadedGlass",
+        "M_GLMedieval_WeatheredOak",
+        "M_GLMedieval_Lead",
+        "M_GLMedieval_GuildDressed",
+        "M_GLMedieval_ShopRed"
+      ],
+      "uv_layers": [
+        "UV0"
+      ],
+      "triangles": 14272,
+      "fbx": "Source/SM_GLMedieval_LeadenhallNorthwest_TradingRange_06ebfe6e.fbx",
+      "style": "TradingRange",
+      "world_pivot_m": [
+        2987.646,
+        657.101,
+        0.2
+      ],
+      "yaw_deg": -12.65900275,
+      "axis_x_world_xy": [
+        0.9756916022946537,
+        -0.21914811706170595
+      ],
+      "axis_y_world_xy": [
+        0.21914811706170595,
+        0.9756916022946537
+      ],
+      "footprint_local_m": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          23.638905555419694,
+          0.9843496035129942
+        ],
+        [
+          33.34072950660302,
+          1.883339047414215
+        ],
+        [
+          33.34072950660302,
+          17.635242583177835
+        ],
+        [
+          33.54228800350387,
+          23.445655578165926
+        ],
+        [
+          32.20746183774816,
+          24.565348887609836
+        ],
+        [
+          23.476454585973613,
+          22.259923900873908
+        ],
+        [
+          20.755799402763614,
+          21.55045129811024
+        ],
+        [
+          21.249250621681686,
+          16.61563266977665
+        ],
+        [
+          11.394450936833834,
+          15.781700315494712
+        ],
+        [
+          6.2148005653874545,
+          15.347023389975424
+        ],
+        [
+          6.300674885080289,
+          12.59186920169172
+        ],
+        [
+          -0.42616131979011707,
+          11.790208629600786
+        ]
+      ],
+      "roof_profile_local_y_z_m": [
+        [
+          0.0,
+          6.15
+        ],
+        [
+          4.094225,
+          9.161
+        ],
+        [
+          8.18845,
+          6.15
+        ],
+        [
+          12.282675,
+          8.461
+        ],
+        [
+          16.376899,
+          6.15
+        ],
+        [
+          20.471124,
+          8.181
+        ],
+        [
+          24.565348887609836,
+          6.15
+        ]
+      ],
+      "chimney_heads_local_m": [
+        [
+          13.958473443865019,
+          2.128997,
+          9.194495842802974
+        ],
+        [
+          22.21522259111914,
+          10.317446740000001,
+          8.739880256004495
+        ],
+        [
+          26.230728238004104,
+          18.50589597077856,
+          8.558034212250488
+        ]
+      ],
+      "source_height_cm": 1480.0,
+      "entry": {
+        "edge": 2,
+        "center_local_xy_m": [
+          33.34073,
+          9.759291
+        ],
+        "recessed_closed_opening_width_height_m": [
+          1.35,
+          2.3
+        ],
+        "approach_sweep_guard_profiles_m": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              3022.151,
+              658.585
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              3023.614,
+              658.256
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              3022.315,
+              659.316
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              3023.779,
+              658.988
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              3022.479,
+              660.048
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              3023.943,
+              659.72
+            ]
+          }
+        ]
+      },
+      "party_wall_edges": [],
+      "collision": false,
+      "roundtrip": {
+        "checked_triangle_edges": 21408,
+        "signed_volume_m3": 4180.798596977441,
+        "closed_solid_edges": true,
+        "fbx_sha256": "127652c4e0dcf3b3911e3128b1407b3ff3cd29800d2804bb4037aeaf2847123c"
+      },
+      "unreal_bridge": {
+        "bounds_cm": [
+          [
+            -42.616,
+            -2456.535,
+            0.0
+          ],
+          [
+            3354.229,
+            -0.0,
+            925.0
+          ]
+        ],
+        "materials": [
+          "M_GLMedieval_Fieldstone",
+          "M_GLMedieval_GuildRubble",
+          "M_GLMedieval_LimePlaster",
+          "M_GLMedieval_Oak",
+          "M_GLMedieval_ClayTile",
+          "M_GLMedieval_Interior",
+          "M_GLMedieval_LeadedGlass",
+          "M_GLMedieval_WeatheredOak",
+          "M_GLMedieval_Lead",
+          "M_GLMedieval_GuildDressed",
+          "M_GLMedieval_ShopRed"
+        ],
+        "uv_layers": [
+          "UV0"
+        ],
+        "triangles": 14272,
+        "canonical_sha256": "127652c4e0dcf3b3911e3128b1407b3ff3cd29800d2804bb4037aeaf2847123c",
+        "prepared_sha256": "04f0034a408c973d443735be29663d7ec19d32480a4c4098db0fc44cdd52c0cd",
+        "geometry_sha256": "83484d9ff1d29cca59a83d0293d6ae72fba86703c93fb859b7dbb0ccfe0fed8c",
+        "signed_volume_m3": 4180.798593719933,
+        "pivot_m": [
+          0,
+          0,
+          0
+        ],
+        "reflected_axis": "Y",
+        "matched_footprint_vertices": 13,
+        "fbx": "UnrealSource/SM_GLMedieval_LeadenhallNorthwest_TradingRange_06ebfe6e.fbx"
+      }
+    },
+    "Tile_p03_p01_roof_9059607ec79664f6": {
+      "bounds_cm": [
+        [
+          -2996.587,
+          -1841.261,
+          0.0
+        ],
+        [
+          0.0,
+          -0.0,
+          925.0
+        ]
+      ],
+      "materials": [
+        "M_GLMedieval_Fieldstone",
+        "M_GLMedieval_WarmPlaster",
+        "M_GLMedieval_WeatheredOak",
+        "M_GLMedieval_GuildRubble",
+        "M_GLMedieval_ClayTile",
+        "M_GLMedieval_Oak",
+        "M_GLMedieval_Interior",
+        "M_GLMedieval_ShopGreen",
+        "M_GLMedieval_Lead",
+        "M_GLMedieval_LeadedGlass",
+        "M_GLMedieval_GuildDressed"
+      ],
+      "uv_layers": [
+        "UV0"
+      ],
+      "triangles": 7538,
+      "fbx": "Source/SM_GLMedieval_LeadenhallNorthwest_DeepWorkshop_9059607e.fbx",
+      "style": "DeepWorkshop",
+      "world_pivot_m": [
+        2959.982,
+        670.699,
+        0.2
+      ],
+      "yaw_deg": 94.66530444,
+      "axis_x_world_xy": [
+        -0.08133497812397182,
+        0.9966868220928644
+      ],
+      "axis_y_world_xy": [
+        -0.9966868220928644,
+        -0.08133497812397182
+      ],
+      "footprint_local_m": [
+        [
+          0.0,
+          -0.0
+        ],
+        [
+          -6.579186380447659,
+          -1.1236047220142877
+        ],
+        [
+          -10.895956342678375,
+          -1.6211487835623337
+        ],
+        [
+          -19.953277503691602,
+          -1.6004030306993782
+        ],
+        [
+          -23.339971324192454,
+          -1.5939248996960638
+        ],
+        [
+          -26.167327833535513,
+          -1.360187506291922
+        ],
+        [
+          -26.44027135311589,
+          -3.0696514091338267
+        ],
+        [
+          -28.55447010734525,
+          -2.813845569452221
+        ],
+        [
+          -29.07328926579428,
+          -4.53635440276085
+        ],
+        [
+          -29.09997247206019,
+          -10.66649436906703
+        ],
+        [
+          -29.12049088699232,
+          -13.856394209916102
+        ],
+        [
+          -29.965871982649617,
+          -17.25690164309514
+        ],
+        [
+          -20.893813856952544,
+          -18.41260634758195
+        ],
+        [
+          -20.515517540216237,
+          -14.797397239280764
+        ],
+        [
+          -18.913317139836106,
+          -14.024150269017426
+        ],
+        [
+          -11.639497378882515,
+          -13.843166609088737
+        ],
+        [
+          0.0,
+          -13.499726997239545
+        ]
+      ],
+      "roof_profile_local_y_z_m": [
+        [
+          -18.41260634758195,
+          6.15
+        ],
+        [
+          -13.809455,
+          9.161
+        ],
+        [
+          -9.206303,
+          6.15
+        ],
+        [
+          -4.603151,
+          8.461
+        ],
+        [
+          -0.0,
+          6.15
+        ]
+      ],
+      "chimney_heads_local_m": [
+        [
+          -25.871911373827746,
+          -16.018967477210644,
+          9.151402172766334
+        ]
+      ],
+      "source_height_cm": 1260.0,
+      "entry": {
+        "edge": 16,
+        "center_local_xy_m": [
+          0.0,
+          -6.749863
+        ],
+        "recessed_closed_opening_width_height_m": [
+          1.35,
+          2.3
+        ],
+        "approach_sweep_guard_profiles_m": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              2967.457,
+              671.309
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2967.335,
+              672.804
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              2966.709,
+              671.248
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2966.587,
+              672.743
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              2965.962,
+              671.187
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2965.84,
+              672.682
+            ]
+          }
+        ]
+      },
+      "party_wall_edges": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "collision": false,
+      "roundtrip": {
+        "checked_triangle_edges": 11307,
+        "signed_volume_m3": 2893.1061621809085,
+        "closed_solid_edges": true,
+        "fbx_sha256": "8c93027e5cfc69a5daccc50e898bd9c3af2d582abf6bb25fe30421d9e64b42e9"
+      },
+      "unreal_bridge": {
+        "bounds_cm": [
+          [
+            -2996.587,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1841.261,
+            925.0
+          ]
+        ],
+        "materials": [
+          "M_GLMedieval_Fieldstone",
+          "M_GLMedieval_WarmPlaster",
+          "M_GLMedieval_WeatheredOak",
+          "M_GLMedieval_GuildRubble",
+          "M_GLMedieval_ClayTile",
+          "M_GLMedieval_Oak",
+          "M_GLMedieval_Interior",
+          "M_GLMedieval_ShopGreen",
+          "M_GLMedieval_Lead",
+          "M_GLMedieval_LeadedGlass",
+          "M_GLMedieval_GuildDressed"
+        ],
+        "uv_layers": [
+          "UV0"
+        ],
+        "triangles": 7538,
+        "canonical_sha256": "8c93027e5cfc69a5daccc50e898bd9c3af2d582abf6bb25fe30421d9e64b42e9",
+        "prepared_sha256": "8d862579e799088f0c5db7fbc212804c3c16576ef72a90ac31d01c741219b4d3",
+        "geometry_sha256": "61ade037bf8320d1f2fe44097a2a26c9100752db71ceb740d10302a79e27ef6b",
+        "signed_volume_m3": 2893.1061376117545,
+        "pivot_m": [
+          0,
+          0,
+          0
+        ],
+        "reflected_axis": "Y",
+        "matched_footprint_vertices": 17,
+        "fbx": "UnrealSource/SM_GLMedieval_LeadenhallNorthwest_DeepWorkshop_9059607e.fbx"
+      }
+    },
+    "Tile_p03_p01_roof_99e572dd8e67f0cc": {
+      "bounds_cm": [
+        [
+          -30.003,
+          -1889.8,
+          0.0
+        ],
+        [
+          643.419,
+          -0.0,
+          1220.0
+        ]
+      ],
+      "materials": [
+        "M_GLMedieval_Fieldstone",
+        "M_GLMedieval_WarmPlaster",
+        "M_GLMedieval_Oak",
+        "M_GLMedieval_ClayTile",
+        "M_GLMedieval_Interior",
+        "M_GLMedieval_LeadedGlass",
+        "M_GLMedieval_WeatheredOak",
+        "M_GLMedieval_Lead",
+        "M_GLMedieval_GuildDressed",
+        "M_GLMedieval_GuildRubble"
+      ],
+      "uv_layers": [
+        "UV0"
+      ],
+      "triangles": 10686,
+      "fbx": "Source/SM_GLMedieval_LeadenhallNorthwest_SteppedMarket_99e572dd.fbx",
+      "style": "SteppedMarket",
+      "world_pivot_m": [
+        2936.576,
+        662.464,
+        0.2
+      ],
+      "yaw_deg": 93.99406761,
+      "axis_x_world_xy": [
+        -0.06965318591742388,
+        0.9975712674749373
+      ],
+      "axis_y_world_xy": [
+        -0.9975712674749373,
+        -0.06965318591742388
+      ],
+      "footprint_local_m": [
+        [
+          0.0,
+          -0.0
+        ],
+        [
+          -0.30003459879759387,
+          -18.897999821132554
+        ],
+        [
+          6.434189079882586,
+          -18.684541521918895
+        ],
+        [
+          6.434189079882586,
+          -1.8296053903283935
+        ],
+        [
+          4.7241893637768335,
+          -0.449145694821912
+        ]
+      ],
+      "roof_profile_local_y_z_m": [
+        [
+          -18.897999821132554,
+          8.1
+        ],
+        [
+          -14.1735,
+          11.130999999999998
+        ],
+        [
+          -9.449,
+          8.1
+        ],
+        [
+          -4.7245,
+          12.110999999999999
+        ],
+        [
+          -0.0,
+          8.1
+        ]
+      ],
+      "chimney_heads_local_m": [
+        [
+          2.550961954783299,
+          -16.44125986763809,
+          11.105141208969625
+        ],
+        [
+          4.274272458661408,
+          -6.99226,
+          11.724678725791088
+        ]
+      ],
+      "source_height_cm": 1900.0,
+      "entry": {
+        "edge": 2,
+        "center_local_xy_m": [
+          6.434189,
+          -10.257073
+        ],
+        "recessed_closed_opening_width_height_m": [
+          1.35,
+          2.3
+        ],
+        "approach_sweep_guard_profiles_m": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              2947.108,
+              669.649
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2947.004,
+              671.146
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              2946.36,
+              669.597
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2946.256,
+              671.093
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              2945.612,
+              669.545
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2945.507,
+              671.041
+            ]
+          }
+        ]
+      },
+      "party_wall_edges": [],
+      "collision": false,
+      "roundtrip": {
+        "checked_triangle_edges": 16029,
+        "signed_volume_m3": 1093.0111716499114,
+        "closed_solid_edges": true,
+        "fbx_sha256": "b398bd11c02b7e8a9e87753ee46c592dbc8ba66e476381b9db0c1f5f8db704d0"
+      },
+      "unreal_bridge": {
+        "bounds_cm": [
+          [
+            -30.003,
+            0.0,
+            0.0
+          ],
+          [
+            643.419,
+            1889.8,
+            1220.0
+          ]
+        ],
+        "materials": [
+          "M_GLMedieval_Fieldstone",
+          "M_GLMedieval_WarmPlaster",
+          "M_GLMedieval_Oak",
+          "M_GLMedieval_ClayTile",
+          "M_GLMedieval_Interior",
+          "M_GLMedieval_LeadedGlass",
+          "M_GLMedieval_WeatheredOak",
+          "M_GLMedieval_Lead",
+          "M_GLMedieval_GuildDressed",
+          "M_GLMedieval_GuildRubble"
+        ],
+        "uv_layers": [
+          "UV0"
+        ],
+        "triangles": 10686,
+        "canonical_sha256": "b398bd11c02b7e8a9e87753ee46c592dbc8ba66e476381b9db0c1f5f8db704d0",
+        "prepared_sha256": "0626b23f637750e863a6ccd82738e9a38e18aa72b71c0e76c43a1b965b3a8a4b",
+        "geometry_sha256": "b08cc4c77f408bf176491de42476609673b0a4b0f8ade36cbff9bb9fa7f8e40b",
+        "signed_volume_m3": 1093.011202868133,
+        "pivot_m": [
+          0,
+          0,
+          0
+        ],
+        "reflected_axis": "Y",
+        "matched_footprint_vertices": 5,
+        "fbx": "UnrealSource/SM_GLMedieval_LeadenhallNorthwest_SteppedMarket_99e572dd.fbx"
+      }
+    },
+    "Tile_p03_p01_roof_ee3443afee1e1296": {
+      "bounds_cm": [
+        [
+          0.0,
+          -1970.169,
+          0.0
+        ],
+        [
+          1680.025,
+          329.576,
+          1075.0
+        ]
+      ],
+      "materials": [
+        "M_GLMedieval_Fieldstone",
+        "M_GLMedieval_GuildRubble",
+        "M_GLMedieval_WeatheredOak",
+        "M_GLMedieval_WarmPlaster",
+        "M_GLMedieval_ClayTile",
+        "M_GLMedieval_Oak",
+        "M_GLMedieval_Interior",
+        "M_GLMedieval_ShopGreen",
+        "M_GLMedieval_Lead",
+        "M_GLMedieval_LeadedGlass",
+        "M_GLMedieval_GuildDressed"
+      ],
+      "uv_layers": [
+        "UV0"
+      ],
+      "triangles": 7486,
+      "fbx": "Source/SM_GLMedieval_LeadenhallNorthwest_DeepWorkshop_ee3443af.fbx",
+      "style": "DeepWorkshop",
+      "world_pivot_m": [
+        2973.437,
+        671.797,
+        0.2
+      ],
+      "yaw_deg": -8.29672134,
+      "axis_x_world_xy": [
+        0.989534048013465,
+        -0.144299576652482
+      ],
+      "axis_y_world_xy": [
+        0.144299576652482,
+        0.989534048013465
+      ],
+      "footprint_local_m": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          2.94548838848874,
+          -11.265875383354729
+        ],
+        [
+          4.753416110635779,
+          -18.313754947556458
+        ],
+        [
+          5.866341838480659,
+          -19.70168625864524
+        ],
+        [
+          9.474285433823773,
+          -19.25943292307532
+        ],
+        [
+          10.829150861557196,
+          -18.009848323004796
+        ],
+        [
+          12.384099428216274,
+          -15.145491684064028
+        ],
+        [
+          13.426364271568833,
+          -9.83956169995082
+        ],
+        [
+          13.426364271568833,
+          -1.4750187955238452
+        ],
+        [
+          16.652783492362516,
+          -0.7033718479560833
+        ],
+        [
+          16.80025347537204,
+          3.2957627589446883
+        ],
+        [
+          4.095806595943052,
+          0.7973683769942077
+        ]
+      ],
+      "roof_profile_local_y_z_m": [
+        [
+          -19.70168625864524,
+          7.2
+        ],
+        [
+          -15.868778,
+          9.961
+        ],
+        [
+          -12.03587,
+          7.2
+        ],
+        [
+          -8.202961,
+          10.661
+        ],
+        [
+          -4.370053,
+          7.2
+        ],
+        [
+          -0.537145,
+          10.280999999999999
+        ],
+        [
+          3.2957627589446883,
+          7.2
+        ]
+      ],
+      "chimney_heads_local_m": [
+        [
+          7.283875712582373,
+          -17.708574031397475,
+          10.106500547715525
+        ]
+      ],
+      "source_height_cm": 1900.0,
+      "entry": {
+        "edge": 7,
+        "center_local_xy_m": [
+          13.426364,
+          -5.65729
+        ],
+        "recessed_closed_opening_width_height_m": [
+          1.35,
+          2.3
+        ],
+        "approach_sweep_guard_profiles_m": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              2985.798,
+              663.519
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2987.283,
+              663.303
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              2985.907,
+              664.262
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2987.391,
+              664.045
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              2986.015,
+              665.004
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              2987.499,
+              664.787
+            ]
+          }
+        ]
+      },
+      "party_wall_edges": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "collision": false,
+      "roundtrip": {
+        "checked_triangle_edges": 11229,
+        "signed_volume_m3": 1966.4251537468742,
+        "closed_solid_edges": true,
+        "fbx_sha256": "b2cdf39d012f78e5b35052b8210f8fb94e60e99e04a7fb6934238b1926824b4f"
+      },
+      "unreal_bridge": {
+        "bounds_cm": [
+          [
+            0.0,
+            -329.576,
+            0.0
+          ],
+          [
+            1680.025,
+            1970.169,
+            1075.0
+          ]
+        ],
+        "materials": [
+          "M_GLMedieval_Fieldstone",
+          "M_GLMedieval_GuildRubble",
+          "M_GLMedieval_WeatheredOak",
+          "M_GLMedieval_WarmPlaster",
+          "M_GLMedieval_ClayTile",
+          "M_GLMedieval_Oak",
+          "M_GLMedieval_Interior",
+          "M_GLMedieval_ShopGreen",
+          "M_GLMedieval_Lead",
+          "M_GLMedieval_LeadedGlass",
+          "M_GLMedieval_GuildDressed"
+        ],
+        "uv_layers": [
+          "UV0"
+        ],
+        "triangles": 7486,
+        "canonical_sha256": "b2cdf39d012f78e5b35052b8210f8fb94e60e99e04a7fb6934238b1926824b4f",
+        "prepared_sha256": "39cf6a84f86dbbac73adfc4faf77e819eadfb6729e9594e6760726594cf1d47f",
+        "geometry_sha256": "e7185df8f3742349645b5061316437c192c6e1bbca047320e85fd22038a99ede",
+        "signed_volume_m3": 1966.4252016101082,
+        "pivot_m": [
+          0,
+          0,
+          0
+        ],
+        "reflected_axis": "Y",
+        "matched_footprint_vertices": 12,
+        "fbx": "UnrealSource/SM_GLMedieval_LeadenhallNorthwest_DeepWorkshop_ee3443af.fbx"
+      }
+    }
+  }
+}
