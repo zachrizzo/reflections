@@ -28,14 +28,97 @@ PROPS = {
 PAVING = f'{ROOT}/Ground/SM_GL1450_OpeningGround/StaticMeshes/SM_GL1450_OpeningGround'
 ASSETS = {**HOUSES, **PROPS, 'paving': PAVING}
 SOLID = {*HOUSES, 'wall'}
+CROSS_STREETS = (-18300, -10900, -3700, 3600, 11300, 18900)
+STREET_AXES = (-19400, -12400, -6200, 0, 6400, 12200, 19300)
+MARKET_X = (-4680, 4650)
+# Keep a 2.5 m pedestrian strip around the *curved* street centre. Marker
+# clearance below is only a geometric guard, not a gameplay interaction test.
+WALK_HALF_WIDTH_CM = 125.0
+MARKER_CLEARANCE_CM = 100.0
+# The separately saved lantern-post pass. The 1 m exclusion exceeds its
+# reported 76 x 41 cm XY half-extents; current loaded transforms need checking.
+LANTERN_POINTS_CM = ((-23050, -425), (-23050, 425),
+                     (-18300, -500), (-18300, 500),
+                     (-10900, -500), (-10900, 500),
+                     (-3100, -3270), (-3100, 3270),
+                     (3100, -3270), (3100, 3270))
+
+
+def main_street_center(x):
+    """A gentle, deterministic bend from the watch gate into the market."""
+    if x <= MARKET_X[0]:
+        t = max(0.0, min(1.0, (x + 24080.0) / (MARKET_X[0] + 24080.0)))
+        return 180.0 * math.sin(math.pi * t) + 55.0 * math.sin(2.0 * math.pi * t)
+    if x <= MARKET_X[1]:
+        return 0.0
+    return 120.0 * math.sin((x - MARKET_X[1]) / 3200.0)
+
+
+def curve_bounds(left, right):
+    """Bound the curved centre over a plot, including between samples."""
+    count = max(1, math.ceil((right - left) / 50.0))
+    values = [main_street_center(left + (right - left) * i / count)
+              for i in range(count + 1)]
+    # Both branches have a derivative below 0.05.  A point between samples is
+    # at most half a sample interval away, so this covers the unsampled curve.
+    margin = .025 * (right - left) / count
+    return min(values) - margin, max(values) + margin
+
+
+def centered_box(bounds, key, center, yaw, scale=(1, 1, 1)):
+    """Conservative XY bounds after the same rotation and scale used by PCG."""
+    low, high = bounds[key]
+    if (len(low) != 3 or len(high) != 3 or len(scale) != 3 or
+            not all(math.isfinite(float(v)) for v in (*low, *high, *center, yaw, *scale)) or
+            any(high[i] <= low[i] or scale[i] <= 0 for i in range(3))):
+        raise ValueError(f'Invalid mesh bounds or transform for {key}.')
+    a = math.radians(yaw)
+    c, s = abs(math.cos(a)), abs(math.sin(a))
+    x = (high[0] - low[0]) * scale[0] * .5
+    y = (high[1] - low[1]) * scale[1] * .5
+    hx, hy = c * x + s * y, s * x + c * y
+    return (center[0] - hx, center[1] - hy, center[0] + hx, center[1] + hy)
+
+
+def boxes_overlap(a, b, clearance=0.0):
+    return (a[0] < b[2] + clearance and b[0] < a[2] + clearance and
+            a[1] < b[3] + clearance and b[1] < a[3] + clearance)
+
+
+def town_story_points():
+    """Reproduce the exact planned marker XY positions without changing actors."""
+    from populate_medieval_london_gameplay import LOCATIONS
+
+    project = Path(__file__).resolve().parents[2]
+    path = project / 'ArtDirection/WorldJump/graylondon_markers.json'
+    rows = json.loads(path.read_text(encoding='utf-8-sig'))
+    if not isinstance(rows, list) or not rows:
+        raise ValueError('The town story-marker source must be a nonempty list.')
+    visits = Counter()
+    points = []
+    for row in rows:
+        if row['place'] not in LOCATIONS:
+            raise ValueError(f"Unknown town story location: {row['place']}")
+        x, y = LOCATIONS[row['place']]
+        index = visits[row['place']]
+        visits[row['place']] += 1
+        if 'CutsceneAnchor_' not in row['name']:
+            x += (index % 4) * 120
+        if not all(math.isfinite(float(v)) for v in (x, y)):
+            raise ValueError(f"Invalid story-marker location: {row['name']}")
+        points.append((float(x), float(y), row['name']))
+    return points
 
 
 def layout(bounds):
     """Make rows of plots with clear cross streets and a central market."""
     randomizer = random.Random(1450)
     groups = defaultdict(list)
-    cross = (-18300, -10900, -3700, 3600, 11300, 18900)
-    axes = (-19400, -12400, -6200, 0, 6400, 12200, 19300)
+    story = town_story_points()
+    keepouts = story + [(float(x), float(y), f'lantern_{i}')
+                        for i, (x, y) in enumerate(LANTERN_POINTS_CM)]
+    houses = []
+    prop_boxes = []
 
     def place(key, center, yaw=0, scale=(1, 1, 1)):
         low, high = bounds[key]
@@ -47,12 +130,12 @@ def layout(bounds):
                  center[2] - low[2] * scale[2])
         groups[key].append((pivot, yaw, scale, randomizer.randrange(1, 2**30)))
 
-    for lane in axes:
+    for lane in STREET_AXES:
         main = lane == 0
-        openings = [(road - 790, road + 790) for road in cross]
+        openings = [(road - 790, road + 790) for road in CROSS_STREETS]
         if main:
             openings = [o for o in openings if o[1] < -4680 or o[0] > 4650]
-            openings.append((-4680, 4650))
+            openings.extend((MARKET_X, (14500, 15300)))  # market and defended-yard mouth
         borders = [-22700, *[x for opening in sorted(openings) for x in opening], 23200]
         for side in (-1, 1):
             for left, right in zip(borders[::2], borders[1::2]):
@@ -65,21 +148,58 @@ def layout(bounds):
                     width = min(mesh_width * randomizer.uniform(.78, 1.1), 1270, right - x)
                     depth = min(mesh_depth * randomizer.uniform(.72, .97), 2010)
                     height = randomizer.uniform(.78, 1.10)
-                    half_width = 620 if main else 360
-                    bend = 95 * math.sin(x / 4400)
-                    y = lane + bend + side * (half_width + depth * .5 + randomizer.uniform(6, 70))
-                    place(key, (x + width * .5, y, 0), -side * 90,
-                          (depth / mesh_depth, width / mesh_width, height))
-                    x += width + randomizer.uniform(34, 105)
+                    left_x, right_x = x, x + width
+                    if main:
+                        low_curve, high_curve = curve_bounds(left_x, right_x)
+                        inside = (high_curve if side > 0 else low_curve) + side * (260 + randomizer.uniform(5, 20))
+                    else:
+                        inside = lane + 95 * math.sin((left_x + right_x) / 8800) + side * (360 + randomizer.uniform(6, 70))
+                    # End a plot just before a marker when a useful-sized
+                    # frontage fits there. This confines any required widening
+                    # to the next plot instead of widening the whole block.
+                    normal_y = inside + side * depth * .5
+                    normal_box = (left_x, normal_y - depth * .5, right_x, normal_y + depth * .5)
+                    cuts = [mx - MARKER_CLEARANCE_CM - 1 for mx, my, _ in keepouts
+                            if normal_box[0] + 580 + MARKER_CLEARANCE_CM + 1 <= mx <= normal_box[2] + MARKER_CLEARANCE_CM
+                            and normal_box[1] - MARKER_CLEARANCE_CM <= my <= normal_box[3] + MARKER_CLEARANCE_CM]
+                    if cuts:
+                        right_x = min(right_x, min(cuts))
+                        width = right_x - left_x
+                        if main:
+                            low_curve, high_curve = curve_bounds(left_x, right_x)
+                            inside = (high_curve if side > 0 else low_curve) + side * (260 + 12.5)
+                    # Keep each authored marker position outside the entire
+                    # conservative house box, leaving 1 m around its XY point.
+                    for _ in range(len(keepouts) + 1):
+                        y = inside + side * depth * .5
+                        box = (left_x, y - depth * .5, right_x, y + depth * .5)
+                        conflicts = [(mx, my) for mx, my, _ in keepouts
+                                     if box[0] - MARKER_CLEARANCE_CM <= mx <= box[2] + MARKER_CLEARANCE_CM
+                                     and box[1] - MARKER_CLEARANCE_CM <= my <= box[3] + MARKER_CLEARANCE_CM]
+                        if not conflicts:
+                            break
+                        limit = (max(my for _, my in conflicts) + MARKER_CLEARANCE_CM + 1 if side > 0
+                                 else min(my for _, my in conflicts) - MARKER_CLEARANCE_CM - 1)
+                        inside = max(inside, limit) if side > 0 else min(inside, limit)
+                    else:
+                        raise RuntimeError('Could not keep town story points clear of a house.')
+                    scale = (depth / mesh_depth, width / mesh_width, height)
+                    center = ((left_x + right_x) * .5, y, 0)
+                    actual = centered_box(bounds, key, center, -side * 90, scale)
+                    if any(boxes_overlap(actual, previous) for previous in houses):
+                        raise RuntimeError('The planned house bounds overlap another house.')
+                    houses.append(actual)
+                    place(key, center, -side * 90, scale)
+                    x += width + randomizer.uniform(15, 60)
 
     # Opening walls and streets run east from PlayerStart before reaching the market.
     for x in range(-23800, 24400, 1450):
-        place('paving', (x, 0, 0), 0, (1, 1.45, .16))
-    for lane in axes:
+        place('paving', (x, main_street_center(x), 0), 0, (1, 1.45, .16))
+    for lane in STREET_AXES:
         if lane:
             for x in range(-22800, 22900, 1940):
                 place('paving', (x, lane, -2), 0, (1.35, .82, .15))
-    for x in cross:
+    for x in CROSS_STREETS:
         for y in range(-22500, 22600, 1400):
             place('paving', (x, y, -3), 90, (1, .8, .11))
     for x in range(-2900, 3100, 1400):
@@ -95,12 +215,43 @@ def layout(bounds):
         for x in range(-24000, 24200, 242):
             place('wall', (x, y, 0), 90, (1, 1.33, 1.45))
 
+    def place_dressing(key, desired_x, side, yaw, market):
+        """Skip crowded candidates rather than blocking houses or the route."""
+        for dx in (0, -200, 200, -400, 400, -600, 600):
+            x = desired_x + dx
+            # The cross-street approaches and defended-yard mouth stay empty.
+            if any(abs(x - road) < 1000 for road in CROSS_STREETS) or 14300 < x < 15500:
+                continue
+            probe = centered_box(bounds, key, (x, 0, 4), yaw)
+            half_y = (probe[3] - probe[1]) * .5
+            curve_low, curve_high = curve_bounds(probe[0], probe[2])
+            if market:
+                y = side * 2200
+            else:
+                y = (curve_high + WALK_HALF_WIDTH_CM + half_y + 5 if side > 0
+                     else curve_low - WALK_HALF_WIDTH_CM - half_y - 5)
+            center = (x, y, 4)
+            box = centered_box(bounds, key, center, yaw)
+            if (any(boxes_overlap(box, other, 5) for other in houses + prop_boxes) or
+                    any(box[0] - MARKER_CLEARANCE_CM <= mx <= box[2] + MARKER_CLEARANCE_CM and
+                        box[1] - MARKER_CLEARANCE_CM <= my <= box[3] + MARKER_CLEARANCE_CM
+                        for mx, my, _ in keepouts)):
+                continue
+            if side > 0 and box[1] < curve_high + WALK_HALF_WIDTH_CM:
+                continue
+            if side < 0 and box[3] > curve_low - WALK_HALF_WIDTH_CM:
+                continue
+            prop_boxes.append(box)
+            place(key, center, yaw)
+            return True
+        return False
+
     for x in (-21400, -19500, -16500, -13400, -8000, -2900, -2200, -1200, 400, 1600, 2600):
         for side in (-1, 1):
-            edge = 2200 if abs(x) < 3100 else 470
-            place('stall', (x, side * edge, 4), -side * 90)
-            place('crates', (x + 185, side * (edge + 70), 4), randomizer.randrange(360))
-            place('cask', (x - 185, side * (edge + 70), 4), randomizer.randrange(360))
+            market = abs(x) < 3100
+            place_dressing('stall', x, side, -side * 90, market)
+            place_dressing('crates', x + 185, side, randomizer.randrange(360), market)
+            place_dressing('cask', x - 185, side, randomizer.randrange(360), market)
 
     # A second defended yard is visible at the far end of the market route.
     place('gate', (14900, 2400, 0), 0, (1.1, 1.2, 1.1))
