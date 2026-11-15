@@ -1,0 +1,120 @@
+name: Medieval prop image-to-3D CPU trials
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/triposr-medieval-props.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  image-to-3d:
+    if: ${{ github.repository == 'zachrizzo/reflections' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {asset: AppleBasket, directory: applebasket, artifact: triposr-applebasket}
+          - {asset: MerchantCrate, directory: merchantcrate, artifact: triposr-merchantcrate}
+          - {asset: PottersStock, directory: pottersstock, artifact: triposr-pottersstock}
+          - {asset: BakersTray, directory: bakerstray, artifact: triposr-bakerstray}
+          - {asset: MarketHandcart, directory: markethandcart, artifact: triposr-markethandcart}
+          - {asset: MarketWell, directory: marketwell, artifact: triposr-marketwell}
+    env:
+      PROP_NAME: ${{ matrix.asset }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      HF_HUB_OFFLINE: '1'
+      TRANSFORMERS_OFFLINE: '1'
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+      CUDA_VISIBLE_DEVICES: ''
+    steps:
+      - name: Check out reference and runner only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+          submodules: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.gitattributes
+            /.github/workflows/triposr-medieval-props.yml
+            /Tools/CityPCG/triposr_props_hosted.py
+            /Tools/CityPCG/triposr_skimage_mc.py
+            /Tools/CityPCG/test_triposr_props_hosted.py
+            /ArtDirection/CityPCG/MedievalLondon/ImageTo3D/.gitattributes
+            /ArtDirection/CityPCG/MedievalLondon/ImageTo3D/inputs.json
+            /ArtDirection/CityPCG/MedievalLondon/ImageTo3D/Configs/
+            /ArtDirection/CityPCG/MedievalLondon/ImageTo3D/Inputs/
+
+      - name: Require a workflow-only main push
+        if: ${{ github.event_name == 'push' }}
+        shell: bash
+        run: |
+          python3 -B - <<'PY'
+          import json, os, re, subprocess
+          with open(os.environ['GITHUB_EVENT_PATH'],encoding='utf-8') as stream: event=json.load(stream)
+          before,after=event.get('before'),event.get('after'); sha=os.environ['GITHUB_SHA']
+          if (event.get('ref')!='refs/heads/main' or event.get('deleted') is not False
+                  or event.get('created') is not False or event.get('forced') is not False
+                  or not isinstance(before,str) or not re.fullmatch(r'[0-9a-f]{40}',before)
+                  or before=='0'*40 or after!=sha or not re.fullmatch(r'[0-9a-f]{40}',sha)):
+              raise SystemExit('Unexpected push event')
+          parents=subprocess.check_output(['git','rev-list','--parents','-n','1',sha],text=True).split()
+          changed=subprocess.check_output(['git','diff','--no-ext-diff','--no-renames','--name-only','-z',before,sha])
+          if parents!=[sha,before] or changed!=b'.github/workflows/triposr-medieval-props.yml\0':
+              raise SystemExit('Expected one workflow-only non-merge commit')
+          PY
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.10'
+
+      - name: Test source input guards
+        run: python -B Tools/CityPCG/test_triposr_props_hosted.py -v
+
+      - name: Install CPU-only inference dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=10s 900s python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 'torch==2.2.2'
+          timeout --signal=TERM --kill-after=10s 900s python -m pip install --no-cache-dir \
+            'numpy==1.26.4' 'Pillow==10.1.0' 'scipy==1.13.1' 'scikit-image==0.22.0' \
+            'trimesh==4.0.5' 'omegaconf==2.3.0' 'einops==0.7.0' 'transformers==4.35.0' \
+            'huggingface-hub==0.17.3' 'imageio==2.34.1'
+
+      - name: Fetch exact TripoSR source and checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=10s 180s git clone --filter=blob:none --no-checkout https://github.com/VAST-AI-Research/TripoSR.git "$RUNNER_TEMP/TripoSR-upstream"
+          timeout --signal=TERM --kill-after=10s 120s git -C "$RUNNER_TEMP/TripoSR-upstream" checkout --detach 107cefdc244c39106fa830359024f6a2f1c78871
+          test "$(git -C "$RUNNER_TEMP/TripoSR-upstream" rev-parse HEAD)" = 107cefdc244c39106fa830359024f6a2f1c78871
+          mkdir "$RUNNER_TEMP/TripoSR-model"
+          timeout --signal=TERM --kill-after=10s 1200s curl --fail --silent --show-error --location \
+            --proto '=https' --proto-redir '=https' --max-redirs 5 --connect-timeout 20 --max-time 1100 \
+            --retry 2 --retry-all-errors --retry-delay 5 --retry-max-time 1150 --max-filesize 1677246742 \
+            https://huggingface.co/stabilityai/TripoSR/resolve/5b521936b01fbe1890f6f9baed0254ab6351c04a/model.ckpt \
+            --output "$RUNNER_TEMP/TripoSR-model/model.ckpt"
+          printf '%s  %s\n' '429e2c6b22a0923967459de24d67f05962b235f79cde6b032aa7ed2ffcd970ee' "$RUNNER_TEMP/TripoSR-model/model.ckpt" | sha256sum --check --strict
+
+      - name: Generate and read back one raw model on CPU
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=30s 75m python -B Tools/CityPCG/triposr_props_hosted.py
+          test -s "$GITHUB_WORKSPACE/ci-triposr-${PROP_NAME,,}/provenance.complete.json"
+
+      - name: Upload this independent review candidate
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.artifact }}
+          path: ci-triposr-${{ matrix.directory }}/
+          if-no-files-found: error
+          retention-days: 3
