@@ -1,0 +1,143 @@
+{
+  "coordinate_system": "ue_cm",
+  "cells": [
+    {
+      "id": "Medieval_OpeningEast",
+      "points": [
+        {
+          "label": "MedievalOpening_East_01_Chandler",
+          "mesh_id": "SM_GLMedieval_Chandler",
+          "location_cm": [
+            330348.657,
+            31216.962,
+            27.65
+          ],
+          "yaw_deg": 171.25003,
+          "seed": 952,
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        {
+          "label": "MedievalOpening_East_02_Mercer",
+          "mesh_id": "SM_GLMedieval_Mercer",
+          "location_cm": [
+            330417.112,
+            31661.725,
+            27.65
+          ],
+          "yaw_deg": 171.25003,
+          "seed": 953,
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        {
+          "label": "MedievalOpening_East_03_Scrivener",
+          "mesh_id": "SM_GLMedieval_Scrivener",
+          "location_cm": [
+            330485.567,
+            32106.488,
+            27.65
+          ],
+          "yaw_deg": 171.25003,
+          "seed": 954,
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        {
+          "label": "MedievalOpening_East_04_Mercer",
+          "mesh_id": "SM_GLMedieval_Mercer",
+          "location_cm": [
+            330553.957,
+            32551.062,
+            27.65
+          ],
+          "yaw_deg": 171.25003,
+          "seed": 955,
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        {
+          "label": "MedievalOpening_East_05_Chandler",
+          "mesh_id": "SM_GLMedieval_Chandler",
+          "location_cm": [
+            330622.412,
+            32995.825,
+            27.65
+          ],
+          "yaw_deg": 171.25003,
+          "seed": 956,
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        {
+          "label": "MedievalOpening_East_06_Scrivener",
+          "mesh_id": "SM_GLMedieval_Scrivener",
+          "location_cm": [
+            330690.867,
+            33440.588,
+            27.65
+          ],
+          "yaw_deg": 171.25003,
+          "seed": 957,
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Medieval_OpeningSouth",
+      "points": [
+        {
+          "label": "MedievalOpening_South_01_Scrivener",
+          "mesh_id": "SM_GLMedieval_Scrivener",
+          "location_cm": [
+            330312.551,
+            30319.206,
+            9.65
+          ],
+          "yaw_deg": 179.84301,
+          "seed": 958,
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        {
+          "label": "MedievalOpening_South_02_Mercer",
+          "mesh_id": "SM_GLMedieval_Mercer",
+          "location_cm": [
+            330313.784,
+            30769.204,
+            9.65
+          ],
+          "yaw_deg": 179.84301,
+          "seed": 959,
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        }
+      ]
+    }
+  ]
+}
