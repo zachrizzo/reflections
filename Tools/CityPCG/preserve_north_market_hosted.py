@@ -48,6 +48,7 @@ PREVIEW_MODEL='SM_GLMedieval_NorthMarketDetail_east_0a73564b'
 PREVIEW_FBX_SHA='6a1f365d71f7cf88e1df766599f323311b600cc4000e558b98a78d9e7cf6b38d'
 SHA=re.compile(r'[0-9a-f]{40}\Z')
 NUMBER=re.compile(r'[1-9][0-9]{0,19}\Z')
+SMUDGE_FILE_CEILING=64*2**20
 
 
 def context():
@@ -351,6 +352,14 @@ def limit_child_files(size):
     resource.setrlimit(resource.RLIMIT_FSIZE,(size,size))
 
 
+def smudge_file_ceiling(archive_size):
+    # The limit applies to every Git/LFS helper file, not just the archive.
+    # Archive and cache integrity remain checked against their exact sizes.
+    if type(archive_size) is not int or not 0<archive_size<SMUDGE_FILE_CEILING:
+        raise RuntimeError('smudge-file-ceiling')
+    return SMUDGE_FILE_CEILING
+
+
 def classify_smudge_error(data,returncode):
     # Never return any text from stderr. A status is emitted only when it is a
     # three-digit HTTP response in the 300-599 range.
@@ -396,6 +405,7 @@ def report_smudge_error(stream,returncode,max_size):
 
 def smudge_to_file(env,store,item,pointer,dest):
     check_pointer(pointer,item)
+    ceiling=smudge_file_ceiling(item['size'])
     rel=(TARGET_REL/(item['key']+'.zip')).as_posix()
     command=git_command(*readback_options(store),'lfs','smudge',rel)
     error_path=dest.parent/('lfs-smudge-stderr-'+item['key'])
@@ -405,7 +415,7 @@ def smudge_to_file(env,store,item,pointer,dest):
         with os.fdopen(descriptor,'w+b') as errors:
             process=subprocess.Popen(command,env=env,stdin=subprocess.PIPE,stdout=output,
                                      stderr=errors,start_new_session=True,
-                                     preexec_fn=lambda:limit_child_files(item['size']))
+                                     preexec_fn=lambda:limit_child_files(ceiling))
             try:
                 process.communicate(input=pointer,timeout=60)
                 if process.returncode!=0:
@@ -418,7 +428,7 @@ def smudge_to_file(env,store,item,pointer,dest):
                     pass
                 process.wait(timeout=5)
                 try:
-                    report_smudge_error(errors,process.returncode,item['size'])
+                    report_smudge_error(errors,process.returncode,ceiling)
                 except Exception:
                     print('LFS smudge diagnostic: unknown',flush=True)
                 raise

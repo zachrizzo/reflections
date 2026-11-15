@@ -82,6 +82,15 @@ class PreservationTests(unittest.TestCase):
         with mock.patch.dict(sys.modules,{'resource':resource}): p.limit_child_files(1234)
         resource.setrlimit.assert_called_once_with(17,(1234,1234))
 
+    def test_smudge_ceiling_has_fixed_bounded_headroom(self):
+        self.assertEqual(p.SMUDGE_FILE_CEILING,64*2**20)
+        for item in p.ARTIFACTS:
+            self.assertGreater(p.SMUDGE_FILE_CEILING,item['size'])
+            self.assertEqual(p.smudge_file_ceiling(item['size']),p.SMUDGE_FILE_CEILING)
+        for invalid in (0,-1,p.SMUDGE_FILE_CEILING,p.SMUDGE_FILE_CEILING+1,True,'10'):
+            with self.subTest(invalid=invalid),self.assertRaisesRegex(RuntimeError,'smudge-file-ceiling'):
+                p.smudge_file_ceiling(invalid)
+
     def test_smudge_receives_only_checked_pointer_and_capped_sink(self):
         item=p.ARTIFACTS[0]; pointer=p.pointer_bytes(item)
         process=SimpleNamespace(pid=321,returncode=0,communicate=mock.Mock(),wait=mock.Mock())
@@ -99,6 +108,9 @@ class PreservationTests(unittest.TestCase):
         self.assertIs(kwargs['stderr'],errors)
         self.assertTrue(kwargs['start_new_session'])
         self.assertTrue(callable(kwargs['preexec_fn']))
+        with mock.patch.object(p,'limit_child_files') as limit:
+            kwargs['preexec_fn']()
+        limit.assert_called_once_with(64*2**20)
         process.communicate.assert_called_once_with(input=pointer,timeout=60)
         with self.assertRaisesRegex(RuntimeError,'lfs-pointer'):
             p.smudge_to_file({},Path('/store'),item,b'bad pointer',Path('/output'))
@@ -113,11 +125,13 @@ class PreservationTests(unittest.TestCase):
                  mock.patch.object(p.os,'fdopen',return_value=io.BytesIO()), \
                  mock.patch.object(p.subprocess,'Popen',return_value=process), \
                  mock.patch.object(p.os,'killpg',create=True) as kill, \
+                 mock.patch.object(p,'report_smudge_error') as diagnostic, \
                  mock.patch.object(p.signal,'SIGKILL',9,create=True),mock.patch('builtins.print'):
                 with self.assertRaises((RuntimeError,subprocess.TimeoutExpired,TimeoutError)):
                     p.smudge_to_file({},Path('/store'),item,pointer,Path('/output'))
                 kill.assert_called_once_with(321,9)
                 process.wait.assert_called_once_with(timeout=5)
+                self.assertEqual(diagnostic.call_args.args[2],64*2**20)
 
     def test_smudge_error_classification_never_returns_sensitive_text(self):
         secret=b'https://example.invalid/x?token=top-secret'
@@ -171,7 +185,9 @@ class PreservationTests(unittest.TestCase):
         store=Path('/stage')/('lfs-readback-'+item['key'])
         report=('LocalReferenceDirs=\nLocalMediaDir='+str(store/'objects')+'\nLfsStorageDir='+str(store)
                 +'\nSkipDownloadErrors=false\nBasicTransfersOnly=true\n').encode()
-        for values,ok in (((expected,expected),True),(((1,'bad'),expected),False),((expected,(1,'bad')),False)):
+        for values,ok in (((expected,expected),True),(((1,'bad'),expected),False),((expected,(1,'bad')),False),
+                          (((item['size']+1,item['sha256']),expected),False),
+                          ((expected,(item['size']+1,item['sha256'])),False)):
             replies=[SimpleNamespace(stdout=report),SimpleNamespace(stdout=p.pointer_bytes(item))]
             with self.subTest(ok=ok,values=values),mock.patch.object(p.Path,'mkdir'), \
                  mock.patch.object(p.Path,'exists',return_value=False), \
