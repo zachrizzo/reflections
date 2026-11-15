@@ -43,9 +43,11 @@ geometry. The source group named `GL_Road` has 18,340 triangles, all retained
 in the filtered and import files. The saved source and replacement assets also
 both have six matching LOD0 section-to-material indices and expected material
 slot names; the replacement's material references match the previously
-recorded effective source-actor materials. These are saved-file checks:
-Unreal's live section-to-material binding still needs verification before
-runtime road, park, water and landmark preservation can be claimed. The saved
+recorded effective source-actor materials. The saved source actor references
+the expected tile and five matching material overrides, with relative location
+`(300000, 0, 0)` cm. These are saved-file checks: the loaded actor, its world
+transform and Unreal's live section-to-material binding still need verification
+before runtime road, park, water and landmark preservation can be claimed. The saved
 Unreal replacement asset also needs an independent geometry check. The building
 assets have been imported and their geometry and collision settings audited.
 The pilot still needs placement, in-editor visual review, streaming/gameplay
