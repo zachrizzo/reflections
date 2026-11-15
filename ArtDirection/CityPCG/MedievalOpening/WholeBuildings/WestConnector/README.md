@@ -11,7 +11,8 @@ ridges and inboard masonry chimneys, with different timber and shutter details.
 triangulated, Y-reflected import copies for the UE legacy FBX importer. The
 manifest records source and prepared hashes, transforms, material slots,
 footprints, roof profiles and Blender round-trip audits. All meshes passed
-closed-solid, winding, UV, material and footprint-edge checks.
+closed-solid, winding, UV, material and footprint-edge checks. The three
+`*_preview.png` images are Blender renders of the same audited geometry.
 
 These are **offline source models**, not placed or enabled in Gray London.
 Fresh in-engine screenshots, import and collision validation, live actor and
