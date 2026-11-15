@@ -90,6 +90,12 @@ class PolygonComparisonTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, r'reversed_winding=True.*max_position_delta_m=0'):
             qa.compare(mesh(TRI), mesh(face))
 
+    def test_changed_assignment_reports_matching_geometry_material(self):
+        before, after = mesh(TRI), mesh(('M_other', TRI[1]))
+        before['slots'] = after['slots'] = ['M_wall', 'M_other']
+        with self.assertRaisesRegex(ValueError, r'candidate_material=M_other.*max_position_delta_m=0'):
+            qa.compare(before, after)
+
 
 class SourceParserTests(unittest.TestCase):
     def parse(self, source):
