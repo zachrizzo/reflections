@@ -1,0 +1,1438 @@
+{
+  "name": "block_7113aff9ea1e",
+  "coordinate_system": "ue_local_m",
+  "status": "offline_candidate",
+  "source_tile": "Tile_p04_p00",
+  "source_origin_m": [
+    4000.0,
+    0.0,
+    0.0
+  ],
+  "source_tile_asset": "/Game/GrayLondon/Geodata/Tiles/Tile_p04_p00.Tile_p04_p00",
+  "source_export_sha256": "5dab26bfe0ce4107b20721fac0998db646d68f22dade557ece0ab8f003aa3943",
+  "anonymous_shop_export_sha256": "daba702d8e36cb1b0290447c7d28acae9dc7e3fe53be60207cba1ed25750ec3a",
+  "ordinary_wall_primitive": 0,
+  "roof_primitive": 1,
+  "untouched_primitives": {
+    "2": "GL_Road",
+    "3": "GL_Park",
+    "4": "GL_Water",
+    "5": "GL_CentralFacade"
+  },
+  "reviewed_neighbor_tiles": [
+    {
+      "tile": "Tile_p03_p00",
+      "source_sha256": "5c946436fce01c086598966fcca3c379381b29776e1e03df2b37ada9fb4b08f4"
+    },
+    {
+      "tile": "Tile_p03_p01",
+      "source_sha256": "411a895aedeb642f0250cdd4c3e4725a1d04b73035ea4a75335f60193ca7102c"
+    }
+  ],
+  "bounds_m": [
+    4018.759,
+    249.088,
+    4077.894,
+    300.968
+  ],
+  "validated_road_links": [
+    {
+      "members": [
+        "Tile_p04_p00_roof_0b4721b7d318c3f2",
+        "Tile_p04_p00_roof_48ad2789552ed924"
+      ],
+      "length_m": 8.15,
+      "samples": 36,
+      "guide_m": [
+        [
+          4047.004,
+          284.215
+        ],
+        [
+          4050.722,
+          276.962
+        ]
+      ],
+      "entries": [
+        2,
+        10
+      ]
+    },
+    {
+      "members": [
+        "Tile_p04_p00_roof_0b4721b7d318c3f2",
+        "Tile_p04_p00_roof_d490d6b3f6d4eb1e"
+      ],
+      "length_m": 3.436,
+      "samples": 18,
+      "guide_m": [
+        [
+          4047.004,
+          284.215
+        ],
+        [
+          4049.796,
+          286.217
+        ]
+      ],
+      "entries": [
+        2,
+        0
+      ]
+    },
+    {
+      "members": [
+        "Tile_p04_p00_roof_0b4721b7d318c3f2",
+        "Tile_p04_p00_roof_f7f6c00104349e36"
+      ],
+      "length_m": 5.989,
+      "samples": 27,
+      "guide_m": [
+        [
+          4045.671,
+          288.025
+        ],
+        [
+          4043.597,
+          293.643
+        ]
+      ],
+      "entries": [
+        2,
+        4
+      ]
+    },
+    {
+      "members": [
+        "Tile_p04_p00_roof_48ad2789552ed924",
+        "Tile_p04_p00_roof_d490d6b3f6d4eb1e"
+      ],
+      "length_m": 5.155,
+      "samples": 24,
+      "guide_m": [
+        [
+          4046.601,
+          279.768
+        ],
+        [
+          4051.15,
+          282.193
+        ]
+      ],
+      "entries": [
+        11,
+        0
+      ]
+    },
+    {
+      "members": [
+        "Tile_p04_p00_roof_48ad2789552ed924",
+        "Tile_p04_p00_roof_f7f6c00104349e36"
+      ],
+      "length_m": 18.139,
+      "samples": 78,
+      "guide_m": [
+        [
+          4050.722,
+          276.962
+        ],
+        [
+          4043.597,
+          293.643
+        ]
+      ],
+      "entries": [
+        10,
+        4
+      ]
+    },
+    {
+      "members": [
+        "Tile_p04_p00_roof_d490d6b3f6d4eb1e",
+        "Tile_p04_p00_roof_f7f6c00104349e36"
+      ],
+      "length_m": 9.673,
+      "samples": 42,
+      "guide_m": [
+        [
+          4049.796,
+          286.217
+        ],
+        [
+          4043.597,
+          293.643
+        ]
+      ],
+      "entries": [
+        0,
+        4
+      ]
+    }
+  ],
+  "shared_party_walls": [],
+  "buildings": [
+    {
+      "id": "Tile_p04_p00_roof_0b4721b7d318c3f2",
+      "footprint": [
+        [
+          4037.424,
+          287.291
+        ],
+        [
+          4040.097,
+          279.661
+        ],
+        [
+          4046.255,
+          281.815
+        ],
+        [
+          4043.589,
+          289.434
+        ]
+      ],
+      "origin_m": [
+        4037.424,
+        287.291,
+        0.2
+      ],
+      "area_m2": 52.714,
+      "base_m": 0.2,
+      "source_roof_m": 15.0,
+      "source_wall_faces_by_edge": [
+        [
+          3668,
+          3669
+        ],
+        [
+          3670,
+          3671
+        ],
+        [
+          3672,
+          3673
+        ],
+        [
+          3666,
+          3667
+        ]
+      ],
+      "source_roof_faces": [
+        1560,
+        1561
+      ],
+      "wall_triangle_signature_by_edge": [
+        [
+          "843569b845ea60ac5ba3",
+          "d2e3114cf81190636cda"
+        ],
+        [
+          "02ea4bea48a070f5e328",
+          "4f6ee28b7c697133e6e7"
+        ],
+        [
+          "967a400a2a63efbd621a",
+          "abafaf366a2127f89656"
+        ],
+        [
+          "9fdfb4abb5dcf5ca16f4",
+          "0c1db411456f25388a35"
+        ]
+      ],
+      "roof_triangle_signatures": [
+        "6dc4eab0495fb9e9d732",
+        "131fd007956ce5ac7106"
+      ],
+      "quest_guide_distance_m": 374.605,
+      "quest_marker_buffer_clearance_m": 99.831,
+      "entry": {
+        "edge": 2,
+        "fraction": 0.5,
+        "outward": [
+          0.943883,
+          0.330279
+        ],
+        "minimum_clear_width_m": 1.5,
+        "verified_offline_approach": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              4045.17,
+              284.917
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              4046.586,
+              285.412
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              4044.922,
+              285.625
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              4046.338,
+              286.12
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              4044.674,
+              286.332
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              4046.09,
+              286.828
+            ]
+          }
+        ]
+      },
+      "other_entry_options": [
+        {
+          "edge": 2,
+          "fraction": 0.25,
+          "outward": [
+            0.943883,
+            0.330279
+          ],
+          "minimum_clear_width_m": 1.5,
+          "verified_offline_approach": [
+            {
+              "tangent_offset_m": -0.75,
+              "wall_xy_m": [
+                4045.836,
+                283.012
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4047.252,
+                283.507
+              ]
+            },
+            {
+              "tangent_offset_m": 0,
+              "wall_xy_m": [
+                4045.588,
+                283.72
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4047.004,
+                284.215
+              ]
+            },
+            {
+              "tangent_offset_m": 0.75,
+              "wall_xy_m": [
+                4045.341,
+                284.428
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4046.757,
+                284.923
+              ]
+            }
+          ]
+        },
+        {
+          "edge": 2,
+          "fraction": 0.75,
+          "outward": [
+            0.943883,
+            0.330279
+          ],
+          "minimum_clear_width_m": 1.5,
+          "verified_offline_approach": [
+            {
+              "tangent_offset_m": -0.75,
+              "wall_xy_m": [
+                4044.503,
+                286.821
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4045.919,
+                287.317
+              ]
+            },
+            {
+              "tangent_offset_m": 0,
+              "wall_xy_m": [
+                4044.256,
+                287.529
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4045.671,
+                288.025
+              ]
+            },
+            {
+              "tangent_offset_m": 0.75,
+              "wall_xy_m": [
+                4044.008,
+                288.237
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4045.424,
+                288.733
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Tile_p04_p00_roof_48ad2789552ed924",
+      "footprint": [
+        [
+          4020.659,
+          260.52
+        ],
+        [
+          4023.89,
+          249.088
+        ],
+        [
+          4030.356,
+          250.905
+        ],
+        [
+          4028.549,
+          257.301
+        ],
+        [
+          4032.953,
+          258.541
+        ],
+        [
+          4032.624,
+          259.689
+        ],
+        [
+          4037.277,
+          260.992
+        ],
+        [
+          4036.863,
+          262.461
+        ],
+        [
+          4046.568,
+          265.198
+        ],
+        [
+          4045.688,
+          268.313
+        ],
+        [
+          4051.174,
+          269.86
+        ],
+        [
+          4048.647,
+          278.785
+        ],
+        [
+          4042.085,
+          276.942
+        ],
+        [
+          4043.18,
+          273.065
+        ],
+        [
+          4031.959,
+          269.91
+        ],
+        [
+          4032.479,
+          268.076
+        ],
+        [
+          4028.219,
+          266.884
+        ],
+        [
+          4028.794,
+          264.852
+        ],
+        [
+          4025.416,
+          263.906
+        ],
+        [
+          4025.952,
+          262.006
+        ]
+      ],
+      "origin_m": [
+        4020.659,
+        260.52,
+        0.2
+      ],
+      "area_m2": 307.334,
+      "base_m": 0.2,
+      "source_roof_m": 15.0,
+      "source_wall_faces_by_edge": [
+        [
+          3692,
+          3693
+        ],
+        [
+          3694,
+          3695
+        ],
+        [
+          3696,
+          3697
+        ],
+        [
+          3698,
+          3699
+        ],
+        [
+          3700,
+          3701
+        ],
+        [
+          3702,
+          3703
+        ],
+        [
+          3704,
+          3705
+        ],
+        [
+          3706,
+          3707
+        ],
+        [
+          3708,
+          3709
+        ],
+        [
+          3710,
+          3711
+        ],
+        [
+          3712,
+          3713
+        ],
+        [
+          3714,
+          3715
+        ],
+        [
+          3716,
+          3717
+        ],
+        [
+          3718,
+          3719
+        ],
+        [
+          3720,
+          3721
+        ],
+        [
+          3722,
+          3723
+        ],
+        [
+          3724,
+          3725
+        ],
+        [
+          3726,
+          3727
+        ],
+        [
+          3728,
+          3729
+        ],
+        [
+          3690,
+          3691
+        ]
+      ],
+      "source_roof_faces": [
+        1568,
+        1569,
+        1570,
+        1571,
+        1572,
+        1573,
+        1574,
+        1575,
+        1576,
+        1577,
+        1578,
+        1579,
+        1580,
+        1581,
+        1582,
+        1583,
+        1584,
+        1585
+      ],
+      "wall_triangle_signature_by_edge": [
+        [
+          "2142bbb9340ff5e6b463",
+          "0524cb33d07a5dbc8033"
+        ],
+        [
+          "f3fc76173883928b9f82",
+          "1b3c05edb0fcb7278151"
+        ],
+        [
+          "2d338783be7abba08bc7",
+          "9d150efe372fa4e665e7"
+        ],
+        [
+          "6e71741ecb33b892731f",
+          "f533e886941d1b12c858"
+        ],
+        [
+          "c5ffb43d99af1e26f957",
+          "2130572eb7847d048cc9"
+        ],
+        [
+          "ecd7b3bdaf01bf21130e",
+          "8bd0521c79913214ea54"
+        ],
+        [
+          "189b8a9299dee5571c03",
+          "bd162963bd7c3af55f8e"
+        ],
+        [
+          "d49b7510c9f81d744a14",
+          "cc0b317980bac8640433"
+        ],
+        [
+          "3bce420fe3b637f275ca",
+          "ffd722b35db3d0862c76"
+        ],
+        [
+          "cf888c66d2c9ada132a0",
+          "0e069de6553df975a057"
+        ],
+        [
+          "103a857b83c6b81248ef",
+          "e7ccb138822b134e6d2f"
+        ],
+        [
+          "6d82b65e78d1459df215",
+          "98496deab446d2fe443a"
+        ],
+        [
+          "4444a0374254cd97e8a5",
+          "74933be05862ab484848"
+        ],
+        [
+          "b8d3543fe5d393e38deb",
+          "a15164cde6b481226e89"
+        ],
+        [
+          "9582828dc427fe6a36d2",
+          "256d32845c9d5863cc72"
+        ],
+        [
+          "ec13bd975b07f6240f91",
+          "bc3f0fff56aa7caf3019"
+        ],
+        [
+          "1010e8330d4a98d160a8",
+          "6345322191cb7fcbd44f"
+        ],
+        [
+          "b0b32bcc7d958c5c6ac6",
+          "d13a6316885a85cb52dc"
+        ],
+        [
+          "4c157a79cf3f85b2beb7",
+          "a73068490cc94cdff846"
+        ],
+        [
+          "3509fe30441a279b4d10",
+          "1a7b81333b04948688f3"
+        ]
+      ],
+      "roof_triangle_signatures": [
+        "e17b13ab76b74d5ff8a8",
+        "f4cbb71cb7a5d86fa2c4",
+        "95fa2474f972af8abd56",
+        "7c6ca2fa3ca7377507ec",
+        "37c6b57ab1db5d67b14d",
+        "ac336c3d444c2e6d1634",
+        "175494de2dfd0c5c5cd3",
+        "43bc5a71355d8f4d7896",
+        "5d311abcdd09a09a997b",
+        "21f05496cdf0a1e5e1f7",
+        "0cb38c1ad80f6d17f9be",
+        "99bfc411fe0689580679",
+        "b4f117108806cac7ad5e",
+        "56b017b8973ffbc94276",
+        "a3556c97d3f3b2b78ad2",
+        "a406c1baa4eaf4815a42",
+        "b3779e35eb53f2901afd",
+        "f721f359f0b4bdc33b41"
+      ],
+      "quest_guide_distance_m": 340.567,
+      "quest_marker_buffer_clearance_m": 79.503,
+      "entry": {
+        "edge": 10,
+        "fraction": 0.5,
+        "outward": [
+          0.962176,
+          0.272428
+        ],
+        "minimum_clear_width_m": 1.5,
+        "verified_offline_approach": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              4050.115,
+              273.601
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              4051.558,
+              274.01
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              4049.91,
+              274.322
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              4051.354,
+              274.731
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              4049.706,
+              275.044
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              4051.149,
+              275.453
+            ]
+          }
+        ]
+      },
+      "other_entry_options": [
+        {
+          "edge": 10,
+          "fraction": 0.25,
+          "outward": [
+            0.962176,
+            0.272428
+          ],
+          "minimum_clear_width_m": 1.5,
+          "verified_offline_approach": [
+            {
+              "tangent_offset_m": -0.75,
+              "wall_xy_m": [
+                4050.747,
+                271.37
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4052.19,
+                271.778
+              ]
+            },
+            {
+              "tangent_offset_m": 0,
+              "wall_xy_m": [
+                4050.542,
+                272.091
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4051.986,
+                272.5
+              ]
+            },
+            {
+              "tangent_offset_m": 0.75,
+              "wall_xy_m": [
+                4050.338,
+                272.813
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4051.781,
+                273.222
+              ]
+            }
+          ]
+        },
+        {
+          "edge": 10,
+          "fraction": 0.75,
+          "outward": [
+            0.962176,
+            0.272428
+          ],
+          "minimum_clear_width_m": 1.5,
+          "verified_offline_approach": [
+            {
+              "tangent_offset_m": -0.75,
+              "wall_xy_m": [
+                4049.483,
+                275.832
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4050.926,
+                276.241
+              ]
+            },
+            {
+              "tangent_offset_m": 0,
+              "wall_xy_m": [
+                4049.279,
+                276.554
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4050.722,
+                276.962
+              ]
+            },
+            {
+              "tangent_offset_m": 0.75,
+              "wall_xy_m": [
+                4049.074,
+                277.275
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4050.518,
+                277.684
+              ]
+            }
+          ]
+        },
+        {
+          "edge": 11,
+          "fraction": 0.25,
+          "outward": [
+            -0.270397,
+            0.962749
+          ],
+          "minimum_clear_width_m": 1.5,
+          "verified_offline_approach": [
+            {
+              "tangent_offset_m": -0.75,
+              "wall_xy_m": [
+                4047.729,
+                278.527
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4047.323,
+                279.971
+              ]
+            },
+            {
+              "tangent_offset_m": 0,
+              "wall_xy_m": [
+                4047.006,
+                278.324
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4046.601,
+                279.768
+              ]
+            },
+            {
+              "tangent_offset_m": 0.75,
+              "wall_xy_m": [
+                4046.284,
+                278.121
+              ],
+              "first_continuous_road_distance_m": 0.75,
+              "road_clear_to_xy_m": [
+                4045.811,
+                279.806
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Tile_p04_p00_roof_d490d6b3f6d4eb1e",
+      "footprint": [
+        [
+          4053.408,
+          289.96
+        ],
+        [
+          4056.58,
+          282.099
+        ],
+        [
+          4077.894,
+          290.662
+        ],
+        [
+          4074.863,
+          298.16
+        ],
+        [
+          4070.72,
+          296.493
+        ],
+        [
+          4069.933,
+          298.442
+        ],
+        [
+          4059.722,
+          294.344
+        ],
+        [
+          4060.368,
+          292.759
+        ]
+      ],
+      "origin_m": [
+        4053.408,
+        289.96,
+        0.2
+      ],
+      "area_m2": 211.788,
+      "base_m": 0.2,
+      "source_roof_m": 15.0,
+      "source_wall_faces_by_edge": [
+        [
+          3652,
+          3653
+        ],
+        [
+          3654,
+          3655
+        ],
+        [
+          3656,
+          3657
+        ],
+        [
+          3658,
+          3659
+        ],
+        [
+          3660,
+          3661
+        ],
+        [
+          3662,
+          3663
+        ],
+        [
+          3664,
+          3665
+        ],
+        [
+          3650,
+          3651
+        ]
+      ],
+      "source_roof_faces": [
+        1554,
+        1555,
+        1556,
+        1557,
+        1558,
+        1559
+      ],
+      "wall_triangle_signature_by_edge": [
+        [
+          "feff02c29afc27cd381f",
+          "e0a109f8666d432bbfd8"
+        ],
+        [
+          "c3a1d39b6defa6fc57b1",
+          "d5a2bcbabd76933fd342"
+        ],
+        [
+          "cdb1f4e88d65a389daee",
+          "69292bae3223da06870c"
+        ],
+        [
+          "5e52ce5baa6242d19197",
+          "8ebf196e24fe199cd1e3"
+        ],
+        [
+          "3171ff922ec60ee19f13",
+          "48517ca8a02045f48235"
+        ],
+        [
+          "1c9b50723617df61cd3e",
+          "07c32c013deefaa20c56"
+        ],
+        [
+          "cb538db616bc97bbb508",
+          "61b99dbb822744aa97d0"
+        ],
+        [
+          "21b42af69900ff7d0710",
+          "4c3c4696812a0c45f05a"
+        ]
+      ],
+      "roof_triangle_signatures": [
+        "748b3f0e18ad8f2ad28c",
+        "757da52844fe14a753ff",
+        "075810523cb6fb5799df",
+        "2b48661e0262cb71035d",
+        "a0d639801a877f159076",
+        "6cb9609c7ec23d3a6a3c"
+      ],
+      "quest_guide_distance_m": 382.323,
+      "quest_marker_buffer_clearance_m": 115.995,
+      "entry": {
+        "edge": 0,
+        "fraction": 0.5,
+        "outward": [
+          -0.92735,
+          -0.374196
+        ],
+        "minimum_clear_width_m": 1.5,
+        "verified_offline_approach": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              4054.713,
+              286.725
+            ],
+            "first_continuous_road_distance_m": 3.75,
+            "road_clear_to_xy_m": [
+              4050.308,
+              284.948
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              4054.994,
+              286.029
+            ],
+            "first_continuous_road_distance_m": 3.75,
+            "road_clear_to_xy_m": [
+              4050.589,
+              284.252
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              4055.275,
+              285.334
+            ],
+            "first_continuous_road_distance_m": 3.75,
+            "road_clear_to_xy_m": [
+              4050.87,
+              283.557
+            ]
+          }
+        ]
+      },
+      "other_entry_options": [
+        {
+          "edge": 0,
+          "fraction": 0.25,
+          "outward": [
+            -0.92735,
+            -0.374196
+          ],
+          "minimum_clear_width_m": 1.5,
+          "verified_offline_approach": [
+            {
+              "tangent_offset_m": -0.75,
+              "wall_xy_m": [
+                4053.92,
+                288.69
+              ],
+              "first_continuous_road_distance_m": 3.5,
+              "road_clear_to_xy_m": [
+                4049.747,
+                287.006
+              ]
+            },
+            {
+              "tangent_offset_m": 0,
+              "wall_xy_m": [
+                4054.201,
+                287.995
+              ],
+              "first_continuous_road_distance_m": 3.75,
+              "road_clear_to_xy_m": [
+                4049.796,
+                286.217
+              ]
+            },
+            {
+              "tangent_offset_m": 0.75,
+              "wall_xy_m": [
+                4054.482,
+                287.299
+              ],
+              "first_continuous_road_distance_m": 3.75,
+              "road_clear_to_xy_m": [
+                4050.077,
+                285.522
+              ]
+            }
+          ]
+        },
+        {
+          "edge": 0,
+          "fraction": 0.75,
+          "outward": [
+            -0.92735,
+            -0.374196
+          ],
+          "minimum_clear_width_m": 1.5,
+          "verified_offline_approach": [
+            {
+              "tangent_offset_m": -0.75,
+              "wall_xy_m": [
+                4055.506,
+                284.76
+              ],
+              "first_continuous_road_distance_m": 4.0,
+              "road_clear_to_xy_m": [
+                4050.87,
+                282.889
+              ]
+            },
+            {
+              "tangent_offset_m": 0,
+              "wall_xy_m": [
+                4055.787,
+                284.064
+              ],
+              "first_continuous_road_distance_m": 4.0,
+              "road_clear_to_xy_m": [
+                4051.15,
+                282.193
+              ]
+            },
+            {
+              "tangent_offset_m": 0.75,
+              "wall_xy_m": [
+                4056.068,
+                283.369
+              ],
+              "first_continuous_road_distance_m": 4.0,
+              "road_clear_to_xy_m": [
+                4051.431,
+                281.498
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Tile_p04_p00_roof_f7f6c00104349e36",
+      "footprint": [
+        [
+          4018.759,
+          295.679
+        ],
+        [
+          4021.696,
+          286.743
+        ],
+        [
+          4036.725,
+          291.657
+        ],
+        [
+          4037.442,
+          289.473
+        ],
+        [
+          4042.812,
+          291.228
+        ],
+        [
+          4040.253,
+          299.017
+        ],
+        [
+          4036.019,
+          297.625
+        ],
+        [
+          4034.924,
+          300.968
+        ]
+      ],
+      "origin_m": [
+        4018.759,
+        295.679,
+        0.2
+      ],
+      "area_m2": 199.248,
+      "base_m": 0.2,
+      "source_roof_m": 15.0,
+      "source_wall_faces_by_edge": [
+        [
+          3676,
+          3677
+        ],
+        [
+          3678,
+          3679
+        ],
+        [
+          3680,
+          3681
+        ],
+        [
+          3682,
+          3683
+        ],
+        [
+          3684,
+          3685
+        ],
+        [
+          3686,
+          3687
+        ],
+        [
+          3688,
+          3689
+        ],
+        [
+          3674,
+          3675
+        ]
+      ],
+      "source_roof_faces": [
+        1562,
+        1563,
+        1564,
+        1565,
+        1566,
+        1567
+      ],
+      "wall_triangle_signature_by_edge": [
+        [
+          "94a6aa58c0131166a88c",
+          "640dc04839384afa3770"
+        ],
+        [
+          "89766077a4e4a5356a54",
+          "a66569529d495558ed54"
+        ],
+        [
+          "e6df8bafdc09b6154fb7",
+          "aa0e577eb4f86a598ffb"
+        ],
+        [
+          "4a99e032f9826266f252",
+          "982c722dbac20ea9c763"
+        ],
+        [
+          "7f74fa14ee3ed5d84f9e",
+          "98f3e8a7a04db951ca6d"
+        ],
+        [
+          "7857cb000ea3f753cc38",
+          "6a59ca4831c6006f5e3e"
+        ],
+        [
+          "21cb1ac6df2cba1274d7",
+          "36ea4178ac69bd6f422f"
+        ],
+        [
+          "6e55a7995d2f7332f579",
+          "c1a994f270e3deb32673"
+        ]
+      ],
+      "roof_triangle_signatures": [
+        "801334338eae345a1a9a",
+        "5217769cd5b7288f6771",
+        "b53a6a4d90d3e19cece3",
+        "cfbb13bc68a5eac467ee",
+        "1a744f497d0093cd3c7c",
+        "147a94447bd0a087c93d"
+      ],
+      "quest_guide_distance_m": 376.152,
+      "quest_marker_buffer_clearance_m": 84.352,
+      "entry": {
+        "edge": 4,
+        "fraction": 0.5,
+        "outward": [
+          0.950041,
+          0.312127
+        ],
+        "minimum_clear_width_m": 1.5,
+        "verified_offline_approach": [
+          {
+            "tangent_offset_m": -0.75,
+            "wall_xy_m": [
+              4041.767,
+              294.41
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              4043.192,
+              294.878
+            ]
+          },
+          {
+            "tangent_offset_m": 0,
+            "wall_xy_m": [
+              4041.533,
+              295.123
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              4042.958,
+              295.591
+            ]
+          },
+          {
+            "tangent_offset_m": 0.75,
+            "wall_xy_m": [
+              4041.298,
+              295.835
+            ],
+            "first_continuous_road_distance_m": 0.5,
+            "road_clear_to_xy_m": [
+              4042.723,
+              296.303
+            ]
+          }
+        ]
+      },
+      "other_entry_options": [
+        {
+          "edge": 4,
+          "fraction": 0.25,
+          "outward": [
+            0.950041,
+            0.312127
+          ],
+          "minimum_clear_width_m": 1.5,
+          "verified_offline_approach": [
+            {
+              "tangent_offset_m": -0.75,
+              "wall_xy_m": [
+                4042.406,
+                292.463
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4043.831,
+                292.931
+              ]
+            },
+            {
+              "tangent_offset_m": 0,
+              "wall_xy_m": [
+                4042.172,
+                293.175
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4043.597,
+                293.643
+              ]
+            },
+            {
+              "tangent_offset_m": 0.75,
+              "wall_xy_m": [
+                4041.938,
+                293.888
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4043.363,
+                294.356
+              ]
+            }
+          ]
+        },
+        {
+          "edge": 4,
+          "fraction": 0.75,
+          "outward": [
+            0.950041,
+            0.312127
+          ],
+          "minimum_clear_width_m": 1.5,
+          "verified_offline_approach": [
+            {
+              "tangent_offset_m": -0.75,
+              "wall_xy_m": [
+                4041.127,
+                296.357
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4042.552,
+                296.825
+              ]
+            },
+            {
+              "tangent_offset_m": 0,
+              "wall_xy_m": [
+                4040.893,
+                297.07
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4042.318,
+                297.538
+              ]
+            },
+            {
+              "tangent_offset_m": 0.75,
+              "wall_xy_m": [
+                4040.659,
+                297.782
+              ],
+              "first_continuous_road_distance_m": 0.5,
+              "road_clear_to_xy_m": [
+                4042.084,
+                298.25
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "review_before_replacement": [
+    "Resolve the current source tile and protect its materials, roads and gameplay collision.",
+    "Combine every previously accepted replacement mask for this tile into the derivative from the canonical export.",
+    "Screen live authored actor descriptors and overlays including site-specific landmarks and quest actors.",
+    "Reproduce source floor and side-wall traces, capsule sweeps along road links and door approaches, and roof access checks.",
+    "Contain the replacement shells, recesses and eaves inside the original horizontal extents."
+  ],
+  "attribution": "Base geometry: OpenStreetMap contributors, ODbL 1.0."
+}
