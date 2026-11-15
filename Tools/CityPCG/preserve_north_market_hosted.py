@@ -373,23 +373,65 @@ def smudge_to_file(env,store,item,pointer,dest):
             raise
 
 
+READBACK_STAGES={
+    'environment-start':'checking environment.',
+    'environment-ok':'environment verified.',
+    'pointer-ok':'committed pointer verified.',
+    'smudge-ok':'smudge completed.',
+    'hash-ok':'output and cache size and SHA-256 verified.',
+}
+SAFE_FAILURE_CODES={
+    'git-command','lfs-readback-env-command','lfs-readback-environment',
+    'lfs-pointer','lfs-readback-cache-not-empty','lfs-smudge-exit',
+    'lfs-readback','file-size','git-alternates','lfs-standalone-agent','lfsconfig',
+}
+
+
+def readback_progress(item,stage):
+    key=item.get('key')
+    if key not in {known['key'] for known in ARTIFACTS} or stage not in READBACK_STAGES:
+        raise RuntimeError('readback-progress')
+    print('Readback '+key+': '+READBACK_STAGES[stage],flush=True)
+
+
+def safe_failure_reason(exc):
+    # Exception text can contain authenticated URLs; only fixed codes leave here.
+    if (type(exc) is RuntimeError and len(exc.args)==1 and type(exc.args[0]) is str
+            and exc.args[0] in SAFE_FAILURE_CODES):
+        return exc.args[0]
+    if isinstance(exc,subprocess.TimeoutExpired): return 'subprocess-timeout'
+    if type(exc) is TimeoutError: return 'overall-timeout'
+    if isinstance(exc,OSError): return 'io-error'
+    return 'unclassified'
+
+
 def verify_lfs_readback(env,stage,commit,item):
     store=stage/('lfs-readback-'+item['key'])
     store.mkdir()
     scoped=readback_environment(env)
     options=readback_options(store)
-    check_readback_environment(git(scoped,*options,'lfs','env').stdout,store)
+    readback_progress(item,'environment-start')
+    try:
+        result=git(scoped,*options,'lfs','env')
+    except RuntimeError as exc:
+        if exc.args==('git-command',): raise RuntimeError('lfs-readback-env-command') from None
+        raise
+    check_readback_environment(result.stdout,store)
+    readback_progress(item,'environment-ok')
     rel=(TARGET_REL/(item['key']+'.zip')).as_posix()
     pointer=git(env,'show',commit+':'+rel).stdout
     check_pointer(pointer,item)
+    readback_progress(item,'pointer-ok')
     cached=store/'objects'/item['sha256'][:2]/item['sha256'][2:4]/item['sha256']
     if cached.exists() or cached.is_symlink():
         raise RuntimeError('lfs-readback-cache-not-empty')
     output=stage/('lfs-output-'+item['key'])
     smudge_to_file(scoped,store,item,pointer,output)
+    readback_progress(item,'smudge-ok')
     expected=(item['size'],item['sha256'])
     if sha_file(output,item['size'])!=expected or sha_file(cached,item['size'])!=expected:
         raise RuntimeError('lfs-readback')
+    readback_progress(item,'hash-ok')
 
 
 def overall_timeout(_signum,_frame):
@@ -465,6 +507,7 @@ def run(ctx):
         if sha_file(TARGET/(item['key']+'.zip'),item['size'])!=(item['size'],item['sha256']):
             raise RuntimeError('prepush-integrity')
     check_no_readback_alternates(readback_environment(env),ctx['sha'])
+    print('LFS readback isolation preflight verified.',flush=True)
     print('Uploading the four verified LFS objects.',flush=True)
     git(env,'lfs','push','--object-id','origin',*oids)
     print('LFS upload completed; checking remote readback.',flush=True)
@@ -487,9 +530,10 @@ def main():
     argparse.ArgumentParser(description=__doc__).parse_args()
     try:
         run(context())
-    except Exception:
+    except Exception as exc:
         # Do not print exception text: HTTP and Git errors may contain tokens or signed URLs.
         print('Preservation refused or failed; no sensitive request details are logged.',file=sys.stderr)
+        print('Failure category: '+safe_failure_reason(exc),file=sys.stderr)
         return 1
     return 0
 

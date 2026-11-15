@@ -136,11 +136,43 @@ class PreservationTests(unittest.TestCase):
                  mock.patch.object(p.Path,'exists',return_value=False), \
                  mock.patch.object(p.Path,'is_symlink',return_value=False), \
                  mock.patch.object(p,'git',side_effect=replies), \
-                 mock.patch.object(p,'smudge_to_file'),mock.patch.object(p,'sha_file',side_effect=values):
-                if ok: p.verify_lfs_readback({},Path('/stage'),'a'*40,item)
+                 mock.patch.object(p,'smudge_to_file'),mock.patch.object(p,'sha_file',side_effect=values), \
+                 mock.patch.object(p,'readback_progress') as progress:
+                if ok:
+                    p.verify_lfs_readback({},Path('/stage'),'a'*40,item)
+                    self.assertEqual([c.args[1] for c in progress.call_args_list],
+                                     ['environment-start','environment-ok','pointer-ok','smudge-ok','hash-ok'])
                 else:
                     with self.assertRaisesRegex(RuntimeError,'lfs-readback'):
                         p.verify_lfs_readback({},Path('/stage'),'a'*40,item)
+                    self.assertNotIn('hash-ok',[c.args[1] for c in progress.call_args_list])
+
+    def test_progress_and_failures_emit_only_allowlisted_information(self):
+        item=p.ARTIFACTS[0]
+        with mock.patch('builtins.print') as output:
+            p.readback_progress(item,'environment-ok')
+            output.assert_called_once_with('Readback '+item['key']+': environment verified.',flush=True)
+        with mock.patch('builtins.print') as output:
+            with self.assertRaises(RuntimeError): p.readback_progress({'key':'secret-url'},'environment-ok')
+            with self.assertRaises(RuntimeError): p.readback_progress(item,'secret-url')
+            output.assert_not_called()
+        secret='https://example.invalid/?sensitive=do-not-log'
+        self.assertEqual(p.safe_failure_reason(RuntimeError('lfs-smudge-exit')),'lfs-smudge-exit')
+        self.assertEqual(p.safe_failure_reason(RuntimeError(secret)),'unclassified')
+        self.assertEqual(p.safe_failure_reason(subprocess.TimeoutExpired(secret,1)),'subprocess-timeout')
+        self.assertEqual(p.safe_failure_reason(PermissionError(secret)),'io-error')
+        sink=io.StringIO()
+        with mock.patch.object(p.sys,'argv',['preserve']),mock.patch.object(p.sys,'stderr',sink), \
+             mock.patch.object(p,'context',side_effect=RuntimeError(secret)):
+            self.assertEqual(p.main(),1)
+        self.assertNotIn(secret,sink.getvalue())
+        self.assertIn('Failure category: unclassified',sink.getvalue())
+
+    def test_readback_environment_command_has_distinct_safe_failure(self):
+        with mock.patch.object(p.Path,'mkdir'),mock.patch.object(p,'readback_progress'), \
+             mock.patch.object(p,'git',side_effect=RuntimeError('git-command')):
+            with self.assertRaisesRegex(RuntimeError,'^lfs-readback-env-command$'):
+                p.verify_lfs_readback({},Path('/stage'),'a'*40,p.ARTIFACTS[0])
 
     def test_no_readback_alternates_or_custom_agents(self):
         def response(data=b'',code=0): return SimpleNamespace(stdout=data,returncode=code)
