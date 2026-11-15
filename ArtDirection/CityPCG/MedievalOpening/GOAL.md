@@ -54,7 +54,8 @@ Blender round trips. They have not yet been imported or placed in Unreal.
 The east Royal Mint block also needs several neighboring exports before review.
 
 The cumulative rollout preflight covers 18 proposed buildings across three of
-the 117 source tile assets on disk; four of those have plans but no meshes yet.
+the 117 source tile assets on disk; four of those have rough massing studies
+but no detailed building meshes yet.
 They remain review-only: the other tiles need exports, the original section
 mapping needs verification, and candidate blocks need live actor and route checks. The
 three large modern shells immediately visible from the real spawn overlap
