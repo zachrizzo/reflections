@@ -1,0 +1,17 @@
+{
+  "mesh": "SM_GL1450_TowerApproachPaving",
+  "actor_origin_cm": [
+    338828.982,
+    29935.938,
+    0.0
+  ],
+  "mesh_sha256": "a851f0a8697117d0682979a56e5703b49e4e4d18e26b24c9578e2357d0a8c6fe",
+  "plan_sha256": "af7f32d70630f68ee042ace695d15929c851ce698974cffaabe9ecfe435de3f3",
+  "triangles": 12,
+  "source_frontages": [
+    "Tile_p03_p00_9429689c5141"
+  ],
+  "source_tile_sha256": "5c946436fce01c086598966fcca3c379381b29776e1e03df2b37ada9fb4b08f4",
+  "material_asset": "/Game/GrayLondon/MedievalOpening/Ground/SM_GL1450_OpeningGround/Materials/M_GL1450_WornCobblesAndEarth",
+  "collision_profile": "NoCollision"
+}

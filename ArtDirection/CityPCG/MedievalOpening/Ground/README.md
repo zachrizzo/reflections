@@ -52,3 +52,27 @@ python "$ground/export_street_patch.py" $verified "$ground/Leadenhall" --asset S
 ```
 
 Call `apply_west_street_patch.apply_leadenhall(verified_plan_path)` in the Gray London editor outside PIE. It repeats the floor traces and uses the same exact-package write path as the west stretch. The installed `GL_1450_Leadenhall_WestApproachPaving` actor has external package `/Game/__ExternalActors__/GrayLondon/Maps/GrayLondon_Geodata/7/TF/15RV4R9DXJFFU22AL3MZRW`.
+
+## Tower Hill approach
+
+`tower_approach_section.json` follows the verified `Tile_p03_p00_9429689c5141` frontage. The 15.30 × 3.05 m strip stays outside the protected landmark footprints and avoids the overlapping source road triangles at the far edge. All 58 floor probes hit `OSM Tile_p03_p00` at Z=28 cm. The 12-triangle mesh reuses the opening cobble material and has collision disabled.
+
+```powershell
+$ground = 'ArtDirection/CityPCG/MedievalOpening/Ground'
+$tile = 'Saved/CityPCG/Tile_p03_p00.glb'
+$survey = 'Saved/CityPCG/medieval_tower_approach_west_frontages.json'
+$plan = 'Saved/CityPCG/tower_approach_paving_candidate.json'
+$floor = 'Saved/CityPCG/tower_approach_paving_floors.json'
+$verified = 'Saved/CityPCG/tower_approach_paving_verified.json'
+python Tools/CityPCG/survey_medieval_corridor.py 'Saved/CityPCG/Tile_p03_p00.assets.json' 'ArtDirection/CityPCG/MedievalOpening/tower_approach_west_corridor.json' $survey
+python "$ground/plan_street_patch.py" $tile $plan --section "$ground/tower_approach_section.json" --survey $survey
+```
+
+Collect `$floor` from `$plan` with `collect_street_floor_traces.collect` in the Gray London editor with `OSM Tile_p03_p00` loaded outside PIE.
+
+```powershell
+python "$ground/plan_street_patch.py" $tile $verified --section "$ground/tower_approach_section.json" --survey $survey --observations $floor
+python "$ground/export_street_patch.py" $verified "$ground/TowerApproach" --asset SM_GL1450_TowerApproachPaving --manifest tower_approach_mesh.json
+```
+
+`apply_west_street_patch.apply_tower_approach(verified_plan_path)` repeats the floor trace checks and installs `GL_1450_TowerApproach_Paving`. The exact actor package is `/Game/__ExternalActors__/GrayLondon/Maps/GrayLondon_Geodata/3/A0/4CPCXST74RGMVAB4XQ8TNK`.

@@ -142,3 +142,10 @@ def apply_leadenhall(plan_path):
                   '/Game/GrayLondon/MedievalOpening/Ground/Leadenhall',
                   'GL_1450_Leadenhall_WestApproachPaving',
                   'Gray London/Medieval Opening/Leadenhall')
+
+
+def apply_tower_approach(plan_path):
+    return _apply(plan_path, ROOT.with_name('TowerApproach'), 'tower_approach_mesh.json',
+                  '/Game/GrayLondon/MedievalOpening/Ground/TowerApproach',
+                  'GL_1450_TowerApproach_Paving',
+                  'Gray London/Medieval Opening/Tower Approach')
