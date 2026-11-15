@@ -71,6 +71,13 @@ candidate blocks need live actor and route checks. The
 three large modern shells immediately visible from the real spawn overlap
 story markers, so replacing them needs a coordinated gameplay and visual review.
 
+A reproducible historical survey worklist identifies 52 additional screened
+shells across those same three exported tiles. It records eight connected
+groups and 22 singletons, with split groups and route access flagged for fresh
+review. These are candidates, not generated or approved replacements; the
+original tile and overlay exports, current protections and live actor evidence
+must be rechecked before use. The remaining tiles still need surveying.
+
 At city scale, keep each surveyed outer footprint and use spatially grouped
 building geometry and repeated details where feasible. The current individual
 models have too many separate material sections to assume they will scale;

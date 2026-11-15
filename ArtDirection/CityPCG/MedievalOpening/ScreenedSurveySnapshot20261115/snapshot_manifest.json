@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "status": "historical_review_snapshot_only",
+  "source_binaries_included": false,
+  "historical_settings_hashes_available": false,
+  "files": [
+    {
+      "file": "rollout_18_buildings_20261115.json",
+      "original_project_relative_path": "Saved/CityPCG/MedievalSurvey/rollout_18_buildings_20261115.json",
+      "original_sha256": "98501b9d8cf2af4b72afc030143412fdc82a7da6e09bc6feb60d96afce98b421",
+      "canonical_lf_sha256": "2961f2f404c2e47593c9f02948357ed3c8db0a37d71a2416d572a1ee0ef62368",
+      "original_bytes": 210297,
+      "canonical_lf_bytes": 202515
+    },
+    {
+      "file": "Tile_p03_p00_next_building_blocks.json",
+      "original_project_relative_path": "Saved/CityPCG/MedievalSurvey/Tile_p03_p00_next_building_blocks.json",
+      "original_sha256": "890cf78cc613a32588223567ec596bc5cc219a70b5cbaccadbe49e45fba2e4ff",
+      "canonical_lf_sha256": "b5a60e2e8e7711f89806a7ea0f602fae9ab5e36226c6f095e11b9eb4ea80e9fb",
+      "original_bytes": 92337,
+      "canonical_lf_bytes": 88412
+    },
+    {
+      "file": "Tile_p03_p01_next_building_blocks.json",
+      "original_project_relative_path": "Saved/CityPCG/MedievalSurvey/Tile_p03_p01_next_building_blocks.json",
+      "original_sha256": "85b4a26eed1f2cb0925b3c14a04ba15cd50dc51a1bf065f9baa77aab6ac40ac0",
+      "canonical_lf_sha256": "3e4d037e858dcbb1510e958b3fea49f72e27a8683e815f393dbbc55c54438f1b",
+      "original_bytes": 147180,
+      "canonical_lf_bytes": 140931
+    },
+    {
+      "file": "Tile_p04_p00_next_building_blocks.json",
+      "original_project_relative_path": "Saved/CityPCG/MedievalSurvey/Tile_p04_p00_next_building_blocks.json",
+      "original_sha256": "e5310a1867666cd828eabbb6fc7a6cd4e052b664e32aefee9712710543198e5b",
+      "canonical_lf_sha256": "c50415a3e941baa3a7fb1817468bee1f3bc2d5feaf7fc277af5c63d2405ce17b",
+      "original_bytes": 480823,
+      "canonical_lf_bytes": 460076
+    }
+  ]
+}
