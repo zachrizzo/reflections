@@ -5,8 +5,10 @@ building shells with complete, varied late-medieval buildings on surveyed city
 plots, then extend the approach across the playable city. Use reusable kits
 and procedural placement where they produce coherent streets; use individually
 authored or image-to-3D assets when they improve difficult landmarks. The aim
-is an inhabited city with distinct streets and visible enemy strongholds to
-reclaim. The separate people workstream owns characters and crowds.
+is an inhabited city with distinct streets and visible enemy strongholds that
+players can reclaim to win back the city. The separate people workstream owns
+characters and crowds; integrate the city objectives with the existing game
+systems without taking over that work.
 
 ## Completion checks
 
@@ -16,7 +18,8 @@ reclaim. The separate people workstream owns characters and crowds.
   remain usable. Existing source city geometry remains recoverable.
 - The medieval treatment extends beyond the opening street, with sufficient
   variation and environmental detail to make the city feel lived in.
-- Enemy-held areas are visually legible as distinct strongholds.
+- Enemy-held areas are visually legible as distinct strongholds, and the
+  player can reclaim them as part of winning back the city.
 - Work is visually inspected from the real player spawn and representative
   streets, then checked in gameplay and a refreshed standalone build.
 - Verified London changes are committed and pushed to `main` incrementally.
@@ -29,6 +32,11 @@ the original road, park, water and landmark geometry. Their assets have been
 imported and their geometry and collision settings audited. The pilot still
 needs placement, in-editor visual review, streaming/gameplay checks and a
 current standalone build; it is not yet the finished city.
+
+The next west connector has three more complete source models, checked against
+their surveyed footprints and Blender round trips. They have not yet been
+imported or placed in Unreal. Four additional plots near Leadenhall and four
+east of Royal Mint Court are offline candidates for later review.
 
 Coordinate any editor or PIE session through `Saved/PIE_LOCK.json` and the
 shared editor queue. Save only explicitly identified London-owned packages;
