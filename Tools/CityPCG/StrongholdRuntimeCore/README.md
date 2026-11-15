@@ -108,7 +108,9 @@ The Windows runner finds the installed Visual Studio x64 compiler, requires a
 free shared editor lock and finished build train, checks for at least 4 GiB
 physical and 10 GiB commit headroom, compiles only these two small C++ files
 with warnings treated as errors, and writes artifacts to a new
-directory under `Saved`. The checks cover client isolation, anchor/person and
+directory under `Saved`. Its newer Windows job-based cancellation path has
+passed fake-child tests but has not yet been exercised with a real compiler
+process. The checks cover client isolation, anchor/person and
 vertical matching, co-op hold timing, victory, restore generations, rollback,
 explicit site migration, and damaged or malformed checkpoint bytes. They do
 not replace Unreal automation, multiplayer, cook or gameplay testing.
