@@ -293,6 +293,14 @@ def ray_x(points,y,z):
     return a[0]+u*(b[0]-a[0])+v*(c[0]-a[0]) if min(u,v,1-u-v)>=-1e-7 else None
 
 
+def intersects_passage(points):
+    """Clip a triangle to the continuous Y/Z clearance, without X sampling."""
+    section=list(points)
+    for axis,limit,sign in ((1,-1.25,1),(1,1.25,-1),(2,.06,1),(2,2.70,-1)):
+        section=clip(section,axis,limit,sign) if section else []
+    return bool(section)
+
+
 def check_obj(manifest,guard):
     vertices=[]; uvs=[]; normal=None; role=None; library=None
     nv=nt=nn=nf=blocked=0
@@ -339,10 +347,7 @@ def check_obj(manifest,guard):
                 for point in vertices:
                     for axis in range(3):
                         bounds[0][axis]=min(bounds[0][axis],point[axis]); bounds[1][axis]=max(bounds[1][axis],point[axis])
-                section=vertices
-                for axis,limit,sign in ((1,-1.25,1),(1,1.25,-1),(2,.06,1),(2,2.70,-1)):
-                    section=clip(section,axis,limit,sign) if section else []
-                blocked+=bool(section)
+                blocked+=intersects_passage(vertices)
                 for name,(y,z) in probes.items():
                     hit=ray_x(vertices,y,z)
                     if hit is not None: hits[name].append(hit)
@@ -367,7 +372,7 @@ def check_obj(manifest,guard):
     report={'triangles':nf,'vertices':nv,'uvs':nt,'normals':nn,'bounds_m':bounds,
             'clear_width_m':2.5,'clear_height_m':2.7,'ignored_floor_band_m':.06,
             'obstructing_triangles':blocked,'role_triangles':dict(sorted(roles.items())),
-            'pier_header_spans_m':{n:max(hits[n])-min(hits[n]) for n in ('left','right','header')},
+            'pier_header_surface_hit_spans_m':{n:max(hits[n])-min(hits[n]) for n in ('left','right','header')},
             'lumen_hit_count':len(hits['lumen'])}
     return triangles,report
 
@@ -502,6 +507,7 @@ def run(context):
             'limitations':['GitHub environment checks prevent accidents but are not attestation',
                            'Baseline hashes came from the embedded manifest of the SHA-verified earlier ZIP; its individual files were not independently extracted',
                            'Source and QA manifests vary by run metadata and resource readings; preview PNGs have no earlier baseline',
+                           'Pier and header probes measure surface-hit spans, not continuous solid masonry or collision',
                            'Flat-color previews do not display texture details',
                            'No Unreal import, collision, navigation, placement or gameplay validation']}
     guard.check()

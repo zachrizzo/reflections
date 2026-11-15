@@ -74,5 +74,23 @@ class HostedQAGuardTests(unittest.TestCase):
                 qa.verify_output_info(name,{'sha256':'0'*64,'bytes':42},{'sha256':'0'*64,'bytes':42})
 
 
+@unittest.skipUnless(qa.sys.platform=='linux' and qa.os.environ.get('GITHUB_ACTIONS')=='true'
+                     and qa.os.environ.get('RUNNER_ENVIRONMENT')=='github-hosted',
+                     'Synthetic geometry runs only on the hosted runner')
+class HostedCorridorRegressions(unittest.TestCase):
+    def test_triangle_crossing_with_no_vertex_inside_is_blocked(self):
+        self.assertTrue(qa.intersects_passage([(-2,-2,1),(0,2,1),(2,0,4)]))
+
+    def test_triangle_outside_corridor_is_clear(self):
+        self.assertFalse(qa.intersects_passage([(0,1.4,1),(1,2,1),(-1,1.4,2)]))
+
+    def test_boundary_contact_is_blocked(self):
+        self.assertTrue(qa.intersects_passage([(0,1.25,1),(1,1.6,1),(-1,1.6,2)]))
+
+    def test_ignored_floor_band_and_its_boundary(self):
+        self.assertFalse(qa.intersects_passage([(0,-.5,.02),(1,.5,.03),(-1,0,.059)]))
+        self.assertTrue(qa.intersects_passage([(0,-.5,.06),(1,.5,.06),(-1,0,.06)]))
+
+
 if __name__=='__main__':
     unittest.main()
