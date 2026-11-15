@@ -40,11 +40,12 @@ workstreams.
 
 ## Current checkpoint
 
-A GitHub-hosted merchant-gate source export succeeded, and its downloaded
-archive matches the expected checksum. Its manifest reports 5,973 triangles
-and a 2.5 m by 2.7 m clear passage. The geometry and materials have not yet
-been independently reviewed, and this gate has not been imported into Unreal
-or placed in the playable map.
+A GitHub-hosted merchant-gate source export and independent source review
+passed. The review checked 5,973 triangles, material references and a clear
+2.5 m by 2.7 m passage through the full depth above a 6 cm floor band. Two
+flat-color previews were produced but have not yet been visually reviewed.
+The gate has not been imported into Unreal or placed in the playable map;
+collision, navigation and in-game appearance remain unverified.
 
 The first West Mark Lane pilot has three complete medieval buildings and a
 filtered source tile that removes their three surveyed shells while retaining
