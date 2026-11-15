@@ -114,19 +114,19 @@ def fbx_options(unreal):
     return options
 
 
-def package_path(name):
-    return f'{DEST}/{name}'
+def package_path(name, destination=DEST):
+    return f'{destination}/{name}'
 
 
 def package_file(name):
     return PROJECT / 'Content' / (package_path(name).removeprefix('/Game/') + '.uasset')
 
 
-def import_mesh(unreal, name, options):
+def import_mesh(unreal, name, options, *, source_file=None, destination=DEST):
     task = unreal.AssetImportTask()
     task.set_editor_properties({
-        'filename': str(WORK / 'Source' / f'{name}.fbx'),
-        'destination_path': DEST,
+        'filename': str(source_file if source_file is not None else WORK / 'Source' / f'{name}.fbx'),
+        'destination_path': destination,
         'destination_name': name,
         'automated': True,
         'replace_existing': False,
@@ -136,7 +136,7 @@ def import_mesh(unreal, name, options):
     })
     unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
     reported = [str(path) for path in task.get_editor_property('imported_object_paths')]
-    exact = f'{package_path(name)}.{name}'
+    exact = f'{package_path(name, destination)}.{name}'
     if reported != [exact]:
         raise RuntimeError(f'{name}: expected only {exact}, import reported {reported}')
     return unreal.load_asset(exact, unreal.StaticMesh)
@@ -185,8 +185,8 @@ def verify_geometry(unreal, mesh, outline, audit):
     return len(outline), volume
 
 
-def verify_mesh(unreal, mesh, name, spec, audit):
-    path = package_path(name)
+def verify_mesh(unreal, mesh, name, spec, audit, *, destination=DEST):
+    path = package_path(name, destination)
     if not isinstance(mesh, unreal.StaticMesh) or mesh.get_path_name() != f'{path}.{name}':
         raise RuntimeError(f'Expected owned static mesh {path}')
     editor = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
@@ -229,9 +229,9 @@ def configure_collision(unreal, mesh):
         raise RuntimeError(f'{mesh.get_name()}: could not configure ComplexAsSimple collision')
 
 
-def verify_registry(unreal, rows):
+def verify_registry(unreal, rows, *, destination=DEST):
     registry = unreal.AssetRegistryHelpers.get_asset_registry()
-    registry.scan_paths_synchronous([DEST], True)
+    registry.scan_paths_synchronous([destination], True)
     options = unreal.AssetRegistryDependencyOptions()
     options.set_editor_property('include_soft_package_references', False)
     for row in rows.values():
