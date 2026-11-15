@@ -44,9 +44,10 @@ The fetcher keeps a partial file and resumes in short sessions, publishing
 the completed checkpoint only after checking that hash. It defers during an
 editor lease or build, a closed editor, or low memory. Re-run it in an idle
 window until verification completes. The fetcher's resume, lock and hash checks
-pass small offline tests; the full network transfer has not run yet. A separate
-inference runner and a successful generation are still needed; fetching files
-alone produces no 3D asset.
+pass small offline tests; the full network transfer has not run yet. The
+[isolated inference runner](../../../../../Tools/CityPCG/README_MERCHANT_GATE_TRIPOSR.md)
+has passed guard and synthetic geometry tests, but its first real generation
+is still needed; fetching files alone produces no 3D asset.
 
 ## Prepare a local trial
 

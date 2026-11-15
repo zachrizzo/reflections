@@ -22,6 +22,9 @@ MAX_BYTES_PER_SECOND = 16 * 1024 * 1024
 
 
 def window_open():
+    lock = PROJECT / 'Saved/PIE_LOCK.json'
+    if lock.exists() or lock.is_symlink():
+        raise RuntimeError('A shared editor lease file is present; defer the download')
     require_editor_available()
     require_memory()
     if sys.platform != 'win32':

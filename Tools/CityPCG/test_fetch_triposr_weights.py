@@ -99,6 +99,7 @@ class DownloadTests(unittest.TestCase):
 class EditorStateTests(unittest.TestCase):
     def test_closed_editor_is_not_treated_as_an_idle_window(self):
         with patch.object(fetch, 'require_editor_available'), patch.object(fetch, 'require_memory'), \
+             patch.object(fetch.Path, 'exists', return_value=False), patch.object(fetch.Path, 'is_symlink', return_value=False), \
              patch.object(fetch.sys, 'platform', 'win32'), \
              patch.object(fetch.subprocess, 'run', return_value=SimpleNamespace(stdout='INFO: No tasks found.')):
             with self.assertRaisesRegex(RuntimeError, 'closed or restarting'):
@@ -106,9 +107,16 @@ class EditorStateTests(unittest.TestCase):
 
     def test_running_editor_allows_window_after_other_guards(self):
         with patch.object(fetch, 'require_editor_available'), patch.object(fetch, 'require_memory'), \
+             patch.object(fetch.Path, 'exists', return_value=False), patch.object(fetch.Path, 'is_symlink', return_value=False), \
              patch.object(fetch.sys, 'platform', 'win32'), \
              patch.object(fetch.subprocess, 'run', return_value=SimpleNamespace(stdout='"UnrealEditor.exe","123","Console"\n')):
             fetch.window_open()
+
+    def test_any_lease_file_blocks_even_before_its_expiration_is_examined(self):
+        with patch.object(fetch.Path, 'exists', return_value=True), patch.object(fetch, 'require_editor_available') as check:
+            with self.assertRaisesRegex(RuntimeError, 'lease file'):
+                fetch.window_open()
+        check.assert_not_called()
 
 
 if __name__ == '__main__':
