@@ -29,6 +29,8 @@ jobs:
             /.github/workflows/merchant-gate-hosted-source.yml
             /Tools/CityPCG/export_merchant_gate_hosted.py
             /Tools/CityPCG/test_export_merchant_gate_hosted.py
+            /Tools/CityPCG/qa_merchant_gate_hosted.py
+            /Tools/CityPCG/test_qa_merchant_gate_hosted.py
             /Tools/CityPCG/build_merchant_gate_procedural.py
             /Tools/CityPCG/test_build_merchant_gate_procedural.py
             /Tools/CityPCG/audit_merchant_gate.py
@@ -77,15 +79,28 @@ jobs:
         run: |
           python3 -B Tools/CityPCG/test_build_merchant_gate_procedural.py -v
           python3 -B Tools/CityPCG/test_export_merchant_gate_hosted.py -v
+          python3 -B Tools/CityPCG/test_qa_merchant_gate_hosted.py -v
 
       - name: Export review-only gate source
         run: python3 -B Tools/CityPCG/export_merchant_gate_hosted.py
+
+      - name: Independently review source and render flat-color previews
+        run: python3 -B Tools/CityPCG/qa_merchant_gate_hosted.py
 
       - name: Upload gate source for review
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: merchant-gate-source
           path: ci-merchant-gate-source/
+          if-no-files-found: error
+          retention-days: 1
+          include-hidden-files: false
+
+      - name: Upload independent gate review
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: merchant-gate-source-qa
+          path: ci-merchant-gate-qa/
           if-no-files-found: error
           retention-days: 1
           include-hidden-files: false
