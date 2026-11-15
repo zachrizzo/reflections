@@ -40,15 +40,18 @@ filtered source tile that removes their three surveyed shells while retaining
 the other exported primitives. An offline comparison now matches all six
 original source mesh groups to their exported primitives by exact signed
 geometry. The source group named `GL_Road` has 18,340 triangles, all retained
-in the filtered and import files. Unreal's live section-to-material binding
-still needs verification before runtime road, park, water and landmark
-preservation can be claimed. The saved Unreal replacement asset also needs an
-independent geometry check. The building assets have been imported and their
-geometry and collision settings audited. The pilot still
-needs placement, in-editor visual review, streaming/gameplay checks and a
-current standalone build; it is not yet the finished city. Its runtime module
-was linked into shared editor build #15, with the replacement disabled by
-default until the pilot is verified.
+in the filtered and import files. The saved source and replacement assets also
+both have six matching LOD0 section-to-material indices and expected material
+slot names; the replacement's material references match the previously
+recorded effective source-actor materials. These are saved-file checks:
+Unreal's live section-to-material binding still needs verification before
+runtime road, park, water and landmark preservation can be claimed. The saved
+Unreal replacement asset also needs an independent geometry check. The building
+assets have been imported and their geometry and collision settings audited.
+The pilot still needs placement, in-editor visual review, streaming/gameplay
+checks and a current standalone build; it is not yet the finished city. Its
+runtime module was linked into shared editor build #15, with the replacement
+disabled by default until the pilot is verified.
 
 The west connector, northwest Leadenhall and east Royal Mint blocks have eleven
 more complete source models, checked against their surveyed footprints and
