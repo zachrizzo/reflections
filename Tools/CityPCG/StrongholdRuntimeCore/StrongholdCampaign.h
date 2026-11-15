@@ -12,9 +12,10 @@
 namespace GrayLondonStrongholds
 {
 enum class Role { Authority, Client };
-enum class Stage { AwaitingCure, Holding, Reclaimed };
+enum class Stage { AwaitingObjective, AwaitingCure = AwaitingObjective, Holding, Reclaimed };
 enum class Display { Pending, Occupied, Reclaimed };
 enum class Migration { Strict, DefaultNewSitesToOccupied };
+enum class ClearCondition { CurePerson, DefeatDefenders };
 
 struct Point
 {
@@ -37,10 +38,15 @@ struct SiteConfig
     std::string PersonId;
     Point ExpectedAnchorPositionM;
     double AnchorPositionToleranceM = 0.0;
-    double CureRadiusM = 0.0;
+    // Cure radius, or the reviewed defender scan radius for a defended site.
+    double ObjectiveRadiusM = 0.0;
     double HoldRadiusM = 0.0;
     double VerticalToleranceM = 0.0;
     double HoldSeconds = 0.0;
+    ClearCondition Condition = ClearCondition::CurePerson;
+    // For DefeatDefenders, bind a distinct reviewed defender set instead of
+    // a person; PersonId must be empty for that mode.
+    std::string DefenderSetId{};
 };
 
 // The server adapter must count all live dedicated anchors for this ID and
@@ -62,6 +68,17 @@ struct PlayerObservation
     bool Eligible = false;
 };
 
+// Derived exclusively from the authoritative world. Complete means the
+// reviewed defender set and the entire contested zone are accounted for,
+// including streamed cells and dynamic hostiles; unknown is not empty.
+struct DefenseObservation
+{
+    std::string DefenderSetId;
+    unsigned LivingDefenders = 0;
+    unsigned HostilesInHoldZone = 0;
+    bool EvidenceComplete = false;
+};
+
 struct SiteSnapshot
 {
     SiteConfig Config;
@@ -71,7 +88,7 @@ struct SiteSnapshot
 
 struct Checkpoint
 {
-    unsigned Schema = 1;
+    unsigned Schema = 2;
     // Store the exact selected FReflectionsCheckpoint::SavedAt ticks.
     std::int64_t SavedAtTicks = 0;
     std::vector<SiteSnapshot> Sites;
@@ -111,11 +128,22 @@ public:
     bool ConfirmCure(const std::string& site, const AnchorObservation& anchor,
                      const std::string& person, const Point& curePosition);
 
+    // A defended site opens its hold only when the authoritative observer has
+    // complete, unambiguous evidence that its reviewed defenders are cleared.
+    bool ConfirmDefendersCleared(const std::string& site, const AnchorObservation& anchor,
+                                 const DefenseObservation& defense);
+
     // The adapter passes all eligible server-owned player observations once
     // per frame. Repeated or older frame IDs never add time a second time.
     bool TickHold(const std::string& site, const AnchorObservation& anchor,
                   const std::vector<PlayerObservation>& players,
                   std::uint64_t serverFrame, double deltaSeconds);
+
+    // Defended sites additionally pause if evidence is incomplete, any named
+    // defender remains, or any hostile contests the hold zone.
+    bool TickDefendedHold(const std::string& site, const AnchorObservation& anchor,
+                          const DefenseObservation& defense, const std::vector<PlayerObservation>& players,
+                          std::uint64_t serverFrame, double deltaSeconds);
 
     Display SiteDisplay(const std::string& site) const;
     double HeldSeconds(const std::string& site) const;
@@ -132,6 +160,9 @@ private:
 
     Site* Find(const std::string& id);
     const Site* Find(const std::string& id) const;
+    bool TickValidated(Site& site, const AnchorObservation& anchor,
+                       const std::vector<PlayerObservation>& players,
+                       std::uint64_t serverFrame, double deltaSeconds, bool objectiveUncontested);
     bool Authorized() const { return bConfigured && Authority == Role::Authority; }
 
     const Role Authority;

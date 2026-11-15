@@ -5,9 +5,12 @@ Gray London sites. It is **not** compiled into Unreal, connected to NPCs or
 quests, placed in the map, replicated, or part of the packaged game yet.
 
 The core has explicit authority/client roles, a pending state while restoring,
-strict authored-anchor identity and reviewed-person checks, a hold that
-counts at most once per server frame while any eligible player is inside, and
-an `AllReclaimed` result only when every configured site is reclaimed. It
+strict authored-anchor identity, a defended-site objective and a separate
+reviewed-person cure objective. The hold counts at most once per server frame
+while an eligible player is inside. `AllReclaimed` is true only when every
+configured site is reclaimed. A
+defended site's hold pauses if a defender or hostile contests it, or if the
+server cannot prove that its defender and zone observations are complete. It
 keeps partial hold progress and uses bounded, checksummed checkpoint data.
 Restore validates the exact checkpoint timestamp, site identities and all
 configuration values before changing state. New sites can be added to a
@@ -18,9 +21,15 @@ per server update so a server hitch does not count as continuous presence.
 ## Integration contract
 
 - The actual server constructs the authority instance; clients cannot choose
-  their role or send cure, marker, time or player-location claims directly.
-  `ConfirmCure` must only receive a real server-world infected-to-cured
-  transition for the configured Person ID, with no client-authored event RPC.
+  their role or send defense, cure, marker, time or player-location claims
+  directly. For defended sites, `ConfirmDefendersCleared` and each
+  `TickDefendedHold` require the reviewed defender-set ID, complete evidence,
+  zero living set members, and zero hostile occupants. Unknown or unloaded
+  evidence must report incomplete. Do not treat the absence of loaded actors
+  as proof of an empty site. The observer must track the full reviewed set,
+  dynamic hostiles, its scan/hold zones, vertical extent and streaming state
+  on the server. For optional cure sites, `ConfirmCure` must only receive a
+  real server-world infected-to-cured transition for the configured Person ID.
 - Add a dedicated, level-placed stronghold anchor actor with an explicit
   `FGuid` `UPROPERTY` that is saved and cooked as authored data. Configure
   each site with that GUID in lowercase 32-digit form and its surveyed world
@@ -28,8 +37,11 @@ per server update so a server hitch does not count as continuous presence.
   editor-only and must **not** be used as the cooked runtime identity. The
   adapter checks the dedicated actor class, the cooked ID, position tolerance
   and exactly one loaded matching anchor, rather than adopting a story marker.
-  Convert site and person names using the same canonical UTF-8 spelling on
-  save and restore; GUIDs use lowercase digits without punctuation.
+  Convert site, defender-set and person names using the same canonical UTF-8
+  spelling on save and restore; GUIDs use lowercase digits without punctuation.
+  The core compares these strings byte-for-byte. If the Unreal manifest uses
+  `FName`, also reject case-insensitive `FName` duplicates before constructing
+  the core and preserve one canonical spelling throughout the adapter.
   Keep the first anchor always loaded and verify its unique ID in the whole
   source map before cooking; loaded-actor checks alone cannot detect a second
   copy in an unloaded cell. For city-scale spatial anchors, ship and validate
@@ -86,10 +98,14 @@ bytes; it is not a cryptographic signature against a malicious save editor.
 See `Tools/CityPCG/StrongholdReclaimPrototype/README.md` for the previous
 quest-backed gate review and marker/network constraints.
 
-The `GLSH` version-1 blob uses little-endian integers and IEEE-754 binary64
-values: magic, 16-bit schema, 64-bit checkpoint ticks, 16-bit site count,
-then length-prefixed ID byte strings, anchor position/tolerance and objective
-parameters, stage byte and held seconds for each site, followed by a CRC-32.
+The `GLSH` blob uses little-endian integers and IEEE-754 binary64 values:
+magic, 16-bit schema, 64-bit checkpoint ticks, 16-bit site count, then each
+site's length-prefixed ID and anchor GUID. Schema 1 stores a cure-person ID;
+schema 2 stores an objective-mode byte and its person or defender-set ID.
+Both then store anchor position/tolerance and objective parameters, stage
+byte and held seconds, followed by a CRC-32. New captures use schema 2. The
+decoder and encoder retain schema-1 compatibility for cure-only sites; schema
+1 refuses defended sites rather than losing their objective mode.
 The decoder rejects an unknown schema, trailing bytes, invalid state/config,
 non-finite values, duplicate IDs, more than 256 sites and blobs over 1 MiB.
 An independently generated Python `struct`/`zlib` fixture checks this wire
@@ -97,11 +113,11 @@ format in the standalone test.
 
 ## Tests
 
-Status: the corrected standalone C++ suite compiled with MSVC C++17 and passed
-its authority, identity, hold, checkpoint and migration checks on 15 November
-2026. The wire fixture was independently checked in Python as well. These tests
-cover only the isolated core; Unreal integration, gameplay and LAN remain
-untested.
+Status: the earlier cure-only standalone core passed with MSVC C++17 on 15
+November 2026. The subsequent defender-clear mode and schema-2 changes have
+**not yet been compiled or run**. The v1 and v2 wire fixtures have separate
+independent Python checks. Neither version is integrated into Unreal gameplay
+or tested in LAN.
 
 From the project root, run `python Tools/CityPCG/StrongholdRuntimeCore/run_tests.py`.
 The Windows runner finds the installed Visual Studio x64 compiler, requires a

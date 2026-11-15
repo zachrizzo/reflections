@@ -36,10 +36,13 @@ bool ValidPoint(const Point& value)
 
 bool ValidConfig(const SiteConfig& config)
 {
-    return ValidIdentity(config.Id) && ValidIdentity(config.PersonId) && ValidAnchorId(config.Anchor) &&
+    const bool validObjective =
+        (config.Condition == ClearCondition::CurePerson && ValidIdentity(config.PersonId) && config.DefenderSetId.empty()) ||
+        (config.Condition == ClearCondition::DefeatDefenders && config.PersonId.empty() && ValidIdentity(config.DefenderSetId));
+    return ValidIdentity(config.Id) && validObjective && ValidAnchorId(config.Anchor) &&
         ValidPoint(config.ExpectedAnchorPositionM) && std::isfinite(config.AnchorPositionToleranceM) &&
         config.AnchorPositionToleranceM >= 0.0 &&
-        std::isfinite(config.CureRadiusM) && config.CureRadiusM > 0.0 &&
+        std::isfinite(config.ObjectiveRadiusM) && config.ObjectiveRadiusM > 0.0 &&
         std::isfinite(config.HoldRadiusM) && config.HoldRadiusM > 0.0 &&
         std::isfinite(config.VerticalToleranceM) && config.VerticalToleranceM > 0.0 &&
         std::isfinite(config.HoldSeconds) && config.HoldSeconds > 0.0;
@@ -48,11 +51,12 @@ bool ValidConfig(const SiteConfig& config)
 bool SameConfig(const SiteConfig& a, const SiteConfig& b)
 {
     return a.Id == b.Id && a.Anchor.AuthoredGuid == b.Anchor.AuthoredGuid && a.PersonId == b.PersonId &&
+        a.Condition == b.Condition && a.DefenderSetId == b.DefenderSetId &&
         a.ExpectedAnchorPositionM.x == b.ExpectedAnchorPositionM.x &&
         a.ExpectedAnchorPositionM.y == b.ExpectedAnchorPositionM.y &&
         a.ExpectedAnchorPositionM.z == b.ExpectedAnchorPositionM.z &&
         a.AnchorPositionToleranceM == b.AnchorPositionToleranceM &&
-        a.CureRadiusM == b.CureRadiusM && a.HoldRadiusM == b.HoldRadiusM &&
+        a.ObjectiveRadiusM == b.ObjectiveRadiusM && a.HoldRadiusM == b.HoldRadiusM &&
         a.VerticalToleranceM == b.VerticalToleranceM && a.HoldSeconds == b.HoldSeconds;
 }
 
@@ -72,6 +76,13 @@ bool Inside(const Point& point, const Point& center, double radius, double verti
         std::abs(point.z - center.z) <= vertical;
 }
 
+bool DefendersCleared(const SiteConfig& config, const DefenseObservation& defense)
+{
+    return config.Condition == ClearCondition::DefeatDefenders && defense.EvidenceComplete &&
+        defense.DefenderSetId == config.DefenderSetId && defense.LivingDefenders == 0 &&
+        defense.HostilesInHoldZone == 0;
+}
+
 bool ValidSavedSite(const SiteSnapshot& entry)
 {
     if (!ValidConfig(entry.Config) || !std::isfinite(entry.HeldSeconds) || entry.HeldSeconds < 0.0)
@@ -89,16 +100,19 @@ bool ValidSavedSite(const SiteSnapshot& entry)
 
 bool UniqueConfig(const SiteConfig& a, const SiteConfig& b)
 {
-    return a.Id != b.Id && a.Anchor.AuthoredGuid != b.Anchor.AuthoredGuid;
+    return a.Id != b.Id && a.Anchor.AuthoredGuid != b.Anchor.AuthoredGuid &&
+        (a.Condition != ClearCondition::DefeatDefenders || b.Condition != ClearCondition::DefeatDefenders ||
+         a.DefenderSetId != b.DefenderSetId);
 }
 
 bool ValidCheckpoint(const Checkpoint& checkpoint)
 {
-    if (checkpoint.Schema != 1 || checkpoint.SavedAtTicks <= 0 || checkpoint.Sites.empty() ||
+    if ((checkpoint.Schema != 1 && checkpoint.Schema != 2) || checkpoint.SavedAtTicks <= 0 || checkpoint.Sites.empty() ||
         checkpoint.Sites.size() > MaximumSites) return false;
     for (std::size_t i = 0; i < checkpoint.Sites.size(); ++i)
     {
-        if (!ValidSavedSite(checkpoint.Sites[i])) return false;
+        if (!ValidSavedSite(checkpoint.Sites[i]) ||
+            (checkpoint.Schema == 1 && checkpoint.Sites[i].Config.Condition != ClearCondition::CurePerson)) return false;
         for (std::size_t j = 0; j < i; ++j)
         {
             if (!UniqueConfig(checkpoint.Sites[i].Config, checkpoint.Sites[j].Config)) return false;
@@ -190,12 +204,20 @@ bool EncodeCheckpoint(const Checkpoint& checkpoint, std::vector<std::uint8_t>& b
         const SiteConfig& config = entry.Config;
         AppendString(result, config.Id);
         AppendString(result, config.Anchor.AuthoredGuid);
-        AppendString(result, config.PersonId);
+        if (checkpoint.Schema == 1)
+        {
+            AppendString(result, config.PersonId);
+        }
+        else
+        {
+            AppendUnsigned(result, static_cast<unsigned>(config.Condition), 1);
+            AppendString(result, config.Condition == ClearCondition::CurePerson ? config.PersonId : config.DefenderSetId);
+        }
         AppendDouble(result, config.ExpectedAnchorPositionM.x);
         AppendDouble(result, config.ExpectedAnchorPositionM.y);
         AppendDouble(result, config.ExpectedAnchorPositionM.z);
         AppendDouble(result, config.AnchorPositionToleranceM);
-        AppendDouble(result, config.CureRadiusM);
+        AppendDouble(result, config.ObjectiveRadiusM);
         AppendDouble(result, config.HoldRadiusM);
         AppendDouble(result, config.VerticalToleranceM);
         AppendDouble(result, config.HoldSeconds);
@@ -219,7 +241,7 @@ bool DecodeCheckpoint(const std::vector<std::uint8_t>& bytes, Checkpoint& checkp
     Reader reader(bytes, payload);
     std::uint64_t magic = 0, schema = 0, timestamp = 0, count = 0;
     if (!reader.Unsigned(4, magic) || !reader.Unsigned(2, schema) || !reader.Unsigned(8, timestamp) ||
-        !reader.Unsigned(2, count) || schema != 1 || timestamp == 0 ||
+        !reader.Unsigned(2, count) || (schema != 1 && schema != 2) || timestamp == 0 ||
         timestamp > static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()) ||
         count == 0 || count > MaximumSites) return false;
     Checkpoint result;
@@ -230,11 +252,22 @@ bool DecodeCheckpoint(const std::vector<std::uint8_t>& bytes, Checkpoint& checkp
     {
         SiteSnapshot entry;
         SiteConfig& config = entry.Config;
-        std::uint64_t stage = 0;
-        if (!reader.String(config.Id) || !reader.String(config.Anchor.AuthoredGuid) ||
-            !reader.String(config.PersonId) || !reader.Double(config.ExpectedAnchorPositionM.x) ||
+        std::uint64_t stage = 0, condition = 0;
+        if (!reader.String(config.Id) || !reader.String(config.Anchor.AuthoredGuid)) return false;
+        if (schema == 1)
+        {
+            if (!reader.String(config.PersonId)) return false;
+        }
+        else
+        {
+            if (!reader.Unsigned(1, condition) || condition > static_cast<unsigned>(ClearCondition::DefeatDefenders)) return false;
+            config.Condition = static_cast<ClearCondition>(condition);
+            std::string& objective = config.Condition == ClearCondition::CurePerson ? config.PersonId : config.DefenderSetId;
+            if (!reader.String(objective)) return false;
+        }
+        if (!reader.Double(config.ExpectedAnchorPositionM.x) ||
             !reader.Double(config.ExpectedAnchorPositionM.y) || !reader.Double(config.ExpectedAnchorPositionM.z) ||
-            !reader.Double(config.AnchorPositionToleranceM) || !reader.Double(config.CureRadiusM) ||
+            !reader.Double(config.AnchorPositionToleranceM) || !reader.Double(config.ObjectiveRadiusM) ||
             !reader.Double(config.HoldRadiusM) || !reader.Double(config.VerticalToleranceM) ||
             !reader.Double(config.HoldSeconds) || !reader.Unsigned(1, stage) ||
             stage > static_cast<unsigned>(Stage::Reclaimed) || !reader.Double(entry.HeldSeconds)) return false;
@@ -357,9 +390,21 @@ bool Campaign::ConfirmCure(const std::string& id, const AnchorObservation& ancho
 {
     if (!Authorized() || !bReady) return false;
     Site* site = Find(id);
-    if (!site || site->Current != Stage::AwaitingCure || person != site->Config.PersonId ||
+    if (!site || site->Config.Condition != ClearCondition::CurePerson || site->Current != Stage::AwaitingCure ||
+        person != site->Config.PersonId ||
         !ValidAnchor(site->Config, anchor) ||
-        !Inside(position, anchor.Position, site->Config.CureRadiusM, site->Config.VerticalToleranceM)) return false;
+        !Inside(position, anchor.Position, site->Config.ObjectiveRadiusM, site->Config.VerticalToleranceM)) return false;
+    site->Current = Stage::Holding;
+    return true;
+}
+
+bool Campaign::ConfirmDefendersCleared(const std::string& id, const AnchorObservation& anchor,
+                                       const DefenseObservation& defense)
+{
+    if (!Authorized() || !bReady) return false;
+    Site* site = Find(id);
+    if (!site || site->Current != Stage::AwaitingObjective || !ValidAnchor(site->Config, anchor) ||
+        !DefendersCleared(site->Config, defense)) return false;
     site->Current = Stage::Holding;
     return true;
 }
@@ -370,19 +415,37 @@ bool Campaign::TickHold(const std::string& id, const AnchorObservation& anchor,
 {
     if (!Authorized() || !bReady) return false;
     Site* site = Find(id);
-    if (!site || site->Current != Stage::Holding || frame == 0 || frame <= site->LastFrame ||
+    if (!site || site->Config.Condition != ClearCondition::CurePerson) return false;
+    return TickValidated(*site, anchor, players, frame, deltaSeconds, true);
+}
+
+bool Campaign::TickDefendedHold(const std::string& id, const AnchorObservation& anchor,
+                                const DefenseObservation& defense, const std::vector<PlayerObservation>& players,
+                                std::uint64_t frame, double deltaSeconds)
+{
+    if (!Authorized() || !bReady) return false;
+    Site* site = Find(id);
+    if (!site || site->Config.Condition != ClearCondition::DefeatDefenders) return false;
+    return TickValidated(*site, anchor, players, frame, deltaSeconds, DefendersCleared(site->Config, defense));
+}
+
+bool Campaign::TickValidated(Site& site, const AnchorObservation& anchor,
+                             const std::vector<PlayerObservation>& players,
+                             std::uint64_t frame, double deltaSeconds, bool objectiveUncontested)
+{
+    if (site.Current != Stage::Holding || frame == 0 || frame <= site.LastFrame ||
         !std::isfinite(deltaSeconds) || deltaSeconds <= 0.0) return false;
-    site->LastFrame = frame;
-    if (!ValidAnchor(site->Config, anchor)) return false;
+    site.LastFrame = frame;
+    if (!objectiveUncontested || !ValidAnchor(site.Config, anchor)) return false;
     const bool present = std::any_of(players.begin(), players.end(), [&](const PlayerObservation& player)
     {
-        return player.Eligible && Inside(player.Position, anchor.Position, site->Config.HoldRadiusM,
-                                         site->Config.VerticalToleranceM);
+        return player.Eligible && Inside(player.Position, anchor.Position, site.Config.HoldRadiusM,
+                                         site.Config.VerticalToleranceM);
     });
     if (!present) return false;
-    site->HeldSeconds = (std::min)(site->Config.HoldSeconds,
-                                   site->HeldSeconds + (std::min)(deltaSeconds, MaximumHoldStepSeconds));
-    if (site->HeldSeconds >= site->Config.HoldSeconds) site->Current = Stage::Reclaimed;
+    site.HeldSeconds = (std::min)(site.Config.HoldSeconds,
+                                  site.HeldSeconds + (std::min)(deltaSeconds, MaximumHoldStepSeconds));
+    if (site.HeldSeconds >= site.Config.HoldSeconds) site.Current = Stage::Reclaimed;
     return true;
 }
 

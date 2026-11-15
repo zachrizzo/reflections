@@ -18,6 +18,15 @@ SiteConfig Config(const std::string& id)
             "person-" + id, {10.0, 20.0, 0.0}, .25, 7.0, 2.5, 2.0, 12.0};
 }
 
+SiteConfig DefendedConfig(const std::string& id)
+{
+    SiteConfig result = Config(id);
+    result.PersonId.clear();
+    result.Condition = ClearCondition::DefeatDefenders;
+    result.DefenderSetId = "defenders-" + id;
+    return result;
+}
+
 AnchorObservation Marker(const SiteConfig& config)
 {
     return {config.Anchor, {10.0, 20.0, 0.0}, 1, true, true, true};
@@ -135,6 +144,73 @@ void TestHoldingAndVictory()
     CHECK(campaign.AllReclaimed());
 }
 
+void TestDefendedSites()
+{
+    const auto a = DefendedConfig("A"), b = DefendedConfig("B");
+    auto duplicateGroup = b; duplicateGroup.DefenderSetId = a.DefenderSetId;
+    auto mixedObjective = a; mixedObjective.PersonId = "wrong-person";
+    Campaign duplicate(Role::Authority, {a, duplicateGroup});
+    Campaign mixed(Role::Authority, {mixedObjective});
+    CHECK(!duplicate.IsConfigured() && !mixed.IsConfigured());
+
+    Campaign client(Role::Client, {a});
+    DefenseObservation clear{a.DefenderSetId, 0, 0, true};
+    CHECK(!client.ConfirmDefendersCleared(a.Id, Marker(a), clear));
+    CHECK(!client.TickDefendedHold(a.Id, Marker(a), clear, {Player()}, 1, .25));
+
+    Campaign campaign(Role::Authority, {a, b});
+    CHECK(campaign.BeginFreshCampaign());
+    CHECK(!campaign.ConfirmCure(a.Id, Marker(a), "", Marker(a).Position));
+    auto unknown = clear; unknown.EvidenceComplete = false;
+    auto alive = clear; alive.LivingDefenders = 1;
+    auto contested = clear; contested.HostilesInHoldZone = 1;
+    auto wrongGroup = clear; wrongGroup.DefenderSetId = b.DefenderSetId;
+    auto missingAnchor = Marker(a); missingAnchor.Loaded = false;
+    CHECK(!campaign.ConfirmDefendersCleared(a.Id, Marker(a), unknown));
+    CHECK(!campaign.ConfirmDefendersCleared(a.Id, Marker(a), alive));
+    CHECK(!campaign.ConfirmDefendersCleared(a.Id, Marker(a), contested));
+    CHECK(!campaign.ConfirmDefendersCleared(a.Id, Marker(a), wrongGroup));
+    CHECK(!campaign.ConfirmDefendersCleared(a.Id, missingAnchor, clear));
+    CHECK(campaign.ConfirmDefendersCleared(a.Id, Marker(a), clear));
+    CHECK(!campaign.ConfirmDefendersCleared(a.Id, Marker(a), clear));
+    CHECK(!campaign.TickHold(a.Id, Marker(a), {Player()}, 1, .25));
+    CHECK(!campaign.TickDefendedHold(a.Id, Marker(a), unknown, {Player()}, 1, .25));
+    CHECK(!campaign.TickDefendedHold(a.Id, Marker(a), contested, {Player()}, 2, .25));
+    CHECK(!campaign.TickDefendedHold(a.Id, Marker(a), alive, {Player()}, 3, .25));
+    CHECK(!campaign.TickDefendedHold(a.Id, Marker(a), wrongGroup, {Player()}, 4, .25));
+    CHECK(!campaign.TickDefendedHold(a.Id, missingAnchor, clear, {Player()}, 5, .25));
+    CHECK(!campaign.TickDefendedHold(a.Id, Marker(a), clear, {}, 6, .25));
+    CHECK(campaign.HeldSeconds(a.Id) == 0.0);
+    CHECK(campaign.TickDefendedHold(a.Id, Marker(a), clear, {Player(), Player()}, 7, 3.0));
+    CHECK(!campaign.TickDefendedHold(a.Id, Marker(a), clear, {Player()}, 7, .25));
+    CHECK(campaign.HeldSeconds(a.Id) == .25);
+    std::uint64_t frame = 7;
+    for (int i = 0; i < 47; ++i)
+        CHECK(campaign.TickDefendedHold(a.Id, Marker(a), clear, {Player()}, ++frame, .25));
+    CHECK(campaign.SiteDisplay(a.Id) == Display::Reclaimed && !campaign.AllReclaimed());
+
+    DefenseObservation bClear{b.DefenderSetId, 0, 0, true};
+    CHECK(campaign.ConfirmDefendersCleared(b.Id, Marker(b), bClear));
+    for (int i = 0; i < 48; ++i)
+        CHECK(campaign.TickDefendedHold(b.Id, Marker(b), bClear, {Player()}, ++frame, .25));
+    CHECK(campaign.AllReclaimed());
+
+    Checkpoint snapshot;
+    CHECK(campaign.CaptureCheckpoint(300, snapshot) && snapshot.Schema == 2);
+    std::vector<std::uint8_t> bytes;
+    CHECK(EncodeCheckpoint(snapshot, bytes));
+    Checkpoint parsed;
+    CHECK(DecodeCheckpoint(bytes, parsed));
+    CHECK(parsed.Sites.size() == 2 && parsed.Sites[0].Config.Condition == ClearCondition::DefeatDefenders &&
+          parsed.Sites[0].Config.DefenderSetId == a.DefenderSetId);
+    Campaign restored(Role::Authority, {a, b});
+    std::uint64_t generation = 0;
+    CHECK(restored.BeginRestore(300, generation) && restored.CompleteRestore(generation, parsed));
+    CHECK(restored.AllReclaimed());
+    snapshot.Schema = 1;
+    CHECK(!EncodeCheckpoint(snapshot, bytes));  // v1 cannot represent defended sites
+}
+
 void TestCheckpointAndRollback()
 {
     const auto a = Config("A"), b = Config("B");
@@ -244,10 +320,42 @@ void TestWireCompatibility()
     CHECK(campaign.BeginFreshCampaign());
     Checkpoint snapshot;
     CHECK(campaign.CaptureCheckpoint(123456789, snapshot));
+    snapshot.Schema = 1;  // Keep reading/writing the original cure-only format.
     std::vector<std::uint8_t> bytes;
     CHECK(EncodeCheckpoint(snapshot, bytes) && bytes == expected);
     Checkpoint parsed;
     CHECK(DecodeCheckpoint(expected, parsed) && parsed.SavedAtTicks == 123456789);
+    Campaign restored(Role::Authority, {Config("A")});
+    std::uint64_t generation = 0;
+    CHECK(restored.BeginRestore(123456789, generation) && restored.CompleteRestore(generation, parsed));
+}
+
+void TestDefenderWireCompatibility()
+{
+    // Independently encoded with Python struct and zlib; this is GLSH v2.
+    const std::vector<std::uint8_t> expected = {
+        0x47, 0x4c, 0x53, 0x48, 0x02, 0x00, 0x15, 0xcd, 0x5b, 0x07, 0x00, 0x00,
+        0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x41, 0x20, 0x00, 0x30, 0x30, 0x30,
+        0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+        0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+        0x30, 0x30, 0x30, 0x30, 0x61, 0x01, 0x0b, 0x00, 0x64, 0x65, 0x66, 0x65,
+        0x6e, 0x64, 0x65, 0x72, 0x73, 0x2d, 0x41, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x24, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x34, 0x40, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0xd0, 0x3f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1c, 0x40, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x28, 0x40, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1d, 0x5d, 0x33, 0x85,
+    };
+    Campaign campaign(Role::Authority, {DefendedConfig("A")});
+    CHECK(campaign.BeginFreshCampaign());
+    Checkpoint snapshot;
+    CHECK(campaign.CaptureCheckpoint(123456789, snapshot));
+    std::vector<std::uint8_t> bytes;
+    CHECK(EncodeCheckpoint(snapshot, bytes) && bytes == expected);
+    Checkpoint parsed;
+    CHECK(DecodeCheckpoint(expected, parsed) && parsed.Schema == 2 && parsed.Sites.size() == 1 &&
+          parsed.Sites[0].Config.DefenderSetId == "defenders-A");
 }
 
 void TestCheckpointCodec()
@@ -296,7 +404,7 @@ void TestCheckpointCodec()
         expectRejected(std::vector<std::uint8_t>(bytes.begin(), bytes.begin() + length));
     auto invalid = bytes; invalid[20] ^= 1; expectRejected(invalid);  // bad checksum
     invalid = bytes; invalid[0] = 'X'; RewriteChecksum(invalid); expectRejected(invalid);
-    invalid = bytes; invalid[4] = 2; RewriteChecksum(invalid); expectRejected(invalid);  // schema
+    invalid = bytes; invalid[4] = 3; RewriteChecksum(invalid); expectRejected(invalid);  // schema
     invalid = bytes; for (int i = 6; i < 14; ++i) invalid[i] = 0;
     RewriteChecksum(invalid); expectRejected(invalid);  // invalid SavedAt
     invalid = bytes; invalid[14] = 0xff; invalid[15] = 0xff;
@@ -315,9 +423,11 @@ int main()
     TestConfigurationAndClients();
     TestAuthoritativeCureGuards();
     TestHoldingAndVictory();
+    TestDefendedSites();
     TestCheckpointAndRollback();
     TestAddingSitesToExistingSave();
     TestWireCompatibility();
+    TestDefenderWireCompatibility();
     TestCheckpointCodec();
     if (Failures)
     {
