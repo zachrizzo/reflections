@@ -15,7 +15,11 @@ enum class EReflectionsStrongholdPennants : uint8
     Reclaimed
 };
 
-/** Cosmetic gate displays the authoritative campaign's site unlock. */
+/**
+ * Review-only cosmetic gate for the authoritative campaign's site unlock.
+ * Keep this outside Source until the restore handshake, LAN travel policy,
+ * streaming-state ownership and objective guards in README.md are in place.
+ */
 UCLASS()
 class REFLECTIONS_API AReflectionsStrongholdGate : public AActor
 {

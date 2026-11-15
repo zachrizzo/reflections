@@ -9,6 +9,8 @@ AReflectionsStrongholdGate::AReflectionsStrongholdGate()
 {
     PrimaryActorTick.bCanEverTick = false;
     bReplicates = true;
+    // Relevance cannot open an actor channel until the client has loaded its level.
+    // The pilot needs an always-loaded actor or persistent per-site state before streaming tests.
     bAlwaysRelevant = true;
     NetDormancy = DORM_Never;
     SetReplicateMovement(false);
@@ -32,6 +34,8 @@ AReflectionsStrongholdGate::AReflectionsStrongholdGate()
 void AReflectionsStrongholdGate::BeginPlay()
 {
     Super::BeginPlay();
+    // A streamed startup actor can retain an old enum. A spatial visual actor needs the
+    // current persistent state before applying either pennant variant on stream-in.
     OnRep_Pennants();
     if (GetNetMode() == NM_Client || !HasAuthority()) return;
     if (!ensureMsgf(!ReclaimUnlock.IsNone(), TEXT("Stronghold gate %s needs its site unlock"), *GetName())) return;
@@ -41,6 +45,8 @@ void AReflectionsStrongholdGate::BeginPlay()
         BoundQuests = Quests;
         Quests->OnUnlock.AddUniqueDynamic(this, &AReflectionsStrongholdGate::HandleUnlock);
         Quests->OnQuestsChanged.AddUniqueDynamic(this, &AReflectionsStrongholdGate::RefreshFromQuests);
+        // Prototype only: BeginPlay may precede checkpoint application. Require a successful
+        // matching quest snapshot or an explicit fresh campaign baseline before publishing.
         RefreshFromQuests();
     }
 }
@@ -67,6 +73,8 @@ void AReflectionsStrongholdGate::RefreshFromQuests()
     const UReflectionsQuestSubsystem* Quests = BoundQuests.Get();
     if (!Quests) return;
 
+    // A mismatched quest snapshot can leave old unlocks in memory. A generic quest-change
+    // or GameFlow-restored broadcast alone cannot establish campaign readiness.
     const EReflectionsStrongholdPennants Desired = Quests->HasUnlock(ReclaimUnlock)
         ? EReflectionsStrongholdPennants::Reclaimed
         : EReflectionsStrongholdPennants::Occupied;
