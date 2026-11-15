@@ -111,9 +111,12 @@ authority and map checks, non-mutating load preflight and unchanged candidates,
 strict treatment of pre-feature and added-site snapshots, schema 1 compatibility,
 duplicate keys,
 restore generations, same-timestamp differing blobs, corrupt data, and a
-two-defended-site capture/save/restore sequence. It also covers the distinct
-city-reclaimed transition, repeated observations, restore, client worlds and
-off-thread calls. After a
+two-defended-site capture/save/restore sequence. The adapter and outcome
+checks compiled and passed on a hosted Linux C++17 runner in [Actions run
+43722217679](https://github.com/zachrizzo/reflections/actions/runs/43722217679).
+They have not been compiled against Unreal or checked with MSVC. The suite also
+covers the distinct city-reclaimed transition, repeated observations,
+restore, client worlds and off-thread calls. After a
 coordinated safe test window, run from the project root:
 
 ```powershell

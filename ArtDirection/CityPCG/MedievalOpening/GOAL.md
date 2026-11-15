@@ -100,11 +100,12 @@ binding, collision and streaming have not yet been tested in Unreal.
 
 An offline watch-gate kit provides occupied and reclaimed pennant variants.
 Its quest example, LAN visual controller and separate campaign rules are
-prototypes. A revised defender-clear capture mode and checkpoint adapter have
-been drafted, but the revised C++ has not yet been compiled or connected to the
-game. No reclaimable stronghold has been placed or verified in the playable
-level. GameFlow needs a save preflight before those rules can be integrated
-without risking loss of stronghold progress.
+prototypes. A revised defender-clear capture mode and checkpoint adapter passed
+standalone C++17 checks on a hosted Linux runner, with Unreal-shaped test
+doubles for the adapter. They have not been compiled against Unreal or connected
+to the game. No reclaimable stronghold has been placed or verified in the
+playable level. GameFlow needs a save preflight before those rules can be
+integrated without risking loss of stronghold progress.
 
 The active tracked goal remains in progress. The current game and standalone
 have not yet received a verified full-building replacement; the first priority

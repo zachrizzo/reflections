@@ -35,7 +35,10 @@ python3 -B Tools/CityPCG/export_merchant_gate_hosted.py
 ```
 
 The tests use only mocked context and the coarse in-memory mesh; they do not
-run the hosted export. A hosted run has not yet validated the full output.
+run the hosted export. The full export completed in [Actions run
+43721087489](https://github.com/zachrizzo/reflections/actions/runs/43721087489)
+at commit `b4c0acec`. The downloaded archive matches GitHub's artifact SHA-256;
+that confirms transfer integrity, not independent approval of its contents.
 Artifacts from this public repository are accessible to signed-in users with
 read access and expire according to workflow retention. The exported mesh is
 still unreviewed source art: appearance, normals, UVs, collision, navigation,

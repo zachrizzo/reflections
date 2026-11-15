@@ -113,11 +113,12 @@ format in the standalone test.
 
 ## Tests
 
-Status: the earlier cure-only standalone core passed with MSVC C++17 on 15
-November 2026. The subsequent defender-clear mode and schema-2 changes have
-**not yet been compiled or run**. The v1 and v2 wire fixtures have separate
-independent Python checks. Neither version is integrated into Unreal gameplay
-or tested in LAN.
+Status: the defender-clear and schema-2 core compiled with C++17 and passed
+its standalone tests in [GitHub Actions run 43722217679](https://github.com/zachrizzo/reflections/actions/runs/43722217679).
+The v1 and v2 wire fixtures also passed separate Python checks in that run.
+The earlier cure-only core passed with MSVC C++17 on 15 November 2026; the
+revised code has not yet been checked with MSVC. Neither version is integrated
+into Unreal gameplay or tested in LAN.
 
 From the project root, run `python Tools/CityPCG/StrongholdRuntimeCore/run_tests.py`.
 The Windows runner finds the installed Visual Studio x64 compiler, requires a
