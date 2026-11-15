@@ -176,14 +176,18 @@ def add_overlay(bpy,key,mesh,materials,original,assets):
     return obj,{'obj_sha256':source.digest(path),'obj_readback':facts}
 
 
-def fit_review_label(bpy,scene,camera):
-    """Fit a visible label and dark backing to the actual camera frame."""
-    caption=bpy.data.objects.get('ReviewCaption')
+def configure_review_label(caption,camera):
     if caption is None or caption.type!='FONT': raise ValueError('Missing baseline caption')
     caption.parent=camera; caption.location=(0,0,-1); caption.rotation_euler=(0,0,0); caption.scale=(1,1,1)
     caption.data.body='ILLUSTRATIVE / ISOLATED / NOT IN GAME'
-    caption.data.size=.028; caption.data.align_x='LEFT'; caption.data.align_y='BASELINE'
+    caption.data.size=.028; caption.data.align_x='LEFT'; caption.data.align_y='BOTTOM_BASELINE'
     caption.hide_render=False
+
+
+def fit_review_label(bpy,scene,camera):
+    """Fit a visible label and dark backing to the actual camera frame."""
+    caption=bpy.data.objects.get('ReviewCaption')
+    configure_review_label(caption,camera)
     bpy.context.view_layer.update()
     bounds=(min(v[0] for v in caption.bound_box),max(v[0] for v in caption.bound_box),
             min(v[1] for v in caption.bound_box),max(v[1] for v in caption.bound_box))

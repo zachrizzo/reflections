@@ -68,6 +68,23 @@ class VariationTests(unittest.TestCase):
         self.assertTrue(all(math.isfinite(x) for x in position))
         with self.assertRaises(ValueError): v.fit_caption(frame,(-.01,1.1,-.005,.025))
 
+    def test_caption_uses_blender_supported_vertical_alignment(self):
+        class Blender45Text:
+            @property
+            def align_y(self): return self._align_y
+            @align_y.setter
+            def align_y(self,value):
+                if value not in ('TOP','TOP_BASELINE','CENTER','BOTTOM_BASELINE','BOTTOM'):
+                    raise ValueError('Unsupported Blender 4.5 text alignment')
+                self._align_y=value
+        data=Blender45Text(); caption=SimpleNamespace(type='FONT',data=data)
+        camera=object()
+        hosted.configure_review_label(caption,camera)
+        self.assertEqual(data.align_y,'BOTTOM_BASELINE')
+        self.assertEqual(data.body,'ILLUSTRATIVE / ISOLATED / NOT IN GAME')
+        self.assertIs(caption.parent,camera)
+        self.assertFalse(caption.hide_render)
+
     def test_front_and_cheek_timber_faces_point_outwards(self):
         for axis in ('front','cheek'):
             for end in ((2.,3.),(2.,4.)):
