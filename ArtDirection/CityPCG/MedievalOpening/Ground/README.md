@@ -11,3 +11,13 @@ Rebuild from the repository root with NumPy and Pillow. Use the original `OSM Ti
 ```powershell
 python ArtDirection/CityPCG/MedievalOpening/Ground/build_opening_ground.py Saved/CityPCG/Tile_p03_p00.glb ArtDirection/CityPCG/MedievalOpening/Ground/Source
 ```
+
+## West district street section
+
+`west_street_section.json` selects a 17.57 × 10.55 m street stretch along four northeast-facing `x20_y1` frontages. `plan_street_patch.py` follows the source road triangles for its upper mesh, proposes a lower City ground layer, and maps both to the opening's cobble material with the drainage seam running along the street. The plan keeps the visual mesh 0.7 cm above the proposed surfaces and specifies `NoCollision`.
+
+```powershell
+python ArtDirection/CityPCG/MedievalOpening/Ground/plan_street_patch.py Saved/CityPCG/Tile_p03_p00.glb Saved/CityPCG/medieval_west_ground_plan.json
+```
+
+The pinned source export should produce eight patches and 157 floor probes with `trace_status` set to `requires_live_editor_traces`. In Unreal, load the pinned tile and call `collect_street_floor_traces.collect(plan_path, output_path)` outside PIE. Pass the observed output to the planner with `--observations`. The planner then requires every probe to agree on the source actor, height within 0.8 cm, and upward normal. The lower layer stays provisional until those observations pass. This stage writes only geometry and checks for review.

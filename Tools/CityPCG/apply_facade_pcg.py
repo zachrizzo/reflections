@@ -249,10 +249,12 @@ async def run(plan_path, mode='preview', cell_id=None, destination=DESTINATION):
     return {'actor': actor.get_actor_label(), 'instances': counts, 'saved_packages': names}
 
 
-async def save_reviewed_cells(plan_path, cell_ids):
+async def save_reviewed_cells(plan_path, cell_ids, destination=DESTINATION):
     """Generate a reviewed selection, with each cell saved as its own package pair."""
     import unreal
 
+    if destination not in (DESTINATION, MEDIEVAL_DESTINATION):
+        raise ValueError('Choose a Gray London facade kit destination.')
     identifiers = list(cell_ids)
     planned = read_plan(plan_path)
     if not identifiers or len(set(identifiers)) != len(identifiers):
@@ -265,16 +267,16 @@ async def save_reviewed_cells(plan_path, cell_ids):
               for desc in unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []}
     labels.update(actor.get_actor_label() for actor in subsystem.get_all_level_actors())
     existing = [identifier for identifier in identifiers if graph_name(identifier) in labels
-                or unreal.EditorAssetLibrary.does_asset_exist(f'{DESTINATION}/Graphs/{graph_name(identifier)}')]
+                or unreal.EditorAssetLibrary.does_asset_exist(f'{destination}/Graphs/{graph_name(identifier)}')]
     needed = {mesh_id for identifier in identifiers for mesh_id in planned[identifier]}
     missing = sorted(mesh_id for mesh_id in needed
-                     if not unreal.EditorAssetLibrary.does_asset_exist(f'{MESH_ROOT}/{mesh_id}'))
+                     if not unreal.EditorAssetLibrary.does_asset_exist(f'{destination}/Kit/{mesh_id}'))
     if existing or missing:
         raise RuntimeError(f'Batch preflight failed. Existing cells: {existing}. Missing kit meshes: {missing}.')
     completed = {}
     for identifier in identifiers:
         try:
-            completed[identifier] = await run(plan_path, mode='save', cell_id=identifier)
+            completed[identifier] = await run(plan_path, mode='save', cell_id=identifier, destination=destination)
         except Exception as error:
             raise RuntimeError(f'Failed at {identifier}. Saved cells: {list(completed)}. {error}') from error
         await asyncio.sleep(0)
