@@ -1,11 +1,14 @@
 """Test detailed OBJ preservation and independent corruption detection."""
 
+from contextlib import contextmanager
 import hashlib
+import os
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import sys
-from tempfile import TemporaryDirectory
+from tempfile import gettempdir, mkdtemp
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -17,9 +20,39 @@ import verify_north_market_detail_obj as verifier
 PROMOTED = (exporter.ROOT / "ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj")
 
 
+@contextmanager
+def checked_tempdir():
+    """Refuse recursive cleanup if this unique temp path or parent redirects."""
+    parent = Path(gettempdir()).resolve(strict=True)
+    target = Path(mkdtemp(prefix="codex-north-market-test-", dir=str(parent)))
+    resolved = target.resolve(strict=True)
+    if target.is_symlink() or not target.is_absolute() or resolved != target or resolved.parent != parent:
+        raise RuntimeError("Unexpected temporary directory; refusing cleanup.")
+
+    def clear_readonly(function, path, error):
+        if not isinstance(error[1], PermissionError):
+            raise error[1]
+        current = target.resolve(strict=True)
+        item = Path(path)
+        actual = item.resolve(strict=True)
+        if (target.is_symlink() or current != resolved or current.parent != parent or item.is_symlink() or
+                not actual.is_relative_to(resolved)):
+            raise RuntimeError("Temporary directory changed; refusing permission change.")
+        os.chmod(item, stat.S_IREAD | stat.S_IWRITE)
+        function(path)
+
+    try:
+        yield resolved
+    finally:
+        current = target.resolve(strict=True)
+        if target.is_symlink() or current != resolved or current.parent != parent:
+            raise RuntimeError("Temporary directory changed; refusing recursive cleanup.")
+        shutil.rmtree(current, onerror=clear_readonly)
+
+
 class DetailedObjTests(unittest.TestCase):
     def setUp(self):
-        self.temp = Path(self.enterContext(TemporaryDirectory()))
+        self.temp = Path(self.enterContext(checked_tempdir()))
         self.palette = {"WarmPlaster": ((.46, .35, .23), .96, 1.8),
                         "Interior": ((.016, .012, .009), .96, None)}
         # A concave n-gon must stay intact and retain its source winding.

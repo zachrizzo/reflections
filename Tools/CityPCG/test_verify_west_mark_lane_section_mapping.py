@@ -1,15 +1,34 @@
 """Offline tests of signed-geometry comparison and fake reflected UE APIs."""
 
 import json
+from contextlib import contextmanager
 from pathlib import Path
+import shutil
 import struct
 import sys
-from tempfile import TemporaryDirectory
+from tempfile import gettempdir, mkdtemp
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
 import verify_west_mark_lane_section_mapping as proof
+
+
+@contextmanager
+def checked_tempdir():
+    """Refuse recursive cleanup unless the resolved directory remains in temp."""
+    parent = Path(gettempdir()).resolve(strict=True)
+    target = Path(mkdtemp(prefix='codex-section-proof-', dir=str(parent)))
+    resolved = target.resolve(strict=True)
+    if target.is_symlink() or not target.is_absolute() or resolved.parent != parent or resolved != target:
+        raise RuntimeError('Unexpected temporary directory; refusing cleanup.')
+    try:
+        yield resolved
+    finally:
+        current = target.resolve(strict=True)
+        if target.is_symlink() or current != resolved or current.parent != parent:
+            raise RuntimeError('Temporary directory changed; refusing recursive cleanup.')
+        shutil.rmtree(current)
 
 
 def vector(x, y, z):
@@ -57,6 +76,7 @@ class FakeGeometry:
         self.triangles = [vector(0, 1, 2), vector(3, 4, 5)]
         self.ids = [0, 1]
         self.success = object()
+        self.found = object()
         self.source_model = object()
         self.dynamic = object()
         self.called_with_section_ids = False
@@ -67,6 +87,7 @@ class FakeGeometry:
             GeometryScriptCopyMeshFromAssetOptions=lambda: SimpleNamespace(),
             GeometryScriptLODType=SimpleNamespace(SOURCE_MODEL=self.source_model),
             GeometryScriptOutcomePins=SimpleNamespace(SUCCESS=self.success),
+            GeometryScriptSearchOutcomePins=SimpleNamespace(FOUND=self.found),
             GeometryScript_AssetUtils=SimpleNamespace(
                 check_static_mesh_has_available_lod=self.available,
                 copy_mesh_from_static_mesh_v2=self.copy,
@@ -82,7 +103,7 @@ class FakeGeometry:
 
     def available(self, mesh, lod):
         assert mesh is self.mesh and lod.lod_type is self.source_model and lod.lod_index == 0
-        return True, object()
+        return self.found
 
     def copy(self, mesh, dynamic, options, lod, section_ids):
         assert mesh is self.mesh and dynamic is self.dynamic
@@ -103,7 +124,7 @@ class SectionProofTests(unittest.TestCase):
 
     def test_permuted_primitives_map_by_geometry_despite_shared_material(self):
         self.assertTrue(self.fake.called_with_section_ids)
-        with TemporaryDirectory() as folder:
+        with checked_tempdir() as folder:
             path = Path(folder) / 'tile.glb'
             points = [proof.from_unreal_cm((p.x, p.y, p.z)) for p in self.positions]
             make_glb(path, [[points[i] for i in (3, 4, 5)], [points[i] for i in (0, 1, 2)]])
@@ -152,9 +173,15 @@ class SectionProofTests(unittest.TestCase):
             proof.reflected_source(self.fake.unreal, self.fake.mesh, lambda: None)
 
     def test_unavailable_source_lod_fails_closed(self):
-        self.fake.unreal.GeometryScript_AssetUtils.check_static_mesh_has_available_lod = lambda *_: (False, object())
-        with self.assertRaisesRegex(proof.CapabilityError, 'LOD0'):
-            proof.reflected_source(self.fake.unreal, self.fake.mesh, lambda: None)
+        for result in (None, False, (False, self.fake.found), (True, object())):
+            self.fake.unreal.GeometryScript_AssetUtils.check_static_mesh_has_available_lod = lambda *_, r=result: r
+            with self.assertRaisesRegex(proof.CapabilityError, 'LOD0'):
+                proof.reflected_source(self.fake.unreal, self.fake.mesh, lambda: None)
+
+    def test_positive_reflected_bool_and_found_tuple_is_accepted(self):
+        self.fake.unreal.GeometryScript_AssetUtils.check_static_mesh_has_available_lod = lambda *_: (True, self.fake.found)
+        _positions, _triangles, _ids, names = proof.reflected_source(self.fake.unreal, self.fake.mesh, lambda: None)
+        self.assertEqual(names, ['GL_Facade', 'GL_Road'])
 
     def test_changed_reflected_signature_names_missing_capability(self):
         self.fake.unreal.GeometryScript_AssetUtils.copy_mesh_from_static_mesh_v2 = lambda: None
@@ -162,7 +189,7 @@ class SectionProofTests(unittest.TestCase):
             proof.reflected_source(self.fake.unreal, self.fake.mesh, lambda: None)
 
     def test_full_run_is_read_only_and_reports_unverified_road_retention(self):
-        with TemporaryDirectory() as folder:
+        with checked_tempdir() as folder:
             project = Path(folder)
             saved = project / 'Saved'
             source = saved / 'CityPCG' / f'{proof.TILE}.glb'

@@ -188,7 +188,8 @@ def require_capabilities(unreal):
                if not hasattr(getattr(unreal, cls, None), method)]
     missing += [name for name in ('DynamicMesh', 'GeometryScriptMeshReadLOD',
                                    'GeometryScriptCopyMeshFromAssetOptions', 'GeometryScriptLODType',
-                                   'GeometryScriptOutcomePins') if not hasattr(unreal, name)]
+                                   'GeometryScriptOutcomePins', 'GeometryScriptSearchOutcomePins')
+                if not hasattr(unreal, name)]
     if missing:
         raise CapabilityError('Required reflected GeometryScript capability missing: ' + ', '.join(missing))
 
@@ -207,7 +208,13 @@ def reflected_source(unreal, mesh, guard):
     lod.lod_type, lod.lod_index = unreal.GeometryScriptLODType.SOURCE_MODEL, 0
     available = reflected_call('check_static_mesh_has_available_lod',
                                unreal.GeometryScript_AssetUtils.check_static_mesh_has_available_lod, mesh, lod)
-    if not isinstance(available, tuple) or len(available) != 2 or available[0] is not True:
+    found = unreal.GeometryScriptSearchOutcomePins.FOUND
+    # UE Python documentation describes a direct outcome; some reflected
+    # builds may expose the C++ bool as an additional tuple element. Accept
+    # only a positive, unambiguous FOUND outcome in either representation.
+    valid_lod = (len(available) == 2 and available[0] is True and available[1] == found
+                 if isinstance(available, tuple) else available == found)
+    if not valid_lod:
         raise CapabilityError('LOD0 source model is unavailable or the reflected availability result is unexpected.')
     opts = unreal.GeometryScriptCopyMeshFromAssetOptions()
     opts.apply_build_settings = False

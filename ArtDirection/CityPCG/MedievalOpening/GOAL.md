@@ -37,14 +37,14 @@ workstreams.
 
 The first West Mark Lane pilot has three complete medieval buildings and a
 filtered source tile that removes their three surveyed shells while retaining
-the other exported primitives. The original Unreal section-to-export mapping
-still needs independent verification before road, park, water and landmark
-preservation can be claimed. In the offline source, filtered and import
-files, the primitive labelled as road in the import copy retains all 18,340
-signed triangles; its identity as the actual Unreal road section remains
-unproven. The saved Unreal replacement asset also needs an independent
-geometry check. The building assets have been imported and their geometry and
-collision settings audited. The pilot still
+the other exported primitives. An offline comparison now matches all six
+original source mesh groups to their exported primitives by exact signed
+geometry. The source group named `GL_Road` has 18,340 triangles, all retained
+in the filtered and import files. Unreal's live section-to-material binding
+still needs verification before runtime road, park, water and landmark
+preservation can be claimed. The saved Unreal replacement asset also needs an
+independent geometry check. The building assets have been imported and their
+geometry and collision settings audited. The pilot still
 needs placement, in-editor visual review, streaming/gameplay checks and a
 current standalone build; it is not yet the finished city. Its runtime module
 was linked into shared editor build #15, with the replacement disabled by

@@ -1,10 +1,9 @@
 """Exercise road retention without using legacy primitive or slot order."""
 
 from pathlib import Path
-from tempfile import TemporaryDirectory
 import unittest
 
-from test_verify_west_mark_lane_section_mapping import make_glb
+from test_verify_west_mark_lane_section_mapping import checked_tempdir, make_glb
 import verify_west_mark_lane_road_retention as road
 
 
@@ -16,7 +15,7 @@ OTHER = [(0, 0, 3), (2, 0, 3), (0, 2, 3)]
 
 class RoadRetentionTests(unittest.TestCase):
     def setUp(self):
-        self.root = Path(self.enterContext(TemporaryDirectory()))
+        self.root = Path(self.enterContext(checked_tempdir()))
         self.source, self.filtered, self.named = [self.root / name for name in ('source.glb', 'filtered.glb', 'named.glb')]
         make_glb(self.source, [FACADE, ROAD, PARK])
         make_glb(self.filtered, [PARK, ROAD, FACADE])
