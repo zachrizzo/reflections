@@ -87,6 +87,8 @@ jobs:
           set -euo pipefail
           script="$GITHUB_WORKSPACE/Tools/CityPCG/north_market_roof_variation_hosted.py"
           blender="$RUNNER_TEMP/blender-4.5.3-linux-x64/blender"
+          timeout --signal=TERM --kill-after=5s 30s "$blender" --background --threads 1 --factory-startup --disable-autoexec \
+            --python-exit-code 1 --python-expr "import bpy; text=bpy.data.curves.new('ReviewLabelPreflight','FONT'); text.align_y='BOTTOM_BASELINE'; print('Review caption alignment supported')"
           timeout --signal=TERM --kill-after=5s 90s python3 -B "$script" prepare
           timeout --signal=TERM --kill-after=10s 600s "$blender" --background --threads 2 --factory-startup --disable-autoexec \
             --python-exit-code 1 --python "$script" -- build
