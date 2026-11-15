@@ -70,9 +70,10 @@ material binding, collision and streaming have not yet been tested in Unreal.
 
 An offline watch-gate kit provides occupied and reclaimed pennant variants.
 Its quest example, LAN visual controller and separate campaign rules are
-prototypes; no reclaimable stronghold has been placed or verified in the
-playable level yet. GameFlow needs a save preflight before those rules can be
-integrated without risking loss of stronghold progress.
+prototypes; the standalone campaign rules pass their C++ tests, but no
+reclaimable stronghold has been placed or verified in the playable level yet.
+GameFlow needs a save preflight before those rules can be integrated without
+risking loss of stronghold progress.
 
 The active tracked goal remains in progress. The current game and standalone
 have not yet received a verified full-building replacement; the first priority

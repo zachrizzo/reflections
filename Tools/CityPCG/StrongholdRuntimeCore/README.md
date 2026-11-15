@@ -97,10 +97,11 @@ format in the standalone test.
 
 ## Tests
 
-Status: the first standalone compile succeeded but two wire-fixture assertions
-failed because one fixture byte was missing. The fixture has since been
-corrected and independently checked, but the full C++ suite has **not** been
-rerun with that correction while the shared editor and memory guards are busy.
+Status: the corrected standalone C++ suite compiled with MSVC C++17 and passed
+its authority, identity, hold, checkpoint and migration checks on 15 November
+2026. The wire fixture was independently checked in Python as well. These tests
+cover only the isolated core; Unreal integration, gameplay and LAN remain
+untested.
 
 From the project root, run `python Tools/CityPCG/StrongholdRuntimeCore/run_tests.py`.
 The Windows runner finds the installed Visual Studio x64 compiler, requires a
