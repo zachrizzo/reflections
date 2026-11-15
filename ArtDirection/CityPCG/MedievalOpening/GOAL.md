@@ -117,8 +117,14 @@ meshes now contain the 14 models in 97 sections instead of 149; material
 binding, collision and streaming have not yet been tested in Unreal.
 
 An offline watch-gate kit provides occupied and reclaimed pennant variants.
-Its quest example, LAN visual controller and separate campaign rules are
-prototypes. A revised defender-clear capture mode and checkpoint adapter passed
+A hosted source-art review adds palisade wings, supplies, a sconce and claim
+markers, with separate occupied and reclaimed scene GLBs. Its source surfaces
+leave the measured central box clear, and both scenes passed a fresh GLB
+reimport; the review bundle and labeled previews are preserved on `main`.
+The result is a simple isolated entrance, not a finished base, and it has not
+been imported or placed in Unreal. Collision, navigation, routes and capture
+gameplay remain unverified. Its quest example, LAN visual controller and
+separate campaign rules are prototypes. A revised defender-clear capture mode and checkpoint adapter passed
 standalone C++17 checks on a hosted Linux runner, with Unreal-shaped test
 doubles for the adapter. They have not been compiled against Unreal or connected
 to the game. No reclaimable stronghold has been placed or verified in the
