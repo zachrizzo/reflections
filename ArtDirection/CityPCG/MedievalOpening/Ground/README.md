@@ -76,3 +76,26 @@ python "$ground/export_street_patch.py" $verified "$ground/TowerApproach" --asse
 ```
 
 `apply_west_street_patch.apply_tower_approach(verified_plan_path)` repeats the floor trace checks and installs `GL_1450_TowerApproach_Paving`. The exact actor package is `/Game/__ExternalActors__/GrayLondon/Maps/GrayLondon_Geodata/3/A0/4CPCXST74RGMVAB4XQ8TNK`.
+
+## Leadenhall market stall
+
+`leadenhall_market_section.json` follows the surveyed south market wall and covers a 4.89 × 8.30 m area from the dry-goods stall and cask into the road. It ends before the portal and arcade. The ten-triangle mesh uses the opening material and preserves the existing collision. Eleven editor probes matched City ground at Z=10 cm and 34 matched the OSM road at Z=28 cm.
+
+```powershell
+$ground = 'ArtDirection/CityPCG/MedievalOpening/Ground'
+$tile = 'Saved/CityPCG/MedievalSurvey/Tile_p03_p01.glb'
+$survey = 'ArtDirection/CityPCG/MedievalOpening/leadenhall_market_face_frontages.json'
+$plan = 'Saved/CityPCG/leadenhall_market_paving_candidate.json'
+$floor = 'Saved/CityPCG/leadenhall_market_paving_floors.json'
+$verified = 'Saved/CityPCG/leadenhall_market_paving_verified.json'
+python "$ground/plan_street_patch.py" $tile $plan --section "$ground/leadenhall_market_section.json" --survey $survey
+```
+
+Collect `$floor` from `$plan` in the Gray London editor with `OSM Tile_p03_p01` loaded outside PIE.
+
+```powershell
+python "$ground/plan_street_patch.py" $tile $verified --section "$ground/leadenhall_market_section.json" --survey $survey --observations $floor
+python "$ground/export_street_patch.py" $verified "$ground/LeadenhallMarket" --asset SM_GL1450_LeadenhallMarketGround --manifest leadenhall_market_mesh.json
+```
+
+`apply_west_street_patch.apply_leadenhall_market(verified_plan_path)` repeats the floor trace checks and installs `GL_1450_Leadenhall_MarketGround` at exact actor package `/Game/__ExternalActors__/GrayLondon/Maps/GrayLondon_Geodata/7/4F/IZGPTFQR4V3BXJ1JGQR3N9`.

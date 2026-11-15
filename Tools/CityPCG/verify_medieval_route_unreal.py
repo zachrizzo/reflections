@@ -8,7 +8,7 @@ from pathlib import Path
 from apply_facade_pcg import MEDIEVAL_DESTINATION, graph_name, read_plan
 from import_medieval_kit import opening_world
 from plan_medieval_district import plan
-from verify_tile_frontages_unreal import verify_document
+from verify_tile_frontages_unreal import cast, verify_document
 
 
 def read_json(path):
@@ -75,6 +75,43 @@ def verify_route(sources, previous_plans=(), cell_budget=125, narrow_kit=False):
         "cells": [{"id": key, "points": points} for key, points in sorted(cells.items())],
         "verification": evidence,
     }
+
+
+def audit_route_ground(plan_path, use_game_world=False):
+    """Recheck the documented corridor's dry road support in editor or PIE."""
+    import unreal
+
+    plan = read_json(plan_path)
+    review, guards = plan["route_review"], plan["route_ground_guards"]
+    editor = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+    world = editor.get_game_world() if use_game_world else opening_world(unreal)
+    if not world or not world.get_path_name().endswith("GrayLondon_Geodata.GrayLondon_Geodata"):
+        raise RuntimeError("The requested Gray London world is unavailable.")
+    actors = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.StaticMeshActor)
+    expected = [actor for actor in actors if actor.get_name() == review["source_tile_actor_object"]]
+    if len(expected) != 1:
+        raise RuntimeError(f"Load the exact corridor source actor {review['source_tile_actor']}.")
+
+    heights = []
+    guide = guards["guide_m"]
+    for start, end in zip(guide, guide[1:]):
+        dx, dy = end[0] - start[0], end[1] - start[1]
+        length = math.hypot(dx, dy)
+        steps = math.ceil(length / guards["interval_max_m"])
+        for step in range(steps + 1):
+            for offset in guards["offsets_m"]:
+                x = 100 * (start[0] + dx * step / steps - offset * dy / length)
+                y = 100 * (start[1] + dy * step / steps + offset * dx / length)
+                hit = cast(world, (x, y, guards["trace_from_z_cm"]), (x, y, guards["trace_to_z_cm"]))
+                if (not hit or hit[9] != expected[0] or not hit[10] or
+                        hit[10].get_name() != guards["component"] or
+                        abs(hit[4].z - guards["floor_z_cm"]) > guards["floor_z_tolerance_cm"] or
+                        hit[7].z < guards["minimum_normal_z"]):
+                    raise RuntimeError(f"Corridor ground differs at ({x:.2f}, {y:.2f}) cm.")
+                heights.append(hit[4].z)
+    if len(heights) != review["road_trace_count"]:
+        raise RuntimeError("The ground audit did not reproduce the reviewed sample count.")
+    return {"samples": len(heights), "minimum_z_cm": min(heights), "maximum_z_cm": max(heights)}
 
 
 def audit_cells(plan_path, cell_ids, use_game_world=False):
