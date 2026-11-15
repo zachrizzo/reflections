@@ -45,6 +45,7 @@ def source_path(root, relative, suffix):
 def make_material(unreal, tools, name, spec, texture, destination=MESH_ROOT):
     asset = check_type(tools.create_asset(name, destination, unreal.Material, unreal.MaterialFactoryNew()),
                        unreal.Material, name, destination)
+    asset.set_editor_property('used_with_instanced_static_meshes', True)
     edit = unreal.MaterialEditingLibrary
     if texture is None:
         base = edit.create_material_expression(asset, unreal.MaterialExpressionConstant3Vector, -410, -80)
