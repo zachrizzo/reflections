@@ -1455,7 +1455,12 @@ IDLE0 = '/Game/Characters/UEFN_Mannequin/Animations/Idle/M_Neutral_Stand_Idle_Lo
 LOWER_PREFIXES = ('root', 'pelvis', 'spine_01', 'spine_02', 'thigh_', 'calf_', 'foot_', 'ball_')
 # Where the sword's blade should point (component space, from body axes): guard = ahead and a little up, at the enemy;
 # march = down and a little forward, carried.
-SWORD_AIM = {'Shield_Guard_Idle': (1.0, 0.0, 0.25), 'Shield_March_Hold': (0.45, 0.0, -0.9)}  # (front, lat, up)
+# march = forward and ~15 deg down: with the arm hanging, that's the blade's natural line (pointing straight down would
+# need a 70 deg wrist bend).
+SWORD_AIM = {'Shield_Guard_Idle': (1.0, 0.0, 0.25), 'Shield_March_Hold': (0.97, 0.0, -0.26)}  # (front, lat, up)
+# Where the left wrist goes (cm from a spine bone, along front / lat (+ = left) / up): the forearm lies across the front
+# of the body, elbow out to the left, so the shield on it covers the chest (guard) or is carried at the stomach (march).
+SHIELD_WRIST = {'Shield_Guard_Idle': ('spine_05', 38.0, -6.0, -8.0), 'Shield_March_Hold': ('spine_02', 30.0, -2.0, -2.0)}
 BLADE_TILT = 15.0  # degrees the blade leans back toward the forearm from square across the palm (npc-unify's prop setup)
 
 
@@ -1520,25 +1525,47 @@ def aim_sword_shield(clip, name):
     skel = clip.get_editor_property('skeleton')
     axes = {s: hand_axes_local(skel, s) for s in 'lr'}
     n = clip.data_model_interface.get_number_of_keys()
-    edit = ('lowerarm_l', 'lowerarm_r', 'hand_r')
+    edit = ('upperarm_l', 'lowerarm_l', 'lowerarm_r', 'hand_r')
     keys = {b: [] for b in edit}
-    report = {'shield_back_facing_front_min': 1.0, 'blade_on_aim_min': 1.0, 'max_wrist_turn_deg': 0.0, 'max_roll_deg': 0.0}
+    report = {'shield_back_facing_front_min': 1.0, 'blade_on_aim_min': 1.0, 'max_wrist_turn_deg': 0.0, 'max_roll_deg': 0.0,
+              'max_left_roll_deg': 0.0, 'wrist_target_miss_cm': 0.0}
     for i in range(n):
         pose = X.get_anim_pose_at_frame(clip, i, opts)
         front, lat, up = body_axes(pose)
         C = lambda b: X.get_bone_pose(pose, b, W)
         local = {b: X.get_bone_pose(pose, b, L) for b in edit}
-        # Left: roll the forearm so the back of the hand (minus palm) faces front.
-        el, hl = C('lowerarm_l'), C('hand_l')
-        axis = (hl.translation - el.translation).normal()
-        back = hl.rotation.rotate_vector(axes['l'][2]) * -1.0
+        # Left: two-bone IK puts the wrist across the front of the body (elbow out to the left and down), then the
+        # forearm rolls so the back of the hand and forearm (where the shield straps on) faces front.
+        bone, f_, l_, u_ = SHIELD_WRIST[name]
+        target = C(bone).translation + front * f_ + lat * l_ + up * u_
+        S, E, H = C('upperarm_l').translation, C('lowerarm_l').translation, C('hand_l').translation
+        qc, qu, ql, qh = C('clavicle_l').rotation, C('upperarm_l').rotation, C('lowerarm_l').rotation, C('hand_l').rotation
+        L1, L2 = (E - S).length(), (H - E).length()
+        to = target - S
+        dist = min(to.length(), (L1 + L2) * 0.995)
+        u = to.normal()
+        a = (L1 * L1 - L2 * L2 + dist * dist) / (2 * dist)
+        h = math.sqrt(max(0.0, L1 * L1 - a * a))
+        pole = lat + front * 0.9 + up * -0.4  # elbow out to the left and forward, so the forearm lies across the body
+        w = (pole - u * pole.dot(u)).normal()
+        E2 = S + u * a + w * h
+        T2 = S + u * dist
+        report['wrist_target_miss_cm'] = max(report['wrist_target_miss_cm'], round((T2 - target).length(), 1))
+        n_old = (E - S).cross(H - E)
+        n_old = n_old.normal() if n_old.length() > 1e-3 else (E - S).cross(front).normal()
+        n_new = (E2 - S).cross(T2 - E2).normal()
+        Ru = frame_quat(E2 - S, n_new) * qinv(frame_quat(E - S, n_old)) * qu
+        Rl = frame_quat(T2 - E2, n_new) * qinv(frame_quat(H - E, n_old)) * ql
+        hand_now = Rl * (qinv(ql) * qh)
+        axis = (T2 - E2).normal()
+        back = hand_now.rotate_vector(axes['l'][2]) * -1.0
         roll = signed_angle(back, front, axis)
-        R = axis_quat(axis, roll)
-        q = el.rotation
-        keys['lowerarm_l'].append((local['lowerarm_l'].translation, local['lowerarm_l'].rotation * (qinv(q) * R * q), local['lowerarm_l'].scale3d))
-        back2 = R.rotate_vector(back)
+        Rr = axis_quat(axis, roll)
+        keys['upperarm_l'].append((local['upperarm_l'].translation, qinv(qc) * Ru, local['upperarm_l'].scale3d))
+        keys['lowerarm_l'].append((local['lowerarm_l'].translation, qinv(Ru) * (Rr * Rl), local['lowerarm_l'].scale3d))
+        back2 = Rr.rotate_vector(back)
         report['shield_back_facing_front_min'] = min(report['shield_back_facing_front_min'], round(back2.dot(front), 3))
-        report['max_roll_deg'] = max(report['max_roll_deg'], round(abs(roll), 1))
+        report['max_left_roll_deg'] = max(report['max_left_roll_deg'], round(abs(roll), 1))
         # Right: blade direction in component space.
         f_, l_, u_ = SWORD_AIM[name]
         aim = (front * f_ + lat * l_ + up * u_).normal()

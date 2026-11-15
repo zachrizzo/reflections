@@ -75,7 +75,30 @@ one set of clips on the walker's skeleton, exactly `/Game/Characters/UEFN_Manneq
 - `AS_Melee_Shield_March_Hold_Walker`: a 2 s seamless loop for an upper-body layer while walking or marching. The sword
   hangs at the right side and the shield forearm is carried across the stomach.
 
-Kimodo keeps the pelvis in place, so neither clip walks by itself. Both get the closed grip.
+Kimodo keeps the pelvis in place, so neither clip walks by itself. Both get the closed grip. Built 14 Nov 21:3x (row E).
+- **Sword** (right): the blade leaves the index side of the fist, tipped 15° toward the forearm (npc-unify's prop
+  setup). It's aimed by a forearm roll, then a wrist turn of at most 55°.
+  - Guard: ahead and a little up (dot 1.00).
+  - March: forward and 15° down (dot 0.994). That's the hanging arm's natural blade line; pointing straight down would
+    need a 70° wrist bend.
+- **Shield** (left): two-bone IK lays the forearm across the front of the body, with the elbow out and forward.
+  - Wrist target: 38 cm in front of `spine_05` for the guard, 30 cm in front of `spine_02` for the march.
+  - Then a forearm roll of at most 38° turns the back of the hand and forearm forward: 0.82 for the guard, 0.88 for the
+    march.
+- **March hold lower body:** root, pelvis, `spine_01`, `spine_02` and both legs are `M_Neutral_Stand_Idle_Loop` frame 0
+  on every frame. npc-unify adds the clip as a local additive over that frame on top of the walk.
+- **Hand clearance:** guard ≥10 cm; march ≥1.3 cm (right hand), with 0 frames inside. Seams are 0 cm.
+- **Pose sheet:** `shield_poses.png`.
+
+**Get-ups** (`getups` stage), for the walker after a physics knockdown (npc-unify, train #15):
+- `AS_GetUp_Back_Walker` (2.0 s) and `AS_GetUp_Front_Walker` (2.03 s) are cut from the Game Animation Sample's
+  `M_ragdoll_getup_stand_B/_F`: the active part only, at 1.25× and 1.15×.
+- Root motion is off. The root's travel is taken out, so the pelvis starts 3–8 cm from the capsule at 11 cm high and
+  rises in place.
+- Capsule placement: put it at the ragdoll's pelvis, projected to the floor. For Back, face from the head toward the
+  feet; for Front, face from the pelvis toward the head.
+- They end in the sample's stand, up to 20 cm from the neutral idle's frame 0, mostly in the hands, so blend out over
+  about 0.25 s.
 
 **Shock loop** (`author_melee_kimodo.py shock`):
 - **Pose:** frame 0 of `M_Neutral_Stand_Idle_Loop`, held, with an authored overlay in component space. The back arches

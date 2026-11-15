@@ -506,7 +506,7 @@ void AReflectionsSpellProjectile::OnProjectileHit(UPrimitiveComponent* HitCompon
         }
         else if (UReflectionsSpellEventSubsystem* Events = World->GetSubsystem<UReflectionsSpellEventSubsystem>())
         {
-            Events->OnSpellImpactVisual.Broadcast(Spell, Hit.ImpactPoint, Normal, Caster, bExplosion ? 2.7f : 0.8f + BlastRadius / 250.0f);
+            Events->OnSpellImpactVisual.Broadcast(Spell, Hit.ImpactPoint, Normal, Caster, bExplosion ? 2.1f : 0.8f + BlastRadius / 250.0f);
         }
     }
     if (Caster)

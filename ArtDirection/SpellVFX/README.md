@@ -265,6 +265,14 @@ physics of it." npc-unify owns NPC body physics; this side owns how a hit feels 
   sweeteners at 0.8, all from the audio session.
 - **One body per NPC**: hits and blast overlaps on an NPC's hidden walker or hit proxy resolve to the NPC, so each spell
   hits each NPC once. This side never launches NPC bodies (npc-unify does, using the same Magnitude scale).
+- **Spells pass through each other**: every spell projectile ignores the others. Before this, the two chain-lightning hops
+  spawned at one point struck each other at once and never reached a body (found with `Spell.LogHits`).
+- **Readable blast**: the Fireball explosion visual is 2.1× (it was 2.7×). The "before" strip showed its white flash
+  covering half the frame for 0.3 s.
+- **Verified on train #13** (Gray London, `Tools/SpellVFX/test_impact_pie.py`):
+  - Health regen holds for 6.0 s after a hit, then climbs about 3.1/s.
+  - A point-blank Fire Bolt hits a held guard (40 → 26).
+  - "Before" strips: `Saved/SpellCombatTest/impact/strip_before_fireball.png` and `strip_before_lightning.png`.
 - **Gray London start**: `AReflectionsSampleGameMode::ChoosePlayerStart` picks the PlayerStart tagged `Lanthorne`
   (Great Tower St, placed by world-jump) over the one at the map origin. Without the tag it falls back to the default.
 

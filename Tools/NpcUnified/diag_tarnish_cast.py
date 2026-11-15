@@ -51,6 +51,22 @@ async def hero_is_down():
         hero = unreal.GameplayStatics.get_player_pawn(game, 0) if game else None
         if hero and abs(hero.get_velocity().z) < 5.0:
             break
+    # Team rule (21:27): until the game puts the hero there itself, go to the start tagged 'Lanthorne' (Great Tower
+    # St) first, look the way it looks, and give the streamed city a few seconds to arrive.
+    game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+    hero = unreal.GameplayStatics.get_player_pawn(game, 0) if game else None
+    starts = [a for a in unreal.GameplayStatics.get_all_actors_of_class(game, unreal.PlayerStart)
+              if str(a.get_editor_property('player_start_tag')) == 'Lanthorne'] if hero else []
+    if starts:
+        hero.set_actor_location(starts[0].get_actor_location(), False, True)
+        hero.set_actor_rotation(unreal.Rotator(0.0, 0.0, starts[0].get_actor_rotation().yaw), False)
+        if hero.get_controller():
+            hero.get_controller().set_control_rotation(starts[0].get_actor_rotation())
+        await asyncio.sleep(4.0)
+        for _ in range(20):
+            if abs(hero.get_velocity().z) < 5.0:
+                break
+            await asyncio.sleep(0.25)
     await asyncio.sleep(1.0)
     W(1500.0, 500.0, 90.0)
 
