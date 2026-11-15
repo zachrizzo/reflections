@@ -32,7 +32,9 @@ filtered source tile that removes their three modern shells while retaining
 the original road, park, water and landmark geometry. Their assets have been
 imported and their geometry and collision settings audited. The pilot still
 needs placement, in-editor visual review, streaming/gameplay checks and a
-current standalone build; it is not yet the finished city.
+current standalone build; it is not yet the finished city. Its runtime module
+was linked into shared editor build #15, with the replacement disabled by
+default until the pilot is verified.
 
 The west connector, northwest Leadenhall and east Royal Mint blocks have eleven
 more complete source models, checked against their surveyed footprints and
@@ -48,7 +50,13 @@ story markers, so replacing them needs a coordinated gameplay and visual review.
 At city scale, keep each surveyed outer footprint and use spatially grouped
 building geometry and repeated details where feasible. The current individual
 models have too many separate material sections to assume they will scale;
-measure the result in the playable map before approving it.
+measure the result in the playable map before approving it. Nine review-only
+grouped meshes now contain the 14 models in 97 sections instead of 149;
+material binding, collision and streaming have not yet been tested in Unreal.
+
+An offline watch-gate kit provides occupied and reclaimed pennant variants.
+Its quest example and LAN visual controller are prototypes; no reclaimable
+stronghold has been placed or verified in the playable level yet.
 
 Coordinate any editor or PIE session through `Saved/PIE_LOCK.json` and the
 shared editor queue. Save only explicitly identified London-owned packages;
