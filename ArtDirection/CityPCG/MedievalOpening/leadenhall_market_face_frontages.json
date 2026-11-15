@@ -1,0 +1,77 @@
+{
+  "coordinate_system": "ue_local_m",
+  "source": "Tile_p03_p01",
+  "attribution": "Base geometry: OpenStreetMap contributors, ODbL 1.0.",
+  "source_geometry": {
+    "facade_primitive": 0,
+    "origin_m": [
+      3000,
+      1000,
+      0
+    ],
+    "road_primitive": 2
+  },
+  "frontages": [
+    {
+      "id": "Tile_p03_p01_market_face_south",
+      "start": [
+        3066.179,
+        569.11,
+        0.2
+      ],
+      "end": [
+        3067.096,
+        574.22,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.9843,
+        -0.1766
+      ],
+      "confidence": "direct_opening_camera_wall",
+      "source_primitive": 0
+    },
+    {
+      "id": "Tile_p03_p01_market_face_north",
+      "start": [
+        3068.598,
+        578.85,
+        0.2
+      ],
+      "end": [
+        3069.714,
+        582.75,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.9614,
+        -0.2753
+      ],
+      "confidence": "direct_opening_camera_wall",
+      "source_primitive": 0
+    }
+  ],
+  "protected_mesh_filters": [
+    {
+      "overlay": "AnonymousShops_Tile_p03_p01.glb",
+      "origin_m": [
+        3000.0,
+        1000.0,
+        0.0
+      ],
+      "excluded_ids": []
+    }
+  ],
+  "review_scope": {
+    "name": "Leadenhall market wall shown behind the linen stall",
+    "camera_cm": [
+      307420,
+      57175,
+      170
+    ],
+    "camera_yaw_deg": 163,
+    "existing_arcade_min_y_m": 583.0
+  }
+}
