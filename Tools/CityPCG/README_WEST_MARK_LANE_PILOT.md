@@ -8,9 +8,21 @@ any later build or restart. The replacement actor has not yet been placed in
 the map or validated in PIE or a packaged build. The steps below describe the
 remaining pilot test.
 
+**Activation is blocked until the original tile's section mapping is
+independently verified.** The existing `Tile_p03_p00.glb` and filtered tile
+were built by assuming that exported GLB primitive order matches the source
+Unreal mesh's section and slot order. Matching primitive counts, triangle
+totals, and material names do not establish this: five of the six source GLB
+primitives use `WorldGridMaterial`. Verify every GLB primitive against the
+corresponding original source section using its signed triangle geometry,
+including the `GL_Road` section, then independently check that all road
+geometry remains in the filtered replacement. If the proof is ambiguous or
+fails, rebuild the filtered tile from verified mappings before any pilot
+activation. Keep `GrayLondon.TileReplacement.Enable` at `0` meanwhile.
+
 ## Prepare and place the pilot
 
-1. Wait for an allocated turn in `Saved/PIE_QUEUE.md` and hold the
+1. Complete the source-section and retained-road proof above. Wait for an allocated turn in `Saved/PIE_QUEUE.md` and hold the
    `codex-gray-london` lease in `Saved/PIE_LOCK.json`. The editor must already
    have Gray London Geodata open outside PIE, and the exact original
    `Tile_p03_p00` actor must already be loaded. The four reviewed assets and
