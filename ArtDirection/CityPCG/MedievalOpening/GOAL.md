@@ -76,9 +76,11 @@ The cumulative rollout preflight covers 18 proposed buildings across three of
 the 117 source tile assets on disk. Four of those North Market buildings
 now have detailed OBJ source meshes with timber, roofs, windows and doors.
 All four passed hosted Blender-to-FBX round trips after a targeted repair
-preserved the fourth model's authored face normals. These are review-only
-source bundles and have not been imported into Unreal. They still need visual
-and Unreal checks, approved collision and a matching cumulative tile filter.
+preserved the fourth model's authored face normals. Their review-only bundles
+and two diagnostic previews are preserved on `main`; they have not been
+imported into Unreal. The first preview is repetitive and needs more
+street-level detail. The buildings still need visual and Unreal checks,
+approved collision and a matching cumulative tile filter.
 The repaired model's sharp-edge count and resulting Unreal performance need
 measurement. All proposals remain review-only: the
 other tiles need exports, the original section mapping needs verification, and
