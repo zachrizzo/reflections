@@ -56,7 +56,7 @@ Blender round trips. They have not yet been imported or placed in Unreal.
 The east Royal Mint block also needs several neighboring exports before review.
 
 The cumulative rollout preflight covers 18 proposed buildings across three of
-the 117 source tile assets on disk. Four additional North Market buildings
+the 117 source tile assets on disk. Four of those North Market buildings
 now have detailed OBJ source meshes with timber, roofs, windows and doors;
 these were produced without Blender and are review-only, not imported Unreal
 assets. They still need Blender and Unreal checks, approved collision and a
