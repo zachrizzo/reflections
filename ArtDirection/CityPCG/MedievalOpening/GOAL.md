@@ -83,8 +83,16 @@ All four passed hosted Blender-to-FBX round trips after a targeted repair
 preserved the fourth model's authored face normals. Their review-only bundles
 and two diagnostic previews are preserved on `main`; they have not been
 imported into Unreal. The first preview is repetitive and needs more
-street-level detail. The buildings still need visual and Unreal checks,
-approved collision and a matching cumulative tile filter.
+street-level detail. A subsequent east-0a variant adds seven closed,
+decorative shop/house bays; its overlay, before/after previews and a complete
+FBX variant passed hosted Blender source and clean-reimport checks. The FBX
+bundle is preserved on `main` with a verified LFS readback. An illustrative
+street scene combines the variant with market stalls, goods and a handcart;
+its archive and two previews are also preserved on `main`. Visual review found
+that its lighting is dark and the upper facades and rooflines remain too regular.
+The scene's ground and prop positions are illustrative, and none of these
+variants has been imported or placed in Unreal. The buildings still need visual
+and Unreal checks, approved collision and a matching cumulative tile filter.
 The repaired model's sharp-edge count and resulting Unreal performance need
 measurement. All proposals remain review-only: the
 other tiles need exports, the original section mapping needs verification, and
