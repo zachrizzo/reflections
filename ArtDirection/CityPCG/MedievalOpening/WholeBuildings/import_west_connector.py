@@ -37,32 +37,35 @@ def text_digest(path, line_ending=b'\n'):
 
 
 def preflight():
-    manifest_path = ROOT / 'whole_buildings_kit.json'
-    candidate_path = ROOT.parents[1] / 'west_connector_whole_buildings_candidate.json'
-    plan_path = ROOT / 'west_connector_whole_building_plan.json'
-    if text_digest(manifest_path) != MANIFEST_SHA256:
-        raise RuntimeError('West Connector kit does not match the pinned reviewed manifest.')
+    return verify_sources(ROOT, ROOT.parents[1] / 'west_connector_whole_buildings_candidate.json',
+                          ROOT / 'west_connector_whole_building_plan.json', MANIFEST_SHA256, NAMES)
+
+
+def verify_sources(root, candidate_path, plan_path, manifest_sha256, names):
+    manifest_path = root / 'whole_buildings_kit.json'
+    if text_digest(manifest_path) != manifest_sha256:
+        raise RuntimeError(f'{root.name} kit does not match the pinned reviewed manifest.')
     manifest = read_json(manifest_path)
     # The generator hashed the survey and plan from its Windows checkout.
     if (manifest['schema'] != 1 or text_digest(candidate_path, b'\r\n') != manifest['candidate_sha256'] or
             text_digest(plan_path, b'\r\n') != manifest['plan_sha256']):
-        raise RuntimeError('West Connector candidate or plan differs from the reviewed source.')
+        raise RuntimeError(f'{root.name} candidate or plan differs from the reviewed source.')
     candidate, plan = read_json(candidate_path), read_json(plan_path)
     surveys = {row['id']: row for row in candidate['buildings']}
     plans = {row['id']: row for row in plan['buildings']}
     specs = manifest['buildings']
-    if (specs.keys() != NAMES.keys() or plans.keys() != NAMES.keys() or surveys.keys() != NAMES.keys() or
-            len(plan['buildings']) != len(NAMES) or len(candidate['buildings']) != len(NAMES) or
+    if (specs.keys() != names.keys() or plans.keys() != names.keys() or surveys.keys() != names.keys() or
+            len(plan['buildings']) != len(names) or len(candidate['buildings']) != len(names) or
             manifest['source_tile'] != plan['source_tile'] or plan['source_tile'] != candidate['source_tile'] or
             plan['source_export_sha256'] != candidate['source_export_sha256']):
-        raise RuntimeError('The kit, plan and survey must agree on the three reviewed West Connector shells.')
+        raise RuntimeError(f'The kit, plan and survey must agree on the reviewed {root.name} shells.')
 
     verified = {}
-    for shell_id, name in NAMES.items():
+    for shell_id, name in names.items():
         spec, review = specs[shell_id], plans[shell_id]
         bridge, roundtrip = spec['unreal_bridge'], spec['roundtrip']
-        original = ROOT / 'Source' / f'{name}.fbx'
-        prepared = ROOT / 'UnrealSource' / original.name
+        original = root / 'Source' / f'{name}.fbx'
+        prepared = root / 'UnrealSource' / original.name
         original_hash = digest(original)
         if (spec['fbx'] != f'Source/{original.name}' or bridge['fbx'] != f'UnrealSource/{prepared.name}' or
                 original_hash != bridge['canonical_sha256'] or original_hash != roundtrip['fbx_sha256'] or
@@ -118,9 +121,12 @@ def run():
     """Import and verify the three assets, then save and persist their exact packages."""
     import unreal
 
-    verified = preflight()
+    return import_reviewed(unreal, preflight(), DEST)
+
+
+def import_reviewed(unreal, verified, destination):
     require_idle(unreal)
-    expected = [package_path(name, DEST) for name in verified]
+    expected = [package_path(name, destination) for name in verified]
     for path in expected:
         assert_absent(unreal, path)
     slot_names = sorted({slot for _, spec, _ in verified.values() for slot in spec['materials']})
@@ -136,16 +142,16 @@ def run():
     packages = []
     for name, (prepared, spec, audit) in verified.items():
         require_idle(unreal)
-        assert_absent(unreal, package_path(name, DEST))
+        assert_absent(unreal, package_path(name, destination))
         if digest(prepared) != audit['prepared_sha256']:
             raise RuntimeError(f'{name}: prepared FBX changed after preflight.')
-        mesh = import_mesh(unreal, name, fbx_options(unreal), source_file=prepared, destination=DEST)
+        mesh = import_mesh(unreal, name, fbx_options(unreal), source_file=prepared, destination=destination)
         if not isinstance(mesh, unreal.StaticMesh) or get_slots(mesh) != spec['materials']:
             raise RuntimeError(f'{name}: mesh or FBX material slot order differs from the canonical export.')
         for index, slot in enumerate(spec['materials']):
             mesh.set_material(index, materials[slot])
         configure_collision(unreal, mesh)
-        row = verify_mesh(unreal, mesh, name, spec, audit, destination=DEST)
+        row = verify_mesh(unreal, mesh, name, spec, audit, destination=destination)
         if not mesh.get_editor_property('has_navigation_data'):
             raise RuntimeError(f'{name}: imported mesh lacks navigation geometry data.')
         rows[name] = {**row, 'has_navigation_data': True, 'prepared_sha256': audit['prepared_sha256']}
@@ -157,7 +163,7 @@ def run():
         raise RuntimeError(f'Unexpected save scope or destination appeared during import: {paths}.')
     if not unreal.EditorLoadingAndSavingUtils.save_packages(packages, only_dirty=False):
         written = [path for path in paths if package_file(path).exists()]
-        raise RuntimeError(f'Could not save all exact West Connector packages. Files present: {written}.')
+        raise RuntimeError(f'Could not save all exact packages under {destination}. Files present: {written}.')
     multi_user = unreal.MultiUserClientStatics
     if multi_user.get_multi_user_connection_status_detail() == unreal.MultiUserConnectionStatus.CONNECTED:
         require_idle(unreal)
@@ -165,7 +171,7 @@ def run():
     missing = [path for path in paths if not package_file(path).is_file()]
     if missing:
         raise RuntimeError(f'Expected local asset packages after save: {missing}.')
-    verify_registry(unreal, rows, destination=DEST)
+    verify_registry(unreal, rows, destination=destination)
     return {'meshes': rows, 'saved_packages': paths}
 
 

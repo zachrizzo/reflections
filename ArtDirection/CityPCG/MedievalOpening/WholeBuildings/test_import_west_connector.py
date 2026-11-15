@@ -16,9 +16,6 @@ NAMES = (
     'SM_GLMedieval_WestConnector_DeepWorkshop_4bd93af4',
     'SM_GLMedieval_WestConnector_SteppedMarket_d02f9ebc',
 )
-PACKAGES = [f'{DESTINATION}/{name}' for name in NAMES]
-
-
 class ImportTask:
     def set_editor_properties(self, properties):
         self.properties = properties.copy()
@@ -50,10 +47,11 @@ class Mesh:
         return True
 
 
-class WestConnectorImportTests(unittest.TestCase):
+class ReviewedImportChecks:
     @classmethod
     def setUpClass(cls):
-        cls.reviewed = importer.preflight()
+        cls.reviewed = cls.entry.preflight()
+        cls.packages = [f'{cls.destination}/{name}' for name in cls.names]
 
     def setUp(self):
         self.temp = Path(self.enterContext(TemporaryDirectory()))
@@ -87,8 +85,8 @@ class WestConnectorImportTests(unittest.TestCase):
             MultiUserConnectionStatus=SimpleNamespace(CONNECTED='connected'),
         )
         self.enterContext(patch.dict(sys.modules, {'unreal': unreal}))
+        self.enterContext(patch.object(self.entry, 'preflight', lambda: self.reviewed))
         for name, value in {
-            'preflight': lambda: self.reviewed,
             'read_json': lambda _path: self.lease,
             'time': SimpleNamespace(time=lambda: 1000.),
             'package_file': self._package_file,
@@ -108,12 +106,12 @@ class WestConnectorImportTests(unittest.TestCase):
         task = tasks[0]
         settings = task.properties
         name = settings['destination_name']
-        self.assertIn(name, NAMES)
-        self.assertEqual(settings['destination_path'], DESTINATION)
+        self.assertIn(name, self.names)
+        self.assertEqual(settings['destination_path'], self.destination)
         self.assertFalse(settings['replace_existing'])
         self.assertFalse(settings['save'])
         self.assertEqual(Path(settings['filename']), self.reviewed[name][0])
-        package = f'{DESTINATION}/{name}'
+        package = f'{self.destination}/{name}'
         path = f'{package}.{name}'
         self.loaded_meshes[path] = Mesh(package, self.reviewed[name][1]['materials'])
         settings['imported_object_paths'] = [path]
@@ -133,62 +131,69 @@ class WestConnectorImportTests(unittest.TestCase):
             with self.subTest(lease=lease):
                 self.lease = lease
                 with self.assertRaisesRegex(RuntimeError, 'lease'):
-                    importer.run()
+                    self.entry.run()
                 self.import_assets.assert_not_called()
                 self.assert_no_save()
 
     def test_rejects_pie_before_import(self):
         self.pie_worlds.append(object())
         with self.assertRaisesRegex(RuntimeError, 'no PIE worlds'):
-            importer.run()
+            self.entry.run()
         self.import_assets.assert_not_called()
         self.assert_no_save()
 
     def test_rejects_existing_destination_before_any_import(self):
-        self.existing_memory.add(PACKAGES[-1])
+        self.existing_memory.add(self.packages[-1])
         with self.assertRaisesRegex(FileExistsError, 'in-memory package'):
-            importer.run()
+            self.entry.run()
         self.existing_memory.clear()
-        self.existing_registry.add(PACKAGES[-1])
+        self.existing_registry.add(self.packages[-1])
         with self.assertRaises(FileExistsError):
-            importer.run()
+            self.entry.run()
         self.existing_registry.clear()
-        self._package_file(PACKAGES[-1]).touch()
+        self._package_file(self.packages[-1]).touch()
         with self.assertRaises(FileExistsError):
-            importer.run()
+            self.entry.run()
         self.import_assets.assert_not_called()
         self.assert_no_save()
 
     def test_failed_verification_leaves_all_packages_unsaved(self):
-        self.verify_mesh.side_effect = [{'package': PACKAGES[0]}, RuntimeError('geometry verification failed')]
+        self.verify_mesh.side_effect = [{'package': self.packages[0]}, RuntimeError('geometry verification failed')]
         with self.assertRaisesRegex(RuntimeError, 'geometry verification failed'):
-            importer.run()
+            self.entry.run()
         self.assertEqual(self.import_assets.call_count, 2)
         self.assert_no_save()
 
     def test_checks_lease_again_after_verification(self):
         def verify(_unreal, mesh, *_args, **_kwargs):
-            if mesh.package == PACKAGES[-1]:
+            if mesh.package == self.packages[-1]:
                 self.lease['expires_epoch'] = 1000.
             return {'package': mesh.package}
 
         self.verify_mesh.side_effect = verify
         with self.assertRaisesRegex(RuntimeError, 'lease'):
-            importer.run()
-        self.assertEqual(self.verify_mesh.call_count, 3)
+            self.entry.run()
+        self.assertEqual(self.verify_mesh.call_count, len(self.packages))
         self.assert_no_save()
 
-    def test_saves_and_persists_only_the_three_verified_packages(self):
-        report = importer.run()
-        self.assertEqual(self.verify_mesh.call_count, 3)
+    def test_saves_and_persists_only_the_verified_packages(self):
+        report = self.entry.run()
+        self.assertEqual(self.verify_mesh.call_count, len(self.packages))
         self.save.assert_called_once()
         args, kwargs = self.save.call_args
-        self.assertEqual([package.get_name() for package in args[0]], PACKAGES)
+        self.assertEqual([package.get_name() for package in args[0]], self.packages)
         self.assertEqual(kwargs, {'only_dirty': False})
-        self.persist.assert_called_once_with(PACKAGES)
-        self.verify_registry.assert_called_once_with(sys.modules['unreal'], report['meshes'], destination=DESTINATION)
-        self.assertEqual(report['saved_packages'], PACKAGES)
-        self.assertTrue(all(self._package_file(path).is_file() for path in PACKAGES))
+        self.persist.assert_called_once_with(self.packages)
+        self.verify_registry.assert_called_once_with(
+            sys.modules['unreal'], report['meshes'], destination=self.destination)
+        self.assertEqual(report['saved_packages'], self.packages)
+        self.assertTrue(all(self._package_file(path).is_file() for path in self.packages))
+
+
+class WestConnectorImportTests(ReviewedImportChecks, unittest.TestCase):
+    entry = importer
+    destination = DESTINATION
+    names = NAMES
 
 
 if __name__ == '__main__':
