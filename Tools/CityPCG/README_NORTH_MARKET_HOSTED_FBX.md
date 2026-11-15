@@ -13,7 +13,11 @@ then passed both east models and `west_d08bbb3b`, retaining a separate bundle
 for each. `west_736fd5c6` failed before FBX export: one imported face normal
 differed from the source by 0.0041 in one component, exceeding the 0.001
 tolerance. Its position, UV, material and winding matched. The cause and a
-safe correction are still under investigation.
+safe correction were unproven at that point. The targeted authored-normal
+preservation trial subsequently passed export and fresh-process reimport in
+[hosted run 43724753596](https://github.com/zachrizzo/reflections/actions/runs/43724753596).
+All four matrix jobs in that run succeeded and uploaded separate review-only
+bundles. These results do not establish visual or Unreal approval.
 
 Each job uses an isolated GitHub-hosted `ubuntu-24.04` VM, `contents: read`,
 no secrets or self-hosted runners, a 20-minute timeout and one-day artifact
@@ -38,6 +42,17 @@ results and do not use the shared machine's Blender or GPU. Blender is distribut
   and +Z up coordinates. OBJ has no slot order, so the contract is the MTL's
   declaration order filtered to materials actually used by that building.
   Slot reordering retains each face's named assignment.
+- For `west_736fd5c6` only, the trial first matches each imported
+  face to the source by position, UV, winding and material, rejecting missing
+  or ambiguous matches. It requires finite, unit source normals that are
+  constant per face. On export it restores those authored loop normals and
+  adds sharp edges only at differing authored-normal boundaries, preserving
+  existing sharp edges, face-smooth flags and topology; FBX export uses edge
+  smoothing. In the hosted run, fresh FBX reimport applied no restoration and
+  passed the strict geometry, normal, material and sharp-edge checks without
+  relaxing tolerances. Both reports identify 16,126 required sharp edges out
+  of 16,220 mesh edges; this is not a count of newly added edges. Unreal vertex
+  splitting and performance still need measurement.
 - Before FBX export and after reimport in a **separate clean Blender
   process**, a fail-closed comparison checks object identity transform and
   pivot; vertex, edge, polygon and UV-corner counts; ordered slot names; and
