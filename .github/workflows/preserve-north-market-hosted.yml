@@ -44,7 +44,7 @@ jobs:
           python3 -B Tools/CityPCG/test_preserve_north_market_hosted.py -v
           python3 -O -B Tools/CityPCG/test_preserve_north_market_hosted.py -v
 
-      - name: Verify and preserve review-only bundles
+      - name: Verify LFS readback and preserve review bundles
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 -B Tools/CityPCG/preserve_north_market_hosted.py
