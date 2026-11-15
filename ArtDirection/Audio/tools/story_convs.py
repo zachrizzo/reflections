@@ -41,7 +41,7 @@ def parse():
         cid = m.group(1)
         out = []
         for seed in re.split(r"\n- \*\*", sec)[1:]:
-            sm = re.match(r"([A-E])\. (.+?)\*\*", seed)
+            sm = re.match(r"([A-Z])\. (.+?)\*\*", seed)  # seeds A-E, plus later ones (F: Emeric's horn)
             if not sm:
                 continue
             letter, title = sm.groups()
@@ -60,7 +60,7 @@ def parse():
                 key = "brink" if label == "Brink pair" else (cond or "")
                 openings[key] = ls
                 k += 3
-            if letter in "ABC":
+            if letter in "ABC" or letter > "E":  # everyday seeds (A-C, and added ones such as F)
                 cond_m = re.search(r"\n\s+- (Before|After) ([^:]+):", seed)
                 out.append({"Seed": letter, "Title": title, "Band": "", "Flag": "", "Cond": cond_m.group(0).strip("- \n") if cond_m else "",
                             "Stances": stances, "Opening": openings.get("", []), "Exact": False})
@@ -92,8 +92,13 @@ def draft():
     convs = story.setdefault("Conversations", {})
     key = G.load_key()
     used = {U.norm(t) for _, _, t in U.collect()}
-    for cid, specs in parse().items():
-        if cid in convs and len(convs[cid]) == len(specs):
+    for cid, all_specs in parse().items():
+        # draft only seeds this clique doesn't have yet, appended after the existing ones: the line ids
+        # (C_<clique>_<k>_<n>) of conversations already voiced must not move
+        existing = convs.get(cid, [])
+        have = {(c.get("Seed"), c.get("Band"), c.get("Flag")) for c in existing}
+        specs = [x for x in all_specs if (x["Seed"], x["Band"], x["Flag"]) not in have]
+        if not specs:
             continue
         members = cliques[cid]["members"]
         guests = sorted({pid for s in specs for pid, _ in s["Opening"] if pid and pid not in members})
@@ -141,9 +146,9 @@ Return JSON: {{"conversations": [{{"n": 1, "lines": [{{"s": "speaker_id", "text"
             if len(lines) >= 2 and len({l["P"] for l in lines}) >= 2:
                 used.update(U.norm(l["Text"]) for l in rest)
                 out.append({**{k2: s[k2] for k2 in ("Seed", "Title", "Band", "Flag")}, "Lines": lines})
-        convs[cid] = out
+        convs[cid] = existing + out
         json.dump(story, open(ST.OUT, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-        print(cid, len(out), "/", len(specs), "conversations", flush=True)
+        print(cid, len(out), "/", len(specs), "new conversations;", len(convs[cid]), "in all", flush=True)
     print("story conversations:", sum(len(v) for v in convs.values()))
 
 

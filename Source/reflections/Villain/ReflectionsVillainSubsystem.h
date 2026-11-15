@@ -127,6 +127,8 @@ public:
 
     /** Player-facing name of a side (from the world-jump config: Pewterside, Giltside, Frostside). */
     static FText SideName(const UObject* WorldContext, EReflectionsWorld World);
+    /** The finale side's name for player text, or empty on a one-side map (no world jump): the lines then name no side. */
+    static FText ArenaSideName(const UObject* WorldContext);
 
     /** The finale's announcement has been shown (after any mirror-whole cutscene): the true form may rise. */
     bool CanManifest() const;
@@ -156,6 +158,8 @@ private:
     void RecheckMap();
     /** Gameplay is live: no title/pause menu, no cutscene, not game over. Possession waits for this (after the intro). */
     bool IsRunLive() const;
+    /** This is the map New Game opens (game flow's NewGameMap): a gameplay map even without world anchors. */
+    bool IsNewGameMap() const;
     void EnsureFinalSpell();
     void SpawnBossAtArena();
 
@@ -210,6 +214,11 @@ private:
     bool bSeedClockStarted = false;
     double NextMapCheck = 0.0;
     double MapCheckUntil = 0.0;
+    /** Tackle pacing: no new conversion before this time (Villain.ConvertInterval). */
+    double NextConversionTime = 0.0;
+    int32 ConversionsStarted = 0;
+    /** Villain.Convert (tests) ignores the pacing gap. */
+    bool bIgnoreConvertGap = false;
     /** Saved tarnished still to find after a load (people are assigned to bodies a moment after the map starts). */
     TArray<FString> PendingInfectedIds;
     FString PendingHostId;

@@ -1,6 +1,6 @@
 """Checks that every marker the story quests ask for exists in a map's marker list (no auto-placed fallbacks).
 
-Plain Python, no editor:  python Tools/Quests/check_markers.py [ArtDirection/MockCity/MARKERS.md]
+Plain Python, no editor:  python Tools/Quests/check_markers.py [ArtDirection/WorldJump/graylondon_markers.json | a MARKERS.md]
 
 Mirrors the runtime lookups in UReflectionsQuestWorldSubsystem / UReflectionsStoryMarkerSubsystem:
   person   QuestGiver_<id> exactly, else the people book's markers.work / haunt / home
@@ -21,8 +21,13 @@ PLACE = ('Spot_', 'Tower_', 'Item_', 'Mk_', 'Home_', 'Work_', 'Haunt_', 'QuestGi
 
 
 def map_names(md):
-    """Every name a marker answers to, from the MARKERS.md tables."""
+    """Every name a marker answers to: a MARKERS.md table, or a JSON list of {name, tags} (graylondon_markers.json)."""
     names = set()
+    if md.suffix.lower() == '.json':
+        for m in json.loads(md.read_text(encoding='utf-8')):
+            names.add(m['name'])
+            names.update(m.get('tags') or [])
+        return names
     for line in md.read_text(encoding='utf-8').splitlines():
         if not line.startswith('| `'):
             continue
@@ -32,7 +37,7 @@ def map_names(md):
 
 
 def main():
-    md = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'ArtDirection' / 'MockCity' / 'MARKERS.md'
+    md = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / 'ArtDirection' / 'WorldJump' / 'graylondon_markers.json'
     quests = json.loads((ROOT / 'ArtDirection' / 'Story' / 'quests.json').read_text(encoding='utf-8'))['quests']
     book = json.loads((ROOT / 'ArtDirection' / 'Story' / 'people.json').read_text(encoding='utf-8'))
     people = {p['id']: p for p in book.get('people', []) if 'id' in p}

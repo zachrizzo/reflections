@@ -311,6 +311,7 @@ namespace ReflectionsQuestJson
         Q.bTurnIn = Bool(O, {TEXT("turnIn"), TEXT("returnToGiver")}, !Q.Giver.IsNone());
         Q.OfferLines = Lines(O, {TEXT("offer"), TEXT("offerLines")});
         Q.AcceptLines = Lines(O, {TEXT("accept"), TEXT("acceptLines")});
+        Q.WantedLines = Lines(O, {TEXT("offerIfWanted"), TEXT("wantedLines")});
         Q.DeclineLines = Lines(O, {TEXT("decline"), TEXT("declineLines")});
         Q.ReminderLines = Lines(O, {TEXT("reminder"), TEXT("reminderLines"), TEXT("progress")});
         Q.TurnInLines = Lines(O, {TEXT("turnInLines"), TEXT("complete"), TEXT("completeLines"), TEXT("thanks")});
@@ -349,6 +350,7 @@ namespace ReflectionsQuestJson
                 if (!T.Person.IsNone()) Step.Talk.Add(MoveTemp(T));
             }
             Step.NextStep = Name(S, {TEXT("next"), TEXT("nextStep")});
+            Step.IfKilledNext = Name(S, {TEXT("ifKilledNext"), TEXT("ifKilled")});
             Step.bPlayVoiceCue = Bool(S, {TEXT("voiceCue")}, true);
             const TSharedPtr<FJsonValue> SR = Field(S, {TEXT("reward"), TEXT("rewards")});
             if (SR.IsValid() && SR->Type == EJson::Object) Step.Reward = Reward(SR->AsObject());

@@ -239,6 +239,20 @@ void UReflectionsSpellVfxSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     TarnishSystem = LoadSystem(TEXT("NS_Tarnish_Bolt"));
     TarnishBurstSystem = LoadSystem(TEXT("NS_Tarnish_Burst"));
     ShockSystem = LoadSystem(TEXT("NS_Spell_Shock"));
+    BodyFxSystem = LoadSystem(TEXT("NS_Spell_BodyFx"));
+    {
+        auto OptionalCue = [](const TCHAR* Name) -> USoundBase*
+        {
+            return FPackageName::DoesPackageExist(FString::Printf(TEXT("/Game/Audio/Jam/Cues/%s"), Name)) ? JamCue(Name) : nullptr;
+        };
+        BodyHitCue = OptionalCue(TEXT("SCue_Spell_BodyHit"));
+        BodyHitHeavyCue = OptionalCue(TEXT("SCue_Spell_BodyHit_Heavy"));
+        BodyElementCues.Init(nullptr, 8);
+        BodyElementCues[static_cast<int32>(EReflectionsSpellElement::Fire)] = OptionalCue(TEXT("SCue_Spell_BodyHit_Fire"));
+        BodyElementCues[static_cast<int32>(EReflectionsSpellElement::Ice)] = OptionalCue(TEXT("SCue_Spell_BodyHit_Ice"));
+        BodyElementCues[static_cast<int32>(EReflectionsSpellElement::Lightning)] = OptionalCue(TEXT("SCue_Spell_BodyHit_Lightning"));
+        BodyElementCues[static_cast<int32>(EReflectionsSpellElement::Water)] = OptionalCue(TEXT("SCue_Spell_BodyHit_Water"));
+    }
     ShockLoopCue = FPackageName::DoesPackageExist(TEXT("/Game/Audio/Jam/Cues/SCue_Shock_Loop")) ? JamCue(TEXT("SCue_Shock_Loop")) : nullptr;
     // Optional (audio session, train #12): checked first so a missing cue never logs a load failure.
     ExplosionCue = FPackageName::DoesPackageExist(TEXT("/Game/Audio/Jam/Cues/SCue_Fireball_Explode"))
@@ -267,7 +281,7 @@ void UReflectionsSpellVfxSubsystem::WarmUpSpellEffects(UWorld& InWorld)
     // in the middle of combat (470-535 misses in the first 12 s, 50 ms+ frames on the first casts). Registering a
     // component precaches its renderers' PSOs, so spawn each system once far below the map and stop it shortly after.
     TArray<UNiagaraSystem*> Systems{ProjectileSystem.Get(), ImpactSystem.Get(), HealSystem.Get(), WardSystem.Get(),
-        TarnishSystem.Get(), TarnishBurstSystem.Get(), ShockSystem.Get()};
+        TarnishSystem.Get(), TarnishBurstSystem.Get(), ShockSystem.Get(), BodyFxSystem.Get()};
     // Crafted-spell systems (owned by the spell-crafting session) live in an always-cooked folder; warm them too.
     TArray<FAssetData> Crafted;
     FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get().GetAssetsByPath(
@@ -690,7 +704,7 @@ void UReflectionsSpellVfxSubsystem::ShakeNear(const FVector& Location, float Str
     Camera->AddTrauma(Strength * Falloff);
 }
 
-void UReflectionsSpellVfxSubsystem::HitStop()
+void UReflectionsSpellVfxSubsystem::HitStop(float Seconds)
 {
     UWorld* World = GetWorld();
     const double Now = FPlatformTime::Seconds();
@@ -702,7 +716,7 @@ void UReflectionsSpellVfxSubsystem::HitStop()
     World->GetTimerManager().SetTimer(HitStopTimer, FTimerDelegate::CreateWeakLambda(this, [this]()
     {
         if (UWorld* W = GetWorld()) UGameplayStatics::SetGlobalTimeDilation(W, 1.0f);
-    }), 0.06f * Dilation, false);
+    }), FMath::Clamp(Seconds, 0.02f, 0.12f) * Dilation, false);
 }
 
 void UReflectionsSpellVfxSubsystem::ElectrifyBody(AActor* Target, float Duration, float Magnitude)
@@ -718,7 +732,33 @@ void UReflectionsSpellVfxSubsystem::ElectrifyBody(AActor* Target, float Duration
             return;
         }
     }
-    // Ride the visible body's pelvis when it has a posed one (so the crackle follows a ragdoll), else the actor's middle.
+    USceneComponent* Parent = nullptr;
+    FName Socket = NAME_None;
+    UNiagaraComponent* Crackle = AttachToBody(ShockSystem, Target, Parent, Socket);
+    if (!Crackle) return;
+    const FElementStyle& Style = StyleFor(EReflectionsSpellElement::Lightning);
+    SetColors(Crackle, Style);
+    Crackle->SetVariableFloat(TEXT("User.Intensity"), FMath::Clamp(0.6f + Magnitude * 0.6f, 0.6f, 1.2f));
+    Crackle->SetVariableFloat(TEXT("User.Scale"), 1.0f);
+    FBodyShock& Shock = Shocks.Add(Target);
+    Shock.Crackle = Crackle;
+    Shock.EndTime = End;
+    if (ShockLoopCue)
+    {
+        Shock.Loop = UGameplayStatics::SpawnSoundAttached(ShockLoopCue, Parent, Socket, FVector::ZeroVector, EAttachLocation::SnapToTarget, true);
+    }
+    if (!World->GetTimerManager().IsTimerActive(ShockTimer))
+    {
+        World->GetTimerManager().SetTimer(ShockTimer, FTimerDelegate::CreateUObject(this, &UReflectionsSpellVfxSubsystem::TickShocks), 0.1f, true);
+    }
+}
+
+UNiagaraComponent* UReflectionsSpellVfxSubsystem::AttachToBody(UNiagaraSystem* System, AActor* Target, USceneComponent*& OutParent, FName& OutSocket)
+{
+    OutParent = nullptr;
+    OutSocket = NAME_None;
+    if (!System || !IsValid(Target)) return nullptr;
+    // Ride the visible body's pelvis when it has a posed one (so the effect follows a ragdoll), else the actor's middle.
     FVector Origin, Extent;
     Target->GetActorBounds(true, Origin, Extent);
     USceneComponent* Parent = Target->GetRootComponent();
@@ -736,29 +776,55 @@ void UReflectionsSpellVfxSubsystem::ElectrifyBody(AActor* Target, float Duration
             break;
         }
     }
-    if (!Parent) return;
-    UNiagaraComponent* Crackle = Socket.IsNone()
-        ? UNiagaraFunctionLibrary::SpawnSystemAttached(ShockSystem, Parent, NAME_None, Origin, FRotator::ZeroRotator,
+    if (!Parent) return nullptr;
+    UNiagaraComponent* Fx = Socket.IsNone()
+        ? UNiagaraFunctionLibrary::SpawnSystemAttached(System, Parent, NAME_None, Origin, FRotator::ZeroRotator,
             EAttachLocation::KeepWorldPosition, false, true, ENCPoolMethod::None, true)
-        : UNiagaraFunctionLibrary::SpawnSystemAttached(ShockSystem, Parent, Socket, FVector(0.0f, 0.0f, 15.0f), FRotator::ZeroRotator,
+        : UNiagaraFunctionLibrary::SpawnSystemAttached(System, Parent, Socket, FVector(0.0f, 0.0f, 15.0f), FRotator::ZeroRotator,
             EAttachLocation::SnapToTarget, false, true, ENCPoolMethod::None, true);
-    if (!Crackle) return;
+    if (!Fx) return nullptr;
     // World-up capsule sized to the body (the pelvis socket's own axes are not upright).
-    Crackle->SetUsingAbsoluteRotation(true);
-    Crackle->SetWorldRotation(FRotator::ZeroRotator);
-    const FElementStyle& Style = StyleFor(EReflectionsSpellElement::Lightning);
-    SetColors(Crackle, Style);
-    Crackle->SetVariableFloat(TEXT("User.Height"), FMath::Clamp(Extent.Z * 1.8f, 80.0f, 210.0f));
-    Crackle->SetVariableFloat(TEXT("User.Radius"), FMath::Clamp(FMath::Max(Extent.X, Extent.Y) * 0.5f, 16.0f, 45.0f));
-    Crackle->SetVariableFloat(TEXT("User.Intensity"), FMath::Clamp(0.6f + Magnitude * 0.6f, 0.6f, 1.2f));
-    Crackle->SetVariableFloat(TEXT("User.Scale"), 1.0f);
-    FBodyShock& Shock = Shocks.Add(Target);
-    Shock.Crackle = Crackle;
-    Shock.EndTime = End;
-    if (ShockLoopCue)
+    Fx->SetUsingAbsoluteRotation(true);
+    Fx->SetWorldRotation(FRotator::ZeroRotator);
+    Fx->SetVariableFloat(TEXT("User.Height"), FMath::Clamp(Extent.Z * 1.8f, 80.0f, 210.0f));
+    Fx->SetVariableFloat(TEXT("User.Radius"), FMath::Clamp(FMath::Max(Extent.X, Extent.Y) * 0.5f, 16.0f, 45.0f));
+    OutParent = Parent;
+    OutSocket = Socket;
+    return Fx;
+}
+
+void UReflectionsSpellVfxSubsystem::AfflictBody(AActor* Target, int32 Kind, float Duration, float Magnitude)
+{
+    UWorld* World = GetWorld();
+    if (!World || !BodyFxSystem || !IsValid(Target) || Duration <= 0.0f) return;
+    const double End = World->GetTimeSeconds() + FMath::Clamp(Duration, 0.3f, 5.0f);
+    if (FBodyShock* Live = Afflictions.Find(Target))
     {
-        Shock.Loop = UGameplayStatics::SpawnSoundAttached(ShockLoopCue, Parent, Socket, FVector::ZeroVector, EAttachLocation::SnapToTarget, true);
+        if (Live->Kind == Kind && Live->Crackle.IsValid() && Live->Crackle->IsActive())
+        {
+            Live->EndTime = FMath::Max(Live->EndTime, End);
+            return;
+        }
+        // A new element replaces the old one (water puts out a burn, fire thaws frost).
+        if (Live->Crackle.IsValid()) Live->Crackle->Deactivate();
     }
+    USceneComponent* Parent = nullptr;
+    FName Socket = NAME_None;
+    UNiagaraComponent* Fx = AttachToBody(BodyFxSystem, Target, Parent, Socket);
+    if (!Fx) return;
+    const EReflectionsSpellElement Element = Kind == 0 ? EReflectionsSpellElement::Fire
+        : Kind == 1 ? EReflectionsSpellElement::Ice : EReflectionsSpellElement::Water;
+    SetColors(Fx, StyleFor(Element));
+    Fx->SetVariableLinearColor(TEXT("User.SmokeColor"), StyleFor(EReflectionsSpellElement::Fire).SmokeColor);
+    Fx->SetVariableFloat(TEXT("User.EmberRate"), Kind == 0 ? 55.0f : 0.0f);
+    Fx->SetVariableFloat(TEXT("User.SmokeRate"), Kind == 0 ? 16.0f : 0.0f);
+    Fx->SetVariableFloat(TEXT("User.FrostRate"), Kind == 1 ? 36.0f : 0.0f);
+    Fx->SetVariableFloat(TEXT("User.DripRate"), Kind == 2 ? 45.0f : 0.0f);
+    Fx->SetVariableFloat(TEXT("User.Intensity"), FMath::Clamp(0.7f + Magnitude * 0.5f, 0.7f, 1.2f));
+    FBodyShock& Affliction = Afflictions.Add(Target);
+    Affliction.Crackle = Fx;
+    Affliction.EndTime = End;
+    Affliction.Kind = Kind;
     if (!World->GetTimerManager().IsTimerActive(ShockTimer))
     {
         World->GetTimerManager().SetTimer(ShockTimer, FTimerDelegate::CreateUObject(this, &UReflectionsSpellVfxSubsystem::TickShocks), 0.1f, true);
@@ -778,22 +844,47 @@ void UReflectionsSpellVfxSubsystem::TickShocks()
         if (Shock.Loop.IsValid()) Shock.Loop->FadeOut(0.2f, 0.0f);
         It.RemoveCurrent();
     }
-    if (Shocks.Num() == 0 && World) World->GetTimerManager().ClearTimer(ShockTimer);
+    for (auto It = Afflictions.CreateIterator(); It; ++It)
+    {
+        FBodyShock& Affliction = It.Value();
+        if (It.Key().IsValid() && Affliction.Crackle.IsValid() && Now < Affliction.EndTime) continue;
+        if (Affliction.Crackle.IsValid()) Affliction.Crackle->Deactivate();
+        It.RemoveCurrent();
+    }
+    if (Shocks.Num() == 0 && Afflictions.Num() == 0 && World) World->GetTimerManager().ClearTimer(ShockTimer);
 }
 
 void UReflectionsSpellVfxSubsystem::OnSpellHit(const FReflectionsSpellHitData& Hit)
 {
-    if (Hit.Reaction == EReflectionsSpellReaction::Electrify)
-    {
-        ElectrifyBody(Hit.Target, Hit.Duration, Hit.Magnitude);
-    }
     FVector Direction = Hit.ImpactNormal.GetSafeNormal();
     if (Direction.IsNearlyZero()) Direction = -Hit.Impulse.GetSafeNormal();
     if (Direction.IsNearlyZero()) Direction = FVector::UpVector;
-
-    // Feedback for the local caster: hit marker, a short freeze on living targets and a little shake.
+    // Walls and floors report hits too; body effects, feedback and sounds are for living targets only.
     const bool bLiving = IsValid(Hit.Target) && (Hit.Target->IsA<APawn>() || Hit.Target->Implements<UCombatDamageable>()
         || Hit.Target->FindComponentByClass<UReflectionsHealthComponent>());
+    if (bLiving)
+    {
+        switch (Hit.Reaction)
+        {
+        case EReflectionsSpellReaction::Electrify: ElectrifyBody(Hit.Target, Hit.Duration, Hit.Magnitude); break;
+        case EReflectionsSpellReaction::Burn: AfflictBody(Hit.Target, 0, Hit.Duration, Hit.Magnitude); break;
+        case EReflectionsSpellReaction::Freeze: AfflictBody(Hit.Target, 1, Hit.Duration, Hit.Magnitude); break;
+        case EReflectionsSpellReaction::Push:
+            if (ReflectionsSpellCatalog::IsValid(Hit.Spell) && ReflectionsSpellCatalog::Get(Hit.Spell).Element == EReflectionsSpellElement::Water)
+            {
+                AfflictBody(Hit.Target, 2, 1.6f, Hit.Magnitude);
+            }
+            break;
+        default: break;
+        }
+    }
+
+    // Impact feel. Strong hits (Magnitude 0.6+, blasts, knockdowns) freeze time for 50-80 ms by strength; every hit
+    // shakes by strength and distance, rate-limited so area spells don't stack it. The player being hit feels it too.
+    const float Strength = FMath::Clamp(Hit.Magnitude, 0.0f, 1.0f);
+    const bool bStrong = Hit.Magnitude >= 0.6f || Hit.Reaction == EReflectionsSpellReaction::Explosion
+        || Hit.Reaction == EReflectionsSpellReaction::Knockdown;
+    const double Now = FPlatformTime::Seconds();
     if (IsLocalPlayer(Hit.Caster) && bLiving && Hit.Spell != EHeroSpell::ForcePush && !Hit.bRepeat)
     {
         const UReflectionsHealthComponent* Health = Hit.Target->FindComponentByClass<UReflectionsHealthComponent>();
@@ -801,10 +892,36 @@ void UReflectionsSpellVfxSubsystem::OnSpellHit(const FReflectionsSpellHitData& H
         {
             Aim->NotifyHit(Health && Health->Health <= 0.0f);
         }
-        // Area spells report one hit per target; only the rate-limited hit-stop gets a shake, so they don't stack.
-        const double Before = LastHitStop;
-        HitStop();
-        if (LastHitStop != Before) ShakeNear(Hit.Location, 0.18f);
+        if (bStrong) HitStop(FMath::Lerp(0.05f, 0.08f, FMath::Clamp((Hit.Magnitude - 0.6f) / 0.4f, 0.0f, 1.0f)));
+        if (Now - LastHitShake > 0.1)
+        {
+            LastHitShake = Now;
+            ShakeNear(Hit.Location, 0.06f + 0.28f * Strength);
+        }
+    }
+    else if (bLiving && !Hit.bRepeat && IsLocalPlayer(Hit.Target) && Now - LastHitShake > 0.1)
+    {
+        LastHitShake = Now;
+        ShakeNear(Hit.Location, 0.12f + 0.3f * Strength);
+    }
+    if (bLiving && !Hit.bRepeat && ReflectionsSpellCatalog::IsValid(Hit.Spell))
+    {
+        const EReflectionsSpellElement Element = ReflectionsSpellCatalog::Get(Hit.Spell).Element;
+        // Punch-through: a light spray out along the hit's direction at the exact hit point (blasts have their own).
+        const FVector Through = Hit.Impulse.GetSafeNormal();
+        if (Hit.Reaction != EReflectionsSpellReaction::Explosion && !Through.IsNearlyZero())
+        {
+            SpawnStyledBurst(this, ImpactSystem, StyleFor(Element), Hit.Location, Through, 0.4f + 0.7f * Strength, true);
+        }
+        if (USoundBase* Thud = bStrong && BodyHitHeavyCue ? BodyHitHeavyCue.Get() : BodyHitCue.Get())
+        {
+            UGameplayStatics::PlaySoundAtLocation(this, Thud, Hit.Location, 0.9f);
+        }
+        const int32 Index = static_cast<int32>(Element);
+        if (BodyElementCues.IsValidIndex(Index) && BodyElementCues[Index])
+        {
+            UGameplayStatics::PlaySoundAtLocation(this, BodyElementCues[Index], Hit.Location, 0.8f);
+        }
     }
 
     // Blood is opt-in: a generic damageable object or character is not evidence of exposed flesh.

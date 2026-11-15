@@ -60,16 +60,46 @@ async def shot(name):
         result.setdefault('shot_errors', []).append(name + ': ' + repr(error))
 
 
+# retargeted: positions are relative to where the hero stands when PIE starts (see retarget_checks.py)
+_frame = {}
+
+
+def W(x, y, z=0.0):
+    """A position of the old test level, as the same offset from where the hero stood when PIE started."""
+    if not _frame:
+        game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+        hero = unreal.GameplayStatics.get_player_pawn(game, 0)
+        here = hero.get_actor_location()
+        ahead = hero.get_actor_forward_vector()
+        ahead = unreal.Vector(ahead.x, ahead.y, 0.0).normal()
+        _frame.update(here=here, ahead=ahead, right=unreal.Vector(-ahead.y, ahead.x, 0.0))
+    sites = ((1500.0, 500.0), (-700.0, 350.0))
+    ox, oy = min(sites, key=lambda s: (x - s[0]) ** 2 + (y - s[1]) ** 2)
+    forward, right = -(y - oy), x - ox          # the old checks looked down -Y, with +X to their right
+    here, a, r = _frame['here'], _frame['ahead'], _frame['right']
+    return unreal.Vector(here.x + a.x * forward + r.x * right, here.y + a.y * forward + r.y * right, here.z - 90.0 + z)
+
+
+async def hero_is_down():
+    """Waits (up to 20 s) until PIE has a hero that has stopped falling, then fixes the frame W() measures from."""
+    for _ in range(40):
+        await asyncio.sleep(0.5)
+        game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+        hero = unreal.GameplayStatics.get_player_pawn(game, 0) if game else None
+        if hero and abs(hero.get_velocity().z) < 5.0:
+            break
+    await asyncio.sleep(1.0)
+    W(1500.0, 500.0, 90.0)
+
+
 open_map = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world().get_name()
 if unwrap(await call_tool('EditorToolset.EditorAppToolset.IsPIERunning')):
     result['abort'] = 'PIE is already running (someone else is testing); nothing was started.'
-elif open_map != 'Lvl_HeroSampleCrowd':
-    result['abort'] = 'The editor has %s open, not Lvl_HeroSampleCrowd. Nothing was started.' % open_map
 else:
     console('Squads.StartPatrol 0')
     await call_tool('EditorToolset.EditorAppToolset.StartPIE')
     try:
-        await asyncio.sleep(3.0)
+        await hero_is_down()
         world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
         console('Squads.Clear', world)
         console('Npc.ElementReactions 1', world)
@@ -79,8 +109,8 @@ else:
         npcs = unreal.get_world_subsystem(world, unreal.ReflectionsNpcSubsystem)
         spells = player.get_component_by_class(unreal.ReflectionsSpellCombatComponent)
         result['build_has_reactions'] = hasattr(npcs, 'get_player_heat')
-        HERE = unreal.Vector(1500, 500, 90)
-        SPOT = unreal.Vector(1500, 80, 0)
+        HERE = W(1500, 500, 90)
+        SPOT = W(1500, 80, 0)
 
         def brain(actor):
             return actor.get_component_by_class(unreal.ReflectionsNpcReactionComponent)
@@ -134,7 +164,7 @@ else:
                 return None
 
         def summary(before, samples):
-            away = max(before['y'] - s['y'] for s in samples)   # the player stands at +Y of the target: away is -Y
+            away = max(((s['x'] - before['x']) * _frame['ahead'].x + (s['y'] - before['y']) * _frame['ahead'].y) for s in samples)   # the player stands at +Y of the target: away is -Y
             return {'before': before, 'last': samples[-1], 'moved_away_cm': away, 'rose_cm': max(s['z'] for s in samples) - before['z'],
                     'modes': sorted({s['mode'] for s in samples}), 'ever_simulating_alive': any(s['simulating'] and s['reaction'] != 'INCAPACITATED' for s in samples),
                     'montage_seen': any(s['montage'] for s in samples), 'min_dilation': min((s['dilation'] for s in samples if s['dilation'] is not None), default=None)}
@@ -200,7 +230,7 @@ else:
         before = state(guard)
         cast(unreal.HeroSpell.WATER_ORB, guard)
         samples = await watch(guard, 1.0, 0.05)
-        launched = next((s for s in samples if s['z'] - before['z'] >= 8 or before['y'] - s['y'] >= 40), None)
+        launched = next((s for s in samples if s['z'] - before['z'] >= 8 or ((s['x'] - before['x']) * _frame['ahead'].x + (s['y'] - before['y']) * _frame['ahead'].y) >= 40), None)
         result['R4'] = summary(before, samples)
         result['R4']['launched_at'] = launched['t'] if launched else None
         check('R4_water_shoves_it', result['R4']['moved_away_cm'] >= 80, result['R4'])

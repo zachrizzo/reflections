@@ -231,24 +231,24 @@
   {
    "id": "GiltCorwin",
    "kind": "new",
-   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_01",
+   "outfit_bp": "/Game/Characters/Lanthorne/Looks/Templates/BP_Template_GiltSoldier_M",
    "sex": "M",
    "age": "Adult",
    "side": "Giltside",
    "role": "Soldier",
    "face": "Dominic",
-   "note": "outfit placeholder until the Codex/Blender Giltside soldier outfit (M, ArchiveApprentice body) lands"
+   "note": "hero-cloak's fitted Giltside medieval soldier (M, ArchiveApprentice body), helmet hidden (no armour)"
   },
   {
    "id": "GiltOsric",
    "kind": "new",
-   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_05",
+   "outfit_bp": "/Game/Characters/Lanthorne/Looks/Templates/BP_Template_GiltSoldier_M",
    "sex": "M",
    "age": "Adult",
    "side": "Giltside",
    "role": "Soldier",
    "face": "Victor",
-   "note": "outfit placeholder until the Codex/Blender Giltside soldier outfit lands"
+   "note": "hero-cloak's fitted Giltside medieval soldier (M, ArchiveApprentice body), helmet hidden (no armour)"
   }
  ]
 }

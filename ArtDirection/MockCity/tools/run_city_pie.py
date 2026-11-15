@@ -11,8 +11,9 @@ from run_mock_pie import session, tool, py, capture, PIE_WORLD  # noqa: E402
 import run_mock_pie  # noqa: E402
 
 SP = os.path.dirname(os.path.abspath(__file__))
-RESULTS = os.path.join(SP, 'city_results.json')
-SHOTS = os.path.join(SP, 'shots_city')
+DRIVER = sys.argv[1] if len(sys.argv) > 1 else 'city_driver.py'
+RESULTS = os.path.join(SP, 'frost_results.json' if ('frost' in DRIVER or 'fix' in DRIVER) else 'city_results.json')
+SHOTS = os.path.join(SP, 'shots_frost' if ('frost' in DRIVER or 'fix' in DRIVER) else 'shots_city')
 os.makedirs(SHOTS, exist_ok=True)
 run_mock_pie.SHOTS = SHOTS
 LOG = 'C:/Users/zachc/Documents/Unreal Projects/reflections/Saved/Logs/reflections.log'
@@ -48,9 +49,15 @@ def main():
     if 'PIE=True' in text:
         print('PIE busy, not starting')
         return
+    # House rule: an open Level Sequence's spawnables get copied into every PIE. Don't close someone else's; stop.
+    err, text = py(sid, 'import unreal\ns = unreal.LevelSequenceEditorBlueprintLibrary.get_current_level_sequence()\n'
+                        '"SEQ=%s" % (s.get_path_name() if s else None)')
+    if 'SEQ=None' not in text:
+        print('a Level Sequence is open in Sequencer, not starting PIE:', text)
+        return
     with open(LOCK, 'w') as f:
-        json.dump({'owner': ME, 'purpose': 'world-jump: city kit look + Frostside re-shoot on Lvl_MockCity (~2 min)',
-                   'acquired_epoch': time.time(), 'expires_epoch': time.time() + 200}, f)
+        json.dump({'owner': ME, 'purpose': 'world-jump: mock city nav fixes + Frostside look check on Lvl_MockCity (~2 min)',
+                   'acquired_epoch': time.time(), 'expires_epoch': time.time() + 260}, f)
     print('start', tool(sid, "EditorToolset.EditorAppToolset", "StartPIE", {}, 90))
     try:
         time.sleep(3)
@@ -63,9 +70,9 @@ def main():
                 break
         print('world', text)
         time.sleep(2)
-        print('driver', py(sid, open(os.path.join(SP, 'city_driver.py'), encoding='utf-8').read()))
+        print('driver', py(sid, open(os.path.join(SP, DRIVER), encoding='utf-8').read()))
         captured = set()
-        deadline = time.time() + 120
+        deadline = time.time() + 150
         while time.time() < deadline:
             time.sleep(0.5)
             r = results()

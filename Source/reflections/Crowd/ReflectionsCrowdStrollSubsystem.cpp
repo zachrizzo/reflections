@@ -237,7 +237,8 @@ bool UReflectionsCrowdStrollSubsystem::StartLaneLeg(FStroller& Stroller, const A
     const FVector Here = Driver.GetActorLocation();
     if (!Stroller.bOnLane || FVector::Dist2D(Stroller.Lane.Position, Here) > 400.0f)
     {
-        const FVector Extent(600.0f, 600.0f, 300.0f);
+        // Wide enough that a walker who ran off (a fright) heads back to the sidewalk once calm.
+        const FVector Extent(2000.0f, 2000.0f, 300.0f);
         FZoneGraphLaneLocation Nearest;
         float DistanceSq = 0.0f;
         if (!ZoneGraph->FindNearestLane(FBox(Here - Extent, Here + Extent), FZoneGraphTagFilter(), Nearest, DistanceSq))

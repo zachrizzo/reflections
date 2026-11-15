@@ -40,7 +40,7 @@ namespace
     FSpellReaction ReactionFor(EHeroSpell Spell, float Damage, float Push)
     {
         FSpellReaction R;
-        R.Magnitude = FMath::Clamp(Push / 900.0f + Damage / 40.0f, 0.1f, 1.0f);
+        R.Magnitude = FMath::Clamp(Push / 1400.0f + Damage / 50.0f, 0.1f, 1.0f);
         if (!ReflectionsSpellCatalog::IsValid(Spell)) return R;
         const FReflectionsSpellSpec& Spec = ReflectionsSpellCatalog::Get(Spell);
         switch (Spec.Element)
@@ -72,6 +72,17 @@ namespace
         if (!Target || Target == Caster) return;
         // NPC casters (enemy soldiers) spare their own side; the player's spells can still hit anyone.
         const UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(Target);
+        // A hit on an NPC's hidden walker or hit proxy is a hit on the NPC; the NPC system moves NPC bodies itself.
+        bool bNpc = false;
+        if (Npcs)
+        {
+            if (const UReflectionsNpcReactionComponent* Npc = Npcs->FindNpc(Target))
+            {
+                Target = Npc->GetOwner();
+                bNpc = true;
+                if (!Target || Target == Caster) return;
+            }
+        }
         if (Npcs && !Npcs->CanBeHarmedBy(Target, Caster))
         {
             UE_CLOG(CVarSpellLogHits.GetValueOnGameThread() != 0, LogTemp, Display, TEXT("Spell: %s spared %s (ally of the caster)"),
@@ -94,11 +105,13 @@ namespace
                 UGameplayStatics::ApplyPointDamage(Target, Damage, Direction, Hit, Pawn ? Pawn->GetController() : nullptr, Caster, UDamageType::StaticClass());
             }
         }
+        // The player is shoved, not thrown: enemy bolts would otherwise knock them around on every hit.
+        if (const APawn* TargetPawn = Cast<APawn>(Target); TargetPawn && TargetPawn->IsPlayerControlled()) Push *= 0.3f;
         // Blasts throw bodies up as well as away.
         const FVector Velocity = Direction * Push + FVector(0.0f, 0.0f, Push * (bBlast ? 0.4f : 0.15f));
         if (Push > 0.0f)
         {
-            if (ACharacter* Character = Cast<ACharacter>(Target)) Character->LaunchCharacter(Velocity, true, true);
+            if (ACharacter* Character = Cast<ACharacter>(Target); Character && !bNpc) Character->LaunchCharacter(Velocity, true, true);
             else if (Primitive && Primitive->IsSimulatingPhysics(Hit.BoneName) && !(Npcs && Npcs->FindNpc(Target)))
             {
                 // Loose props: a velocity kick, so a crate flies as far as a bottle. NPC bodies react on their own side.
@@ -127,7 +140,17 @@ namespace
         Types.AddObjectTypesToQuery(ECC_Pawn); Types.AddObjectTypesToQuery(ECC_WorldDynamic); Types.AddObjectTypesToQuery(ECC_PhysicsBody);
         FCollisionQueryParams Query(SCENE_QUERY_STAT(SpellArea), false, Caster);
         World->OverlapMultiByObjectType(Hits, Location, FQuat::Identity, Types, FCollisionShape::MakeSphere(Radius), Query);
-        for (const FOverlapResult& Hit : Hits) if (AActor* Actor = Hit.GetActor()) if (Actor != Caster) Targets.Add(Actor);
+        const UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(World);
+        for (const FOverlapResult& Hit : Hits)
+        {
+            AActor* Actor = Hit.GetActor();
+            // An NPC and its hidden walker or hit proxy count once, as the NPC.
+            if (Npcs && Actor)
+            {
+                if (const UReflectionsNpcReactionComponent* Npc = Npcs->FindNpc(Actor)) Actor = Npc->GetOwner();
+            }
+            if (Actor && Actor != Caster) Targets.Add(Actor);
+        }
         return Targets;
     }
 
@@ -144,6 +167,10 @@ namespace
         FCollisionQueryParams Query(SCENE_QUERY_STAT(SpellExplosion), false, Caster);
         World->OverlapMultiByObjectType(Hits, Center, FQuat::Identity, Types, FCollisionShape::MakeSphere(Radius), Query);
         const UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(World);
+        if (Npcs && DirectActor)
+        {
+            if (const UReflectionsNpcReactionComponent* Npc = Npcs->FindNpc(DirectActor)) DirectActor = Npc->GetOwner();
+        }
         TSet<AActor*> Done;
         TSet<UPrimitiveComponent*> Thrown;
         auto Blast = [&](AActor* Target, const FHitResult* Direct)
@@ -164,7 +191,11 @@ namespace
                 Thrown.Add(Part);
                 Part->AddRadialImpulse(Center, Radius, Speed, ERadialImpulseFalloff::RIF_Linear, true);
             }
-            if (Done.Contains(Target) || Target == DirectActor) continue;
+            if (Npcs)
+            {
+                if (const UReflectionsNpcReactionComponent* Npc = Npcs->FindNpc(Target)) Target = Npc->GetOwner();
+            }
+            if (!Target || Target == Caster || Ignore.Contains(Target) || Done.Contains(Target) || Target == DirectActor) continue;
             Done.Add(Target);
             Blast(Target, nullptr);
         }

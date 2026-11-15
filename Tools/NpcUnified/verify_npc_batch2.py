@@ -47,12 +47,44 @@ async def shot(name):
         result.setdefault('shot_errors', []).append(name + ': ' + repr(error))
 
 
+# retargeted: positions are relative to where the hero stands when PIE starts (see retarget_checks.py)
+_frame = {}
+
+
+def W(x, y, z=0.0):
+    """A position of the old test level, as the same offset from where the hero stood when PIE started."""
+    if not _frame:
+        game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+        hero = unreal.GameplayStatics.get_player_pawn(game, 0)
+        here = hero.get_actor_location()
+        ahead = hero.get_actor_forward_vector()
+        ahead = unreal.Vector(ahead.x, ahead.y, 0.0).normal()
+        _frame.update(here=here, ahead=ahead, right=unreal.Vector(-ahead.y, ahead.x, 0.0))
+    sites = ((1500.0, 500.0), (-700.0, 350.0))
+    ox, oy = min(sites, key=lambda s: (x - s[0]) ** 2 + (y - s[1]) ** 2)
+    forward, right = -(y - oy), x - ox          # the old checks looked down -Y, with +X to their right
+    here, a, r = _frame['here'], _frame['ahead'], _frame['right']
+    return unreal.Vector(here.x + a.x * forward + r.x * right, here.y + a.y * forward + r.y * right, here.z - 90.0 + z)
+
+
+async def hero_is_down():
+    """Waits (up to 20 s) until PIE has a hero that has stopped falling, then fixes the frame W() measures from."""
+    for _ in range(40):
+        await asyncio.sleep(0.5)
+        game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+        hero = unreal.GameplayStatics.get_player_pawn(game, 0) if game else None
+        if hero and abs(hero.get_velocity().z) < 5.0:
+            break
+    await asyncio.sleep(1.0)
+    W(1500.0, 500.0, 90.0)
+
+
 if unwrap(await call_tool('EditorToolset.EditorAppToolset.IsPIERunning')):
     result['abort'] = 'PIE is already running (someone else is testing); nothing was started.'
 else:
     await call_tool('EditorToolset.EditorAppToolset.StartPIE')
     try:
-        await asyncio.sleep(3.0)
+        await hero_is_down()
         world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
         player = unreal.GameplayStatics.get_player_pawn(world, 0)
         controller = player.get_controller()
@@ -167,17 +199,17 @@ else:
         # ---- K: the tarnished hunt townspeople and convert them -------------------------------------
         # Three fresh civilians and one placed townsperson that carries the Friendly tag, in the empty
         # south-west, with the player too far away to be the nearer quarry.
-        player.set_actor_location(unreal.Vector(-700, 350, 90), False, True)
-        spots = [unreal.Vector(-700, -800, 0), unreal.Vector(-1050, -800, 0), unreal.Vector(-700, -1150, 0)]
+        player.set_actor_location(W(-700, 350, 90), False, True)
+        spots = [W(-700, -800, 0), W(-1050, -800, 0), W(-700, -1150, 0)]
         clean = [npcs.spawn_npc('Civilian', spot, 90.0, None) for spot in spots]
         friendly = next((a for a in level_npcs.values() if a.actor_has_tag('Friendly')), None)
         if friendly:
-            place(friendly, unreal.Vector(-1050, -1150, 0))
+            place(friendly, W(-1050, -1150, 0))
             clean.append(friendly)
         await asyncio.sleep(1.5)
         check('K_civilians_spawned', all(c and brain(c) for c in clean), [label(c) for c in clean])
         meter_before = infected_count()
-        face(unreal.Vector(-875, -975, 60))
+        face(W(-875, -975, 60))
         await asyncio.sleep(0.2)
         result['K'] = {'villain_loaded': bool(villain), 'timeline': []}
         if not villain:
@@ -238,7 +270,7 @@ else:
             await asyncio.sleep(1.5)
             still_held = [label(a) for a in tarnished() if brain(a).is_scripted() and not villain.is_converting(a)]
             check('K_holds_released', not still_held, still_held)
-            face(unreal.Vector(-875, -975, 60))
+            face(W(-875, -975, 60))
             await asyncio.sleep(0.2)
             await shot('K_after')
             # Leave no hunters behind for the rest of the run.
@@ -246,11 +278,11 @@ else:
                 unreal.GameplayStatics.apply_damage(actor, 999.0, None, None, unreal.DamageType)
 
         # ---- H: SpawnNpc and Npc.Spawn give team looks ----------------------------------------------
-        player.set_actor_location(unreal.Vector(1200, 1300, 90), False, True)
+        player.set_actor_location(W(1200, 1300, 90), False, True)
         controller.set_control_rotation(unreal.Rotator(0, 0, -90))
         await asyncio.sleep(0.3)
         before = set(a.get_name() for a in npcs.get_npc_actors())
-        soldier = npcs.spawn_npc('Soldier', unreal.Vector(900, 700, 0), 90.0, None)
+        soldier = npcs.spawn_npc('Soldier', W(900, 700, 0), 90.0, None)
         unreal.SystemLibrary.execute_console_command(world, 'Npc.Spawn Guard 2 600', controller)
         await asyncio.sleep(1.5)
         fresh = [a for a in npcs.get_npc_actors() if a.get_name() not in before]
@@ -312,7 +344,7 @@ else:
         check('I_cooldown_stops_a_repeat', len(repeated) <= len(spoken), [len(spoken), len(repeated)])
 
         # ---- J: scripted hold -------------------------------------------------------------------------
-        bystander = npcs.spawn_npc('Civilian', unreal.Vector(1500, 300, 0), 90.0, None)
+        bystander = npcs.spawn_npc('Civilian', W(1500, 300, 0), 90.0, None)
         await asyncio.sleep(1.2)
         start = bystander.get_actor_location()
         npcs.hold_npc(bystander, 4.0)
@@ -332,7 +364,7 @@ else:
         check('J_release_gives_reactions_back', released and after['reaction'] == 'FLEEING', after)
 
         # ---- L: passing remarks (only when the build has them) --------------------------------------
-        calm = npcs.spawn_npc('Civilian', unreal.Vector(900, 1300, 0), 90.0, None)
+        calm = npcs.spawn_npc('Civilian', W(900, 1300, 0), 90.0, None)
         await asyncio.sleep(1.0)
         if hasattr(brain(calm), 'set_remarks_muted'):
             brain(calm).set_remarks_muted(True)

@@ -7,6 +7,9 @@ public class reflections : ModuleRules
 	public reflections(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		// Jam: compile every .cpp on its own. Each session proves its files with -SingleFile, and unity blobs
+		// let one file's file-scope "using namespace" leak into another (GameFlowSlate vs CutsceneSlate, train #13).
+		bUseUnity = false;
 
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core",

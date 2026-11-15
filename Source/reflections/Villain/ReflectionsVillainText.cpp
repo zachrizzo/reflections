@@ -6,6 +6,10 @@ FText ReflectionsVillainText::BossName() { return LOCTEXT("BossName", "The Tarni
 
 FText ReflectionsVillainText::BossSubtitle(const FText& WhiteSide)
 {
+    if (WhiteSide.IsEmpty())
+    {
+        return LOCTEXT("BossSubtitleOneCity", "It rises from the cracked glass of the city");
+    }
     return FText::Format(LOCTEXT("BossSubtitle", "It rises from the cracked glass of {0}"), WhiteSide);
 }
 
@@ -22,6 +26,10 @@ FText ReflectionsVillainText::MirrorWholeTitle() { return LOCTEXT("BookTitle", "
 
 FText ReflectionsVillainText::MirrorWholeSubtitle(const FText& WhiteSide)
 {
+    if (WhiteSide.IsEmpty())
+    {
+        return LOCTEXT("BookSubtitleOneCity", "The Final Spell is yours. Go and burn the Tarnish out.");
+    }
     return FText::Format(LOCTEXT("BookSubtitle", "The Final Spell is yours. The Tarnish waits at the top of {0}'s tower."), WhiteSide);
 }
 

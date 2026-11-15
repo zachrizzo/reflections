@@ -200,8 +200,8 @@ def Burning_Loop(rng):
 
 
 # ---------------------------------------------------------------- squads
-STEP_RATE = 1.8  # steps per second at march speed (squads session to confirm)
-SQUAD = 8
+STEP_RATE = 2.0  # steps per second per soldier at 150 cm/s (squads session, 2026-11-14)
+SQUAD = 5  # usually 5; each soldier walks on its own phase (not lockstep)
 
 
 def boot_step(rng, d=0.45, dist=0.0):
@@ -229,9 +229,9 @@ def March_Loop(rng):
     y = np.zeros(S.n_(d), np.float32)
     dists = np.linspace(0, 1, SQUAD)
     for s in range(SQUAD):
-        lag = rng.normal(0, 0.028)  # each soldier's own small lag behind the beat
+        lag = rng.uniform(0, 1.0 / STEP_RATE)  # each soldier's own phase: a loose group, not one beat
         for k in range(int(3 * 8)):
-            t0 = (k + 0.5) / STEP_RATE + lag + rng.normal(0, 0.012)
+            t0 = k / STEP_RATE + lag + rng.normal(0, 0.012)
             place(y, boot_step(rng, 0.45, dists[s]) * rng.uniform(0.7, 1.0), t0)
     y = S.reverb(y, 0.22, 0.9, 0.8, 6000)
     mid = y[S.n_(period):]
@@ -285,9 +285,119 @@ def Shield_BlockHeavy(rng):
     return S.fade_out(S.reverb(sat(y, 1.3), 0.14, 0.7, 0.45)[: S.n_(d)], 200)
 
 
-SOUNDS = {"Fireball_Explode": Fireball_Explode, "Shock_Loop": Shock_Loop, "Shock_Collapse": Shock_Collapse,
+# ---------------------------------------------------------------- replacements for the ElevenLabs fire takes
+def Fire_Impact(rng):
+    """A fire bolt hitting: punchy fiery burst with embers (smaller than Fireball_Explode, no stone debris)."""
+    d = 1.9
+    n = S.n_(d)
+    crack = S.mix(SP.click(rng, 2, 400, 14000), 0.8 * SP.burst(rng, 0.04, 900, 5000, 0.0002, 0.012))
+    thump = SP.sub_drop(0.6, rng.uniform(78, 95), 34, 0.22)
+    body = S.fft_filter(S.colored(rng, S.n_(0.5), -3), 60, 600) * S.env_ad(S.n_(0.5), 0.002, 0.12, 2.5)
+    blast = S.stft_sculpt(S.colored(rng, S.n_(0.8), -1.5), lambda t: 6500 * (350 / 6500) ** min(1, t / 0.4),
+                          lambda t: 1.3) * S.env_ad(S.n_(0.8), 0.002, 0.3, 3.0)
+    m = S.n_(1.4)
+    roar = S.fft_filter(S.colored(rng, m, -4), 70, 1600) * SP.turb(rng, m, 6, 20, 0.85) * S.env_ad(m, 0.015, 0.7, 2.6)
+    embers = SP.pops(rng, d, lambda t: 140 * np.exp(-1.8 * t), (1500, 7500), (0.0006, 0.003))
+    sizzle = S.impulses(rng, 1.2, lambda t: 260 * np.exp(-2.5 * t), (0.1, 0.5), 3000, 11000)
+    y = S.mix(0.8 * N(crack), 1.0 * N(thump), 0.6 * N(body), 0.7 * N(blast), S.at(0.6 * N(roar), 0.01), 0.3 * N(embers),
+              S.at(0.18 * N(sizzle), 0.05, n))
+    return S.fade_out(sat(S.reverb(sat(y, 1.6), 0.14, 0.9, 0.6)[: S.n_(d + 0.3)], 1.8), 300)
+
+
+def Fire_Cast(rng):
+    """Flame igniting from an open hand: ignition snap, whoosh, a short low roar, crackle and sizzle."""
+    y = SP.Fire_Cast(rng)
+    n = len(y)
+    roar = S.fft_filter(S.colored(rng, n, -5), 90, 450) * SP.turb(rng, n, 5, 16, 0.8) * S.bell_env(n, 0.3, 1.6)
+    sizzle = S.impulses(rng, n / SR, lambda t: 220 * np.exp(-1.2 * t), (0.1, 0.5), 3000, 12000)
+    snap = SP.burst(rng, 0.03, 1500, 9000, 0.0002, 0.008)
+    return S.fade_out(S.mix(N(y), 0.45 * N(roar), 0.22 * N(sizzle), 0.4 * N(snap)), 140)
+
+
+def Water_Impact(rng):
+    """spells.py's water impact with gentle saturation so it reaches its loudness without hard limiting."""
+    return sat(SP.Water_Impact(rng), 2.4)
+
+
+# ---------------------------------------------------------------- spell hits on living bodies (layer over the element impact)
+def meat(rng, f0, weight=1.0, d=0.5):
+    """A punchy hit on a body: hard click, low thump, a short meaty mid burst and a skin/cloth slap."""
+    click = S.mix(SP.click(rng, 1, 1500, 16000), 0.6 * SP.burst(rng, 0.012, 2500, 9000, 0.0001, 0.003))
+    thump = SP.sub_drop(min(d, 0.3), f0, f0 * 0.45, 0.06)
+    flesh = SP.burst(rng, 0.12, 150, 1400, 0.0004, 0.025, -2)
+    slap = SP.burst(rng, 0.04, 1000, 5000, 0.0002, 0.008)
+    cloth = SP.burst(rng, 0.08, 1500, 6000, 0.002, 0.025)
+    return weight * S.mix(0.55 * N(click), 1.0 * N(thump), 0.85 * N(flesh), 0.5 * N(slap), 0.2 * N(cloth))
+
+
+def Spell_BodyHit(rng):
+    d = 0.45
+    y = meat(rng, rng.uniform(95, 125), 1.0, d)
+    return S.fade_out(sat(S.reverb(sat(y, 3.0), 0.06, 0.5, 0.2)[: S.n_(d)], 2.0), 80)
+
+
+def Spell_BodyHit_Heavy(rng):
+    d = 0.85
+    n = S.n_(d)
+    hard = S.mix(SP.click(rng, 1, 800, 18000), 0.9 * SP.burst(rng, 0.015, 2000, 12000, 0.0001, 0.004))
+    sub = SP.sub_drop(0.7, rng.uniform(70, 85), 28, 0.25)
+    body = meat(rng, rng.uniform(80, 100), 1.0, 0.5)
+    crunch = S.mix(SP.burst(rng, 0.05, 900, 3500, 0.0003, 0.012),
+                   0.5 * S.partials(0.08, [rng.uniform(1100, 1500), rng.uniform(2200, 2800)], [1, 0.6], [0.01, 0.007], rng))
+    slap = SP.burst(rng, 0.05, 1500, 4500, 0.0002, 0.01)
+    k = S.n_(0.12)
+    wet = S.fft_filter(S.white(rng, k), 250, 2200) * SP.turb(rng, k, 80, 220, 0.95) * S.env_ad(k, 0.002, 0.05, 2.5)
+    y = S.mix(1.0 * N(hard), 0.55 * N(sub), 1.0 * N(body), S.at(0.6 * N(crunch), 0.004, n), 0.6 * N(slap),
+              S.at(0.45 * N(wet), 0.006, n))
+    return S.fade_out(sat(S.reverb(sat(y, 3.0), 0.08, 0.6, 0.3)[: n], 2.0), 150)
+
+
+def Spell_BodyHit_Fire(rng):
+    d = 0.6
+    n = S.n_(d)
+    sizzle = S.impulses(rng, d, lambda t: 900 * np.exp(-6 * t), (0.1, 0.5), 3000, 13000)
+    flare = S.fft_filter(S.colored(rng, n, -3), 300, 3000) * S.env_ad(n, 0.004, 0.18, 2.5) * SP.turb(rng, n, 10, 30, 0.8)
+    hiss = S.fft_filter(S.white(rng, n), 4000, 12000) * S.env_ad(n, 0.002, 0.25, 3.0)
+    return S.fade_out(S.mix(0.8 * N(sizzle), 0.6 * N(flare), 0.3 * N(hiss)), 120)
+
+
+def Spell_BodyHit_Ice(rng):
+    d = 0.7
+    n = S.n_(d)
+    crack = S.mix(SP.click(rng, 1, 2000, 18000), 0.8 * SP.burst(rng, 0.02, 3000, 14000, 0.0001, 0.004))
+    f0 = rng.uniform(2200, 3200)
+    ping = S.partials(0.5, [f0, f0 * 1.57, f0 * 2.31, f0 * 3.12], [1, 0.6, 0.4, 0.25], [0.12, 0.08, 0.05, 0.03], rng)
+    shards = rings(rng, d, 26, 0.08, (3000, 11000), (0.002, 0.01), peak_s=0.01)
+    crackle = S.impulses(rng, 0.4, lambda t: 300 * np.exp(-8 * t), (0.1, 0.4), 2500, 12000)
+    return S.fade_out(S.mix(0.9 * N(crack), 0.35 * N(ping), 0.5 * N(shards), 0.35 * N(crackle)), 150)
+
+
+def Spell_BodyHit_Lightning(rng):
+    d = 0.45
+    n = S.n_(d)
+    z = arc(rng, 0.18, rng.uniform(150, 190), 1.0)
+    snap = S.mix(SP.click(rng, 1, 300, 18000), 0.8 * SP.burst(rng, 0.01, 1500, 16000, 0.0001, 0.003))
+    sizzle = S.impulses(rng, 0.35, lambda t: 500 * np.exp(-9 * t), (0.1, 0.4), 3000, 14000)
+    return S.fade_out(sat(S.mix(1.0 * N(snap), 0.7 * N(z), S.at(0.3 * N(sizzle), 0.05, n)), 2.2), 100)
+
+
+def Spell_BodyHit_Water(rng):
+    d = 0.6
+    n = S.n_(d)
+    slap = S.mix(SP.burst(rng, 0.06, 400, 3500, 0.0003, 0.014), 0.6 * SP.burst(rng, 0.03, 2000, 8000, 0.0002, 0.006))
+    k = S.n_(0.4)
+    splash = S.fft_filter(S.colored(rng, k, -2), 400, 7000) * SP.turb(rng, k, 15, 40, 0.8) * S.env_ad(k, 0.003, 0.15, 3.0)
+    bub = SP.bubbles(rng, 0.5, 18, 400, 1600, 0.15, 0.15)
+    return S.fade_out(sat(S.mix(1.0 * N(slap), 0.6 * N(splash), 0.3 * N(bub)), 2.5), 120)
+
+
+SOUNDS = {"Spell_BodyHit": Spell_BodyHit, "Spell_BodyHit_Heavy": Spell_BodyHit_Heavy, "Spell_BodyHit_Fire": Spell_BodyHit_Fire,
+          "Spell_BodyHit_Ice": Spell_BodyHit_Ice, "Spell_BodyHit_Lightning": Spell_BodyHit_Lightning,
+          "Spell_BodyHit_Water": Spell_BodyHit_Water,
+          "Fire_Impact": Fire_Impact, "Water_Impact": Water_Impact, "Fireball_Explode": Fireball_Explode, "Shock_Loop": Shock_Loop, "Shock_Collapse": Shock_Collapse,
           "Water_Shove": Water_Shove, "Body_Knockback": Body_Knockback, "Burning_Loop": Burning_Loop,
           "March_Loop": March_Loop, "March_Step": March_Step, "Sword_ShieldHit": Sword_ShieldHit,
           "Shield_BlockHeavy": Shield_BlockHeavy}
-VARIANTS = {"Fireball_Explode": 3, "Shock_Loop": 1, "Shock_Collapse": 3, "Water_Shove": 3, "Body_Knockback": 4,
+VARIANTS = {"Spell_BodyHit": 4, "Spell_BodyHit_Heavy": 3, "Spell_BodyHit_Fire": 3, "Spell_BodyHit_Ice": 3,
+            "Spell_BodyHit_Lightning": 3, "Spell_BodyHit_Water": 3, "Fire_Impact": 3, "Water_Impact": 3, "Fireball_Explode": 3, "Shock_Loop": 1, "Shock_Collapse": 3, "Water_Shove": 3, "Body_Knockback": 4,
             "Burning_Loop": 1, "March_Loop": 1, "March_Step": 6, "Sword_ShieldHit": 4, "Shield_BlockHeavy": 4}

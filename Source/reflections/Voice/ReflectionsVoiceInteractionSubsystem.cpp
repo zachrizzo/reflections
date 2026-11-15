@@ -8,6 +8,7 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
+#include "Hero/ReflectionsSpellCombat.h"
 #include "InputCoreTypes.h"
 #include "Kismet/GameplayStatics.h"
 #include "NPC/ReflectionsNpcReactionComponent.h"
@@ -205,6 +206,13 @@ void UReflectionsVoiceInteractionSubsystem::Tick(float DeltaTime)
             else Overlay->ClearLines();
         }
         if (bTyping && !Next) { Overlay->CloseTyping(); FinishTyping(); }
+        // Hit while typing: give the player their controls back at once.
+        if (const UReflectionsHealthComponent* Health = Pawn->FindComponentByClass<UReflectionsHealthComponent>())
+        {
+            const bool bHurt = LastPlayerHealth >= 0.0f && Health->Health < LastPlayerHealth - 0.01f;
+            LastPlayerHealth = Health->Health;
+            if (bHurt && Overlay->IsTyping()) { Overlay->CloseTyping(); FinishTyping(); }
+        }
     }
     UpdateFacing(DeltaTime);
     // An NPC in a conversation doesn't also say its passing remarks over the reply (NPC unify's SetRemarksMuted).
@@ -572,5 +580,10 @@ namespace
         }));
 }
 #endif
+
+float UReflectionsVoiceInteractionSubsystem::GetPanelTopFromBottom() const
+{
+    return Overlay.IsValid() ? Overlay->GetPanelTopFromBottom() : 0.0f;
+}
 
 #undef LOCTEXT_NAMESPACE

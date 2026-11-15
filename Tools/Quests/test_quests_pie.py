@@ -20,7 +20,7 @@ import time
 from pathlib import Path
 
 APP = 'EditorToolset.EditorAppToolset.'
-TEST_MAP = globals().get('QUEST_TEST_MAP', '/Game/MockCity/Lvl_MockCity')   # New Game's map; the side proof ran on Lvl_WorldJumpTest
+TEST_MAP = globals().get('QUEST_TEST_MAP', '/Game/GrayLondon/Maps/GrayLondon_Geodata')   # the only map since 21:05 (earlier proofs: Lvl_WorldJumpTest, Lvl_MockCity)
 MAP_TAG = TEST_MAP.rsplit('/', 1)[-1]
 ROOT = Path(unreal.Paths.project_saved_dir()).resolve() / 'QuestsTest'
 SHOTS = Path(unreal.Paths.project_dir()).resolve() / 'ArtDirection' / 'Quests' / 'Screenshots'
@@ -407,9 +407,9 @@ async def main_try(run, world, q, sid):
             await asyncio.sleep(1.2)
         pages = list(unreal.GameplayStatics.get_all_actors_of_class(world, unreal.ReflectionsBookPagePickup))
         used = run.report.setdefault('used_pages', [])
-        pages = [p for p in pages if p.get_name() not in used]
+        pages = [p for p in pages if p.get_path_name() not in used]
         if pages and sid != 'first_face':
-            used.append(pages[0].get_name())
+            used.append(pages[0].get_path_name())
             pl = pages[0].get_actor_location()
             teleport(pawn, pl - unreal.Vector(0, 0, 80))
             await asyncio.sleep(1.4)
@@ -458,8 +458,27 @@ async def main(run, n):
         run.report['walk'] = []
         run.note('ui_start', ui(world))
         await run.shot('20_main_start')
-        await main_walk(run, world, q, 'through_glass')
+        # Catch-up repro (playtest run 3): pick up a real page while the story is still near its start.
+        run.note('step_before_page', main_step(q))
+        pc, pawn = player(world)
+        pages = list(unreal.GameplayStatics.get_all_actors_of_class(world, unreal.ReflectionsBookPagePickup))
+        run.note('pages', ['%s @ %s' % (p.get_name(), p.get_actor_location()) for p in pages])
+        for p in pages:
+            run.report.setdefault('used_pages', []).append(p.get_path_name())
+            teleport(pawn, p.get_actor_location() - unreal.Vector(0, 0, 80))
+            await asyncio.sleep(1.5)
+            if main_step(q) not in ('intro', 'lantern_row', 'cast', 'first_face'):
+                break
+        await asyncio.sleep(1.0)
+        run.note('step_after_page', main_step(q))
+        run.note('ui_after_page', ui(world))
+        await run.shot('21_catchup_after_page')
     elif n == 2:
+        world = game_world()
+        mine(world)
+        q = quests(world)
+        await main_walk(run, world, q, 'cracked_crown')
+    elif n == 3:
         world = game_world()
         mine(world)
         q = quests(world)
@@ -507,6 +526,9 @@ async def story(run, n):
             await asyncio.sleep(0.8)
             qw.open_talk(a, False)
             await asyncio.sleep(0.6)
+            # Talking never pauses (train #13): the world keeps running behind the card.
+            run.note('paused_while_talking', unreal.GameplayStatics.is_game_paused(world))
+            run.note('ui_talk_open', ui(world))
             await run.shot(shot)
             for _ in range(6):
                 if 'accept:' in ui(world):
@@ -543,6 +565,18 @@ async def story(run, n):
         run.note('seam_held', q.has_unlock('Seam_Held'))
         await asyncio.sleep(1.0)
         await run.shot('34_sq9_complete')
+        # Consequences (train #12): a person a running side quest still needs dies, so it fails with a journal note.
+        # SQ7: Dov Merriman gives the lamp oil in a later step.
+        q.accept_quest('sq7_lamps')
+        await asyncio.sleep(0.5)
+        q.notify_person_died('dov_merriman', True)
+        await asyncio.sleep(1.0)
+        run.note('sq7_after_death', str(q.get_status('sq7_lamps')))
+        r = q.get_quest_state('sq7_lamps')
+        st = r[1] if isinstance(r, tuple) else r
+        run.note('sq7_note', str(st.end_note) if st else None)
+        await run.shot('36_quest_failed_banner')
+        q.set_tracked_quest('sq7_lamps')
         qw.open_journal()
         await asyncio.sleep(0.8)
         await run.shot('35_journal_story')

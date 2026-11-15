@@ -51,8 +51,9 @@ public:
 
     // ---- Current world -----------------------------------------------------------------------------------
 
+    /** The London the hero is in. Until something sets it (one-London maps never jump), the config's DefaultWorld. */
     UFUNCTION(BlueprintPure, Category = "World Jump")
-    EReflectionsWorld GetCurrentWorld() const { return CurrentWorld; }
+    EReflectionsWorld GetCurrentWorld() const;
 
     /** Records which London the hero is in. Broadcasts OnWorldChanged when it changes and bBroadcast is set. */
     UFUNCTION(BlueprintCallable, Category = "World Jump")

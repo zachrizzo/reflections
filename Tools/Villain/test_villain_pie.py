@@ -170,7 +170,7 @@ async def stop(run):
         return
     if await call_tool(APP + 'IsPIERunning'):
         world = game_world()
-        if world and any(m in world.get_path_name() for m in ('Lvl_WorldJumpTest', 'Lvl_HeroSampleCrowd', 'Lvl_MockCity')):
+        if world and any(m in world.get_path_name() for m in ('Lvl_WorldJumpTest', 'Lvl_HeroSampleCrowd', 'Lvl_MockCity', 'GrayLondon')):
             cmd(world, 'Villain.Status')
             await call_tool(APP + 'StopPIE')
             run.report['stopped'] = True
@@ -603,7 +603,8 @@ async def last_slot(run, n):
 
 # ----------------------------------------------------------------------------------------------- Frost Tower crown (mock city)
 
-MOCK_CITY = '/Game/MockCity/Lvl_MockCity'
+MOCK_CITY = '/Game/MockCity/Lvl_MockCity'   # deleted 21:05; kept for the old stages
+GAME_MAP_KEY = 'GrayLondon_Geodata'          # the New Game map since 21:05 (World Partition, one side)
 CROWN = unreal.Vector(301300.0, 7000.0, 2400.0)         # VillainArena_FrostCrown (world-jump, Lvl_MockCity_Frostside)
 RAMP_EXIT = unreal.Vector(300800.0, 7800.0, 2500.0)   # on the crown, ~9.4 m from centre (world-jump's tested spot)
 TOWER_INSIDE = unreal.Vector(300000.0, 7000.0, 100.0)  # inside the Frost Tower, 23 m below the crown
@@ -758,11 +759,11 @@ async def proof(run, n):
     if n == 1:
         for _ in range(40):
             world = game_world()
-            if world and 'Lvl_MockCity' in world.get_path_name() and player(world)[1]:
+            if world and GAME_MAP_KEY in world.get_path_name() and player(world)[1]:
                 break
             await asyncio.sleep(0.5)
         run.report['map'] = world.get_path_name() if world else None
-        if not world or 'Lvl_MockCity' not in world.get_path_name():
+        if not world or GAME_MAP_KEY not in world.get_path_name():
             return
         await asyncio.sleep(2.0)
         await skip_button(world, run, 'intro')
@@ -811,38 +812,29 @@ async def proof(run, n):
         b = boss(world)
         run.report['boss'] = bool(b)
         if b:
-            run.report['boss_from_crown_cm'] = round((b.get_actor_location() - CROWN).length())
+            arena = villain(world).get_arena()
+            run.report['arena'] = str(arena)
+            run.report['boss_at'] = str(b.get_actor_location())
             run.report['boss_state_before_climb'] = str(b.get_boss_state())
         final = pawn.get_component_by_class(unreal.ReflectionsFinalSpellComponent)
         run.report['final_spell_given'] = bool(final)
         return
-    if n == 4:  # climb (teleport to the ramp top), he rises; after-look shots
+    if n == 4:  # arrive at the arena, he rises; after-look shots
         pc, pawn = player(world)
         b = boss(world)
         if not b:
             return
-        pawn.teleport(TOWER_INSIDE, unreal.Rotator(0.0, 0.0, 0.0))
-        await asyncio.sleep(1.2)
-        run.report['state_inside_tower'] = str(b.get_boss_state())
-        # Walk up the Frost Tower ramps on the navmesh (path following moves the hero like held input).
-        walked = False
-        try:
-            unreal.AIBlueprintHelperLibrary.simple_move_to_location(pc, RAMP_EXIT)
-            start = pawn.get_actor_location()
-            for i in range(56):
-                await asyncio.sleep(0.5)
-                loc = pawn.get_actor_location()
-                if i == 6 and (loc - start).length() < 50.0:
-                    break                                   # no path: not moving at all
-                if loc.z > CROWN.z - 50.0 and (loc - RAMP_EXIT).length() < 900.0:
-                    walked = True
-                    break
-            run.report['walk_end'] = [round(c) for c in (pawn.get_actor_location().x, pawn.get_actor_location().y, pawn.get_actor_location().z)]
-        except Exception as ex:
-            run.report['walk_error'] = str(ex)
-        run.report['walked_up_ramps'] = walked
-        if not walked:
-            pawn.teleport(RAMP_EXIT, unreal.Rotator(0.0, 0.0, 0.0))   # fallback, reported as such
+        run.report['state_before_arrival'] = str(b.get_boss_state())
+        arena = villain(world).get_arena()
+        if isinstance(arena, tuple) and len(arena) >= 3:
+            center, radius = arena[1], arena[2]
+        elif isinstance(arena, tuple) and len(arena) == 2:
+            center, radius = arena[0], arena[1]
+        else:
+            center, radius = b.get_actor_location(), 1000.0
+        # Walk in from where the hero stands: the first ground spot just inside the arena's edge.
+        run.report['arrived_at_cm_from_centre'] = stand_beside(pawn, center, max(400.0, radius - 150.0), anchor=pawn.get_actor_location())
+        run.report['walked_up_ramps'] = False
         await asyncio.sleep(0.5)
         run.report['state_on_arrival'] = str(b.get_boss_state())
         face(pc, pawn, b.get_actor_location(), pitch_bias=2.0, yaw_offset=9.0)

@@ -207,8 +207,26 @@ def import_one(item):
     return out
 
 
+def skeleton_guard():
+    """RULE (2026-11-14): clothing imports must never modify or save a metahuman_base_skel. If an import dirtied one
+    (merged bones, changed the ref pose), reload it from disk so the change is dropped, and report every skeleton's
+    bone 0, which must be "root"."""
+    dirty = [p for p in unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages()
+             if str(p.get_name()).endswith('metahuman_base_skel')]
+    if dirty:
+        unreal.EditorLoadingAndSavingUtils.reload_packages(dirty)
+    roots = {}
+    for it in ITEMS:
+        sk = unreal.load_asset(it['body']).get_editor_property('skeleton')
+        names = unreal.AnimPoseExtensions.get_bone_names(sk.get_reference_pose())
+        roots[sk.get_path_name().split('.')[0]] = str(names[0])
+    return {'reloaded_dirty_skeletons': [str(p.get_name()) for p in dirty], 'bone0': roots,
+            'ok': all(r == 'root' for r in roots.values())}
+
+
 for it in ITEMS:
     try:
         RESULT['items'].append(import_one(it))
     except Exception as e:  # report and carry on with the next piece
         RESULT['items'].append({'fbx': it.get('fbx'), 'error': repr(e)})
+RESULT['skeleton_guard'] = skeleton_guard()

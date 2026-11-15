@@ -16,7 +16,7 @@ namespace
 {
     TAutoConsoleVariable<int32> CVarSquadAutoTest(
         TEXT("Squads.AutoTest"), 0,
-        TEXT("1 spawns two test squads when Lvl_HeroSampleCrowd begins play (PIE testing only; nothing is saved)."),
+        TEXT("1 spawns two test squads when a start-patrol map (Squads.StartPatrolMaps) begins play (PIE testing only)."),
         ECVF_Default);
 
     bool GroundPoint(UWorld* World, const FVector& Center, FVector Candidate, FVector& Out)
@@ -39,9 +39,34 @@ namespace
 
     TAutoConsoleVariable<int32> CVarSquadStartPatrol(
         TEXT("Squads.StartPatrol"), 1,
-        TEXT("1: on Lvl_HeroSampleCrowd and Lvl_MockCity, raise one squad patrolling in sight of the player start when no ")
+        TEXT("1: on the maps in Squads.StartPatrolMaps, raise one squad patrolling in sight of the player start when no ")
         TEXT("squad already patrols within 40 m of it. 0 = off (set before PIE for tests that need an empty start)."),
         ECVF_Default);
+
+    TAutoConsoleVariable<FString> CVarSquadStartPatrolMaps(
+        TEXT("Squads.StartPatrolMaps"), TEXT("GrayLondon"),
+        TEXT("Comma-separated map-name fragments that get the start patrol (and Squads.AutoTest). Default: Gray London."),
+        ECVF_Default);
+
+    TAutoConsoleVariable<int32> CVarSquadStartPatrolFaction(
+        TEXT("Squads.StartPatrolFaction"), 0,
+        TEXT("Faction of the start patrol where the map has no side levels: 0 Frost raiders (hostile when provoked), 1 Gilt guards (allied)."),
+        ECVF_Default);
+
+    bool IsStartPatrolMap(const FString& Map)
+    {
+        TArray<FString> Names;
+        CVarSquadStartPatrolMaps.GetValueOnGameThread().ParseIntoArray(Names, TEXT(","), true);
+        for (FString& Name : Names)
+        {
+            Name.TrimStartAndEndInline();
+            if (!Name.IsEmpty() && Map.Contains(Name))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /** Ground under a point on the same floor as the start (no pulling): walkable and within 1.5 m of its height. */
     bool GroundAt(UWorld* World, const FVector& Point, float FloorZ, FVector& Out)
@@ -62,6 +87,118 @@ namespace
         FHitResult Hit;
         FCollisionQueryParams Params(SCENE_QUERY_STAT(SquadStartSight), false);
         return !World->LineTraceSingleByObjectType(Hit, From, To, FCollisionObjectQueryParams(ECC_WorldStatic), Params);
+    }
+
+    /**
+     * A patrol route near Floor (the ground under the player) that fits a city street as well as open ground: in each
+     * direction (ahead, right, left, behind) first a 14 x 8 m loop 8-16 m away (or 3/4 of that), else a straight
+     * out-and-back line from 6 m out (20, 14 or 10 m long). Every point on walkable ground at the same level, in view
+     * from the start, on the navmesh when there is one, and no wall across any leg. Each direction gives at most one
+     * route; Skip picks the next direction's (so several test squads never overlap).
+     */
+    bool FitRouteNear(UWorld* World, const FVector& Floor, const FVector& Ahead, int32 Skip, TArray<FVector>& OutPoints, bool& bOutLoop)
+    {
+        const FVector Eye = Floor + FVector(0, 0, 160);
+        const FVector Side(-Ahead.Y, Ahead.X, 0.0);
+        UNavigationSystemV1* Nav = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
+        const bool bNav = Nav && Nav->GetDefaultNavDataInstance(FNavigationSystem::DontCreate) != nullptr;
+        const auto Fits = [&](const TArray<FVector>& Wanted, bool bLoop, TArray<FVector>& Points)
+        {
+            Points.Reset();
+            for (const FVector& Want : Wanted)
+            {
+                FVector Ground;
+                FNavLocation OnNav;
+                if (!GroundAt(World, Want, Floor.Z, Ground) || !ClearLine(World, Eye, Ground + FVector(0, 0, 120))
+                    || (bNav && !Nav->ProjectPointToNavigation(Ground, OnNav, FVector(100.0, 100.0, 250.0))))
+                {
+                    return false;
+                }
+                Points.Add(Ground);
+            }
+            const int32 Legs = bLoop ? Points.Num() : Points.Num() - 1;
+            for (int32 Index = 0; Index < Legs; ++Index)
+            {
+                const FVector Lift(0, 0, 90);
+                if (!ClearLine(World, Points[Index] + Lift, Points[(Index + 1) % Points.Num()] + Lift))
+                {
+                    return false;
+                }
+            }
+            return true;
+        };
+        int32 Found = 0;
+        for (const FVector& Dir : { Ahead, Side, -Side, -Ahead })
+        {
+            const FVector Across(-Dir.Y, Dir.X, 0.0);
+            TArray<FVector> Points;
+            bool bLoop = false;
+            bool bFound = false;
+            for (const double Scale : { 1.0, 0.75 })
+            {
+                const FVector Mid = Floor + Dir * (1200.0 * Scale);
+                const TArray<FVector> Corners = { Mid + Dir * 400.0 * Scale - Across * 700.0 * Scale, Mid + Dir * 400.0 * Scale + Across * 700.0 * Scale,
+                    Mid - Dir * 400.0 * Scale + Across * 700.0 * Scale, Mid - Dir * 400.0 * Scale - Across * 700.0 * Scale };
+                if (Fits(Corners, true, Points))
+                {
+                    bLoop = true;
+                    bFound = true;
+                    break;
+                }
+            }
+            for (const double Length : { 2000.0, 1400.0, 1000.0 })
+            {
+                if (bFound)
+                {
+                    break;
+                }
+                const TArray<FVector> Line = { Floor + Dir * 600.0, Floor + Dir * (600.0 + Length) };
+                if (Fits(Line, false, Points))
+                {
+                    bLoop = false;
+                    bFound = true;
+                }
+            }
+            if (bFound && Found++ == Skip)
+            {
+                OutPoints = Points;
+                bOutLoop = bLoop;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Ground under the player and the way it faces, for fitting routes. */
+    bool PlayerFloor(UWorld* World, FVector& OutFloor, FVector& OutAhead)
+    {
+        const APawn* Player = UGameplayStatics::GetPlayerPawn(World, 0);
+        FVector Start;
+        FRotator Facing;
+        if (Player)
+        {
+            Start = Player->GetActorLocation();
+            Facing = Player->GetControlRotation();
+        }
+        else
+        {
+            TActorIterator<APlayerStart> It(World);
+            if (!It)
+            {
+                return false;
+            }
+            Start = It->GetActorLocation();
+            Facing = It->GetActorRotation();
+        }
+        FHitResult Hit;
+        FCollisionQueryParams Params(SCENE_QUERY_STAT(SquadPlayerFloor), false);
+        if (!World->LineTraceSingleByObjectType(Hit, Start, Start - FVector(0, 0, 500), FCollisionObjectQueryParams(ECC_WorldStatic), Params))
+        {
+            return false;
+        }
+        OutFloor = Hit.ImpactPoint;
+        OutAhead = FRotator(0.0, Facing.Yaw, 0.0).Vector();
+        return true;
     }
 
     AReflectionsSquad* SpawnOne(UWorld* World, const FVector& Center, const TArray<FVector>& Offsets, bool bLoop,
@@ -231,14 +368,14 @@ bool UReflectionsSquadSubsystem::DoesSupportWorldType(const EWorldType::Type Wor
 void UReflectionsSquadSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
     Super::OnWorldBeginPlay(InWorld);
-    if (CVarSquadAutoTest.GetValueOnGameThread() > 0 && InWorld.GetMapName().Contains(TEXT("Lvl_HeroSampleCrowd")))
+    if (CVarSquadAutoTest.GetValueOnGameThread() > 0 && IsStartPatrolMap(InWorld.GetMapName()))
     {
         // Wait a moment for the player pawn to spawn.
         FTimerHandle Handle;
         InWorld.GetTimerManager().SetTimer(Handle, FTimerDelegate::CreateWeakLambda(this, [this]() { SpawnTestSquads(2); }), 0.5f, false);
     }
     const FString Map = InWorld.GetMapName();
-    if (CVarSquadStartPatrol.GetValueOnGameThread() > 0 && (Map.Contains(TEXT("Lvl_HeroSampleCrowd")) || Map.Contains(TEXT("Lvl_MockCity"))))
+    if (CVarSquadStartPatrol.GetValueOnGameThread() > 0 && IsStartPatrolMap(Map))
     {
         // After the placed squads in the streamed side levels have begun play, so they count as "already near".
         FTimerHandle Handle;
@@ -298,68 +435,30 @@ void UReflectionsSquadSubsystem::SpawnStartPatrol()
             }
         }
     }
-    // Ground under the start, then a 14 x 8 m loop 8-16 m away that the start can see and that has no wall in it:
-    // ahead first, then right, left and behind, shrinking it if it doesn't fit.
+    // A route near the start that fits the street (FitRouteNear), in plain view of the player start.
     FVector Floor;
+    FVector Ahead;
+    TArray<FVector> Points;
+    bool bLoop = false;
+    if (PlayerFloor(World, Floor, Ahead) && FitRouteNear(World, Floor, Ahead, 0, Points, bLoop))
     {
-        FHitResult Hit;
-        FCollisionQueryParams Params(SCENE_QUERY_STAT(SquadStartFloor), false);
-        if (!World->LineTraceSingleByObjectType(Hit, Start, Start - FVector(0, 0, 500), FCollisionObjectQueryParams(ECC_WorldStatic), Params))
+        TArray<FVector> Offsets;
+        FVector Middle = FVector::ZeroVector;
+        for (const FVector& Point : Points)
         {
-            return;
+            Offsets.Add(Point - Floor);
+            Middle += Point / Points.Num();
         }
-        Floor = Hit.ImpactPoint;
-    }
-    const FVector Eye = Floor + FVector(0, 0, 160);
-    const FVector Ahead = FRotator(0.0, Facing.Yaw, 0.0).Vector();
-    const FVector Side(-Ahead.Y, Ahead.X, 0.0);
-    UNavigationSystemV1* Nav = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
-    const bool bNav = Nav && Nav->GetDefaultNavDataInstance(FNavigationSystem::DontCreate) != nullptr;
-    for (const FVector& Dir : { Ahead, Side, -Side, -Ahead })
-    {
-        const FVector Across(-Dir.Y, Dir.X, 0.0);
-        for (const double Scale : { 1.0, 0.75, 0.55 })
-        {
-            const FVector Mid = Floor + Dir * (1200.0 * Scale);
-            const FVector Corners[4] = { Mid + Dir * 400.0 * Scale - Across * 700.0 * Scale, Mid + Dir * 400.0 * Scale + Across * 700.0 * Scale,
-                Mid - Dir * 400.0 * Scale + Across * 700.0 * Scale, Mid - Dir * 400.0 * Scale - Across * 700.0 * Scale };
-            TArray<FVector> Points;
-            bool bFits = true;
-            for (const FVector& Corner : Corners)
-            {
-                FVector Ground;
-                FNavLocation OnNav;
-                if (!GroundAt(World, Corner, Floor.Z, Ground) || !ClearLine(World, Eye, Ground + FVector(0, 0, 120))
-                    || (bNav && !Nav->ProjectPointToNavigation(Ground, OnNav, FVector(100.0, 100.0, 250.0))))
-                {
-                    bFits = false;
-                    break;
-                }
-                Points.Add(Ground);
-            }
-            for (int32 Index = 0; bFits && Index < Points.Num(); ++Index)
-            {
-                const FVector Lift(0, 0, 90);
-                bFits = ClearLine(World, Points[Index] + Lift, Points[(Index + 1) % Points.Num()] + Lift);
-            }
-            if (!bFits)
-            {
-                continue;
-            }
-            TArray<FVector> Offsets;
-            for (const FVector& Point : Points)
-            {
-                Offsets.Add(Point - Floor);
-            }
-            // Hostile, but only at close quarters: it marches past in plain view and fights when the player walks up
-            // to it or casts at it (a spell within 11 m, or a hit, always starts the fight).
-            AReflectionsSquad* Squad = SpawnOne(World, Floor, Offsets, true, EReflectionsSquadFormation::Column, 5, 2,
-                { EHeroSpell::Fire, EHeroSpell::IceShard }, 0.0f, TestActors, 700.0f, 300.0f);
-            StartPatrol = Squad;
-            UE_LOG(LogTemp, Log, TEXT("Squads: start patrol %s on %s, %d m from the player start"), *GetNameSafe(Squad),
-                *World->GetMapName(), static_cast<int32>(FVector::Dist2D(Mid, Floor) / 100.0));
-            return;
-        }
+        // A showcase: it marches past in plain view and never attacks an idle player (no sight of the player).
+        // Hitting a soldier, a spell near a Frost squad, or a crime near it starts the fight. An allied Gilt squad
+        // still watches for the tarnished (its sight is for them only).
+        AReflectionsSquad* Squad = SpawnOne(World, Floor, Offsets, bLoop, EReflectionsSquadFormation::Column, 5, 2,
+            { EHeroSpell::Fire, EHeroSpell::IceShard }, bLoop ? 0.0f : 2.0f, TestActors, 0.0f, 0.0f,
+            CVarSquadStartPatrolFaction.GetValueOnGameThread() > 0 ? static_cast<int32>(EReflectionsSquadFaction::Gilt) : -1);
+        StartPatrol = Squad;
+        UE_LOG(LogTemp, Log, TEXT("Squads: start patrol %s on %s, %s, %d m from the player start"), *GetNameSafe(Squad),
+            *World->GetMapName(), bLoop ? TEXT("loop") : TEXT("out and back"), static_cast<int32>(FVector::Dist2D(Middle, Floor) / 100.0));
+        return;
     }
     UE_LOG(LogTemp, Warning, TEXT("Squads: no clear ground for a start patrol near %s"), *Start.ToString());
 }
@@ -371,27 +470,32 @@ void UReflectionsSquadSubsystem::SpawnTestSquads(int32 Count)
     {
         return;
     }
-    const APawn* Player = UGameplayStatics::GetPlayerPawn(World, 0);
-    const FVector Center = Player ? Player->GetActorLocation() : FVector::ZeroVector;
-    // Offsets fit Lvl_HeroSampleCrowd's 35 m practice ground (player start at its centre), clear of the jump steps
-    // and the crouch beam; GroundPoint pulls any point that misses the floor back toward the player.
-    if (Count >= 1)
+    // Routes fitted around the player (any map): one per direction, so the squads never overlap.
+    FVector Floor;
+    FVector Ahead;
+    if (!PlayerFloor(World, Floor, Ahead))
     {
-        // A column of five (3 blades, fire + ice casters) patrolling the edge of the ground.
-        SpawnOne(World, Center, { FVector(1400, -1400, 0), FVector(1400, 1350, 0), FVector(-1450, 1350, 0), FVector(-1450, -1400, 0) },
-            true, EReflectionsSquadFormation::Column, 5, 2, { EHeroSpell::Fire, EHeroSpell::IceShard }, 0.0f, TestActors);
+        return;
     }
-    if (Count >= 2)
+    const int32 Taken = StartPatrol.IsValid() ? 1 : 0;
+    for (int32 Index = 0; Index < Count; ++Index)
     {
-        // A line of five (3 blades, arcane + fire casters) pacing up and down the west side, halting at each end.
-        SpawnOne(World, Center, { FVector(-950, -1050, 0), FVector(-950, 950, 0) },
-            false, EReflectionsSquadFormation::Line, 5, 2, { EHeroSpell::ArcaneBolt, EHeroSpell::Fire }, 2.0f, TestActors);
-    }
-    for (int32 Extra = 2; Extra < Count; ++Extra)
-    {
-        const float Side = Extra % 2 == 0 ? -1.0f : 1.0f;
-        SpawnOne(World, Center, { FVector(300, Side * 900, 0), FVector(1100, Side * 900, 0), FVector(1100, Side * 1150, 0), FVector(300, Side * 1150, 0) },
-            true, EReflectionsSquadFormation::ColumnOfTwos, 6, 2, { EHeroSpell::IceShard, EHeroSpell::ArcaneBolt }, 0.0f, TestActors);
+        TArray<FVector> Points;
+        bool bLoop = false;
+        if (!FitRouteNear(World, Floor, Ahead, Index + Taken, Points, bLoop))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Squads: room for only %d test squads here"), Index);
+            break;
+        }
+        TArray<FVector> Offsets;
+        for (const FVector& Point : Points)
+        {
+            Offsets.Add(Point - Floor);
+        }
+        const TArray<EHeroSpell> Spells = Index == 0 ? TArray<EHeroSpell>{ EHeroSpell::Fire, EHeroSpell::IceShard }
+            : Index == 1 ? TArray<EHeroSpell>{ EHeroSpell::ArcaneBolt, EHeroSpell::Fire } : TArray<EHeroSpell>{ EHeroSpell::IceShard, EHeroSpell::ArcaneBolt };
+        SpawnOne(World, Floor, Offsets, bLoop, Index == 0 ? EReflectionsSquadFormation::Column : EReflectionsSquadFormation::ColumnOfTwos,
+            5, 2, Spells, bLoop ? 0.0f : 2.0f, TestActors);
     }
 }
 
@@ -402,11 +506,28 @@ void UReflectionsSquadSubsystem::SpawnGiltTestSquad()
     {
         return;
     }
-    const APawn* Player = UGameplayStatics::GetPlayerPawn(World, 0);
-    const FVector Center = Player ? Player->GetActorLocation() : FVector::ZeroVector;
-    // Five Gilt guards (3 blades with shields, 1 caster) pacing the east side of the practice ground.
-    SpawnOne(World, Center, { FVector(950, -1050, 0), FVector(950, 950, 0) }, false, EReflectionsSquadFormation::ColumnOfTwos, 5, 1,
-        { EHeroSpell::IceShard }, 2.0f, TestActors, -1.0f, -1.0f, static_cast<int32>(EReflectionsSquadFaction::Gilt));
+    // Five Gilt guards (3 blades, 1 caster) on the next free route around the player.
+    FVector Floor;
+    FVector Ahead;
+    TArray<FVector> Points;
+    bool bLoop = false;
+    int32 Squads = 0;
+    for (TActorIterator<AReflectionsSquad> It(World); It; ++It)
+    {
+        ++Squads;
+    }
+    if (!PlayerFloor(World, Floor, Ahead) || !FitRouteNear(World, Floor, Ahead, FMath::Min(Squads, 3), Points, bLoop))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Squads: no room for a Gilt test squad here"));
+        return;
+    }
+    TArray<FVector> Offsets;
+    for (const FVector& Point : Points)
+    {
+        Offsets.Add(Point - Floor);
+    }
+    SpawnOne(World, Floor, Offsets, bLoop, EReflectionsSquadFormation::ColumnOfTwos, 5, 1, { EHeroSpell::IceShard },
+        bLoop ? 0.0f : 2.0f, TestActors, -1.0f, -1.0f, static_cast<int32>(EReflectionsSquadFaction::Gilt));
 }
 
 void UReflectionsSquadSubsystem::ClearTestSquads()

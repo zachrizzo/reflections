@@ -399,10 +399,10 @@ TSharedRef<FJsonObject> UReflectionsRealtimeVoiceComponent::BuildNpcContext(AAct
         Context->SetNumberField(TEXT("fear"), FMath::RoundToDouble(Reaction->Fear * 100.0) / 100.0);
         Context->SetNumberField(TEXT("hostility"), FMath::RoundToDouble(Reaction->Hostility * 100.0) / 100.0);
     }
-    // Side: the anchor box the NPC stands in, else the side the hero is in.
+    // Side: the anchor box the NPC stands in, else this map's side, else the world-jump config's DefaultWorld
+    // (one map with no world jump, as on Gray London). Never the hero's never-set CurrentWorld (Gray by default).
     EReflectionsWorld Side = EReflectionsWorld::Red;
-    if (const UReflectionsWorldJumpWorldSubsystem* Worlds = UReflectionsWorldJumpWorldSubsystem::Get(Npc);
-        Worlds && Worlds->IsWorldJumpActive())
+    if (const UReflectionsWorldJumpWorldSubsystem* Worlds = UReflectionsWorldJumpWorldSubsystem::Get(Npc))
     {
         Side = Worlds->GetWorldAtLocation(Npc->GetActorLocation());
     }
@@ -787,15 +787,24 @@ int32 UReflectionsRealtimeVoiceComponent::GetRepliesBySource(EReflectionsReplySo
 
 // ---- Playback ------------------------------------------------------------------------------------------
 
+namespace
+{
+    USoundWaveProcedural* MakeReplyWave(UObject* Outer)
+    {
+        USoundWaveProcedural* Wave = NewObject<USoundWaveProcedural>(Outer);
+        Wave->SetSampleRate(24000);
+        Wave->NumChannels = 1;
+        Wave->Duration = INDEFINITELY_LOOPING_DURATION;
+        Wave->bLooping = false;
+        return Wave;
+    }
+}
+
 void UReflectionsRealtimeVoiceComponent::EnsureOutput()
 {
     AActor* Npc = VoiceNpc.Get();
     if (OutputWave && IsValid(OutputAudio)) return;
-    OutputWave = NewObject<USoundWaveProcedural>(this);
-    OutputWave->SetSampleRate(24000);
-    OutputWave->NumChannels = 1;
-    OutputWave->Duration = INDEFINITELY_LOOPING_DURATION;
-    OutputWave->bLooping = false;
+    OutputWave = MakeReplyWave(this);
     // The reply comes from the NPC's head and fades with distance like any other NPC voice.
     AActor* Host = IsValid(Npc) ? Npc : GetOwner();
     FName VoiceSocket;
@@ -829,7 +838,13 @@ void UReflectionsRealtimeVoiceComponent::EnsureOutput()
 void UReflectionsRealtimeVoiceComponent::StopPlayback()
 {
     if (IsValid(OutputAudio)) OutputAudio->Stop();
-    if (OutputWave) OutputWave->ResetAudio();
+    // A fresh wave for the next reply. ResetAudio() zeroes the byte count later, on the audio thread: a cached reply
+    // queued in the same frame drove it negative, so the stream never drained and the NPC stayed "Thinking".
+    if (OutputWave)
+    {
+        OutputWave = MakeReplyWave(this);
+        if (IsValid(OutputAudio)) OutputAudio->SetSound(OutputWave);
+    }
     QueuedOutputBytes = 0;
     if (IsValid(BarkAudio)) BarkAudio->Stop();
     BarkAudio = nullptr;
@@ -1183,7 +1198,7 @@ void UReflectionsRealtimeVoiceComponent::TickComponent(float DeltaTime, ELevelTi
         PlayBark();
     }
     // The audio component lives on the NPC: if the NPC is gone, nothing will ever drain the stream.
-    const bool bStreamDrained = !OutputWave || !IsValid(OutputAudio) || OutputWave->GetAvailableAudioByteCount() == 0;
+    const bool bStreamDrained = !OutputWave || !IsValid(OutputAudio) || OutputWave->GetAvailableAudioByteCount() <= 0;
     if (bAwaitingReply && bResponseDone && bStreamDrained)
     {
         bAwaitingReply = false;

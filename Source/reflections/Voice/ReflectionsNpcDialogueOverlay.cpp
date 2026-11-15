@@ -60,7 +60,7 @@ void SReflectionsNpcDialogueOverlay::Construct(const FArguments& InArgs)
     ChildSlot
     .HAlign(HAlign_Center)
     .VAlign(VAlign_Bottom)
-    .Padding(FMargin(40.0f, 0.0f, 40.0f, 215.0f))  // above the spell bar (health, mana, spell slots)
+    .Padding(FMargin(40.0f, 0.0f, 40.0f, BottomMargin))
     [
         SNew(SBox)
         .MaxDesiredWidth(980.0f)
@@ -140,6 +140,7 @@ void SReflectionsNpcDialogueOverlay::Construct(const FArguments& InArgs)
                             SNew(STextBlock)
                             .Font(Font(TEXT("Regular"), 18))
                             .WrapTextAt(680.0f)
+                            .AutoWrapText(true)  // a long speaker name ("Sergeant Maud Kettering") leaves less than 680
                             .Text_Lambda([Weak]() { return Weak.IsValid() ? FText::FromString(Weak.Pin()->NpcLine) : FText::GetEmpty(); })
                             .ColorAndOpacity_Lambda([Alpha]() { return FSlateColor(WithAlpha(Paper, Alpha())); })
                         ]
@@ -189,6 +190,9 @@ void SReflectionsNpcDialogueOverlay::Construct(const FArguments& InArgs)
 void SReflectionsNpcDialogueOverlay::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
     SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+    // Collapsed parts take no height, so this follows whatever shows (notice, hint, lines, typing box, prompt).
+    const float Height = ChildSlot.GetWidget()->GetDesiredSize().Y;
+    PanelTopFromBottom = Height > 1.0f ? BottomMargin + Height : 0.0f;
 }
 
 void SReflectionsNpcDialogueOverlay::ShowLine(const FString& Speaker, const FString& Text, bool bPlayer, bool bAi)

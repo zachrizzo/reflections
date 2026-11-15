@@ -343,6 +343,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cutscene|Hand-off")
     float HandOffPitch = -12.0f;
 
+    /** NPCs that aren't cast and stand within this distance of the anchor are hidden for the scene (0 = keep them). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cutscene", meta = (Units = "cm"))
+    float ClearRadius = 1500.0f;
+
     /** Nothing can hurt the hero while the cutscene plays. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cutscene")
     bool bHeroInvulnerable = true;

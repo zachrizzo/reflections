@@ -440,7 +440,8 @@ void SReflectionsQuestHud::Construct(const FArguments& InArgs)
         ]
 
         // Narration subtitle: above the dialogue overlay and the spell bar.
-        + SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Bottom).Padding(FMargin(0, 0, 0, 300))
+        + SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Bottom)
+            .Padding(TAttribute<FMargin>::CreateLambda([Weak]() { return FMargin(0, 0, 0, 300.0f + (Weak.IsValid() ? Weak->GetSubtitleLift() : 0.0f)); }))
         [
             SNew(SBorder)
             .BorderImage(Rounded(8.0f))

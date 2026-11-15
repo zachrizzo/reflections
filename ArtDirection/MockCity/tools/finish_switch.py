@@ -58,10 +58,13 @@ for i in range(36):
         break
     time.sleep(5)
 print('nav built:', built)
+# Save ONLY the mock city maps, by path. Never save-all: other sessions' dirty assets must not be written.
 run(sid, 'import unreal\nimport json\n'
-         'ok = unreal.EditorLevelLibrary.save_all_dirty_levels()\n'
+         'paths = ["/Game/MockCity/Lvl_MockCity", "/Game/MockCity/Lvl_MockCity_Pewterside", '
+         '"/Game/MockCity/Lvl_MockCity_Giltside", "/Game/MockCity/Lvl_MockCity_Frostside"]\n'
          'dirty = [p.get_name() for p in unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages()]\n'
-         'json.dumps({"saved": ok, "still_dirty": dirty})', 300)
+         'ok = {p: unreal.EditorAssetLibrary.save_asset(p, only_if_is_dirty=True) for p in paths if p in dirty}\n'
+         'json.dumps({"saved": ok, "other_dirty_maps_left_alone": [d for d in dirty if d not in paths]})', 300)
 run(sid, 'import unreal\nok = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level("%s")\n"back home: %%s" %% ok' % HOME, 300)
 keep_lock(8)
 print('done at', time.strftime('%H:%M:%S'))

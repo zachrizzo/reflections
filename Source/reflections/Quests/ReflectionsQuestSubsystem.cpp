@@ -763,6 +763,15 @@ bool UReflectionsQuestSubsystem::CompleteObjective(FName QuestId, FName Objectiv
     return true;
 }
 
+bool UReflectionsQuestSubsystem::CompleteStepTo(FName QuestId, FName NextStep)
+{
+    const FReflectionsQuestDef* Def = FindQuest(QuestId);
+    FReflectionsQuestState* S = States.Find(QuestId);
+    if (!Def || !S || S->Status != EReflectionsQuestStatus::Active || !Def->FindStep(S->StepId)) return false;
+    FinishStep(*Def, *S, NextStep);
+    return true;
+}
+
 bool UReflectionsQuestSubsystem::CompleteStep(FName QuestId)
 {
     const FReflectionsQuestDef* Def = FindQuest(QuestId);
@@ -1146,6 +1155,11 @@ void UReflectionsQuestSubsystem::AddUnlock(FName Unlock, FName SourceQuest)
 {
     if (Unlock.IsNone() || Unlocks.Contains(Unlock)) return;
     Unlocks.Add(Unlock);
+    if (Unlock == TEXT("Silverer_RecordClean") && !bApplying)
+    {
+        UWorld* World = GetGameInstance() ? GetGameInstance()->GetWorld() : nullptr;
+        if (UReflectionsNpcSubsystem* Npcs = World ? World->GetSubsystem<UReflectionsNpcSubsystem>() : nullptr) CallNamed(Npcs, TEXT("ClearPlayerHeat"), {});
+    }
     OnUnlock.Broadcast(Unlock, SourceQuest);
     if (!bApplying)
     {
@@ -1324,7 +1338,8 @@ TArray<FString> UReflectionsQuestSubsystem::GetQuestActions(AActor* Npc) const
         const EReflectionsQuestStatus Status = GetStatus(Def.Id);
         if (Def.Giver == Person)
         {
-            if (Status == EReflectionsQuestStatus::Available && RequirementsMet(Def) && IsOfferAllowedByLives(Person) && (Def.bMain || !IsWaryOfHero(Person, nullptr, Npc)))
+            if (Status == EReflectionsQuestStatus::Available && RequirementsMet(Def) && IsOfferAllowedByLives(Person) && (Def.bMain || !IsWaryOfHero(Person, nullptr, Npc)) &&
+                (Def.WantedLines.IsEmpty() || GetPlayerHeat() < 0.5f))
             {
                 Out.Add(TEXT("offer_quest:") + Q);
                 Out.Add(TEXT("accept:") + Q);
@@ -1491,6 +1506,16 @@ TArray<FReflectionsQuestLine> UReflectionsQuestSubsystem::GetLinesFor(AActor* Np
     {
         Out = GetStepTalkLines(Person);
         if (!Out.IsEmpty()) return Out;
+        if (GetPlayerHeat() >= 0.5f)
+        {
+            for (const FReflectionsQuestDef& D : Quests)
+            {
+                if (D.Giver == Person && !D.WantedLines.IsEmpty() && GetStatus(D.Id) == EReflectionsQuestStatus::Available && RequirementsMet(D))
+                {
+                    return ToLines(D.WantedLines, Person);
+                }
+            }
+        }
         FText Wary;
         if (IsWaryOfHero(Person, &Wary, Npc) && Quests.ContainsByPredicate([this, Person](const FReflectionsQuestDef& D)
             { return D.Giver == Person && !D.bMain && GetStatus(D.Id) == EReflectionsQuestStatus::Available && RequirementsMet(D); }))

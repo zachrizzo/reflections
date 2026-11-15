@@ -247,7 +247,7 @@ void AReflectionsVillainBoss::Manifest()
         if (UReflectionsVillainHudWidget* Hud = Villain->GetOrCreateHud())
         {
             Hud->ShowBanner(DisplayName(), ReflectionsVillainText::BossSubtitle(
-                UReflectionsVillainSubsystem::SideName(World, EReflectionsWorld::White)), ReflectionsVillainColors::Lilac);
+                UReflectionsVillainSubsystem::ArenaSideName(World)), ReflectionsVillainColors::Lilac);
         }
     }
 }
@@ -456,6 +456,8 @@ void AReflectionsVillainBoss::TickAttack(float DeltaSeconds)
 {
     AttackClock += DeltaSeconds;
     UWorld* World = GetWorld();
+    // Every attack winds up on his body too: rim, cracks, eyes and heart brighten toward the strike (dodge on the peak).
+    Look->SetGlow(AttackClock < Telegraph ? 1.0f + 2.5f * Ease(AttackClock / FMath::Max(0.1f, Telegraph)) : 1.0f);
     switch (Attack)
     {
     case EReflectionsVillainAttack::Volley:

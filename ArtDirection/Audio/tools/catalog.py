@@ -7,10 +7,10 @@ MUS_MODEL = "ElevenLabs Music v2.5 (eleven_music_v2_5), instrumental"
 # name, folder, node_id, prompt, gen_seconds, prompt_influence, loop, attenuation, class, cue volume, pitch range, owner, event
 S = [
     # --- Spells (spell-combat-rebuild) ---
-    ("Fire_Cast", "Spells", "KqCZRkXGjcbk5x7ttmQ0", "Burst of fire igniting from an open hand, sharp whoosh of flame with crackling embers, close-mic", 1.2, 0.5, False, "Medium", "SFX", 0.8, (0.95, 1.05), "spell", "Cast of a Fire-element spell (Fire Bolt, Flame Burst, Fireball)"),
-    ("Fire_Impact", "Spells", "E3UXLDqvM7saBmjBm0Zj", "Fireball exploding on impact, deep punchy boom with roaring flames and crackling embers scattering", 1.8, 0.5, False, "Large", "SFX", 0.9, (0.94, 1.06), "spell", "Fire projectile hit / Flame Burst and Fireball area detonation"),
+    ("Fire_Cast", "Spells", None, "procedural: ignition sweep, flame whoosh, turbulent roar, crackle and low pops (tools/spells.py)", 1.2, 0.5, False, "Medium", "SFX", 0.8, (0.95, 1.05), "spell", "Cast of a Fire-element spell (Fire Bolt, Flame Burst, Fireball)"),
+    ("Fire_Impact", "Spells", None, "procedural: crack, sub thump, blast sweep, fire roar, embers and sizzle (tools/physics_sfx.py)", 1.8, 0.5, False, "Large", "SFX", 0.9, (0.94, 1.06), "spell", "Fire projectile hit / Flame Burst and Fireball area detonation"),
     ("Water_Cast", "Spells", "TrnduLAVYA4ROuouYS5W", "Swirling rush of water gathering and launching forward, splashy whoosh, close-mic", 1.2, 0.5, False, "Medium", "SFX", 0.8, (0.95, 1.05), "spell", "Cast of a Water-element spell (Water Bolt, Tidal Surge, Water Orb)"),
-    ("Water_Impact", "Spells", "xrv6euQle3wmaH9Qqwwf", "Heavy blast of water slamming into stone, big splash with spray and dripping", 1.5, 0.5, False, "Medium", "SFX", 0.9, (0.94, 1.06), "spell", "Water projectile hit / Tidal Surge area"),
+    ("Water_Impact", "Spells", None, "procedural: falling-band splash, bubbles, droplets and a low thump (tools/spells.py)", 1.5, 0.5, False, "Medium", "SFX", 0.9, (0.94, 1.06), "spell", "Water projectile hit / Tidal Surge area"),
     ("Ice_Cast", "Spells", "6ZHTgizBazhvGqMtBFj8", "Ice crystals forming rapidly, crisp crackling freeze with a cold glassy shimmer", 1.2, 0.5, False, "Medium", "SFX", 0.8, (0.95, 1.05), "spell", "Cast of an Ice-element spell (Ice Shard, Frost Nova)"),
     ("Ice_Impact", "Spells", "QV8eiYwHMql82Ks7O7uC", "Ice shard shattering on impact, sharp glassy crack with tinkling frozen fragments", 1.3, 0.5, False, "Medium", "SFX", 0.9, (0.94, 1.06), "spell", "Ice Shard hit / Frost Nova burst"),
     ("Lightning_Cast", "Spells", "LEVm7B83MZSO8iNPmDaU", "Electric charge snapping in the air, crackling high-voltage arc zap", 1.0, 0.5, False, "Medium", "SFX", 0.75, (0.95, 1.05), "spell", "Cast of a Lightning spell (Lightning Burst, Lightning Bolt, Thunder Wave)"),
@@ -59,6 +59,13 @@ S = [
     ("Shock_Collapse", "Physics", None, "procedural: falling-pitch arc zap, sizzle, body drop", 0, 0, False, "Medium", "SFX", 1.0, (0.95, 1.05), "npc", "Shock ends or kills: final zap and the body dropping"),
     ("Body_Knockback", "Physics", None, "procedural: torso, arm and leg impacts on stone, pebbles, scrape, kit rattle", 0, 0, False, "Small", "SFX", 1.0, (0.93, 1.07), "npc", "A body lands on stone after being thrown (knockback, blast, shove)"),
     ("Burning_Loop", "Physics", None, "procedural: flame roar and breathing, fabric flapping, crackle, low pops", 0, 0, True, "Small", "SFX", 1.0, None, "npc", "Fire on a burning person (attach, stop when the fire goes out)"),
+    # --- Spell hits on living bodies: layered over the element impact (spell-aim-vfx, train #14) ---
+    ("Spell_BodyHit", "Physics", None, "procedural: hard click, low thump, meaty mid burst, skin and cloth slap", 0, 0, False, "Small", "SFX", 1.0, (0.93, 1.07), "spell", "A spell bolt strikes a living body (Magnitude < 0.6), on top of the element impact"),
+    ("Spell_BodyHit_Heavy", "Physics", None, "procedural: hard transient, sub drop, meaty body thud, crunch, wet layer", 0, 0, False, "Medium", "SFX", 1.0, (0.94, 1.06), "spell", "A heavy spell hit on a body (Magnitude >= 0.6, Fireball, knockdowns), during the hit-stop"),
+    ("Spell_BodyHit_Fire", "Physics", None, "procedural: dense sizzle, flame flare, hiss", 0, 0, False, "Small", "SFX", 1.0, (0.95, 1.05), "spell", "Fire sweetener on a body hit"),
+    ("Spell_BodyHit_Ice", "Physics", None, "procedural: ice crack, glassy ping, shard tinkle, crackle", 0, 0, False, "Small", "SFX", 1.0, (0.95, 1.05), "spell", "Ice sweetener on a body hit"),
+    ("Spell_BodyHit_Lightning", "Physics", None, "procedural: electric snap, short arc, sizzle", 0, 0, False, "Small", "SFX", 1.0, (0.95, 1.05), "spell", "Lightning sweetener on a body hit"),
+    ("Spell_BodyHit_Water", "Physics", None, "procedural: wet slap, short splash, a few bubbles", 0, 0, False, "Small", "SFX", 1.0, (0.95, 1.05), "spell", "Water sweetener on a body hit"),
     # --- Giltside squads (procedural, numpy; tools/physics_sfx.py) ---
     ("March_Loop", "Squads", None, "procedural: eight soldiers' boots in step on stone with mail and kit, street reverb", 0, 0, True, "Medium", "SFX", 1.0, None, "squads", "Squad marching in step (loop on the squad centre while it marches)"),
     ("March_Step", "Squads", None, "procedural: one armoured boot step on stone with mail jingle and kit knock", 0, 0, False, "Small", "SFX", 1.0, (0.94, 1.06), "squads", "One soldier's step (footstep notify)"),

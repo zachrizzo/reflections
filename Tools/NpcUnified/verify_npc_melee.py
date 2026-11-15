@@ -62,15 +62,45 @@ async def shot(name):
         result.setdefault('shot_errors', []).append(name + ': ' + repr(error))
 
 
+# retargeted: positions are relative to where the hero stands when PIE starts (see retarget_checks.py)
+_frame = {}
+
+
+def W(x, y, z=0.0):
+    """A position of the old test level, as the same offset from where the hero stood when PIE started."""
+    if not _frame:
+        game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+        hero = unreal.GameplayStatics.get_player_pawn(game, 0)
+        here = hero.get_actor_location()
+        ahead = hero.get_actor_forward_vector()
+        ahead = unreal.Vector(ahead.x, ahead.y, 0.0).normal()
+        _frame.update(here=here, ahead=ahead, right=unreal.Vector(-ahead.y, ahead.x, 0.0))
+    sites = ((1500.0, 500.0), (-700.0, 350.0))
+    ox, oy = min(sites, key=lambda s: (x - s[0]) ** 2 + (y - s[1]) ** 2)
+    forward, right = -(y - oy), x - ox          # the old checks looked down -Y, with +X to their right
+    here, a, r = _frame['here'], _frame['ahead'], _frame['right']
+    return unreal.Vector(here.x + a.x * forward + r.x * right, here.y + a.y * forward + r.y * right, here.z - 90.0 + z)
+
+
+async def hero_is_down():
+    """Waits (up to 20 s) until PIE has a hero that has stopped falling, then fixes the frame W() measures from."""
+    for _ in range(40):
+        await asyncio.sleep(0.5)
+        game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+        hero = unreal.GameplayStatics.get_player_pawn(game, 0) if game else None
+        if hero and abs(hero.get_velocity().z) < 5.0:
+            break
+    await asyncio.sleep(1.0)
+    W(1500.0, 500.0, 90.0)
+
+
 open_map = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world().get_name()
 if unwrap(await call_tool('EditorToolset.EditorAppToolset.IsPIERunning')):
     result['abort'] = 'PIE is already running (someone else is testing); nothing was started.'
-elif open_map != 'Lvl_HeroSampleCrowd':
-    result['abort'] = 'The editor has %s open, not Lvl_HeroSampleCrowd; this check places things by that map. Nothing was started.' % open_map
 else:
     await call_tool('EditorToolset.EditorAppToolset.StartPIE')
     try:
-        await asyncio.sleep(3.0)
+        await hero_is_down()
         world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
         player = unreal.GameplayStatics.get_player_pawn(world, 0)
         controller = player.get_controller()
@@ -132,14 +162,14 @@ else:
             check('M_builtin_lists_the_melee_set', len(clips) == 12, clips[:12])
 
             # One enemy per body skeleton, in a row 4.5 m in front of the player (inside their sight).
-            player.set_actor_location(unreal.Vector(1500, 500, 90), False, True)
+            player.set_actor_location(W(1500, 500, 90), False, True)
             controller.set_control_rotation(unreal.Rotator(0, -8, -90))
             player_health = player.get_component_by_class(unreal.ReflectionsHealthComponent)
             health_before = player_health.get_editor_property('health') if player_health else None
             fighters = {}
             for index, (suffix, path) in enumerate(LOOKS.items()):
                 look = unreal.load_class(None, path)
-                actor = npcs.spawn_npc('Enemy', unreal.Vector(1300 + index * 200, 50, 0), 90.0, look)
+                actor = npcs.spawn_npc('Enemy', W(1300 + index * 200, 50, 0), 90.0, look)
                 fighters[suffix] = actor
             await asyncio.sleep(1.0)
             check('M_enemies_spawned', all(a and brain(a) for a in fighters.values()), {k: a.get_class().get_name() if a else None for k, a in fighters.items()})
@@ -194,8 +224,8 @@ else:
 
         # ---- S: a real spell kills and ragdolls ---------------------------------------------------
         spell_combat = player.get_component_by_class(unreal.ReflectionsSpellCombatComponent)
-        player.set_actor_location(unreal.Vector(1500, 500, 90), False, True)
-        target = npcs.spawn_npc('Soldier', unreal.Vector(1500, 50, 0), 90.0, None)
+        player.set_actor_location(W(1500, 500, 90), False, True)
+        target = npcs.spawn_npc('Soldier', W(1500, 50, 0), 90.0, None)
         await asyncio.sleep(1.2)
         unreal.GameplayStatics.apply_damage(target, max(0.0, health(target) - 5.0), None, player, unreal.DamageType)
         aim = target.get_actor_location() + unreal.Vector(0, 0, 100)
@@ -224,8 +254,8 @@ else:
             roster = unreal.load_object(None, '/Game/Audio/Jam/Voice/DT_NpcVoiceRoster.DT_NpcVoiceRoster')
         except Exception:
             roster = None
-        player.set_actor_location(unreal.Vector(-700, 350, 90), False, True)
-        crowd = [npcs.spawn_npc('Civilian' if i < 3 else 'Guard', unreal.Vector(-1100 + i * 160, -700, 0), 90.0, None) for i in range(6)]
+        player.set_actor_location(W(-700, 350, 90), False, True)
+        crowd = [npcs.spawn_npc('Civilian' if i < 3 else 'Guard', W(-1100 + i * 160, -700, 0), 90.0, None) for i in range(6)]
         await asyncio.sleep(1.2)
         voices = []
         for actor in crowd:
@@ -327,7 +357,7 @@ else:
               {k: (v.get('tag_sex'), v.get('sex')) for k, v in result['N'].items()})
         check('N_new_looks_pose_readable', seen_new and all(isinstance(v['spine'], float) and v['spine'] > 50.0 for v in seen_new),
               {k: v.get('spine') for k, v in result['N'].items()})
-        face(unreal.Vector(-900, -1100, 60))
+        face(W(-900, -1100, 60))
         await asyncio.sleep(0.3)
         await shot('N_new_looks')
         # A lethal hit on three of them, one after another body type if there are several.

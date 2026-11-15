@@ -1,4 +1,4 @@
-"""Lives check on the open test map (Lvl_HeroSampleCrowd): identities, a compressed day, friends meeting, a witness
+"""Lives check on the main map (GrayLondon_Geodata): identities, a compressed day, friends meeting, a witness
 reacting to a friend being taken, and the debug overlay.
 
 Run through the editor MCP `execute_python` tool, one phase per call (each call must stay under the tool's ~60 s
@@ -19,7 +19,7 @@ import json
 import math
 from pathlib import Path
 
-MAP = globals().get('MAP', '')            # e.g. '/Game/MockCity/Lvl_MockCity': PIE travels there in phase A
+MAP = globals().get('MAP', '/Game/GrayLondon/Maps/GrayLondon_Geodata')   # PIE travels there in phase A unless already on it
 PREFIX = globals().get('PREFIX', '')      # picture name prefix, e.g. 'Mock_'
 OUT = Path(unreal.Paths.project_saved_dir()) / 'Lives'
 OUT.mkdir(parents=True, exist_ok=True)
@@ -92,6 +92,27 @@ def lines(text):
     return [l for l in text.splitlines()[1:] if l.strip()]
 
 
+async def enter_map(get_world, wait_people=30.0):
+    """PIE is on MAP after this: travels only when the PIE world isn't it already (World Partition map, slow to reload),
+    then waits until the townspeople exist (or wait_people seconds)."""
+    w = get_world()
+    short = MAP.rsplit('/', 1)[-1].split('.')[0]
+    if MAP and (w is None or short not in str(w.get_name())):
+        unreal.SystemLibrary.execute_console_command(w, 'open ' + MAP)
+        await asyncio.sleep(10.0)
+    waited = 0.0
+    while waited < wait_people:
+        w = get_world()
+        try:
+            if w is not None and len(unreal.get_world_subsystem(w, unreal.ReflectionsNpcSubsystem).get_npc_actors()) >= 8:
+                break
+        except Exception:
+            pass
+        await asyncio.sleep(2.0)
+        waited += 2.0
+    await asyncio.sleep(3.0)   # let Lives cast the bodies
+
+
 async def run():
     if PHASE == 'A':
         if unwrap(await call_tool('EditorToolset.EditorAppToolset.IsPIERunning')):
@@ -99,9 +120,7 @@ async def run():
             return
         await call_tool('EditorToolset.EditorAppToolset.StartPIE')
         await asyncio.sleep(4.0)
-        if MAP:
-            unreal.SystemLibrary.execute_console_command(game_world(), 'open ' + MAP)
-            await asyncio.sleep(16.0)
+        await enter_map(game_world)
     world = game_world()
     if world is None:
         result['error'] = 'no PIE world in phase ' + PHASE

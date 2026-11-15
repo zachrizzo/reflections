@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\References\\Caster_M_Upper.png",
+  "output": "ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\RawHunyuan\\Caster_M_Upper.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 12,
+  "resolution": 256,
+  "seed": 631,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 193445,
+  "faces": 386908,
+  "seconds": 23.8,
+  "bounds": [
+    [
+      -0.7597311735153198,
+      -0.9969510436058044,
+      -0.2885698676109314
+    ],
+    [
+      0.7522853016853333,
+      0.9894058704376221,
+      0.29550614953041077
+    ]
+  ]
+}

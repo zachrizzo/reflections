@@ -58,6 +58,18 @@ Distinct faces across every spawn pool: **5**.
 
 The machine-readable version is `Tools/CrowdLooks/cast.json`. The faces are Epic's MetaHuman Creator presets from the engine's MetaHuman plugin, covered by the MetaHuman licence for Unreal Engine projects. The in-world names are ours, not Epic's preset names.
 
+## Pewterside (14 Nov, 19:50)
+
+The user's rule: rags only in Frostside, red only in Giltside, grey in Pewterside, never mixed. `Tools/CrowdLooks/make_pewter.py` made 12 Pewterside looks, `/Game/Characters/Lanthorne/Looks/Pewterside/PewLook_<X>`, one per Giltside look. Each is a material-only change: the outfit's tinted fabric gets `MI_Crowd_<Char>_Pewter` (slate grey, `CrowdTint` 0.30/0.32/0.35, a child of the outfit's own `M_CrowdTint_<Char>`). They keep the same faces as their Giltside twins (the city is mirrored, and SpawnNpc never mixes sides). Tags are `Look_Side_Pewterside` and `Look_Id_Pew<X>`, plus the twin's sex, age and role: 10 civilians and 2 guards. No Pewterside soldiers or casters yet. Not yet checked in PIE for leftover red trims (sash, shield).
+
+## Armour-free soldiers (14 Nov, 20:04)
+
+The user: "Remove the armor from the soldiers." `Tools/CrowdLooks/make_soldiers.py` made `/Game/Characters/Lanthorne/Looks/Soldiers/`:
+- GiltSoldier_BridgeGuard and GiltSoldier_Rowena: the Giltside guard outfit without `BridgeGuard_Armor` (plates/bracers). They keep the red gambeson, trousers, boots, sash and the carried shield.
+- FrostSoldier_Iven, _Saran, _Nia, _Amara: the Frostside soldier looks (cloth only), with the leftover hidden armour part stripped.
+
+All are tagged `Look_Role_Soldier`; the source looks are unchanged. They replace the soldier pool entries. That swap is npc-unify's and squads', handed over in the shared notes.
+
 ## Licence check (commercial-readiness.md)
 
 - **No Hunyuan3D-2 garments in any look.** The Hunyuan pieces are the SimpleRed tunic, trousers and boots (`CrowdMotion/SimpleRed`) and the hero's generated boots and shirt folds. No `BP_Look_*` uses them, and the six SimpleRed actors placed in `Lvl_HeroSampleCrowd` were replaced.

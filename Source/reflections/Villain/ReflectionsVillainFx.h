@@ -34,6 +34,8 @@ namespace ReflectionsVillainTuning
     float InfectRadius();
     float HopRadius();
     float SeedRadius();
+    /** Seconds between tackle conversions (pacing of the Tarnish meter). */
+    float ConvertInterval();
     float RiftDelay();
     float RiftChance();
     bool KillHostsOnBurnout();

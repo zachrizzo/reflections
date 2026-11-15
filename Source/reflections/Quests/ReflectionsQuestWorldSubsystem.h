@@ -122,6 +122,8 @@ public:
     bool GetBanner(FText& OutKicker, FText& OutTitle, FText& OutDetail, FLinearColor& OutColor, float& OutAlpha) const;
     /** Narration subtitle (speaker: line) and fade. */
     bool GetSubtitle(FText& OutSpeaker, FText& OutLine, float& OutAlpha) const;
+    /** Extra height for the quest subtitles while npc-dialogue's conversation panel is up, so they sit above it. */
+    float GetSubtitleLift() const;
     APlayerController* GetController() const { return Controller.Get(); }
     APawn* GetHero() const;
     float GetClock() const { return Clock; }
@@ -151,7 +153,12 @@ private:
     void BindInput(APlayerController* PC);
     void OnJournalPressed();
     void OnTalkPressed();
-    void EnterMenuMode(TSharedPtr<SWidget> Focus);
+    /** bPause: the journal pauses; talk cards don't (the world keeps running, game and UI input both live). */
+    void EnterMenuMode(TSharedPtr<SWidget> Focus, bool bPause = true);
+    /** Talk cards close themselves when the hero is hurt or walks off; the person stops and faces the hero meanwhile. */
+    void TickTalk(float DeltaTime);
+    float TalkHeroHealth = -1.0f;
+    bool bTalkHeld = false;
     void EnterGameMode();
     void BindGame();
     void UnbindGame();

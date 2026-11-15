@@ -383,6 +383,8 @@ private:
     bool bStarted = false;
     bool bEventsBound = false;
     bool bCrimeBound = false;
+    /** Placed townspeople the player killed in an earlier run: kept hidden (the NPC system's reveal-when-posed may show them). */
+    TArray<TWeakObjectPtr<AActor>> GoneBodies;
     /** The memory generation this world began on (see UReflectionsLivesMemory::Generation). */
     uint32 MemoryGeneration = 0;
     float NextCrimeBindTry = 0.0f;

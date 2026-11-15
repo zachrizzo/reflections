@@ -3,13 +3,28 @@
   "body": "FestivalDrummer",
   "ue_body": "/Game/Characters/RedLondon/FestivalDrummer/Assembled/FestivalDrummer/Body/SKM_MHC_FestivalDrummer_BodyMesh",
   "ue_dest": "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker",
-  "looks": ["GiltDrummer", "GiltPriya"],
+  "looks": [
+    "GiltDrummer",
+    "GiltPriya"
+  ],
   "front": "-Y",
-  "boot_drop_cm": "auto",
+  "boot_drop_cm": 0,
   "pieces": [
-    {"name": "SK_Gilt_Worker_F_Feet_FestivalDrummer", "fbx": "ArtDirection/CodexRequests/Clothing2026_11_14/Giltside/CivilianWorker_F_Feet.fbx", "kind": "feet"},
-    {"name": "SK_Gilt_Worker_F_Lower_FestivalDrummer", "fbx": "ArtDirection/CodexRequests/Clothing2026_11_14/Giltside/CivilianWorker_F_Lower.fbx", "kind": "skirt"},
-    {"name": "SK_Gilt_Worker_F_Upper_FestivalDrummer", "fbx": "ArtDirection/CodexRequests/Clothing2026_11_14/Giltside/CivilianWorker_F_Upper.fbx", "kind": "upper"}
+    {
+      "name": "SK_Gilt_Worker_F_Feet_FestivalDrummer",
+      "fbx": "ArtDirection/CodexRequests/Clothing2026_11_14/Giltside/CivilianWorker_F_Feet.fbx",
+      "kind": "feet"
+    },
+    {
+      "name": "SK_Gilt_Worker_F_Lower_FestivalDrummer",
+      "fbx": "ArtDirection/CodexRequests/Clothing2026_11_14/Giltside/CivilianWorker_F_Lower.fbx",
+      "kind": "skirt"
+    },
+    {
+      "name": "SK_Gilt_Worker_F_Upper_FestivalDrummer",
+      "fbx": "ArtDirection/CodexRequests/Clothing2026_11_14/Giltside/CivilianWorker_F_Upper.fbx",
+      "kind": "upper"
+    }
   ],
   "out_dir": "Intermediate/ClothingFit2026_11_14/Out/Gilt_CivilianWorker_F_FestivalDrummer"
 }

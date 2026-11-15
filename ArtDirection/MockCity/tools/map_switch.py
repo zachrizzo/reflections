@@ -91,10 +91,13 @@ def main():
             if i == 3 and isinstance(v, dict) and not any(v.get('nav_points', {}).values()):
                 run(sid, 'import unreal\nunreal.SystemLibrary.execute_console_command(unreal.EditorLevelLibrary.get_editor_world(), "RebuildNavigation")\n"rebuild nav requested"')
         print('built:', built)
+        # Save ONLY the mock city maps, by path. Never save-all: other sessions' dirty assets must not be written.
         run(sid, 'import unreal\n'
-                 'ok = unreal.EditorLevelLibrary.save_all_dirty_levels()\n'
+                 'paths = ["/Game/MockCity/Lvl_MockCity", "/Game/MockCity/Lvl_MockCity_Pewterside", '
+                 '"/Game/MockCity/Lvl_MockCity_Giltside", "/Game/MockCity/Lvl_MockCity_Frostside"]\n'
                  'dirty = [p.get_name() for p in unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages()]\n'
-                 '{"saved": ok, "still_dirty": dirty}', 300)
+                 'ok = {p: unreal.EditorAssetLibrary.save_asset(p, only_if_is_dirty=True) for p in paths if p in dirty}\n'
+                 '{"saved": ok, "other_dirty_maps_left_alone": [d for d in dirty if d not in paths]}', 300)
     finally:
         run(sid, 'import unreal\n'
                  'ok = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level("%s")\n'

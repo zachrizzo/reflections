@@ -18,9 +18,11 @@
 #include "NPC/ReflectionsNpcReactionComponent.h"
 #include "GameFlow/ReflectionsGameFlowSlate.h"
 #include "NPC/ReflectionsNpcSubsystem.h"
+#include "Hero/ReflectionsSpellCombat.h"
 #include "Quests/ReflectionsQuestItem.h"
 #include "Quests/ReflectionsQuestSlate.h"
 #include "Quests/ReflectionsStoryMarker.h"
+#include "Voice/ReflectionsVoiceInteractionSubsystem.h"
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
 #include "Worlds/ReflectionsSealedDoor.h"
@@ -387,21 +389,33 @@ APawn* UReflectionsQuestWorldSubsystem::GetHero() const
     return PC ? PC->GetPawn() : nullptr;
 }
 
-void UReflectionsQuestWorldSubsystem::EnterMenuMode(TSharedPtr<SWidget> Focus)
+void UReflectionsQuestWorldSubsystem::EnterMenuMode(TSharedPtr<SWidget> Focus, bool bPause)
 {
     APlayerController* PC = Controller.Get();
     if (!PC) return;
-    if (!UGameplayStatics::IsGamePaused(this))
-    {
-        bPausedByUs = UGameplayStatics::SetGamePaused(this, true);
-    }
     PC->FlushPressedKeys();
     PC->bShowMouseCursor = true;
-    FInputModeUIOnly Mode;
-    if (Focus.IsValid()) Mode.SetWidgetToFocus(Focus);
-    Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-    PC->SetInputMode(Mode);
-    if (UReflectionsGameFlowSubsystem* Flow = UReflectionsGameFlowSubsystem::Get(this)) Flow->bMenuInputActive = true;
+    if (bPause)
+    {
+        if (!UGameplayStatics::IsGamePaused(this))
+        {
+            bPausedByUs = UGameplayStatics::SetGamePaused(this, true);
+        }
+        FInputModeUIOnly Mode;
+        if (Focus.IsValid()) Mode.SetWidgetToFocus(Focus);
+        Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+        PC->SetInputMode(Mode);
+        if (UReflectionsGameFlowSubsystem* Flow = UReflectionsGameFlowSubsystem::Get(this)) Flow->bMenuInputActive = true;
+    }
+    else
+    {
+        // Talking never stops the world: the card takes its keys and buttons, everything else still reaches the game.
+        FInputModeGameAndUI Mode;
+        if (Focus.IsValid()) Mode.SetWidgetToFocus(Focus);
+        Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+        Mode.SetHideCursorDuringCapture(false);
+        PC->SetInputMode(Mode);
+    }
     if (FSlateApplication::IsInitialized() && Focus.IsValid())
     {
         FSlateApplication::Get().SetAllUserFocus(Focus, EFocusCause::SetDirectly);
@@ -576,8 +590,16 @@ bool UReflectionsQuestWorldSubsystem::OpenTalk(AActor* Npc, bool bOnlyIfBusiness
     if (UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(this))
     {
         Npcs->PlayBark(Npc, TEXT("Greet"));
+        // The person stops for the conversation (released in CloseTalk; the hold also times out by itself).
+        Npcs->HoldNpc(Npc, 120.0f);
+        bTalkHeld = true;
     }
-    EnterMenuMode(Talk);
+    if (const APawn* Hero = GetHero())
+    {
+        const UReflectionsHealthComponent* Health = Hero->FindComponentByClass<UReflectionsHealthComponent>();
+        TalkHeroHealth = Health ? Health->Health : -1.0f;
+    }
+    EnterMenuMode(Talk, false);
     PlaySound(TEXT("UI_Confirm"));
     return true;
 }
@@ -603,7 +625,8 @@ bool UReflectionsQuestWorldSubsystem::OpenChoice(FName QuestId)
     RefreshTalkOptions();
     bTalkOpen = true;
     ++TalkRevision;
-    EnterMenuMode(Talk);
+    TalkHeroHealth = -1.0f;
+    EnterMenuMode(Talk, false);
     return true;
 }
 
@@ -854,6 +877,12 @@ void UReflectionsQuestWorldSubsystem::CloseTalk()
 {
     if (!bTalkOpen) return;
     bTalkOpen = false;
+    if (bTalkHeld && TalkNpc.IsValid())
+    {
+        if (UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(this)) Npcs->ReleaseNpc(TalkNpc.Get());
+    }
+    bTalkHeld = false;
+    TalkHeroHealth = -1.0f;
     TalkNpc.Reset();
     TalkChoiceQuest = NAME_None;
     EnterGameMode();
@@ -882,6 +911,36 @@ FText UReflectionsQuestWorldSubsystem::GetTalkLine() const
 
 // ---- Tick ----------------------------------------------------------------------------------------------------
 
+void UReflectionsQuestWorldSubsystem::TickTalk(float DeltaTime)
+{
+    if (!bTalkOpen) return;
+    APawn* Hero = GetHero();
+    if (!Hero) return;
+    // A menu (pause, save, load) takes over: the card steps aside rather than fight it for input.
+    if (const UReflectionsGameFlowWorldSubsystem* FlowWorld = UReflectionsGameFlowWorldSubsystem::Get(this))
+    {
+        if (FlowWorld->IsMenuOpen()) { CloseTalk(); return; }
+    }
+    // Hurt: the conversation is over.
+    if (const UReflectionsHealthComponent* Health = Hero->FindComponentByClass<UReflectionsHealthComponent>())
+    {
+        if (TalkHeroHealth >= 0.0f && Health->Health < TalkHeroHealth - 0.5f) { CloseTalk(); return; }
+        TalkHeroHealth = FMath::Max(TalkHeroHealth, Health->Health);
+    }
+    AActor* Npc = TalkNpc.Get();
+    if (!Npc) return;
+    // Walked off (5 m), or the person is gone.
+    if (!IsValid(Npc) || FVector::Dist2D(Npc->GetActorLocation(), Hero->GetActorLocation()) > 500.0f) { CloseTalk(); return; }
+    // The person turns to face the hero.
+    const FVector To = Hero->GetActorLocation() - Npc->GetActorLocation();
+    if (To.SizeSquared2D() > 1.0f)
+    {
+        const FRotator Want(0.0f, To.Rotation().Yaw, 0.0f);
+        const FRotator Now = Npc->GetActorRotation();
+        Npc->SetActorRotation(FMath::RInterpTo(FRotator(0.0f, Now.Yaw, 0.0f), Want, DeltaTime, 6.0f));
+    }
+}
+
 void UReflectionsQuestWorldSubsystem::Tick(float DeltaTime)
 {
     if (!bBegunPlay || !ReflectionsQuestWorldCVars::Enabled) return;
@@ -889,6 +948,7 @@ void UReflectionsQuestWorldSubsystem::Tick(float DeltaTime)
     if (!Quests) return;
     Clock += DeltaTime;
     EnsureController();
+    TickTalk(DeltaTime);
     if (!Hud && Controller.IsValid()) BuildWidgets();
     BindGame();
 
@@ -1019,6 +1079,15 @@ bool UReflectionsQuestWorldSubsystem::IsHeroNear(const FVector& Location, float 
     return FVector2D(Delta.X, Delta.Y).Size() <= Radius && FMath::Abs(Delta.Z) <= FMath::Max(400.0f, Radius);
 }
 
+float UReflectionsQuestWorldSubsystem::GetSubtitleLift() const
+{
+    // Never overlap npc-dialogue's conversation panel: sit 20 above its top edge (0 while it shows nothing).
+    const UWorld* World = GetWorld();
+    const UReflectionsVoiceInteractionSubsystem* Voice = World ? World->GetSubsystem<UReflectionsVoiceInteractionSubsystem>() : nullptr;
+    const float PanelTop = Voice ? Voice->GetPanelTopFromBottom() : 0.0f;
+    return PanelTop > 0.0f ? FMath::Max(0.0f, PanelTop + 20.0f - 300.0f) : 0.0f;
+}
+
 int32 UReflectionsQuestWorldSubsystem::QueryEventCount(FName Key, FName Arg) const
 {
     const UReflectionsQuestSubsystem* Quests = UReflectionsQuestSubsystem::Get(this);
@@ -1028,6 +1097,13 @@ int32 UReflectionsQuestWorldSubsystem::QueryEventCount(FName Key, FName Arg) con
     {
         if (!Progress) return 0;
         if (Arg.IsNone()) return Progress->GetPageCount();
+        // One London: a side's page is simply the next one (Pewterside's the first, Giltside's the second, ...).
+        if (!IsWorldJumpActive())
+        {
+            const FString A = Arg.ToString();
+            const int32 Nth = A.StartsWith(TEXT("Pew")) || A.StartsWith(TEXT("Gray")) ? 1 : A.StartsWith(TEXT("Gilt")) || A.StartsWith(TEXT("Red")) ? 2 : A.StartsWith(TEXT("Frost")) || A.StartsWith(TEXT("White")) ? 3 : 1;
+            return Progress->GetPageCount() >= Nth ? 1 : 0;
+        }
         int32 N = Quests->HasUnlock(FName(*FString::Printf(TEXT("PageFound_%s"), *Arg.ToString()))) ? 1 : 0;
         for (const FName& Page : Progress->GetPages())
         {
@@ -1046,7 +1122,7 @@ int32 UReflectionsQuestWorldSubsystem::QueryEventCount(FName Key, FName Arg) con
         int32 N = 0;
         for (const TPair<EReflectionsWorld, int32>& C : Progress->GetAllCoins())
         {
-            if (Arg.IsNone() || SideName(C.Key) == Arg) N += C.Value;
+            if (Arg.IsNone() || !IsWorldJumpActive() || SideName(C.Key) == Arg) N += C.Value;
         }
         return N;
     }
@@ -1213,7 +1289,8 @@ void UReflectionsQuestWorldSubsystem::EvaluateObjectives(float DeltaTime)
             case EReflectionsObjectiveType::GoTo:
             {
                 FReflectionsQuestTarget T;
-                if (ResolveObjectiveTarget(Def, O, T) && !T.bOtherSide && IsHeroNear(T.Location, T.Radius))
+                // One London: the walks are long and the places big (a churchyard, a market), so 25 m at least.
+                if (ResolveObjectiveTarget(Def, O, T) && !T.bOtherSide && IsHeroNear(T.Location, IsWorldJumpActive() ? T.Radius : FMath::Max(T.Radius, 2500.0f)))
                 {
                     Updates.Add({Def.Id, O.Id, O.Count, 0.0f, false});
                 }
@@ -1234,10 +1311,11 @@ void UReflectionsQuestWorldSubsystem::EvaluateObjectives(float DeltaTime)
                 break;
             case EReflectionsObjectiveType::WorldJump:
             {
+                // One London (no world jumping in this map): there is nowhere to step through to, so it's done.
                 // Already on the side asked for (the player is ahead of the story): done.
                 EReflectionsWorld Want;
                 const UReflectionsWorldJumpSubsystem* Progress = UReflectionsWorldJumpSubsystem::Get(this);
-                if (ReflectionsQuest::ToWorld(O.Side, Want) && Progress && IsWorldJumpActive() && Progress->GetCurrentWorld() == Want)
+                if (!IsWorldJumpActive() || (ReflectionsQuest::ToWorld(O.Side, Want) && Progress && Progress->GetCurrentWorld() == Want))
                 {
                     Updates.Add({Def.Id, O.Id, O.Count, 0.0f, false});
                 }
@@ -1795,7 +1873,7 @@ void UReflectionsQuestWorldSubsystem::CountSpellAt(EHeroSpell Spell, const FVect
         {
             const FReflectionsQuestObjective& O = Step->Objectives[i];
             if (O.Type != EReflectionsObjectiveType::SpellHit || S->Objectives[i].bDone || !SpellMatches(Hit.Spell, O.Spell)) continue;
-            if (!ReflectionsQuest::Matches(O.Side, SideOf(Hit.Location))) continue;
+            if (IsWorldJumpActive() && !ReflectionsQuest::Matches(O.Side, SideOf(Hit.Location))) continue;
             bool bTarget = false;
             if (O.Target.IsNone() || O.Target == TEXT("Any"))
             {
@@ -1856,6 +1934,25 @@ void UReflectionsQuestWorldSubsystem::HandleNpcDied(AActor* Npc, AActor* Killer)
     const bool bInfected = Npcs && Npcs->GetInfection(Npc) != EReflectionsNpcInfection::None;
     const bool bHostile = Npcs && Npcs->IsHostileToPlayer(Npc);
     const FName Person = UReflectionsQuestSubsystem::GetPersonId(Npc);
+    // A cure step whose tarnished target the hero killed instead branches (ifKilledNext); the kill then counts there.
+    if (bByHero && bInfected)
+    {
+        TArray<TPair<FName, FName>> Branches;
+        UReflectionsStoryMarkerSubsystem* BranchMarkers = UReflectionsStoryMarkerSubsystem::Get(this);
+        for (const FReflectionsQuestDef& Def : Quests->GetQuests())
+        {
+            const FReflectionsQuestStep* Step = Quests->GetStatus(Def.Id) == EReflectionsQuestStatus::Active ? Quests->GetCurrentStep(Def.Id) : nullptr;
+            if (!Step || Step->IfKilledNext.IsNone()) continue;
+            bool bNear = true;
+            for (const FReflectionsQuestObjective& O : Step->Objectives)
+            {
+                AReflectionsStoryMarker* M = O.Marker.IsNone() || !BranchMarkers ? nullptr : BranchMarkers->Find(O.Marker);
+                if (M) bNear = FVector::Dist(M->GetActorLocation(), Npc->GetActorLocation()) <= FMath::Max(O.Radius, 1500.0f);
+            }
+            if (bNear) Branches.Add({Def.Id, Step->IfKilledNext});
+        }
+        for (const TPair<FName, FName>& B : Branches) Quests->CompleteStepTo(B.Key, B.Value);
+    }
     TArray<TPair<FName, FName>> Kills;
     for (const FReflectionsQuestDef& Def : Quests->GetQuests())
     {
@@ -1868,7 +1965,7 @@ void UReflectionsQuestWorldSubsystem::HandleNpcDied(AActor* Npc, AActor* Killer)
         {
             const FReflectionsQuestObjective& O = Step->Objectives[i];
             if (O.Type != EReflectionsObjectiveType::Defeat || S->Objectives[i].bDone) continue;
-            if (!ReflectionsQuest::Matches(O.Side, SideOf(Npc->GetActorLocation()))) continue;
+            if (IsWorldJumpActive() && !ReflectionsQuest::Matches(O.Side, SideOf(Npc->GetActorLocation()))) continue;
             const FString T = O.Target.ToString();
             const bool bMatch = O.Target.IsNone() || O.Target == TEXT("Any") ? bHostile || bInfected
                 : (Id.StartsWith(T) || Npc->ActorHasTag(O.Target) || Person == O.Target ||

@@ -406,6 +406,33 @@ void ReflectionsSquadNpc::UnbindCrimes(const UObject* WorldContext, FDelegateHan
     }
 }
 
+namespace
+{
+    template <typename T>
+    bool ArchetypeHasShield(const T* Archetype)
+    {
+        if constexpr (requires(const T* A) { A->Combat.ShieldProp.IsNull(); })
+        {
+            return Archetype && !Archetype->Combat.ShieldProp.IsNull();
+        }
+        else
+        {
+            return false;
+        }
+    }
+}
+
+bool ReflectionsSquadNpc::NpcCarriesShield(AActor* Soldier)
+{
+    const UReflectionsNpcReactionComponent* Npc = Soldier ? Soldier->FindComponentByClass<UReflectionsNpcReactionComponent>() : nullptr;
+    if (!Npc)
+    {
+        return false;
+    }
+    const UReflectionsNpcArchetype* Archetype = Npc->GetActiveArchetype();
+    return ArchetypeHasShield(Archetype ? Archetype : Npc->Archetype.Get());
+}
+
 bool ReflectionsSquadNpc::NpcCarriesWeapon(AActor* Soldier)
 {
     const UReflectionsNpcReactionComponent* Npc = Soldier ? Soldier->FindComponentByClass<UReflectionsNpcReactionComponent>() : nullptr;
@@ -419,6 +446,26 @@ bool ReflectionsSquadNpc::NpcCarriesWeapon(AActor* Soldier)
 
 namespace
 {
+    template <typename T>
+    bool LooksForSide(T* Npcs, FName Id, const FString& Side, TArray<TSoftClassPtr<AActor>>& Out)
+    {
+        if constexpr (requires(T* N, FName I, FName S) { N->GetLooksForSide(I, S); })
+        {
+            for (const TSoftClassPtr<AActor>& Look : Npcs->GetLooksForSide(Id, FName(*Side)))
+            {
+                if (!Look.IsNull())
+                {
+                    Out.Add(Look);
+                }
+            }
+            return Out.Num() > 0;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     template <typename T>
     bool LooksAt(T* Npcs, FName Id, const FVector& Location, TArray<TSoftClassPtr<AActor>>& Out)
     {
@@ -445,7 +492,12 @@ bool ReflectionsSquadNpc::GetSideLooks(const UObject* WorldContext, FName Archet
 {
     Out.Reset();
     UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(WorldContext);
-    if (Npcs && LooksAt(Npcs, ArchetypeId, Location, Out))
+    // The squad's side decides (its level's side, or its faction's); the location only when it has none.
+    if (Npcs && !Side.IsEmpty() && LooksForSide(Npcs, ArchetypeId, Side, Out))
+    {
+        return true;
+    }
+    if (Npcs && Side.IsEmpty() && LooksAt(Npcs, ArchetypeId, Location, Out))
     {
         return true;
     }

@@ -8,6 +8,7 @@
 
 class UAnimSequence;
 class UStaticMesh;
+class UMaterialInterface;
 
 UENUM(BlueprintType)
 enum class EReflectionsNpcDisposition : uint8 { Timid, Civilian, Brave, Guard, Enemy, Infected, VillainHost };
@@ -261,6 +262,24 @@ struct REFLECTIONS_API FReflectionsNpcCombatProfile
     /** A prop held in the right hand (a sword, a wand). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Melee")
     TSoftObjectPtr<UStaticMesh> WeaponProp;
+    /**
+     * A shield on the left forearm (bone lowerarm_l), face outwards, for looks that do not already wear one (a
+     * mesh part with "Shield" in its name). Where it sits is worked out from the body's reference pose.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Melee")
+    TSoftObjectPtr<UStaticMesh> ShieldProp;
+    /** The point of the weapon mesh that sits in the middle of the fist (the middle of its handle), in the mesh's own space. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Melee")
+    FVector WeaponGrip = FVector(-5.5, 0.0, 0.0);
+    /** A correction to how the weapon sits in the fist, applied in the weapon's own space (+X is the blade). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Melee")
+    FTransform WeaponOffset;
+    /** A material for the whole shield in place of its own, so one mesh can serve another side's colours. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Melee")
+    TSoftObjectPtr<UMaterialInterface> ShieldMaterial;
+    /** A correction to where the shield sits, applied in the shield's own space (+X is its face). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Melee")
+    FTransform ShieldOffset;
 
     /**
      * Fights at range with spells instead of closing in. The NPC then never walks up to its target; whoever
@@ -302,6 +321,23 @@ struct REFLECTIONS_API FReflectionsNpcCombatProfile
     /** Cast gesture made for the hidden walker's skeleton (a montage on the walker; the body follows). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ranged")
     TSoftObjectPtr<UAnimSequence> WalkerCastAnimation;
+
+    /**
+     * How it holds its weapons, as clips made for the hidden walker's skeleton. The guard stance loops while it
+     * stands still. The march hold loops over the walk, and only when the walker's skeleton has an "UpperBody"
+     * slot to play it on (on the full-body slot it would stop the legs).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Melee")
+    TSoftObjectPtr<UAnimSequence> WalkerGuardIdle;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Melee")
+    TSoftObjectPtr<UAnimSequence> WalkerMarchHold;
+    /**
+     * Sword and shield held at the ready over anything the legs do: an ADDITIVE clip for the walker's skeleton
+     * (arms and closed fists over a neutral stand). Played in the walker's default slot, which adds an additive
+     * montage to the pose under it, so it works standing, walking and marching. Preferred over the two above.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Melee")
+    TSoftObjectPtr<UAnimSequence> WalkerArmedHold;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Simple attack", meta=(ClampMin="0", Units="cm"))
     float SimpleAttackRange = 150.0f;
@@ -380,6 +416,13 @@ public:
      */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Body")
     TArray<TSoftClassPtr<AActor>> Looks;
+
+    /**
+     * Parts of the look this type goes without: every mesh part whose name contains one of these is hidden
+     * ("Armor": soldiers wear their gambeson and no plate over it).
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Body")
+    TArray<FName> HiddenLookParts;
 
     /** Which London this NPC belongs to: decides the coin it is worth. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="World")

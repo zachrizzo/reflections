@@ -32,16 +32,18 @@ COLORS = {
                  'WallAlt': (0.42, 0.26, 0.15), 'Trim': (0.72, 0.52, 0.22), 'Door': (0.14, 0.05, 0.02),
                  'Water': (0.03, 0.045, 0.07), 'Stall': (0.55, 0.16, 0.06), 'Metal': (0.22, 0.15, 0.05),
                  'Tower': (0.80, 0.58, 0.20), 'Rail': (0.08, 0.06, 0.04), 'Canvas': (0.62, 0.40, 0.14)},
-    'Frostside': {'Ground': (0.44, 0.49, 0.55), 'Street': (0.32, 0.37, 0.44), 'Wall': (0.54, 0.58, 0.63),
-                  'WallAlt': (0.42, 0.48, 0.56), 'Trim': (0.62, 0.67, 0.72), 'Door': (0.12, 0.16, 0.22),
-                  'Water': (0.18, 0.27, 0.35), 'Stall': (0.34, 0.40, 0.48), 'Metal': (0.20, 0.24, 0.30),
-                  'Tower': (0.58, 0.65, 0.73), 'Rail': (0.22, 0.26, 0.32), 'Canvas': (0.50, 0.55, 0.60)},
+    # Frostside (18:50 look pass): darker blue-grey ground, streets and ice so Codex's pale facades have contrast.
+    'Frostside': {'Ground': (0.30, 0.34, 0.40), 'Street': (0.19, 0.23, 0.29), 'Wall': (0.54, 0.58, 0.63),
+                  'WallAlt': (0.40, 0.46, 0.55), 'Trim': (0.52, 0.58, 0.65), 'Door': (0.10, 0.14, 0.20),
+                  'Water': (0.09, 0.15, 0.21), 'Stall': (0.30, 0.36, 0.45), 'Metal': (0.16, 0.19, 0.25),
+                  'Tower': (0.44, 0.53, 0.64), 'Rail': (0.18, 0.22, 0.28), 'Canvas': (0.46, 0.52, 0.60)},
 }
 LAMP = {  # colour, candelas, radius m, every Nth lamp lit
     'Pewterside': ((0.82, 0.86, 0.92), 22.0, 13.0, 2),
     'Giltside': ((1.0, 0.60, 0.28), 55.0, 15.0, 1),
-    'Frostside': ((0.62, 0.76, 1.0), 26.0, 12.0, 2),
+    'Frostside': ((0.50, 0.70, 1.0), 32.0, 12.0, 1),   # every brazier burns blue: the cold accents
 }
+FROST_TOWER_LIGHT = ((0.45, 0.66, 1.0), 24.0, 9.0)   # blue glow on each ramp landing inside the Frost Tower
 PROPS = {  # role -> per-side mesh
     'lamp': {'Pewterside': 'Pewterside/Props/SM_Pewterside_CanalLamp', 'Giltside': 'Giltside/Props/SM_Giltside_ArchiveLantern',
              'Frostside': 'Frostside/Props/SM_Frostside_IronBrazier'},
@@ -475,9 +477,13 @@ def build_common(s):
     for (x0, x1, y0, y1, lab) in [(wx0, wx1, wy0, wy0 + 0.4, 'S'), (wx0 + 3.0, wx1, wy1 - 0.4, wy1, 'N'),
                                   (wx1 - 0.4, wx1, wy0, wy1, 'E'), (wx0, wx0 + 0.4, wy0, wy1 - 3.0, 'W')]:
         s.box(x0, x1, y0, y1, WEIGH_H, WEIGH_H + 1.0, 'Trim', 'WeighHouse_Parapet_' + lab)
-    # The stair goes up round the back (west side, in the street), by the drainpipe.
-    stairs(s, wx0 - 1.3, wy0 + 1.0, wy1 - 0.5, 0.0, WEIGH_H, 2.4, 'Trim', 'WeighHouse_Stair')
-    s.mesh(CYL, (wx0 - 0.25, wy0 + 0.6, WEIGH_H / 2), (0.25, 0.25, WEIGH_H), 'Metal', 'WeighHouse_Drainpipe')
+    # The stair goes up round the back (west side, in the street), by the drainpipe: 40 steps of 25 cm (27.5 cm
+    # treads, 2.5 m wide) flush against the wall, then a 3 m landing level with the roof where the west parapet
+    # leaves its gap. Playtest run 3 fix: the old top was one 34 cm step with a 10 cm gap to the roof, so the
+    # navmesh never joined the roof to the street and a player had to perch across.
+    stairs(s, wx0 - 1.25, wy0 + 1.0, wy1 - 3.0, 0.0, WEIGH_H, 2.5, 'Trim', 'WeighHouse_Stair')
+    s.box(wx0 - 2.5, wx0, wy1 - 3.0, wy1, 0.0, WEIGH_H, 'Trim', 'WeighHouse_StairLanding')
+    s.mesh(CYL, (wx0 + 0.4, wy0 - 0.15, WEIGH_H / 2), (0.25, 0.25, WEIGH_H), 'Metal', 'WeighHouse_Drainpipe')
     s.box(wx0 + 4.0, wx0 + 6.0, wy1 + 0.1, wy1 + 0.3, 0.0, 2.6, 'Door', 'WeighHouse_Door', collide=False)
     place('WeighHouseCorner', wx1 + 3.0, wy1 + 4.0, 0.0, 45.0)
     place('WeighHouseStair', wx0 - 2.5, wy0 - 0.5, 0.0, 90.0)
@@ -656,6 +662,8 @@ def build_tower(s):
         ly = cy + sy * (inner - lw / 2)
         if k > 0:
             s.box(lx - lw / 2, lx + lw / 2, ly - lw / 2, ly + lw / 2, z - 0.4, z, 'Trim', 'Tower_Landing_%d' % k)
+        col, cd_, rad = FROST_TOWER_LIGHT
+        s.light((lx - sx * 0.6, ly - sy * 0.6, z + 2.2), col, cd_, rad, 'Tower_LandingGlow_%d' % k)
         if k == 8:
             break
         nxt = order[(k + 1) % 4]
@@ -743,7 +751,7 @@ def build_side_specific(s):
         fog = s.spawn(fog_cls, (0.0, 0.0, 0.0), scale=(32.0, 32.0, 6.0), label='Mood_LocalFog')
         comp = fog.get_component_by_class(unreal.LocalFogVolumeComponent) if hasattr(unreal, 'LocalFogVolumeComponent') else None
         settings = {'Pewterside': (0.35, 0.25, (0.55, 0.57, 0.6)), 'Giltside': (0.2, 0.15, (0.9, 0.62, 0.35)),
-                    'Frostside': (0.45, 0.3, (0.7, 0.78, 0.9))}[n]
+                    'Frostside': (0.1, 0.06, (0.62, 0.74, 0.9))}[n]   # was 0.45 / 0.3: a white-out from the crown
         if comp:
             for prop, val in (('radial_fog_extinction', settings[0]), ('height_fog_extinction', settings[1]),
                               ('fog_albedo', unreal.LinearColor(*settings[2], 1.0))):
@@ -877,6 +885,7 @@ def is_free(x, y, margin=1.0):
     if not SOLIDS:
         SOLIDS.extend((a[0], a[1], a[2], a[3]) for a in building_lots())
         SOLIDS.extend([WEIGH, LAMPLIGHT, ARCHIVE, (-62.0, -45.0, 55.0, 90.0),
+                       (WEIGH[0] - 2.5, WEIGH[0], WEIGH[2] + 1.0, WEIGH[3]),     # the Weigh-House stair and landing
                        (TOWER[0] - TOWER_HALF, TOWER[0] + TOWER_HALF, TOWER[1] - TOWER_HALF, TOWER[1] + TOWER_HALF),
                        (-140.0, -107.0, -100.0, -70.0), (107.0, 140.0, -100.0, -70.0), (84.0, 89.0, -4.0, 1.0),
                        (-200.0, 200.0, CANAL[0] - 0.5, CANAL[1] + 0.5)])
@@ -1125,7 +1134,10 @@ def build_persistent():
     nav = s.spawn(unreal.RecastNavMesh, (0.0, 0.0, 0.0), label='RecastNavMesh_MockCity')
     try:
         nav.set_editor_property('runtime_generation', unreal.RuntimeGenerationType.DYNAMIC)
-        log('navmesh runtime generation dynamic')
+        # Recast's ledge-slope filter marks every 25 cm stair step as a ledge (neighbours span > ~30 cm), so the
+        # Weigh-House stair never joined the roof. Drops still split the navmesh with the filter off.
+        nav.set_editor_property('ledge_slope_filter_mode', unreal.NavigationLedgeSlopeFilterMode.NONE)
+        log('navmesh runtime generation dynamic, ledge slope filter off')
     except Exception as e:  # noqa: BLE001
         log('navmesh rg: %s' % e)
     for name in SIDES:

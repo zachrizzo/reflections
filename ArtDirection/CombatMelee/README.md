@@ -59,7 +59,7 @@ one set of clips on the walker's skeleton, exactly `/Game/Characters/UEFN_Manneq
 | `AS_Melee_Sword_HitReact_Walker` | 0.47 s | jolt 0.13 s (0.29) | |
 | `AS_Melee_Wand_Channel_Walker` | 3.00 s loop | n/a | seam 0 cm; both forearms were up to 7.7 cm inside the chest before the fix |
 | `AS_Shock_Convulse_Walker` | 1.00 s loop | n/a | Electrify reaction: authored overlay, see below |
-| `AS_React_Stagger_Walker` | ~0.6 s | n/a | Explosion/Push survivor stumble, from a Kimodo take, played in place (in progress) |
+| `AS_React_Stagger_Walker` | 0.47 s | jolt 0.13 s | Explosion/Push survivor reaction. For now it holds the HitReact motion: the Kimodo stumble take (19:47) came out as a weak sway with the pelvis pinned, so it wasn't used. A real stumble needs a take that follows a backward transform track. |
 
 - **How they're made:** `author_melee_kimodo.py walker [moves]` retargets the same trimmed Kimodo takes as the body
   clips with `/Game/Villain/Conversion/Rigs/RTG_Mannequin_to_UEFN`. It runs the two-bone IK hand fix against
@@ -67,6 +67,15 @@ one set of clips on the walker's skeleton, exactly `/Game/Characters/UEFN_Manneq
 - **Settings:** root motion is off for every clip, and the strike timing is the same as in the body table.
 - **Hand clearance:** every clip keeps both hands at least 2 cm clear of the walker's torso collision. The visible
   MetaHuman follows through a retarget, so it can differ by a few cm.
+
+**Sword and shield soldiers** (the user's request: soldiers must hold sword and shield in their hands). Stages
+`add_shield`, then `arm_shield` (twice: open, then arm), then `build_shield`:
+- `AS_Melee_Shield_Guard_Idle_Walker`: a 3 s seamless loop. Guard stance with the shield forearm raised across the
+  chest and the sword low by the right hip.
+- `AS_Melee_Shield_March_Hold_Walker`: a 2 s seamless loop for an upper-body layer while walking or marching. The sword
+  hangs at the right side and the shield forearm is carried across the stomach.
+
+Kimodo keeps the pelvis in place, so neither clip walks by itself. Both get the closed grip.
 
 **Shock loop** (`author_melee_kimodo.py shock`):
 - **Pose:** frame 0 of `M_Neutral_Stand_Idle_Loop`, held, with an authored overlay in component space. The back arches
@@ -100,10 +109,21 @@ Add a socket `weapon_r` on bone `hand_r` (the numbers are the same on all three 
 Model the sword and wand with the grip at the pivot and the blade or tip along +X. The wand uses the same socket. In
 `Wand_Channel` the left hand comes alongside the right but doesn't hold the wand.
 
-**Known gap: the fingers are open.** Kimodo animates the body, not the fingers: every clip keeps the fingers at the
-reference pose (a relaxed, slightly curled hand). A prop on the socket will sit in an open hand. To close the fist,
-layer a grip pose on the finger bones (`index`/`middle`/`ring`/`pinky`/`thumb` `_01`–`_03` `_r`) in the AnimBP or
-with a pose asset. The grip pose isn't authored yet.
+**Fingers.** Kimodo animates the body, not the fingers, so raw takes keep the fingers at the reference pose: open
+hands. The walker clips get a closed grip baked in. `author_melee_kimodo.py` stage `fist <clip names>` applies it, and
+`build_shield` applies it automatically.
+- **What it closes around:** a round handle 3 cm across, a sword grip or the shield's strap handle.
+- **Fingers:** each finger's segments lie tangent to the handle, using that finger's own bone lengths. Every segment
+  touches it with no penetration, and each finger wraps 146–174°.
+- **Thumb:** it comes over the top on the wrist side, with its tip beside the index fingertip.
+- **Handle position:** the axis runs index-to-pinky, about 3 cm palm-side of the knuckles. All four fingers' axes
+  agree within 0.4 cm.
+- **Check:** `grip_check` measures it on the reference hands; `draw_grip_sheet.py` draws it from two angles
+  (`grip_check.png`).
+- **On the visible bodies:** the runtime retargeters (`RTG_Crowd_<Body>`) map every finger chain, thumb included,
+  from the walker.
+- **Not checked yet:** the grip on the visible MetaHuman bodies in PIE, and against the actual sword and shield
+  meshes.
 
 ## Packaging
 

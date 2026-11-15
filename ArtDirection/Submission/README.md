@@ -15,6 +15,8 @@
 | [sunday-checklist.md](sunday-checklist.md) | **Start here on Sunday.** Tonight's prep, the minute-by-minute timeline (rehearsal train → package → smoke test → zip → upload → itch page → submit) with owners and fallbacks, the 15-minute smoke test, and the size plan |
 | [video-plan.md](video-plan.md) | 55-second, 10-shot list with each shot's console set-up, and how to record the packaged build without touching the shared editor |
 | [screenshots.md](screenshots.md) | The 6 itch screenshots and the cover: what's in frame and how to set each one up |
+| [gray-london-review.md](gray-london-review.md) | Jah's Gray London map (merged to main 11-14): required attributions, what blocks a sale (real brands and Underground roundels, the Albert Memorial scan, ODbL share-alike), and the naming sweep (no "Gray/Red/White London" reaches players) |
+| [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) | Licence notices for the zip root (OSM/ODbL, CC BY 4.0, MIT, OFL, and the AI-tool attributions). Two `[CONFIRM]` items for Jah. |
 
 ## Decisions the team still has to make
 

@@ -56,6 +56,7 @@ for c in M.CLIQUES:
 # Pinned crowd looks (Tools/CrowdLooks/cast.json): Lives and the quest pack read "look" as a look-id string and match it
 # against the look Blueprint's class name. The descriptive look object moves to "appearance".
 cast = {l["id"]: l for l in json.load(open(os.path.join(ROOT, r"Tools\CrowdLooks\cast.json"), encoding="utf-8"))["looks"]}
+for k, v in M.PEW_LOOKS.items(): cast.setdefault(k, v)
 pinned = 0
 for p in people:
     p["appearance"] = p.pop("look")

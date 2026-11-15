@@ -17,7 +17,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT = os.path.join(ROOT, "voice", "script")
 OUT = os.path.join(SCRIPT, "story.json")
 INTENT_GROUP = {"greet": "Greet", "idle": "Idle", "see_tarnished": "SeeTarnished", "flee": "Flee", "spell_near": "SpellNear",
-                "thanks": "Thanks", "dread": "Dread", "farewell": "Farewell"}
+                "thanks": "Thanks", "dread": "Dread", "farewell": "Farewell",
+                # story batch 2 (2026-11-14 evening): reactions, heat and soldiers' battle lines
+                "witness_crime": "WitnessCrime", "flee_silverer": "FleeSilverer", "call_guards": "CallGuards",
+                "knocked_down": "KnockedDown", "on_fire": "OnFire", "shocked": "Shocked", "mourning": "Grief",  # Lives plays Grief
+                "battle_1": "Battle", "battle_2": "Battle", "patrol_1": "Patrol", "patrol_2": "Patrol",
+                "enemy_down": "EnemyDown"}
 TARNISH_3D = {"MQ09_01", "MQ09_03", "MQ09_05"}
 HERO_3D = {"MQ09_02", "MQ09_04"}
 
@@ -129,7 +134,8 @@ def build():
         take = seen.get((pmap[pid], re.sub(r"[^a-z ]", "", text.lower()).strip()))  # same person, same words: reuse the take
         barks.setdefault(pid, {}).setdefault(group, []).append({"Text": text, "Style": "" if group != "TarnishedLine" else "slow, flat, hollow",
                                                                 "Delivery": delivery, "Take": take})
-    out = {"Map": pmap, "Victim": victim, "Scripted": scripted, "Barks": barks, "Replies": old.get("Replies", {})}
+    out = {"Map": pmap, "Victim": victim, "Scripted": scripted, "Barks": barks, "Replies": old.get("Replies", {}),
+           "Conversations": old.get("Conversations", {})}  # drafted by story_convs.py; voiced, so always carried over
     json.dump(out, open(OUT, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     from collections import Counter
     print(len(scripted), "scripted", Counter(v["Voice"] if v["Voice"] in ("HERO", "TARNISH") else "roster" for v in scripted.values()),

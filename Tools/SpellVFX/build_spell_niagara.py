@@ -1,6 +1,6 @@
 """Builds the parametric spell Niagara systems (run inside the Unreal 5.9 editor via its MCP Python tool).
 
-ARGS (prepended by the runner) selects systems: projectile, impact, heal, ward, tarnish_bolt, tarnish_burst, shock, or all.
+ARGS (prepended by the runner) selects systems: projectile, impact, heal, ward, tarnish_bolt, tarnish_burst, shock, bodyfx, or all.
 Every look is driven by User.* parameters that C++ (UReflectionsSpellVfxSubsystem) sets per element,
 so six elements share three attack systems instead of eighteen one-off assets.
 
@@ -879,6 +879,106 @@ async def build_spell_shock():
     return b
 
 
+# ----------------------------------------------------------------------------------------------- body fx (afflictions)
+# Attached to a body after a Burn, Freeze or water Push hit, for the hit's Duration: rising embers and smoke (burn),
+# frost mist and falling ice glints (freeze), dripping water and mist (wet). C++ picks the mix through the *Rate
+# parameters and sizes the capsule (User.Height x User.Radius, Z up from the pelvis) from the body's bounds.
+async def build_spell_bodyfx():
+    b = await new_system('NS_Spell_BodyFx', [
+        ('Color', 'color', (1.0, 0.35, 0.06, 1.0)), ('Color2', 'color', (1.0, 0.8, 0.4, 1.0)),
+        ('SmokeColor', 'color', (0.07, 0.06, 0.055, 0.55)), ('Height', 'float', 170.0), ('Radius', 'float', 26.0),
+        ('EmberRate', 'float', 0.0), ('SmokeRate', 'float', 0.0), ('FrostRate', 'float', 0.0), ('DripRate', 'float', 0.0),
+        ('Intensity', 'float', 1.0)])
+    on_body = ('Engine.Owner.Position + float3(cos(Particles.Phase) * User.Radius * %s, sin(Particles.Phase) * User.Radius * %s, '
+               '(rand(1.0f) - 0.5f) * User.Height)' % (rl(0.6, 1.1), rl(0.6, 1.1)))
+    # Burn: embers lifting off the body.
+    e = await b.emitter('Embers')
+    await b.rate(e, 'User.EmberRate * User.Intensity')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.5, 1.1)),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Position', 'pos', on_body),
+        ('Particles.Velocity', 'vec3', 'float3(0.0f, 0.0f, %s) + %s * 30.0f' % (rl(60, 160), RU)),
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * ' + rl(2.0, 4.5))])
+    await b.curl(e, '220.0f')
+    await b.drag(e, 1.2)
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(lerp(User.Color2.rgb * 7.0f, User.Color.rgb * 3.0f, %s) * (1.0f - %s), 1.0f)' % (NA, NA))])
+    await b.solve(e)
+    await b.sprite(e, 'M_Spell_Glow')
+    # Burn: dark smoke curling up from the body.
+    e = await b.emitter('Smoke')
+    await b.rate(e, 'User.SmokeRate * User.Intensity')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.9, 1.6)),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Position', 'pos', on_body),
+        ('Particles.Velocity', 'vec3', 'float3(0.0f, 0.0f, %s)' % rl(40, 90)),
+        ('Particles.BaseSize', 'float', rl(20, 38)),
+        ('Particles.SpriteRotation', 'float', 'rand(360.0f)')])
+    await b.curl(e, '120.0f')
+    await b.drag(e, 1.5)
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * Particles.BaseSize * (1.0f + %s * 2.0f)' % NA),
+        ('Particles.Color', 'color', 'float4(User.SmokeColor.rgb, User.SmokeColor.a * (1.0f - %s) * saturate(Particles.Age * 4.0f))' % NA)])
+    await b.solve(e)
+    await b.sprite(e, 'M_Spell_SoftPuff', sort='ViewDepth')
+    # Freeze: pale mist hugging the body and ice glints falling off it.
+    e = await b.emitter('FrostMist')
+    await b.rate(e, 'User.FrostRate * 0.5f * User.Intensity')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.8, 1.4)),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Position', 'pos', on_body),
+        ('Particles.Velocity', 'vec3', 'float3(0.0f, 0.0f, %s) + %s * 12.0f' % (rl(-25, 5), RU)),
+        ('Particles.BaseSize', 'float', rl(22, 40)),
+        ('Particles.SpriteRotation', 'float', 'rand(360.0f)')])
+    await b.drag(e, 2.0)
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * Particles.BaseSize * (1.0f + %s * 1.4f)' % NA),
+        ('Particles.Color', 'color', 'float4(0.75f, 0.88f, 1.0f, 0.32f * (1.0f - %s) * saturate(Particles.Age * 4.0f))' % NA)])
+    await b.solve(e)
+    await b.sprite(e, 'M_Spell_SoftPuff', sort='ViewDepth')
+    e = await b.emitter('FrostGlints')
+    await b.rate(e, 'User.FrostRate * User.Intensity')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.4, 0.9)),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Position', 'pos', on_body),
+        ('Particles.Velocity', 'vec3', '%s * 40.0f' % RU),
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * ' + rl(1.5, 3.5))])
+    await b.gravity(e, 'float3(0.0f, 0.0f, -500.0f)')
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color2.rgb * 6.0f * (0.5f + 0.5f * sin(Particles.Age * 40.0f + Particles.Phase)) * (1.0f - %s), 1.0f)' % NA)])
+    await b.solve(e)
+    await b.sprite(e, 'M_Spell_Glow')
+    # Wet: water dripping off the body.
+    e = await b.emitter('Drips')
+    await b.rate(e, 'User.DripRate * User.Intensity')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.35, 0.7)),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Position', 'pos', on_body),
+        ('Particles.Velocity', 'vec3', '%s * 25.0f' % RU),
+        ('Particles.SpriteSize', 'vec2', 'float2(%s, %s)' % (rl(1.2, 2.2), rl(4, 9)))])
+    await b.gravity(e, 'float3(0.0f, 0.0f, -980.0f)')
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color2.rgb * 2.5f * (1.0f - %s), 1.0f)' % NA)])
+    await b.solve(e)
+    await b.sprite(e, 'M_Spell_Glow', alignment='VelocityAligned')
+    # A soft light in the element's colour while it lasts (embers glow, frost gleams).
+    e = await b.emitter('Light', local=True)
+    await b.rate(e, '40.0f')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', '0.1f'),
+        ('Particles.Position', 'pos', 'float3(0.0f, 0.0f, 0.0f)'),
+        ('Particles.LightRadius', 'float', '220.0f')])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color.rgb * User.Intensity * saturate(User.EmberRate + User.FrostRate) * 0.04f * (2.5f + 0.8f * sin(Engine.Time * 17.0f)) * (1.0f - %s), 1.0f)' % NA)])
+    await b.light(e)
+    return b
+
+
 async def finish(b):
     s = b.S
     # GetSystemCompileState can report UpToDate before the VM compile has even started; opening the
@@ -908,7 +1008,7 @@ if await call_tool('EditorToolset.EditorAppToolset.IsPIERunning'):
 which = ARGS or ['all']
 builders = {'projectile': build_projectile, 'impact': build_impact, 'heal': build_heal, 'ward': build_ward,
             'tarnish_bolt': build_tarnish_bolt, 'tarnish_burst': build_tarnish_burst,
-            'shock': build_spell_shock}
+            'shock': build_spell_shock, 'bodyfx': build_spell_bodyfx}
 results = []
 for key, fn in builders.items():
     if 'all' in which or key in which:

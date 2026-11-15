@@ -2,6 +2,9 @@
 
 Codex generates the garments (image, then image-to-3D; request `ArtDirection/CodexRequests/2026-11-14_clothing.md`). This folder only fits them to our bodies. Nothing here models or reshapes a garment.
 
+
+> **SKELETON RULE (2026-11-14).** Never modify or save any `metahuman_base_skel`. Garment FBX files must be exported with the armature object named `Armature`, which UE's FBX importer drops. Under any other name (this pipeline used `Rig_<Body>`), the legacy importer makes that node the root bone of the skeleton it imports onto, replacing `root`. That broke the shared BridgeGuard-Common skeleton (saved at 19:28; half the cast T-posed) and the hero/IvenRook skeleton (in memory). `export()` now renames the rig to `Armature`, and `import_fitted_garments.py` ends with a skeleton guard: it reloads any dirtied skeleton from disk (never saving) and reports bone 0 of every touched skeleton, which must be `root`. Before importing a new batch, prove it on a throwaway skeleton: import with no skeleton set and check that the new skeleton's bone 0 is `root`.
+
 ## Bodies
 
 `Intermediate/ClothingFit2026_11_14/Bodies/<Body>_Body.fbx` and `<Body>_Face.fbx` are FBX exports of the live UE meshes the looks wear. Each body is 3,328 vertices on the 341-bone `metahuman_base_skel`, in an A-pose with the arms 52.6° below horizontal, facing -Y in Blender. Exporting them saved nothing in UE.
@@ -56,3 +59,13 @@ Piece kinds:
 - Helmets don't hide hair grooms: a helmeted look needs its Hair groom off.
 - A look's NPC systems use its Body component. After a look swaps to a hidden body, spawn it once to check walk and ragdoll.
 - A fitted ankle skirt can't follow a long running stride without cloth. Expect some leg clipping at full run.
+
+## Lessons from the first real delivery (Giltside soldier M, 19:30–20:05)
+
+- **Scale.** Codex's first export was about 1.45x life size and its re-export was misplaced. `coarse_fit` searches uniform scale (0.5–1.6) and height before the fine ICP. Boots take their scale from foot length (boot = 1.12 x foot), measured on the foot part of the boot only, because a tall shaft's flare sits behind the heel.
+- **Sleeves.** These are posed in two steps: upper sleeve about the shoulder, then forearm about the elbow. The MetaHuman A-pose bends the elbow, and Codex's forearms were 33 degrees off. Only vertices whose nearest body vertex is an arm are moved, so hems and hips stay put.
+- **Helmets.** Hunyuan helmets are closed solids with the face opening only painted dark. The helmet is sized by head width (+4 cm) and set 6 cm above the crown, and the face-opening cap (forward faces within 4 cm of the eyes, nose and mouth) is trimmed. Hair grooms must be off for helmeted looks.
+- **Layers.** Tall boots go over the trousers, so the soldier configs fit lower, then feet, then upper, then helmet. With body hiding on, boots ignore foot skin (it is hidden anyway) and keep their delivered proportions. Nothing except a boot sole may go below the floor.
+- **Neck.** It is kept by coverage, not by bone name: optimised MetaHuman bodies weight the neck to `spine_04` and the clavicles. A covered neck (standing collar) is hidden like other covered skin.
+- **Materials.** One instance per FBX material slot. A textured slot gets its BaseColor; a flat slot gets white × Tint, using the FBX colour. Re-importing over an asset with different slots leaves stale slots, so delete and import fresh (`REPLACE=False`).
+- **Preview.** `/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/Preview/BP_Preview_GiltSoldier_M` is a look copy with the new garments in its garment components and Body swapped to the hidden body. `pie_before_after.py` spawns it next to the original look through the NPC system's `SpawnNpc` (Python can't spawn into PIE otherwise).

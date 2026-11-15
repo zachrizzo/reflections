@@ -29,7 +29,7 @@ rem The cooker splits its command line on spaces, so the never-cook list goes to
 set "NEVERCOOK=%TEMP%\ReflectionsJamNeverCook.txt"
 copy /y "%HERE%NeverCookList.txt" "%NEVERCOOK%" >nul || (echo Could not copy NeverCookList.txt & exit /b 1)
 if not exist "%PROJ%\Saved\JamBuild\Logs" mkdir "%PROJ%\Saved\JamBuild\Logs"
-set ARGS=BuildCookRun -project="%PROJ%\reflections.uproject" -noP4 -platform=Win64 -clientconfig=Development -target=reflections -nocompileeditor -cook -map=/Game/Characters/Hero/Sample/Lvl_HeroSampleCrowd+/Game/MockCity/Lvl_MockCity -stage -pak -iostore -compressed -nodebuginfo -stagingdirectory="%PROJ%\Saved\JamBuild" -unattended -utf8output -AdditionalCookerOptions=-NeverCookListFile=%NEVERCOOK%
+set ARGS=BuildCookRun -project="%PROJ%\reflections.uproject" -noP4 -platform=Win64 -clientconfig=Development -target=reflections -nocompileeditor -cook -map=/Game/GrayLondon/Maps/GrayLondon_Geodata -stage -pak -iostore -compressed -nodebuginfo -stagingdirectory="%PROJ%\Saved\JamBuild" -unattended -utf8output -AdditionalCookerOptions=-NeverCookListFile=%NEVERCOOK%
 if defined WITHRELAY (
   if not exist "%RELAYSRC%\NpcDialogueRelay.exe" (echo --with-npc-relay: NpcDialogueRelay.exe not found in Content\NpcDialogue\Relay or Tools\RealtimeVoice\dist. Build it first. & exit /b 1)
   rem Never ship API keys. A keys.json for local testing may sit next to the exe; it is excluded from the copy below
@@ -46,8 +46,14 @@ if defined PEOPLESTALE (
   echo ERROR: Content\Lives\DA_PeopleBook is older than ArtDirection\Story\people.json. Ask npc-lives to re-import it, then package.
   if not defined DRYRUN exit /b 1
 )
+rem Third-party notices (submission prep): CC BY 4.0, ODbL, MIT and OFL texts for the map's assets. They go next to
+rem reflections.exe, so they sit in the zip's top folder. Open [CONFIRM] items only warn; they're the map owner's.
+set "NOTICES=%PROJ%\ArtDirection\Submission\THIRD_PARTY_NOTICES.txt"
+if not exist "%NOTICES%" echo WARNING: %NOTICES% not found; the zip will ship without third-party notices.
+if exist "%NOTICES%" findstr /l /c:"[CONFIRM" "%NOTICES%" >nul && echo WARNING: THIRD_PARTY_NOTICES.txt still has [CONFIRM] items. Ask submission prep before the final upload.
 if defined DRYRUN (
   echo "%UAT%" %ARGS%
+  if exist "%NOTICES%" echo then: copy THIRD_PARTY_NOTICES.txt to "%STAGE%\"
   if defined WITHRELAY echo then: copy the relay allowlist ^(NpcDialogueRelay.exe, roster.json, keys.json.example, _internal\, seed\^) from "%RELAYSRC%" to "%RELAYDST%", then scan it for keys
   exit /b 0
 )
@@ -56,6 +62,7 @@ call "%UAT%" %ARGS% > "%PROJ%\Saved\JamBuild\Logs\uat_package.log" 2>&1
 set RC=%ERRORLEVEL%
 echo UAT exit code %RC% (0 = success). Output: %STAGE%
 if not "%RC%"=="0" exit /b %RC%
+if exist "%NOTICES%" (copy /y "%NOTICES%" "%STAGE%\" >nul || (echo Copying THIRD_PARTY_NOTICES.txt failed. & exit /b 8))
 if defined WITHRELAY (
   call :stagerelay
   if errorlevel 9 exit /b 9

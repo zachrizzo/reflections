@@ -4,6 +4,8 @@
 #include "NPC/ReflectionsNpcSubsystem.h"
 
 #include "Camera/PlayerCameraManager.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -18,7 +20,7 @@ namespace
 {
     TAutoConsoleVariable<int32> CVarRingEnable(TEXT("Crowd.Ring.Enable"), 1,
         TEXT("Civilians kept around the hero on the sidewalk lanes of the ring-crowd maps. 0 removes them."));
-    TAutoConsoleVariable<FString> CVarRingMaps(TEXT("Crowd.Ring.Maps"), TEXT("Lvl_MockCity"),
+    TAutoConsoleVariable<FString> CVarRingMaps(TEXT("Crowd.Ring.Maps"), TEXT("GrayLondon_Geodata"),
         TEXT("Short names of the maps that get a ring crowd, comma separated (the map needs ZoneGraph sidewalk lanes)."));
     TAutoConsoleVariable<int32> CVarRingCount(TEXT("Crowd.Ring.Count"), 12,
         TEXT("How many ring walkers to keep. Each is a full sample-locomotion character (see Crowd.Lod for the cost)."));
@@ -65,13 +67,27 @@ void UReflectionsCrowdRingSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     bActiveMap = IsRingMap(UWorld::RemovePIEPrefix(InWorld.GetMapName()));
     // The hero and the NPC system settle in first.
     StartAt = InWorld.GetTimeSeconds() + 1.5;
-    if (bActiveMap) UE_LOG(LogReflectionsCrowdRing, Log, TEXT("Ring crowd: active on %s."), *InWorld.GetMapName());
+    if (!bActiveMap) return;
+    UE_LOG(LogReflectionsCrowdRing, Log, TEXT("Ring crowd: active on %s."), *InWorld.GetMapName());
+    // SpawnNpc loads a look synchronously the first time it is worn; load them all in the background now instead.
+    if (UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(this))
+    {
+        if (const UReflectionsNpcArchetype* Archetype = Npcs->FindArchetype(FName(*CVarRingArchetype.GetValueOnGameThread())))
+        {
+            TArray<FSoftObjectPath> Looks;
+            for (const TSoftClassPtr<AActor>& Look : Archetype->Looks)
+                if (!Look.IsNull() && !Look.Get()) Looks.AddUnique(Look.ToSoftObjectPath());
+            if (!Looks.IsEmpty()) LookPreload = UAssetManager::GetStreamableManager().RequestAsyncLoad(Looks);
+        }
+    }
 }
 
 void UReflectionsCrowdRingSubsystem::Deinitialize()
 {
     // The world is ending and takes the walkers with it.
     Walkers.Reset();
+    if (LookPreload.IsValid()) LookPreload->CancelHandle();
+    LookPreload.Reset();
     Super::Deinitialize();
 }
 
@@ -113,7 +129,9 @@ bool UReflectionsCrowdRingSubsystem::FindSpawnPoint(const FVector& Hero, float A
     const UZoneGraphSubsystem* ZoneGraph = UWorld::GetSubsystem<UZoneGraphSubsystem>(GetWorld());
     if (!ZoneGraph) return false;
     const float MinDistance = CVarRingMinDistance.GetValueOnGameThread();
-    const float MaxDistance = FMath::Max(MinDistance + 100.0f, CVarRingMaxDistance.GetValueOnGameThread());
+    // Never place a walker where it would be recycled at once (beyond the recycle distance, unseen).
+    const float Farthest = FMath::Max(MinDistance + 100.0f, CVarRingRecycleDistance.GetValueOnGameThread() * 0.9f);
+    const float MaxDistance = FMath::Clamp(CVarRingMaxDistance.GetValueOnGameThread(), MinDistance + 100.0f, Farthest);
     const FVector Extent(800.0f, 800.0f, 1000.0f);
     for (int32 Try = 0; Try < 12; ++Try)
     {
@@ -124,7 +142,7 @@ bool UReflectionsCrowdRingSubsystem::FindSpawnPoint(const FVector& Hero, float A
         float DistanceSq = 0.0f;
         if (!ZoneGraph->FindNearestLane(FBox(Probe - Extent, Probe + Extent), FZoneGraphTagFilter(), Lane, DistanceSq)) continue;
         const double FromHero = FVector::Dist2D(Lane.Position, Hero);
-        if (FromHero < MinDistance * 0.7f || FromHero > MaxDistance * 1.3f) continue;
+        if (FromHero < MinDistance * 0.7f || FromHero > FMath::Min(MaxDistance * 1.3f, Farthest)) continue;
         const bool bCrowded = Walkers.ContainsByPredicate([&Lane](const FRingWalker& Walker)
         {
             const AActor* Actor = Walker.Actor.Get();
@@ -159,6 +177,8 @@ void UReflectionsCrowdRingSubsystem::SpawnWalker(const FVector& Hero, float Ahea
     Npc->Tags.AddUnique(RingTag);
     Npc->Tags.AddUnique(LaneWalkerTag);
     Npc->Tags.AddUnique(TEXT("Friendly"));
+    // Passers-by are an endless supply next to the hero: the Tarnish takes only named or placed people (orchestrator, train #13).
+    Npc->Tags.AddUnique(TEXT("NoVillain"));
     Walkers.Add({ Npc, -1.0 });
     ++SpawnedTotal;
 }

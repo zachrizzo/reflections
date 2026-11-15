@@ -125,6 +125,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Quests")
     bool CompleteStep(FName QuestId);
 
+    /** Ends the current step and goes to NextStep ("End" finishes the quest). For branches such as ifKilledNext. */
+    UFUNCTION(BlueprintCallable, Category = "Quests")
+    bool CompleteStepTo(FName QuestId, FName NextStep);
+
     /**
      * Something happened that a quest may wait on (Event objectives with Target = Key and, if set, Spell = Arg).
      * Exactly two FName parameters, so other systems can call it by name (cutscenes: CutsceneDone, <Name>).

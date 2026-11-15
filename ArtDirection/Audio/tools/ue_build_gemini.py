@@ -162,7 +162,11 @@ elif STEP == "cues":
             g = rest.split("_", 1)[0]
             groups.setdefault((g, vid), []).append(lid)
             into = {"Flee": "Civilian_Fear", "SeeTarnished": "Civilian_Fear", "Idle": "Remark", "Dread": "Remark",
-                    "Greet": "Reply", "TarnishedLine": "Tarnished_Mutter"}.get(g)
+                    "Greet": "Reply", "TarnishedLine": "Tarnished_Mutter",
+                    # story batch 2: a named person's own lines join the groups the game calls
+                    "WitnessCrime": "Heat_CallGuards", "CallGuards": "Heat_CallGuards", "FleeSilverer": "Civilian_Fear",
+                    "KnockedDown": "React_Knocked", "OnFire": "React_Burning", "Shocked": "React_Shocked",
+                    "Battle": "Soldier_Charge", "EnemyDown": "Soldier_EnemyDown", "Patrol": "Remark"}.get(g)
             if into:
                 groups.setdefault((into, vid), []).append(lid)
                 if into == "Reply":
@@ -179,7 +183,9 @@ elif STEP == "cues":
     made, missing = 0, []
     BARK_GROUPS = {"Civilian_Fear", "Guard_Alert", "Guard_Attack", "Soldier_Command", "Tarnished_Mutter", "Flee", "SeeTarnished",
                    "TarnishedLine", "React_Hurt", "React_Knocked", "React_Burning", "React_Shocked", "React_Death",
-                   "React_Effort", "Heat_CallGuards", "Heat_Halt", "Heat_Alarm", "Soldier_Battle"}
+                   "React_Effort", "Heat_CallGuards", "Heat_Halt", "Heat_Alarm", "Soldier_Charge",
+                   "Soldier_Hold", "Soldier_AllyDown", "Soldier_EnemyDown", "Soldier_Retreat", "Soldier_Victory",
+                   "WitnessCrime", "FleeSilverer", "CallGuards", "KnockedDown", "OnFire", "Shocked", "Battle", "EnemyDown"}
     for (g, vid), ids in sorted(groups.items()):
         if ONLY and vid not in ONLY:
             continue

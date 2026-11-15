@@ -39,7 +39,7 @@ _vm = json.load(open(_vm_p)) if os.path.exists(_vm_p) else {}
 _live_ids = {l[0] for l in VS.LINES}
 _eng = {}
 for _id, _m in _vm.items():
-    if _id not in _live_ids:
+    if _id not in _live_ids or _id.startswith("Narrator_"):  # the narrator moved to a Gemini designed voice
         continue
     if "engine" in _m:
         _eng[_m["engine"]] = _eng.get(_m["engine"], 0) + 1
@@ -47,19 +47,37 @@ w("- Character voices: OpenAI's realtime audio model, baked offline into WAVs (n
   + (", ".join(f"`{e}` x{n}" for e, n in _eng.items()) if _eng else "not generated yet")
   + f"; `{VS.MODEL}` is the fallback when a take's transcript doesn't match the script. Prompts (actor rules, per-character brief, pronunciation) "
   "and every line are in `ArtDirection/Audio/VoiceScript.md`. The voices are AI-generated, not performed by actors, and the credits must say so.")
+_nc_p = os.path.join(ROOT, "voice", "narrator_choice.json")
+_nc = json.load(open(_nc_p)) if os.path.exists(_nc_p) else {}
+_nj_p = os.path.join(ROOT, "voice", "narrator_judgement.json")
+_nj = json.load(open(_nj_p)) if os.path.exists(_nj_p) else {}
+if _nc:
+    _tot = lambda k: sum(v for kk, v in _nj.get("scores", {}).get(k, {}).items() if isinstance(v, (int, float)))
+    w(f"- Narrator ({len(_nc.get('lines', {}))} lines, `SCue_VO_Narrator_<Line>`): a Google Gemini designed voice "
+      f"(`{_nc.get('GeminiVoice')}`, candidate {_nc.get('Candidate')} of 3: a retired Yorkshire lamplighter, weathered and close). "
+      "It replaced the OpenAI narrator after the user found it \"too clean\". Gemini audio judging picked it "
+      f"({_tot(_nc.get('Candidate', 'A'))}/50 against {_tot('OLD')}/50 for the old voice; `voice/narrator_judgement.json`). "
+      "Post-processing (not AI): a quiet room-tone bed, a short warm room reverb and light saturation, with no noise gate "
+      "(`tools/narrator_audition.py`). Comparison clip: `reel/Reflections_narrator_old_vs_new.mp3`.")
 _gm_p = os.path.join(ROOT, "voice", "gemini", "manifest.json")
 _gm = json.load(open(_gm_p)) if os.path.exists(_gm_p) else {}
 _nv = len(json.load(open(os.path.join(ROOT, "voice", "roster.json"), encoding="utf-8")))
 w(f"- Crowd voices ({_nv} NPC voices): Google Gemini Voice design (`gemini-3.8-flash-tts`) made one voice per character from a "
   "written brief (`ArtDirection/Audio/data/voice_roster.json`); the lines are synthesized offline with Gemini 3.8 Flash TTS "
-  "and accepted only when an OpenAI `gpt-4o-transcribe` transcript matches the script word for word. These baked lines "
+  "and accepted only when a transcript matches the script word for word: OpenAI `gpt-4o-transcribe` for the lines made "
+  "before the evening of 2026-11-14, Gemini 3.8 Flash audio transcription since then (`tools/stt_compare.py`: it passed "
+  "29 of 30 takes OpenAI heard exactly and caught all 10 deliberately wrong takes, the same as OpenAI). Wordless "
+  "grunts and gasps (`React_Effort`) have no words to check and are exempt. These baked lines "
   "make no API calls at runtime. The optional live-reply helper (NPC dialogue session) uses the same designed voices "
   "with a Gemini key the user supplies, and is declared in its own README. " + (f"Status: {len(_gm)} lines generated." if _gm else "Status: voices designed; lines not generated yet."))
 w("- Crowd scripts: the conversations, remarks, replies, barks, possessed mutters and fillers were drafted by Google "
   "Gemini 3.8 Flash (text) from the project's canon brief, then machine-checked (never-say words, Teen-safe wording, "
   "length) and passed through an AI editor pass. Every line is unique to its speaker: `tools/uniq_check.py` fails "
   "the build on any line two characters share. The full script is `ArtDirection/Audio/AmbientScript.md`.")
-w(f"- ElevenLabs ({catalog.SFX_MODEL}; {catalog.MUS_MODEL}): only the 6 final cues listed below. The team decided on 2026-11-14 not to generate more.")
+w(f"- ElevenLabs ({catalog.MUS_MODEL}): only the three music loops `MUS_Gray_Loop`, `MUS_Red_Loop` and `MUS_White_Loop`. "
+  "They were made on the ElevenLabs free tier, so the credits must say \"Music: Eleven Music / elevenlabs.io\", and they "
+  "are on the before-sale replacement list (the free tier is not cleared for commercial use). The three ElevenLabs SFX "
+  "(`Fire_Cast`, `Fire_Impact`, `Water_Impact`) were replaced by procedural versions on 2026-11-14.")
 w("- Post-processing (not AI): trim, mono downmix for SFX, peak/RMS normalization, equal-power loop crossfade, slicing of multi-take clips.")
 ai = [n for n, v in ue.items() if v.get("source") == "elevenlabs"]
 proc = [n for n, v in ue.items() if v.get("source") == "procedural"]
@@ -222,7 +240,22 @@ for _g, _v, _n, _when, _who in [
         ("Guard_Alert", "guards", 3, "guard enters Alert", "npc-unify"),
         ("Guard_Attack", "guards", 2, "guard starts attacking", "npc-unify"),
         ("Soldier_Command", "soldiers", 4, "squad commands in combat", "soldier-squads"),
-        ("Tarnished_Mutter", "all", 2, "after the NPC is taken (tarnished FX baked in)", "npc-unify")]:
+        ("Tarnished_Mutter", "all", 2, "after the NPC is taken (tarnished FX baked in)", "npc-unify"),
+        ("React_Hurt", "all", 2, "hit, neither killed nor thrown", "npc-unify"),
+        ("React_Knocked", "all", 2, "thrown by a blast or water and survives", "npc-unify"),
+        ("React_Burning", "all", 3, "on fire: at the start, then every 1.5-2.5 s while burning", "npc-unify"),
+        ("React_Shocked", "all", 2, "a lightning hit starts the convulsion", "npc-unify"),
+        ("React_Death", "all", 2, "a lethal hit (instead of the fear or alert bark)", "npc-unify"),
+        ("React_Effort", "all", 2, "wordless grunts (no trigger yet)", "npc-unify"),
+        ("Heat_CallGuards", "civilians", 2, "a witness of an assault or murder by the player", "npc-unify"),
+        ("Heat_Halt", "guards", 3, "a guard turns on the player", "npc-unify"),
+        ("Heat_Alarm", "soldiers", 2, "a soldier turns on the player; a squad's retaliation", "npc-unify, soldier-squads"),
+        ("Soldier_Charge", "soldiers", 2, "the squad breaks formation to engage (leader)", "soldier-squads"),
+        ("Soldier_Hold", "soldiers", 1, "casters open a volley", "soldier-squads"),
+        ("Soldier_AllyDown", "soldiers", 1, "a squadmate is killed (nearest comrade)", "soldier-squads"),
+        ("Soldier_EnemyDown", "soldiers", 2, "the squad's target is killed", "soldier-squads"),
+        ("Soldier_Retreat", "soldiers", 1, "standing down after losing the target", "soldier-squads"),
+        ("Soldier_Victory", "soldiers", 1, "target dead and nobody left to fight", "soldier-squads")]:
     w(f"| `{_g}` | {_v} | {_n} | {_when} | {_who} |")
 w("")
 _hc_p = os.path.join(ROOT, "voice", "hero_choice.json")

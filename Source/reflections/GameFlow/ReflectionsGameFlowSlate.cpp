@@ -1159,11 +1159,34 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildCredits(bool bEmbedded)
         Line(Entry);
     }
     Heading(LOCTEXT("CreditsThanksHead", "BUILT ON"));
-    for (const FText& Entry : ReflectionsFlowText::GetLines(TEXT("Credits.Thanks"), LOCTEXT("Credits.Thanks",
+    const TArray<FText> BuiltOn = ReflectionsFlowText::GetLines(TEXT("Credits.Thanks"), LOCTEXT("Credits.Thanks",
         "Epic's Game Animation Sample and Third Person template\n"
-        "Made with Unreal Engine 5.9")))
+        "Made with Unreal Engine 5.9"));
+    // The map's licence credits (OpenStreetMap's ODbL and the CC BY models and scan need them on screen), word for word
+    // from ai-declaration.md "Credits block". They go just before the last BUILT ON line, the engine line.
+    const TArray<FText> MapCredits = ReflectionsFlowText::GetLines(TEXT("Credits.Map"), LOCTEXT("Credits.Map",
+        "Map data \u00A9 OpenStreetMap contributors, ODbL (openstreetmap.org/copyright)\n"
+        "Landmark models adapted from Codriver 3D (3d-assets.codriver.io), CC BY 4.0\n"
+        "Albert Memorial scan by artfletch (Zenodo), CC BY 4.0 \u00B7 Street props by Minimaliano (Fab), CC BY 4.0\n"
+        "Textures and props: Poly Haven (CC0) \u00B7 Trees: Cosmo Tree Gen by FrogCosmonaut (MIT) \u00B7 Signs set in Noto Serif (SIL OFL 1.1)\n"
+        "Full licence notices: THIRD_PARTY_NOTICES.txt"));
+    for (int32 Index = 0; Index < BuiltOn.Num(); ++Index)
     {
-        Line(Entry);
+        if (Index == BuiltOn.Num() - 1)
+        {
+            for (const FText& Entry : MapCredits)
+            {
+                Line(Entry);
+            }
+        }
+        Line(BuiltOn[Index]);
+    }
+    if (BuiltOn.Num() == 0)
+    {
+        for (const FText& Entry : MapCredits)
+        {
+            Line(Entry);
+        }
     }
     if (!bEmbedded)
     {

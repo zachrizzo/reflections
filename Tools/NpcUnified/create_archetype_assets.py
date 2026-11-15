@@ -17,7 +17,7 @@ import unreal
 
 FOLDER = '/Game/NPC/Archetypes'
 BUILT_IN = ('Civilian', 'Timid', 'Brave', 'Guard', 'Enemy', 'Hostile', 'Soldier', 'SoldierCaster', 'Infected', 'VillainHost',
-            'AlliedSoldier')
+            'AlliedSoldier', 'AlliedSoldierCaster')
 
 
 def create_archetype_assets(ids=BUILT_IN, resync=False):

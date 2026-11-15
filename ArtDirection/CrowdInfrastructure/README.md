@@ -96,7 +96,15 @@ It stays woken for 9 s. Console:
 - Lvl_HeroSampleCrowd has no navmesh, so neither crowd nor squads share navigation there.
 - `Crowd.Yield.Enable 0|1` turns it off or on, `Crowd.Yield.Debug 1` draws the lanes, and the other `Crowd.Yield.*` variables tune it.
 
-## The ring crowd: actor civilians on the mock city's sidewalks (train #10)
+## Gray London (from train #14)
+
+The old maps (`Lvl_HeroSampleCrowd`, `Lvl_MockCity`, the Mass crowd level) were deleted. `/Game/GrayLondon/Maps/GrayLondon_Geodata` is the only map: one London, one side, no world jump.
+- The ring crowd below now targets it (`Crowd.Ring.Maps` = `GrayLondon_Geodata`). It waits for world-jump's CitySidewalk lanes along the Tower district's pavements, and logs `no ZoneGraph lanes` once until they exist.
+- With one side, every walker wears the red (Giltside) looks.
+- The Mass city crowd has no host map by default, so it is dormant everywhere.
+- Test: `Saved/CrowdReactions/verify_ring.py`. It travels to Gray London; the walk-away step replaces the world-jump step.
+
+## The ring crowd: actor civilians on the sidewalks (train #10; first tested on the mock city)
 
 The Mass crowd is **no-go for the jam**, a decision confirmed by the orchestrator on crowd-looks' recommendation. The city crowd in `/Game/MockCity/Lvl_MockCity` is therefore made of finished-look actor civilians.
 
@@ -108,7 +116,18 @@ The Mass crowd is **no-go for the jam**, a decision confirmed by the orchestrato
   - A calm or dead walker more than 55 m away and unseen for 2 s is replaced ahead of the hero. After a world jump the crowd moves to the new side the same way.
   - `Crowd.Ring.Enable 0` removes them.
 - **Walking the sidewalks.** Ring walkers are tagged `Crowd_LaneWalker`. The stroll subsystem walks them 10–30 m along the lane (`Crowd.Stroll.LaneLegMin`/`Max`), steering at a point 2.2 m ahead so they follow corners onto the next lane, then idles them like the other strollers. Without a lane nearby they stroll around their spawn point instead.
-- **Not verified yet.** The cost of 12 walkers with `Crowd.Lod`, how well they follow the lanes, and recycling after a jump are all unmeasured. The test needs a PIE session on `Lvl_MockCity`.
+- **Verified in PIE on Lvl_MockCity** (19:32 build, run by the orchestrator from `Saved/CrowdReactions/verify_ring.py`; results in `ring_result.json`, screenshots `ring_mockcity.png` and `ring_after_jump.png`):
+  - 12 walkers within about 10 s of arriving, all on lanes and walking at about 1.5 m/s. 9 of 11 walked 6–13 m in 8 s; the other two were fleeing or down.
+  - The side rule holds: Gilt looks on Giltside, and Frost rag looks after jumping to Frostside.
+  - After a 1.5 km jump, all 12 old walkers were replaced, and 12 new ones stood 20–44 m from the hero within 12 s.
+  - **Cost** in editor PIE: about 5.7 ms of game thread for 12 (median 30.3 vs 24.5 ms), roughly 0.5 ms each with `Crowd.Lod`, plus 1.1 ms GPU. Keep 12 for the jam.
+  - No pose warnings, no errors.
+- **Playtest run 3** found the walkers standing still. Cause: the lives system of train #10 took every NPC's body, ring walkers included. From the 19:32 build it leaves `Crowd_Ring` actors to stroll.
+- **Converted walkers.** A walker the villain converts leaves the ring and stays his. A fresh civilian replaces it.
+- **Look preload.** From train #13 the ring loads the Civilian looks in the background at map start, so spawning doesn't stall on a first-time load. One 228 ms frame was seen during replacements in the test.
+- **Not the villain's (train #13).** In the test the villain converted 3 ring walkers in about 40 s (Tarnish 3/20). At that rate the meter would hit 20 in 4–5 minutes. The orchestrator decided that ring walkers carry `NoVillain`, so the Tarnish takes only named or placed people. A walker converted before the tag existed still leaves the ring.
+- **Back to the sidewalk (train #13).** After a fright, a calm walker now looks for a lane up to 20 m away (6 m before), so it walks back to the sidewalk instead of strolling round its spawn point.
+- **Frostside variety.** In the test, every Frostside walker was FrostSilas or FrostHyeon. The look pool per side belongs to npc-unify; a request to add FrostIven, Nia, Saran, Amara, Tobias and Wen (armour-free only) has been sent.
 
 ## The city crowd: Mass pedestrians on ZoneGraph lanes (2026-11-14, not used for the jam)
 

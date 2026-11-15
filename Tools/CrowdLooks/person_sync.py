@@ -55,6 +55,9 @@ try:
         p.set_editor_property('common_folder_path', ROOT + '/Common')
         p.set_editor_property('absolute_build_path', '%s/%s/Built' % (ROOT, PID))
         sub.build_meta_human(mhc, p)
+        # Never save a shared skeleton the build may have rewritten in memory (see skel_guard.py).
+        exec(open(TOOLS + 'skel_guard.py', encoding='utf-8').read(), globals())
+        row['skel_reloaded_after_build'] = skel_guard()
         if not eal.does_asset_exist(built_face):
             raise RuntimeError('build failed (see LogMetaHumanCharacterEditor)')
         # Save the person AND the shared Common folder: the build copies each groom's textures and card meshes into
@@ -69,6 +72,9 @@ try:
     row['ok'] = True
 except Exception as e:
     row['err'] = str(e)[:300]
+finally:
+    exec(open(TOOLS + 'skel_guard.py', encoding='utf-8').read(), globals())
+    row['skel_reloaded_at_end'] = skel_guard()
 row['secs'] = round(time.time() - t0, 1)
 with open(PROGRESS, 'w') as f:
     json.dump(progress, f, indent=1)

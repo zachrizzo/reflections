@@ -72,6 +72,12 @@ namespace
 
 }
 
+FText UReflectionsVillainSubsystem::ArenaSideName(const UObject* WorldContext)
+{
+    const UReflectionsWorldJumpWorldSubsystem* Jump = UReflectionsWorldJumpWorldSubsystem::Get(WorldContext);
+    return Jump && Jump->IsWorldJumpActive() ? SideName(WorldContext, EReflectionsWorld::White) : FText::GetEmpty();
+}
+
 FText UReflectionsVillainSubsystem::SideName(const UObject* WorldContext, EReflectionsWorld World)
 {
     // The world-jump config owns the player-facing names of the three sides.
@@ -385,6 +391,11 @@ void UReflectionsVillainSubsystem::TrySeed()
     }
     if (!Target)
     {
+        // Nobody takeable near the player (ring walkers carry NoVillain): any named or placed person on the map.
+        Target = PickCandidate(Around, 1.0e7f, nullptr, true);
+    }
+    if (!Target)
+    {
         return;
     }
     // He arrives from the sky: a streak falling onto his first body.
@@ -441,7 +452,7 @@ void UReflectionsVillainSubsystem::Think()
         TryRestoreSaved();
     }
     // Also keep looking while the true form waits at a fallback spot: its marker may sit in a sublevel loaded later.
-    if (Now(World) >= NextMapCheck && (Now(World) <= MapCheckUntil || (bFinale && !bArenaFromMarker)))
+    if (Now(World) >= NextMapCheck && (Now(World) <= MapCheckUntil || !bArenaFromMarker || !bMapEnabled))
     {
         NextMapCheck = Now(World) + 2.0;
         RecheckMap();
@@ -970,6 +981,10 @@ float UReflectionsVillainSubsystem::BeginConversion(AActor* Attacker, AActor* Vi
     {
         return Refuse(TEXT("too far apart"));
     }
+    if (!bIgnoreConvertGap && Now(World) < NextConversionTime)
+    {
+        return Refuse(TEXT("pacing: the next conversion is not due yet (Villain.ConvertInterval)"));
+    }
     FActorSpawnParameters Params;
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     AReflectionsVillainConversion* Conversion = World->SpawnActor<AReflectionsVillainConversion>(AReflectionsVillainConversion::StaticClass(),
@@ -984,6 +999,15 @@ float UReflectionsVillainSubsystem::BeginConversion(AActor* Attacker, AActor* Vi
     {
         Conversions.Remove(Conversion);
         Conversion->Destroy();
+    }
+    else
+    {
+        // Pacing: a couple of quick ones show the player what is happening, then about one every ConvertInterval,
+        // a little faster with each page (the Tarnish grows bolder as the mirror comes together).
+        ++ConversionsStarted;
+        const float Early = ConversionsStarted <= 2 ? 0.4f : 1.0f;
+        const float Pages = FMath::Max(0.7f, 1.0f - 0.1f * PagesFound);
+        NextConversionTime = Now(World) + ReflectionsVillainTuning::ConvertInterval() * Early * Pages * FMath::FRandRange(0.85f, 1.15f);
     }
     return Length;
 }
@@ -1038,6 +1062,7 @@ float UReflectionsVillainSubsystem::ConvertNearest()
         Mover->SetActorLocation(Victim->GetActorLocation() + (Away.IsNearlyZero() ? FVector::ForwardVector : Away) * 300.0f, false,
             nullptr, ETeleportType::TeleportPhysics);
     }
+    TGuardValue<bool> AnyTime(bIgnoreConvertGap, true);
     const float Length = BeginConversion(Attacker, Victim);
     if (Length > 0.0f)
     {
@@ -1112,7 +1137,7 @@ void UReflectionsVillainSubsystem::RecheckMap()
     }
     if (!bMapEnabled && !bFinale && ReflectionsVillainTuning::AutoStart() == 1)
     {
-        bool bHasAnchors = bArenaFromMarker;
+        bool bHasAnchors = bArenaFromMarker || IsNewGameMap();
         for (TActorIterator<AReflectionsWorldAnchor> It(World); It && !bHasAnchors; ++It)
         {
             bHasAnchors = true;
@@ -1122,9 +1147,18 @@ void UReflectionsVillainSubsystem::RecheckMap()
             bMapEnabled = true;
             bRunning = true;
             bSeedClockStarted = false;
-            UE_LOG(LogReflectionsVillain, Log, TEXT("Villain: world anchors streamed in; possession on (starts once play is live)."));
+            UE_LOG(LogReflectionsVillain, Log, TEXT("Villain: gameplay map (anchors, arena or the New Game map); possession on (starts once play is live)."));
         }
     }
+}
+
+bool UReflectionsVillainSubsystem::IsNewGameMap() const
+{
+    const UWorld* World = GetWorld();
+    const UGameInstance* Instance = World ? World->GetGameInstance() : nullptr;
+    const UReflectionsGameFlowSubsystem* Flow = Instance ? Instance->GetSubsystem<UReflectionsGameFlowSubsystem>() : nullptr;
+    const FString Target = Flow ? Flow->GetNewGameMapPackage() : FString();
+    return !Target.IsEmpty() && UWorld::RemovePIEPrefix(World->GetOutermost()->GetName()) == Target;
 }
 
 bool UReflectionsVillainSubsystem::IsRunLive() const
@@ -1391,7 +1425,7 @@ void UReflectionsVillainSubsystem::AnnounceFinale()
     {
         // After the cutscene its own caption already said "The Mirror Is Whole": show only the second line.
         Widget->ShowBanner(bMirrorCutscenePlayed ? FText::GetEmpty() : ReflectionsVillainText::MirrorWholeTitle(),
-            ReflectionsVillainText::MirrorWholeSubtitle(SideName(this, EReflectionsWorld::White)), ReflectionsVillainColors::FinalGold);
+            ReflectionsVillainText::MirrorWholeSubtitle(ArenaSideName(this)), ReflectionsVillainColors::FinalGold);
     }
     ReflectionsVillainFx::Sound2D(GetWorld(), ReflectionsVillainAssets::FinalSpellSound(), 0.8f);
 }

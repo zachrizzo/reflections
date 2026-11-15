@@ -242,6 +242,48 @@ Playtest feedback: "think of this like a fully open world. There needs to be rea
     for the hit's Duration, with `SCue_Shock_Loop`.
   - Chain lightning: a Lightning Bolt's direct hit jumps to up to two living bodies within 7.5 m at 60% damage.
 
+## Impact feel (train #14)
+
+User feedback: "the effect it has and the way it hits their body is underwhelming, it's like they don't react to the
+physics of it." npc-unify owns NPC body physics; this side owns how a hit feels and looks.
+- **Knock-back that reads**: single-target bolts carried almost no impulse (Fire Bolt 80 cm/s). Now:
+  - Fire Bolt 380, Ice Shard 320, Arcane Bolt 340, Lightning Bolt 260, Lightning Burst 200, Stone Shard 650;
+  - Water Bolt stays 450, and a Fireball blast reaches up to 1100 at the centre.
+  - The player as a target takes 0.3×.
+  - `Magnitude` is `Push/1400 + Damage/50`, clamped to 0.1–1: Fire Bolt ≈ 0.55, Lightning ≥ 0.6, Stone Shard ≈ 0.94.
+- **Hit-stop**: only on strong hits (Magnitude ≥ 0.6, Explosion or Knockdown), 50–80 ms by strength. It was a fixed
+  60 ms on every hit.
+- **Shake**: by strength (0.06 + 0.28 × Magnitude) and distance, rate-limited to one per 0.1 s. The player feels being
+  hit too (0.12 + 0.3 × Magnitude).
+- **At the hit point on a body**:
+  - a light punch-through spray of the element along the hit direction (blasts use their own effect);
+  - lingering `NS_Spell_BodyFx` on the body: embers and smoke while burning, frost mist and glints while frozen,
+    drips for 1.6 s after a water hit;
+  - the electric crackle while shocked.
+  - All of these are for living targets only. Wall hits used to be able to crackle.
+- **Sound**: `SCue_Spell_BodyHit` (`_Heavy` on strong hits) at 0.9, plus `_Fire`, `_Ice`, `_Lightning` and `_Water`
+  sweeteners at 0.8, all from the audio session.
+- **One body per NPC**: hits and blast overlaps on an NPC's hidden walker or hit proxy resolve to the NPC, so each spell
+  hits each NPC once. This side never launches NPC bodies (npc-unify does, using the same Magnitude scale).
+
+## Verified on train #11+12 (14 Nov, 20:03, PIE queue row 5)
+
+- **Tarnish through the real AI** (`Tools/SpellVFX/test_tarnish_live_pie.py`, PASS):
+  - An infected walker had the caster component added by npc-unify at 12.2 s.
+  - A Bolt wind-up followed, and the player took 11 + 11 damage, with 3 tarnish stains.
+  - The two hits were 0.7 s apart, which is faster than npc-unify's 2.5–4 s spacing; reported to npc-unify.
+- **Fireball explosion**: the walker took the full 20, was lifted off its feet and thrown back, with burning debris
+  and a scorch. Prop throwing is not checked yet: there were no small props near the blast.
+- **Lightning Bolt**: the target took 20, and three crackle effects were active at once. That suggests the chain hit
+  two more bodies, but they weren't the walker the test was watching, so the chain is not fully proven.
+- **Testing in PIE**: this editor's Python can't add components or spawn actors there, so the tests use real AI
+  (`SetInfection`) and existing level props instead.
+- Image: `Saved/SpellCombatTest/final/10_tarnish_explosion_shock.png`.
+- **Train #13 (compiled, not yet in a build)**:
+  - point-blank sweep (`ResolvePointBlank`): a bolt that spawns inside a body in melee range strikes it;
+  - hero health regen: 3 HP/s after 6 s without damage;
+  - `Spell.LogHits`.
+
 ## Earlier queued items (now all in the build)
 
 - HUD target panel: shows health for whatever the reticle is on if it is tagged `NPC_CombatEnemy` or the unified NPC

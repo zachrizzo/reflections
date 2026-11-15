@@ -11,7 +11,13 @@
 #include "Sound/SoundBase.h"
 #include "Misc/PackageName.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/MeshComponent.h"
+#include "Materials/MaterialInterface.h"
+#include "AnimationRuntime.h"
+#include "ReferenceSkeleton.h"
 #include "Animation/AnimSequence.h"
+#include "Animation/AnimMontage.h"
+#include "Animation/Skeleton.h"
 #include "Engine/StaticMesh.h"
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
@@ -79,7 +85,13 @@ void UReflectionsNpcReactionComponent::RepairBodyPose()
     // Followers have no buffers of their own; a simulating body is left to physics; a task in flight means the
     // buffers are swapped on purpose.
     if (!Body || !Body->IsRegistered() || !Body->GetSkeletalMeshAsset() || Body->LeaderPoseComponent.IsValid() ||
-        Body->IsAnySimulatingPhysics() || Body->IsRunningParallelEvaluation() || HasPose(Body)) return;
+        Body->IsAnySimulatingPhysics() || Body->IsRunningParallelEvaluation()) return;
+    if (HasPose(Body))
+    {
+        // Good again: a later loss gets its full number of repairs.
+        PoseRepairs = 0;
+        return;
+    }
     const UWorld* World = GetWorld();
     const float Now = World ? World->GetTimeSeconds() : 0.0f;
     if (Now < NextPoseRepairTime || PoseRepairs >= 20) return;
@@ -161,6 +173,7 @@ void UReflectionsNpcReactionComponent::StartHitFlash(const FReflectionsSpellHitD
     if (!HitFlash)
     {
         HitFlash = NewObject<UPointLightComponent>(Owner);
+        HitFlash->ComponentTags.Add(TEXT("NpcRuntime"));
         HitFlash->SetMobility(EComponentMobility::Movable);
         HitFlash->SetupAttachment(Owner->GetRootComponent());
         HitFlash->SetCastShadows(false);
@@ -291,8 +304,8 @@ void UReflectionsNpcReactionComponent::EndScriptedHold()
     ScriptedHoldRemaining = 0.0f;
 }
 
-static TAutoConsoleVariable<int32> CVarNpcElementReactions(TEXT("Npc.ElementReactions"), 0,
-    TEXT("1: a spell's hit does to a living NPC what the spell says (thrown by a blast, shoved, lifted, pulled, shocked until it drops, frozen, set alight). 0 (default until tested): the plain flinch."));
+static TAutoConsoleVariable<int32> CVarNpcElementReactions(TEXT("Npc.ElementReactions"), 1,
+    TEXT("1 (default): a spell's hit does to a living NPC what the spell says (thrown by a blast, shoved, lifted, pulled, shocked until it drops, frozen, set alight). 0: the plain flinch."));
 
 namespace
 {
@@ -474,6 +487,15 @@ bool UReflectionsNpcReactionComponent::ReactToSpell(const FReflectionsSpellHitDa
     const UReflectionsNpcArchetype* Active = GetActiveArchetype();
     if (CVarNpcElementReactions.GetValueOnGameThread() == 0 || !Owner || !Active || !Subsystem.IsValid()) return false;
     const FVector Here = Owner->GetActorLocation();
+    if (WalkerDown == EWalkerDown::Down)
+    {
+        // Lying there: the hit shoves the ragdoll, and it stays down a little longer.
+        if (const ACharacter* Downed = LocomotionDriver.Get())
+            if (USkeletalMeshComponent* DownedMesh = Downed->GetMesh())
+                DownedMesh->AddImpulse(FVector(Hit.Impulse.X, Hit.Impulse.Y, FMath::Abs(Hit.Impulse.Z) + 60.0) * 0.5, NAME_None, true);
+        WalkerStillTime = 0.0f;
+        return true;
+    }
     // Which way: along the velocity the hit gives the body, flattened; away from the blast's centre when it has none.
     FVector Along(Hit.Impulse.X, Hit.Impulse.Y, 0.0);
     if (Along.SizeSquared() < 1.0) Along = FVector(Here.X - Hit.Origin.X, Here.Y - Hit.Origin.Y, 0.0);
@@ -488,12 +510,22 @@ bool UReflectionsNpcReactionComponent::ReactToSpell(const FReflectionsSpellHitDa
         if (bFirst) Subsystem->PlayReaction(Owner, FName(Group));
     };
     const auto Up = [](float Speed) { return FVector(0.0, 0.0, Speed); };
+    // A plain hit with some weight behind it rocks the NPC back on its feet: about half the speed the spell
+    // gives the body, never more than a step or two. Light hits (strength under 0.4) only jolt.
+    const auto Rock = [this, &Hit, Along, Strength, bFirst]()
+    {
+        const float Speed = FMath::Min(static_cast<float>(FVector(Hit.Impulse.X, Hit.Impulse.Y, 0.0).Size()) * 0.5f, 260.0f);
+        return bFirst && Strength >= 0.4f && Speed >= 80.0f && Throw(Along * Speed + FVector(0.0, 0.0, 40.0), true);
+    };
     switch (Hit.Reaction)
     {
     case EReflectionsSpellReaction::Explosion:
     {
-        // Thrown off its feet, harder the nearer the blast. A blast of fire leaves it burning as well.
-        const bool bThrown = Throw(Along * FMath::Lerp(450.0f, 1000.0f, Strength) + Up(FMath::Lerp(220.0f, 480.0f, Strength)), bFirst);
+        // Thrown off its feet, harder the nearer the blast: about 2 m at the edge, 4 m from a direct hit (the
+        // first numbers, 1000 and 480 at full strength, threw a soldier 9.7 m). A blast of fire leaves it burning.
+        // A strong blast (the same 0.6 line as the spell's hit-stop and shake) knocks it off its feet.
+        const FVector Launch = Along * FMath::Lerp(250.0f, 520.0f, Strength) + Up(FMath::Lerp(200.0f, 340.0f, Strength));
+        const bool bThrown = (bFirst && Strength >= 0.6f && StartWalkerKnockdown(Launch)) || Throw(Launch, bFirst);
         if (ReflectionsSpellCatalog::IsValid(Hit.Spell) && ReflectionsSpellCatalog::Get(Hit.Spell).Element == EReflectionsSpellElement::Fire)
             StartBurning(3.5f, bFirst);
         else Say(TEXT("React_Knocked"));
@@ -501,19 +533,26 @@ bool UReflectionsNpcReactionComponent::ReactToSpell(const FReflectionsSpellHitDa
     }
     case EReflectionsSpellReaction::Push:
     {
-        const bool bThrown = Throw(Along * FMath::Lerp(500.0f, 950.0f, Strength) + Up(170.0f), bFirst);
+        // A shove of 1.5 to 3 m (950 at full strength sent a soldier 6.7 m).
+        const FVector Launch = Along * FMath::Lerp(320.0f, 580.0f, Strength) + Up(150.0f);
+        const bool bThrown = (bFirst && Strength >= 0.8f && StartWalkerKnockdown(Launch)) || Throw(Launch, bFirst);
+        // Shoved by water: the splash of it on the body, on top of the thud.
+        if (bFirst && ReflectionsSpellCatalog::IsValid(Hit.Spell) && ReflectionsSpellCatalog::Get(Hit.Spell).Element == EReflectionsSpellElement::Water)
+            if (USoundBase* Splash = Subsystem->FindJamCue(TEXT("Cues/SCue_Water_Shove")))
+                UGameplayStatics::PlaySoundAtLocation(this, Splash, Here + FVector(0.0, 0.0, 90.0));
         Say(TEXT("React_Knocked"));
         return bThrown;
     }
     case EReflectionsSpellReaction::Knockdown:
     {
-        const bool bThrown = Throw(Along * FMath::Lerp(300.0f, 600.0f, Strength) + Up(280.0f), bFirst);
+        const FVector Launch = Along * FMath::Lerp(200.0f, 380.0f, Strength) + Up(230.0f);
+        const bool bThrown = (bFirst && Strength >= 0.6f && StartWalkerKnockdown(Launch)) || Throw(Launch, bFirst);
         Say(TEXT("React_Knocked"));
         return bThrown;
     }
     case EReflectionsSpellReaction::Lift:
     {
-        const bool bThrown = Throw(Along * FMath::Lerp(150.0f, 400.0f, Strength) + Up(FMath::Lerp(480.0f, 760.0f, Strength)), bFirst);
+        const bool bThrown = Throw(Along * FMath::Lerp(100.0f, 240.0f, Strength) + Up(FMath::Lerp(420.0f, 640.0f, Strength)), bFirst);
         Say(TEXT("React_Knocked"));
         return bThrown;
     }
@@ -521,7 +560,7 @@ bool UReflectionsNpcReactionComponent::ReactToSpell(const FReflectionsSpellHitDa
     {
         // Drawn toward the centre; the spell sends this again about twice a second while it lasts.
         const FVector Toward = FVector(Hit.Origin.X - Here.X, Hit.Origin.Y - Here.Y, 0.0).GetSafeNormal();
-        const bool bThrown = !Toward.IsNearlyZero() && Throw(Toward * FMath::Lerp(300.0f, 600.0f, Strength) + Up(120.0f), bFirst);
+        const bool bThrown = !Toward.IsNearlyZero() && Throw(Toward * FMath::Lerp(220.0f, 420.0f, Strength) + Up(90.0f), bFirst);
         Say(TEXT("React_Knocked"));
         return bThrown;
     }
@@ -534,10 +573,71 @@ bool UReflectionsNpcReactionComponent::ReactToSpell(const FReflectionsSpellHitDa
         return false;
     case EReflectionsSpellReaction::Burn:
         StartBurning(FMath::Clamp(Hit.Duration + 1.0f, 2.5f, 5.0f), bFirst);
-        return false;
+        return Rock();
     default:
         Say(TEXT("React_Hurt"));
-        return false;
+        return Rock();
+    }
+}
+
+namespace
+{
+    // One hand of the body in its reference pose, in component space: where the wrist and the knuckle line are and
+    // which way the fingers, the thumb side and the palm point. Read from the mesh asset's reference skeleton only,
+    // never from the live pose.
+    struct FNpcHandFrame
+    {
+        bool bValid = false;
+        FTransform Hand;
+        FTransform Forearm;
+        FVector Wrist = FVector::ZeroVector;
+        FVector Knuckles = FVector::ZeroVector;
+        FVector Fingers = FVector::ForwardVector;
+        FVector ThumbSide = FVector::UpVector;
+        FVector Palm = FVector::RightVector;
+    };
+
+    FNpcHandFrame MakeHandFrame(const USkeletalMesh* Asset, bool bRight)
+    {
+        FNpcHandFrame Out;
+        if (!Asset) return Out;
+        const FReferenceSkeleton& Ref = Asset->GetRefSkeleton();
+        const auto Find = [&Ref, bRight](const TCHAR* Stem)
+        {
+            return Ref.FindBoneIndex(FName(*FString::Printf(TEXT("%s_%s"), Stem, bRight ? TEXT("r") : TEXT("l"))));
+        };
+        const int32 Hand = Find(TEXT("hand")), Forearm = Find(TEXT("lowerarm")), Index = Find(TEXT("index_01")),
+            Middle = Find(TEXT("middle_01")), Pinky = Find(TEXT("pinky_01")), Tip = Find(TEXT("middle_03"));
+        if (Hand == INDEX_NONE || Forearm == INDEX_NONE || Index == INDEX_NONE || Middle == INDEX_NONE || Pinky == INDEX_NONE) return Out;
+        const auto At = [&Ref](int32 Bone) { return FAnimationRuntime::GetComponentSpaceTransformRefPose(Ref, Bone); };
+        Out.Hand = At(Hand);
+        Out.Forearm = At(Forearm);
+        Out.Wrist = Out.Hand.GetLocation();
+        const FVector I = At(Index).GetLocation(), M = At(Middle).GetLocation(), P = At(Pinky).GetLocation();
+        Out.Knuckles = (I + P) * 0.5;
+        Out.Fingers = (M - Out.Wrist).GetSafeNormal();
+        Out.ThumbSide = I - P;
+        Out.ThumbSide = (Out.ThumbSide - Out.Fingers * FVector::DotProduct(Out.ThumbSide, Out.Fingers)).GetSafeNormal();
+        Out.Palm = FVector::CrossProduct(Out.Fingers, Out.ThumbSide).GetSafeNormal();
+        // Which of the two faces is the palm: a relaxed finger droops toward it. (The two hands are mirror images,
+        // so the cross product alone points to the palm on one hand and to the back of the other.)
+        FVector Droop = Tip != INDEX_NONE ? At(Tip).GetLocation() - M : FVector::ZeroVector;
+        Droop -= Out.Fingers * FVector::DotProduct(Droop, Out.Fingers);
+        if (Droop.SizeSquared() > 0.01 ? FVector::DotProduct(Out.Palm, Droop) < 0.0 : !bRight) Out.Palm = -Out.Palm;
+        Out.bValid = !Out.Fingers.IsNearlyZero() && !Out.ThumbSide.IsNearlyZero() && !Out.Palm.IsNearlyZero();
+        return Out;
+    }
+
+    UStaticMeshComponent* MakeHeldProp(AActor* Owner)
+    {
+        UStaticMeshComponent* Prop = NewObject<UStaticMeshComponent>(Owner, NAME_None, RF_Transient);
+        Prop->SetMobility(EComponentMobility::Movable);
+        Prop->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        Prop->SetGenerateOverlapEvents(false);
+        Prop->SetCanEverAffectNavigation(false);
+        Prop->ComponentTags.Add(TEXT("NpcRuntime"));
+        Prop->RegisterComponent();
+        return Prop;
     }
 }
 
@@ -555,20 +655,315 @@ void UReflectionsNpcReactionComponent::RefreshWeaponProp()
     }
     if (!WeaponProp)
     {
-        WeaponProp = NewObject<UStaticMeshComponent>(Owner, NAME_None, RF_Transient);
-        WeaponProp->SetMobility(EComponentMobility::Movable);
-        WeaponProp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        WeaponProp->SetGenerateOverlapEvents(false);
-        WeaponProp->SetCanEverAffectNavigation(false);
-        WeaponProp->ComponentTags.Add(TEXT("NpcRuntime"));
-        WeaponProp->RegisterComponent();
-        // The grip the melee set was made for: a weapon_r socket where the skeleton has one, else the same
-        // offset on the hand bone (the crafting session's numbers, +X along the blade).
-        const bool bSocket = Body->DoesSocketExist(TEXT("weapon_r"));
-        WeaponProp->AttachToComponent(Body, FAttachmentTransformRules::SnapToTargetNotIncludingScale, bSocket ? FName(TEXT("weapon_r")) : FName(TEXT("hand_r")));
-        if (!bSocket) WeaponProp->SetRelativeLocationAndRotation(FVector(-3.8, -0.1, 0.1), FRotator(73.2, -142.3, 0.0));
+        WeaponProp = MakeHeldProp(Owner);
+        WeaponProp->AttachToComponent(Body, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("hand_r"));
+    }
+    // In the fist: the handle lies across the palm in the crook of the closed fingers (2 cm back from the knuckle
+    // line, 3 cm into the palm), and the blade leaves the fist on the thumb side, tipped back a little so that a
+    // hanging arm carries the point forward and slightly up. The weapon's own axes: +X along the blade, +Y
+    // across it (the guard), which is laid along the fingers.
+    const FNpcHandFrame Fist = MakeHandFrame(Body->GetSkeletalMeshAsset(), true);
+    if (Fist.bValid)
+    {
+        const FVector GripAt = Fist.Knuckles - Fist.Fingers * 2.0 + Fist.Palm * 3.0;
+        const float Tilt = FMath::DegreesToRadians(15.0f);
+        const FVector Blade = (Fist.ThumbSide * FMath::Cos(Tilt) - Fist.Fingers * FMath::Sin(Tilt)).GetSafeNormal();
+        const FQuat Facing = FRotationMatrix::MakeFromXY(Blade, Fist.Fingers).ToQuat();
+        const FTransform InComponent(Facing, GripAt - Facing.RotateVector(Active->Combat.WeaponGrip));
+        WeaponProp->SetRelativeTransform(Active->Combat.WeaponOffset * InComponent.GetRelativeTransform(Fist.Hand));
+    }
+    else
+    {
+        // A body without finger bones: the old grip, measured on the walker's hand.
+        WeaponProp->SetRelativeLocationAndRotation(FVector(-3.8, -0.1, 0.1), FRotator(73.2, -142.3, 0.0));
     }
     WeaponProp->SetStaticMesh(Mesh);
+}
+
+void UReflectionsNpcReactionComponent::RefreshShieldProp()
+{
+    AActor* Owner = GetOwner();
+    const UReflectionsNpcArchetype* Active = GetActiveArchetype();
+    UStaticMesh* Mesh = Active ? Active->Combat.ShieldProp.LoadSynchronous() : nullptr;
+    USkeletalMeshComponent* Body = Owner ? FindNpcBody(Owner) : nullptr;
+    const FNpcHandFrame Arm = MakeHandFrame(Body ? Body->GetSkeletalMeshAsset() : nullptr, false);
+    // A look whose own shield stays visible keeps it; one whose shield part this archetype hides gets this one.
+    bool bKeepsItsOwn = false;
+    if (Owner && Active)
+    {
+        TInlineComponentArray<UMeshComponent*> Parts(Owner);
+        for (const UMeshComponent* Part : Parts)
+        {
+            if (!Part || Part == ShieldProp.Get() || !Part->GetName().Contains(TEXT("Shield"))) continue;
+            bool bHidden = false;
+            for (const FName& Piece : Active->HiddenLookParts)
+                if (!Piece.IsNone() && Part->GetName().Contains(Piece.ToString())) bHidden = true;
+            if (!bHidden) bKeepsItsOwn = true;
+        }
+    }
+    if (!Mesh || bKeepsItsOwn || !Arm.bValid)
+    {
+        if (ShieldProp) ShieldProp->DestroyComponent();
+        ShieldProp = nullptr;
+        return;
+    }
+    if (!ShieldProp)
+    {
+        ShieldProp = MakeHeldProp(Owner);
+        // The squad layer looks for this tag (or the archetype's ShieldProp) and then attaches no shield of its own.
+        ShieldProp->ComponentTags.Add(TEXT("NpcShield"));
+        ShieldProp->AttachToComponent(Body, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("lowerarm_l"));
+    }
+    // Strapped to the forearm with its handle in the fist: the shield lies along the forearm on the side of the
+    // back of the hand, its face (+X) looking that way, its middle a hand's width short of the wrist so that the
+    // fist is behind it. It hangs on the forearm bone, so bending the wrist does not swing it.
+    const FVector Elbow = Arm.Forearm.GetLocation();
+    const FVector Along = Arm.Wrist - Elbow;
+    const float Length = FMath::Clamp(static_cast<float>(Along.Size()), 15.0f, 40.0f);
+    const FVector Axis = Along.GetSafeNormal();
+    FVector Out = -Arm.Palm;
+    Out = (Out - Axis * FVector::DotProduct(Out, Axis)).GetSafeNormal();
+    if (Out.IsNearlyZero()) Out = FVector::UpVector;
+    const FQuat Facing = FRotationMatrix::MakeFromXZ(Out, -Axis).ToQuat();
+    const FTransform InComponent(Facing, Elbow + Axis * (Length - 4.0f) + Out * 6.0f);
+    ShieldProp->SetRelativeTransform(Active->Combat.ShieldOffset * InComponent.GetRelativeTransform(Arm.Forearm));
+    ShieldProp->SetStaticMesh(Mesh);
+    if (UMaterialInterface* Material = Active->Combat.ShieldMaterial.LoadSynchronous())
+        for (int32 Slot = 0; Slot < ShieldProp->GetNumMaterials(); ++Slot) ShieldProp->SetMaterial(Slot, Material);
+}
+
+void UReflectionsNpcReactionComponent::HideLookParts()
+{
+    AActor* Owner = GetOwner();
+    const UReflectionsNpcArchetype* Active = GetActiveArchetype();
+    if (!Owner || !Active || Active->HiddenLookParts.Num() == 0) return;
+    // The look's own parts only: never the body, never what this component added (sword, shield).
+    const USkeletalMeshComponent* Body = FindNpcBody(Owner);
+    TInlineComponentArray<UMeshComponent*> Parts(Owner);
+    for (UMeshComponent* Part : Parts)
+    {
+        if (!Part || Part == Body || Part == WeaponProp.Get() || Part == ShieldProp.Get()) continue;
+        const FString Name = Part->GetName();
+        for (const FName& Piece : Active->HiddenLookParts)
+            if (!Piece.IsNone() && Name.Contains(Piece.ToString()))
+            {
+                Part->SetHiddenInGame(true);
+                break;
+            }
+    }
+}
+
+static TAutoConsoleVariable<int32> CVarNpcWalkerPhysics(TEXT("Npc.WalkerPhysics"), 0,
+    TEXT("1: a spell's hit jolts an NPC's upper body with real physics, on its hidden walker (the visible body copies the walker and is never simulated). 0 (default until tested): off."));
+
+void UReflectionsNpcReactionComponent::FacePoint(const FVector& Point, float DeltaTime)
+{
+    AActor* Owner = GetOwner();
+    if (!Owner || IsIncapacitated()) return;
+    const FVector Direction = (Point - Owner->GetActorLocation()).GetSafeNormal2D();
+    if (Direction.IsNearlyZero()) return;
+    // A walking NPC is turned through its walker (the body is attached to it); anything else turns itself.
+    AActor* Turner = LocomotionDriver.IsValid() ? static_cast<AActor*>(LocomotionDriver.Get()) : Owner;
+    Turner->SetActorRotation(FMath::RInterpTo(Turner->GetActorRotation(), FRotator(0.0, Direction.Rotation().Yaw, 0.0), DeltaTime, 8.0f));
+}
+
+namespace
+{
+    const FName WalkerJoltRoot(TEXT("spine_02"));
+    const FName WalkerJoltAt(TEXT("spine_04"));
+}
+
+bool UReflectionsNpcReactionComponent::StartWalkerJolt(const FVector& Direction, float Strength)
+{
+    AActor* Owner = GetOwner();
+    ACharacter* Driver = LocomotionDriver.Get();
+    USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr;
+    USkeletalMeshComponent* Body = Owner ? FindNpcBody(Owner) : nullptr;
+    if (CVarNpcWalkerPhysics.GetValueOnGameThread() == 0 || WalkerDown != EWalkerDown::None || IsIncapacitated() || !Mesh || !Body || !Mesh->GetPhysicsAsset() ||
+        Mesh->GetBoneIndex(WalkerJoltRoot) == INDEX_NONE || Direction.IsNearlyZero()) return false;
+    Strength = FMath::Clamp(Strength, 0.0f, 1.0f);
+    if (!bWalkerJolting)
+    {
+        // Physics needs the walker's bodies in the scene. They touch nothing: no queries, every channel ignored.
+        WalkerCollisionBefore = Mesh->GetCollisionEnabled();
+        Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+        Mesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+        Mesh->SetAllBodiesBelowSimulatePhysics(WalkerJoltRoot, true, true);
+        // The visible body copies the walker's pose. For the length of the jolt it ticks after physics, so that
+        // what it copies is the pose with the physics blended in. Its animation mode, its animation instance
+        // and its bone buffers are not touched.
+        BodyTickGroupBefore = Body->PrimaryComponentTick.TickGroup;
+        Body->SetTickGroup(TG_PostPhysics);
+        bWalkerJolting = true;
+    }
+    WalkerJoltPeak = FMath::Lerp(0.35f, 0.85f, Strength);
+    WalkerJoltDuration = FMath::Lerp(0.35f, 0.6f, Strength);
+    WalkerJoltRemaining = WalkerJoltDuration;
+    Mesh->SetAllBodiesBelowPhysicsBlendWeight(WalkerJoltRoot, WalkerJoltPeak, false, true);
+    Mesh->AddImpulse(Direction.GetSafeNormal() * FMath::Lerp(180.0f, 650.0f, Strength),
+        Mesh->GetBoneIndex(WalkerJoltAt) != INDEX_NONE ? WalkerJoltAt : WalkerJoltRoot, true);
+    return true;
+}
+
+void UReflectionsNpcReactionComponent::EndWalkerJolt()
+{
+    if (!bWalkerJolting) return;
+    bWalkerJolting = false;
+    WalkerJoltRemaining = 0.0f;
+    AActor* Owner = GetOwner();
+    const ACharacter* Driver = LocomotionDriver.Get();
+    if (USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr)
+    {
+        Mesh->SetAllBodiesBelowPhysicsBlendWeight(WalkerJoltRoot, 0.0f, false, true);
+        Mesh->SetAllBodiesBelowSimulatePhysics(WalkerJoltRoot, false, true);
+        Mesh->SetCollisionEnabled(WalkerCollisionBefore);
+    }
+    if (USkeletalMeshComponent* Body = Owner ? FindNpcBody(Owner) : nullptr) Body->SetTickGroup(BodyTickGroupBefore);
+}
+
+bool UReflectionsNpcReactionComponent::StartWalkerKnockdown(const FVector& Velocity)
+{
+    AActor* Owner = GetOwner();
+    ACharacter* Driver = LocomotionDriver.Get();
+    USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr;
+    USkeletalMeshComponent* Body = Owner ? FindNpcBody(Owner) : nullptr;
+    if (CVarNpcWalkerPhysics.GetValueOnGameThread() < 2 || IsIncapacitated() || WalkerDown != EWalkerDown::None || !Mesh || !Body ||
+        !Mesh->GetPhysicsAsset() || Mesh->GetBoneIndex(TEXT("pelvis")) == INDEX_NONE || Mesh->GetBoneIndex(TEXT("head")) == INDEX_NONE) return false;
+    EndWalkerJolt();
+    // The capsule stays where it stood, out of everyone's way, until the walker gets up.
+    UCharacterMovementComponent* Movement = Driver->GetCharacterMovement();
+    Movement->StopMovementImmediately();
+    Movement->DisableMovement();
+    UCapsuleComponent* Capsule = Driver->GetCapsuleComponent();
+    WalkerCapsuleCollisionBefore = Capsule->GetCollisionEnabled();
+    Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    if (Motor) Motor->SetCombatTarget(nullptr);
+    // The walker's mesh leaves the capsule and falls as a ragdoll that only the ground stops. The visible body
+    // is attached to this mesh and copies its pose after physics; it is not simulated and not re-initialised.
+    WalkerMeshRelative = Mesh->GetRelativeTransform();
+    WalkerCollisionBefore = Mesh->GetCollisionEnabled();
+    Mesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+    Mesh->SetCollisionObjectType(ECC_PhysicsBody);
+    Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+    Mesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+    Mesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+    Mesh->PhysicsTransformUpdateMode = EPhysicsTransformUpdateMode::SimulationUpatesComponentTransform;
+    Mesh->SetAllBodiesSimulatePhysics(true);
+    Mesh->SetAllBodiesPhysicsBlendWeight(1.0f);
+    Mesh->SetAllPhysicsLinearVelocity(Velocity);
+    BodyTickGroupBefore = Body->PrimaryComponentTick.TickGroup;
+    Body->SetTickGroup(TG_PostPhysics);
+    WalkerDown = EWalkerDown::Down;
+    WalkerDownTime = 0.0f;
+    WalkerStillTime = 0.0f;
+    return true;
+}
+
+void UReflectionsNpcReactionComponent::TickWalkerKnockdown(float DeltaTime)
+{
+    const ACharacter* Driver = LocomotionDriver.Get();
+    USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr;
+    if (!Mesh)
+    {
+        WalkerDown = EWalkerDown::None;
+        return;
+    }
+    if (WalkerDown == EWalkerDown::Down)
+    {
+        WalkerDownTime += DeltaTime;
+        WalkerStillTime = Mesh->GetPhysicsLinearVelocity(TEXT("pelvis")).SizeSquared() < FMath::Square(35.0) ? WalkerStillTime + DeltaTime : 0.0f;
+        // On the ground and still for a second and a half (or four seconds in all, wherever it is): up it gets.
+        if ((WalkerDownTime > 0.8f && WalkerStillTime >= 1.5f) || WalkerDownTime >= 4.0f) BeginWalkerGetUp();
+        return;
+    }
+    // Rising: the physics fades out over the first third of a second of the get-up.
+    WalkerRiseRemaining -= DeltaTime;
+    if (WalkerRiseBlend > 0.0f)
+    {
+        WalkerRiseBlend = FMath::Max(0.0f, WalkerRiseBlend - DeltaTime / 0.35f);
+        Mesh->SetAllBodiesPhysicsBlendWeight(WalkerRiseBlend);
+        if (WalkerRiseBlend <= 0.0f)
+        {
+            Mesh->SetAllBodiesSimulatePhysics(false);
+            Mesh->PhysicsTransformUpdateMode = EPhysicsTransformUpdateMode::SimulationUpatesComponentTransform;
+            Mesh->SetCollisionEnabled(WalkerCollisionBefore);
+        }
+    }
+    if (WalkerRiseRemaining <= 0.0f && WalkerRiseBlend <= 0.0f) EndWalkerKnockdown();
+}
+
+void UReflectionsNpcReactionComponent::BeginWalkerGetUp()
+{
+    AActor* Owner = GetOwner();
+    ACharacter* Driver = LocomotionDriver.Get();
+    USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr;
+    UWorld* World = GetWorld();
+    if (!Owner || !Mesh || !World)
+    {
+        EndWalkerKnockdown();
+        return;
+    }
+    const FVector PelvisAt = Mesh->GetSocketLocation(TEXT("pelvis"));
+    const FVector HeadAt = Mesh->GetSocketLocation(TEXT("head"));
+    // On its back or on its front: which way the chest looks (hips right-to-left crossed with the spine).
+    const FVector Spine = (HeadAt - PelvisAt).GetSafeNormal();
+    const FVector Hips = (Mesh->GetSocketLocation(TEXT("thigh_r")) - Mesh->GetSocketLocation(TEXT("thigh_l"))).GetSafeNormal();
+    const bool bOnBack = FVector::CrossProduct(Hips, Spine).Z > 0.0;
+    // The capsule is stood up where the walker lies: over the pelvis, on the ground under it.
+    UCapsuleComponent* Capsule = Driver->GetCapsuleComponent();
+    FHitResult Floor;
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(NpcGetUp), false, Driver);
+    Params.AddIgnoredActor(Owner);
+    const bool bFloor = World->LineTraceSingleByObjectType(Floor, PelvisAt + FVector(0.0, 0.0, 60.0), PelvisAt - FVector(0.0, 0.0, 300.0),
+        FCollisionObjectQueryParams(ECC_WorldStatic), Params);
+    const FVector Stand(PelvisAt.X, PelvisAt.Y, (bFloor ? Floor.ImpactPoint.Z : PelvisAt.Z - 15.0) + Capsule->GetScaledCapsuleHalfHeight() + 1.0);
+    // The get-up clips start with the head behind the actor (from the back) or ahead of it (from the front).
+    FVector Facing = bOnBack ? PelvisAt - HeadAt : HeadAt - PelvisAt;
+    Facing.Z = 0.0;
+    const FRotator Turn(0.0, Facing.IsNearlyZero() ? Driver->GetActorRotation().Yaw : Facing.Rotation().Yaw, 0.0);
+    Driver->SetActorLocationAndRotation(Stand, Turn, false, nullptr, ETeleportType::TeleportPhysics);
+    // The mesh goes back on the capsule as a kinematic component while its bodies still simulate where they lie:
+    // the pose then blends from the ragdoll to the get-up clip as the physics fades (see the tick).
+    Mesh->PhysicsTransformUpdateMode = EPhysicsTransformUpdateMode::ComponentTransformIsKinematic;
+    Mesh->AttachToComponent(Capsule, FAttachmentTransformRules::KeepWorldTransform);
+    Mesh->SetRelativeTransform(WalkerMeshRelative, false, nullptr, ETeleportType::None);
+    float Length = 0.6f;
+    UAnimSequence* Clip = WalkerClipNamed(bOnBack ? TEXT("AS_GetUp_Back_Walker") : TEXT("AS_GetUp_Front_Walker"));
+    if (Clip && PlayOnWalker(Clip)) Length = Clip->GetPlayLength();
+    WalkerRiseRemaining = Length;
+    WalkerRiseBlend = 1.0f;
+    WalkerDown = EWalkerDown::Rising;
+}
+
+void UReflectionsNpcReactionComponent::EndWalkerKnockdown(bool bLeaveWhereItLies)
+{
+    if (WalkerDown == EWalkerDown::None) return;
+    const bool bStillDown = WalkerDown == EWalkerDown::Down;
+    WalkerDown = EWalkerDown::None;
+    WalkerRiseRemaining = 0.0f;
+    WalkerRiseBlend = 0.0f;
+    AActor* Owner = GetOwner();
+    if (ACharacter* Driver = LocomotionDriver.Get())
+    {
+        UCapsuleComponent* Capsule = Driver->GetCapsuleComponent();
+        if (USkeletalMeshComponent* Mesh = Driver->GetMesh())
+        {
+            Mesh->SetAllBodiesPhysicsBlendWeight(0.0f);
+            Mesh->SetAllBodiesSimulatePhysics(false);
+            Mesh->PhysicsTransformUpdateMode = EPhysicsTransformUpdateMode::SimulationUpatesComponentTransform;
+            Mesh->SetCollisionEnabled(WalkerCollisionBefore);
+            // Cut short while it still lay there and it is to go on (not a death): back on its capsule.
+            if (bStillDown && !bLeaveWhereItLies && Capsule)
+            {
+                Mesh->AttachToComponent(Capsule, FAttachmentTransformRules::KeepWorldTransform);
+                Mesh->SetRelativeTransform(WalkerMeshRelative, false, nullptr, ETeleportType::None);
+            }
+        }
+        if (Capsule) Capsule->SetCollisionEnabled(WalkerCapsuleCollisionBefore);
+        if (!bLeaveWhereItLies && !IsIncapacitated())
+            if (UCharacterMovementComponent* Movement = Driver->GetCharacterMovement()) Movement->SetMovementMode(MOVE_Walking);
+    }
+    if (USkeletalMeshComponent* Body = Owner ? FindNpcBody(Owner) : nullptr) Body->SetTickGroup(BodyTickGroupBefore);
 }
 
 void UReflectionsNpcReactionComponent::FaceTowards(const AActor* Target, float DeltaTime)
@@ -623,6 +1018,16 @@ namespace
         Params.Spell = Spell;
         Caster->ProcessEvent(Function, &Params);
         return Params.ReturnValue > 0.05f ? Params.ReturnValue : Fallback;
+    }
+
+    float TarnishRange(UObject* Caster, uint8 Spell, float Fallback)
+    {
+        UFunction* Function = TarnishFunction(Caster, TEXT("GetCastRange"), 2, sizeof(FTarnishSpellFloat));
+        if (!Function || !CastField<FFloatProperty>(Function->GetReturnProperty())) return Fallback;
+        FTarnishSpellFloat Params;
+        Params.Spell = Spell;
+        Caster->ProcessEvent(Function, &Params);
+        return Params.ReturnValue > 50.0f ? Params.ReturnValue : Fallback;
     }
 }
 
@@ -708,9 +1113,15 @@ bool UReflectionsNpcReactionComponent::TickSpellcasting(float DeltaTime)
 
     // Begin a cast: pick the spell, start the glow in front of the chest, mutter.
     PendingSpell = Active->Combat.RangedSpells[FMath::RandHelper(Active->Combat.RangedSpells.Num())];
-    bPendingHoming = FMath::FRand() < Active->Combat.RangedHomingChance;
+    // The slow wisp only from where it can still arrive (the spell side's own range for it), and never twice running.
+    bPendingHoming = !bBurst && !bLastCastWasWisp && Distance <= TarnishRange(Caster, 1, 1950.0f) &&
+        FMath::FRand() < Active->Combat.RangedHomingChance;
+    bLastCastWasWisp = bPendingHoming;
     CastWindupLength = FMath::Max(0.2f, Active->Combat.RangedWindup);
     CastWindupRemaining = CastWindupLength;
+    // The spacing counts from the start of a cast as well. The Tarnish's caster lets go by itself; if this
+    // NPC's own wind-up is then cut short (its quarry changed for a moment), the next cast must still wait.
+    CastCooldownRemaining = FMath::Max(CastCooldownRemaining, CastWindupLength + Active->Combat.RangedCooldown.X);
     // The Tarnish's own magic first (spell-combat's caster: its wind-up effects, projectile and damage). It
     // lets go by itself; this NPC only stands and faces for as long as that wind-up takes.
     const uint8 TarnishSpell = bBurst ? 2 : bPendingHoming ? 1 : 0;
@@ -904,6 +1315,10 @@ bool UReflectionsNpcReactionComponent::UpdateEngagement()
 // Both default on; they exist so the performance session can measure with and without (read when an NPC gets its walker).
 static TAutoConsoleVariable<int32> CVarNpcWalkerFoley(TEXT("Npc.WalkerFoley"), 0,
     TEXT("1: the hidden walker pawns of NPCs play the animation sample's foley sounds (footsteps). 0 (default): silent."));
+static TAutoConsoleVariable<int32> CVarNpcArmedStance(TEXT("Npc.ArmedStance"), 1,
+    TEXT("1 (default): an armed NPC that stands still holds sword and shield at the ready (a looping clip on its hidden walker). 0: arms at its sides."));
+static TAutoConsoleVariable<int32> CVarNpcHideUntilPosed(TEXT("Npc.HideUntilPosed"), 1,
+    TEXT("1 (default): an NPC that has only just been spawned is not shown until its walker's animation has given it a pose (otherwise it stands with its arms out for a moment). 0: shown at once."));
 static TAutoConsoleVariable<int32> CVarNpcLeanFollowers(TEXT("Npc.LeanFollowerParts"), 1,
     TEXT("1 (default): an NPC's outfit and face parts that follow the body's pose take the body's bounds and raise no overlap events. 0: as authored."));
 
@@ -950,6 +1365,23 @@ void UReflectionsNpcReactionComponent::EndPlay(const EEndPlayReason::Type Reason
 {
     if (HitMesh.IsValid()) EndPhysicalHit();
     EndFlinch();
+    if (bHiddenUntilPosed)
+    {
+        // Released while still unseen (a stand-in handed back within its first moments): it is shown again.
+        bHiddenUntilPosed = false;
+        if (AActor* Hidden = GetOwner()) Hidden->SetActorHiddenInGame(false);
+    }
+    EndWalkerJolt();
+    EndWalkerKnockdown(true);
+    // Nothing of a cast or of a spell's after-effect outlives the NPC (a stand-in released in the middle of a
+    // cast, a level that unloads): the glow and light go, the loops stop, the walker's clock runs again.
+    CastWindupRemaining = 0.0f;
+    EndCastTelegraph();
+    if (IsValid(TarnishCaster)) CancelTarnishCast();
+    bCastByTarnishCaster = false;
+    EndShock(false);
+    EndBurning();
+    EndFreeze();
     if (Reason == EEndPlayReason::Destroyed)
         if (ACharacter* Driver = LocomotionDriver.Get()) Driver->Destroy();
     if (AActor* Owner = GetOwner())
@@ -1036,6 +1468,8 @@ void UReflectionsNpcReactionComponent::ConfigureMotor()
         Motor->RegisterComponent();
     }
     RefreshWeaponProp();
+    RefreshShieldProp();
+    HideLookParts();
     if (!Motor) return;
     Motor->Configure(Active->Combat, this);
     Motor->AddTickPrerequisiteComponent(this);
@@ -1109,6 +1543,13 @@ void UReflectionsNpcReactionComponent::ReceiveSpellHit(const FReflectionsSpellHi
     if (IsScripted()) return;
     StartPhysicalHit(Hit);
     StartFlinch(Hit);
+    // A fresh hit lands with physics: a jolt through the upper body along the hit, on the hidden walker.
+    if (!Hit.bRepeat)
+    {
+        FVector Push(Hit.Impulse.X, Hit.Impulse.Y, 0.0);
+        if (Push.IsNearlyZero()) Push = FVector(Owner->GetActorLocation().X - Hit.Location.X, Owner->GetActorLocation().Y - Hit.Location.Y, 0.0);
+        StartWalkerJolt(Push.GetSafeNormal() + FVector(0.0, 0.0, 0.15), FMath::Clamp(Hit.Magnitude, 0.2f, 1.0f));
+    }
     // The spell says what the body does (thrown, shocked, set alight...). Thrown that way, nothing pushes it twice.
     if (!ReactToSpell(Hit) && !Cast<ACharacter>(Owner))
     {
@@ -1293,6 +1734,10 @@ void UReflectionsNpcReactionComponent::OnOwnerDied(AActor* Source)
     CastWindupRemaining = 0.0f;
     EndCastTelegraph();
     CancelTarnishCast();
+    EndWalkerJolt();
+    // Killed while knocked down: the walker stops where it lies and the visible body, which is lying there with
+    // it, goes limp in its place like any other death.
+    EndWalkerKnockdown(true);
     // Whatever it was going through ends here: the loops stop, the walker's clock runs again, and it has a last
     // sound of its own. One that dies while the current runs through it goes on twitching on the ground.
     if (bShocked)
@@ -1451,6 +1896,81 @@ void UReflectionsNpcReactionComponent::InitializeLocomotion()
     }
     LocomotionDriver = Driver;
     RoamPause = 0.2f + FMath::Fmod(FMath::Abs(RoamOrigin.Y), 170.0f) / 180.0f;
+    // Until the walker's animation has run, the body stands in its reference pose, arms out. One that has only
+    // just been created is not shown for that moment. An actor someone else has hidden, or one that has been
+    // in the world for a while already (enrolled later), is left as it is.
+    if (CVarNpcHideUntilPosed.GetValueOnGameThread() != 0 && !Actor->IsHidden() && Actor->GetGameTimeSinceCreation() < 1.0f &&
+        !Actor->ActorHasTag(TEXT("Lives_Gone")) && !Actor->ActorHasTag(TEXT("NPC_NoLife")))
+    {
+        Actor->SetActorHiddenInGame(true);
+        bHiddenUntilPosed = true;
+        RevealTimeout = 1.5f;
+        RevealElapsed = 0.0f;
+        RevealGoodFrames = 0;
+    }
+}
+
+void UReflectionsNpcReactionComponent::TickStance(float DeltaTime)
+{
+    const UReflectionsNpcArchetype* Active = GetActiveArchetype();
+    const ACharacter* Driver = LocomotionDriver.Get();
+    USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr;
+    UAnimInstance* Anim = Mesh ? Mesh->GetAnimInstance() : nullptr;
+    const USkeletalMesh* Asset = Mesh ? Mesh->GetSkeletalMeshAsset() : nullptr;
+    const USkeleton* Skeleton = Asset ? Asset->GetSkeleton() : nullptr;
+    if (!Active || !Anim || !Skeleton) return;
+    const float Speed = Driver->GetVelocity().Size2D();
+    StanceStillFor = Speed < 15.0f ? StanceStillFor + DeltaTime : 0.0f;
+    StanceCheckIn -= DeltaTime;
+    if (StanceCheckIn > 0.0f) return;
+    StanceCheckIn = 0.15f;
+
+    const bool bMine = StanceMontage && Anim->Montage_IsPlaying(StanceMontage);
+    // Anything else playing on the walker (a strike, a cast, a stagger, a squad's or the villain's clip) has
+    // the body; the hold comes back when it is over.
+    if (!bMine)
+    {
+        StanceMontage = nullptr;
+        if (Anim->IsAnyMontagePlaying()) return;
+    }
+    const bool bOn = CVarNpcArmedStance.GetValueOnGameThread() != 0 && !bShocked && FrozenRemaining <= 0.0f &&
+        CastWindupRemaining <= 0.0f && !bHiddenUntilPosed;
+    // The additive hold lies over whatever the legs do, so it is wanted all the time. Without it, the guard
+    // stance (a whole-body clip) only while standing still: over a walk it would stop the legs.
+    UAnimSequence* Hold = bOn ? Active->Combat.WalkerArmedHold.LoadSynchronous() : nullptr;
+    if (Hold && !Hold->IsValidAdditive()) Hold = nullptr;
+    UAnimSequence* Guard = bOn && !Hold ? Active->Combat.WalkerGuardIdle.LoadSynchronous() : nullptr;
+    UAnimSequence* Wanted = Hold ? Hold : (StanceStillFor >= 0.35f ? Guard : nullptr);
+    const bool bWantHold = Wanted && Wanted == Hold;
+    if (bMine && Wanted && bWantHold == bStanceIsMarch) return;
+    // A guard stance that is playing is given a moment after the NPC stops being still before it is dropped.
+    if (bMine && !Wanted && !bStanceIsMarch && Guard && StanceStillFor > 0.0f) return;
+    if (bMine) Anim->Montage_Stop(0.25f, StanceMontage);
+    StanceMontage = nullptr;
+    if (!Wanted || Wanted->GetSkeleton() != Skeleton) return;
+    StanceMontage = Anim->PlaySlotAnimationAsDynamicMontage(Wanted, TEXT("DefaultSlot"), 0.25f, 0.25f, 1.0f, 100000);
+    bStanceIsMarch = bWantHold;
+}
+
+void UReflectionsNpcReactionComponent::TickReveal(float DeltaTime)
+{
+    AActor* Owner = GetOwner();
+    const ACharacter* Driver = LocomotionDriver.Get();
+    const USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr;
+    RevealTimeout -= DeltaTime;
+    RevealElapsed += DeltaTime;
+    // In the reference pose the walker's hands are out to the sides, about 55 cm from its axis; standing or
+    // walking they are by the body. Two frames by the body (and a quarter of a second, for the visible body to
+    // have followed) and it may be seen; after 1.5 s it is shown whatever the pose.
+    if (Mesh && Mesh->GetBoneIndex(TEXT("hand_r")) != INDEX_NONE)
+    {
+        const float Out = FVector::Dist2D(Mesh->GetSocketLocation(TEXT("hand_r")), Driver->GetActorLocation());
+        RevealGoodFrames = Out > 5.0f && Out < 44.0f ? RevealGoodFrames + 1 : 0;
+    }
+    if (Driver && RevealTimeout > 0.0f && (RevealGoodFrames < 2 || RevealElapsed < 0.25f)) return;
+    bHiddenUntilPosed = false;
+    // One the lives layer has put away in the meantime (a townsperson killed in an earlier run) stays unseen.
+    if (Owner && !Owner->ActorHasTag(TEXT("Lives_Gone")) && !Owner->ActorHasTag(TEXT("NPC_NoLife"))) Owner->SetActorHiddenInGame(false);
 }
 
 void UReflectionsNpcReactionComponent::TickAmbientMovement(float DeltaTime)
@@ -1562,10 +2082,23 @@ void UReflectionsNpcReactionComponent::UpdateHunt()
 void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* TickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, TickFunction);
+    if (bHiddenUntilPosed) TickReveal(DeltaTime);
+    if (bWalkerJolting)
+    {
+        // The jolt fades: full physics at the moment of the hit, back to the animation by the end.
+        WalkerJoltRemaining -= DeltaTime;
+        const ACharacter* JoltDriver = LocomotionDriver.Get();
+        USkeletalMeshComponent* JoltMesh = JoltDriver ? JoltDriver->GetMesh() : nullptr;
+        if (WalkerJoltRemaining <= 0.0f || !JoltMesh) EndWalkerJolt();
+        else JoltMesh->SetAllBodiesBelowPhysicsBlendWeight(WalkerJoltRoot,
+            WalkerJoltPeak * FMath::Square(WalkerJoltRemaining / FMath::Max(0.05f, WalkerJoltDuration)), false, true);
+    }
     AActor* Owner = GetOwner();
     const UReflectionsNpcArchetype* Active = GetActiveArchetype();
     if (!Owner || !Active) return;
-    if (!IsIncapacitated()) RepairBodyPose();
+    // Alive or dead: a body that is not simulating (a dead one that tipped over instead of going limp is still
+    // an animated mesh) must never be left with empty bone buffers. The repair itself skips simulating bodies.
+    RepairBodyPose();
     if (!bTriedLocomotion && !IsIncapacitated()) InitializeLocomotion();
     if (HitMesh.IsValid())
     {
@@ -1639,6 +2172,16 @@ void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick
             Subsystem->PlayReaction(Owner, TEXT("React_Burning"));
         }
     }
+    if (WalkerDown != EWalkerDown::None)
+    {
+        // Knocked down: it lies there, then gets up. No thinking, no moving, no fighting meanwhile.
+        if (Motor) Motor->SetCombatTarget(nullptr);
+        CastWindupRemaining = 0.0f;
+        EndCastTelegraph();
+        CancelTarnishCast();
+        TickWalkerKnockdown(DeltaTime);
+        return;
+    }
     if (bShocked || FrozenRemaining > 0.0f)
     {
         // Shocked or frozen: no thinking, no moving, no fighting until it is over.
@@ -1665,6 +2208,8 @@ void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick
             {
                 ShockFlashIn = 0.18f;
                 StartHitFlash(ShockHit);
+                // The current keeps jolting it while it convulses.
+                StartWalkerJolt(FMath::VRand(), 0.35f);
             }
             ShockTickIn -= DeltaTime;
             if (ShockTickIn <= 0.0f && ShockDamageLeft > 0.0f)
@@ -1680,7 +2225,8 @@ void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick
                 // The current stops. Those who were never fighters, and anyone it has left under half, do not
                 // get up: they drop where they stand. The rest come round.
                 const UReflectionsHealthComponent* Health = Owner->FindComponentByClass<UReflectionsHealthComponent>();
-                const bool bDrops = Health && Health->Health > 0.0f &&
+                // The villain's host only takes the damage: its fight is the finale's, and two bolts must not end it.
+                const bool bDrops = Health && Health->Health > 0.0f && Disposition != EReflectionsNpcDisposition::VillainHost &&
                     (!Active->Reaction.bCanAttack || Health->Health <= Health->MaxHealth * 0.5f);
                 // Dropping is dying: the ordinary death ends the shock (with its sound) and lets the body fall.
                 if (bDrops) UGameplayStatics::ApplyDamage(Owner, Health->Health + Health->Shield + 1.0f, By, Caster, UDamageType::StaticClass());
@@ -1700,6 +2246,7 @@ void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick
         if (Motor) Motor->SetCombatTarget(nullptr);
         return;
     }
+    TickStance(DeltaTime);
     ProvokedRemaining = FMath::Max(0.0f, ProvokedRemaining - DeltaTime);
     AttackCooldown = FMath::Max(0.0f, AttackCooldown - DeltaTime);
     HeatCheckIn -= DeltaTime;

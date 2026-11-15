@@ -1,5 +1,5 @@
 """NPC talk-back showcase (short version of test_npc_dialogue_pie.py, under 3 minutes). Run through the editor MCP `execute_python` tool (top-level `await`, `call_tool`) with
-the crowd sample map open, PIE stopped, the PIE lock held, and the local relay running
+Gray London (/Game/GrayLondon/Maps/GrayLondon_Geodata, the only map) open, PIE stopped, the PIE lock held, and the local relay running
 (Tools/RealtimeVoice/Start-NpcDialogueRelay.ps1).
 
 It starts PIE, spawns a passive soldier squad, then types lines to NPCs through

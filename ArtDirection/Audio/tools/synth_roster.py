@@ -29,11 +29,15 @@ BARK_KIND = {"Civilian_Fear": "Bark", "Guard_Alert": "Bark", "Guard_Attack": "Ba
              "Tarnished_Mutter": "Tarnished", "Filler": "Reply",
              "React_Hurt": "Bark", "React_Knocked": "Bark", "React_Burning": "Bark", "React_Shocked": "Bark",
              "React_Death": "Bark", "React_Effort": "Bark", "Heat_CallGuards": "Bark", "Heat_Halt": "Bark",
-             "Heat_Alarm": "Bark", "Soldier_Battle": "Bark"}
+             "Heat_Alarm": "Bark", "Soldier_Charge": "Bark", "Soldier_Hold": "Bark", "Soldier_AllyDown": "Bark",
+             "Soldier_EnemyDown": "Bark", "Soldier_Retreat": "Bark", "Soldier_Victory": "Bark"}
 
 
 STORY_BARK_KIND = {"Flee": "Bark", "SeeTarnished": "Bark", "Greet": "Reply", "Farewell": "Reply", "Thanks": "Reply",
-                   "SpellNear": "Reply", "Cured": "Reply", "Idle": "Remark", "Dread": "Remark", "TarnishedLine": "Tarnished"}
+                   "SpellNear": "Reply", "Cured": "Reply", "Idle": "Remark", "Dread": "Remark", "TarnishedLine": "Tarnished",
+                   "WitnessCrime": "Bark", "FleeSilverer": "Bark", "CallGuards": "Bark", "KnockedDown": "Bark",
+                   "OnFire": "Bark", "Shocked": "Bark", "Grief": "Remark", "Battle": "Bark", "Patrol": "Remark",
+                   "EnemyDown": "Bark"}
 HERO_FILE = os.path.join(ROOT, "voice", "hero_choice.json")  # {"Candidate": "A", "GeminiVoice": "voice_..."} once the user picks
 
 

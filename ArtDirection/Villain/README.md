@@ -12,6 +12,7 @@ Verified in PIE on `/Game/Worlds/Test/Lvl_WorldJumpTest` (screenshots in `Screen
 
 | Feature | Status | Evidence |
 |---|---|---|
+| **A real run with no console (New Game on the mock city to Victory)** | **Works** (20:03-20:05, after the merged #11/#12 build) | `Saved/VillainTest/proof/report.json`: New Game from the title (config map, no cvar) -> possession on by itself, "play is live", first host `BP_Look_GiltFerryman_C_0` 20 s later (`23_proof_first_host_by_itself.png`) -> the 3 pages touched, FirstPage and MirrorWhole cutscenes skipped with the skip button's own UFUNCTION -> true form DORMANT on the Frost crown marker, still DORMANT with the hero inside the tower, MANIFESTING on arrival (`24_proof_crown_true_form.png`) -> 6 Final Spell casts through the F key's `CastFinalSpell`, boss 750 -> 0 in 7.9 s, hero 100 -> 92.8 -> Ending -> game flow "Victory." and the victory screen (`26_proof_victory_no_console.png`). One shortcut: the hero reached the crown by teleport (the nav walk helper is not exposed to editor Python); playtest Run 3 walked the ramps for real. |
 | Possession: takes a body, black smoke, violet glow | **Works** | `01_host_taken.png`; game flow meter 1/20 |
 | Spread to nearby NPCs (ranged wisp) | **Works** | `02_spread_tarnished.png`; meter 2/20, later 5 |
 | Host burns out (dies, ragdolls) and it hops to a fresh NPC | **Works** | `03_burnout_and_hop.png`, `04_new_host.png`; run report: hosts TestHost_5 → TestHost_4 → TestHost_0 |
@@ -92,6 +93,8 @@ Soldiers (story canon: Giltside's soldiers fight the tarnished on sight):
   corpse's look (a last puff of smoke) through `OnNpcDied`, without calling `SetInfection` again. A killed host makes him
   hop at once, as before.
 
+Pacing (train #13, after crowd-react's ring run took the meter 0 -> 3 in 40 s): ring walkers carry `NoVillain`, so only named or placed people are taken. Tackle conversions are spaced by `Villain.ConvertInterval` (85 s; the first two quicker so the player sees it happen, a little faster with each page), which puts a full meter at about 25 minutes for a player who ignores the Tarnish. If nobody takeable is near the player when he first arrives, he takes any named or placed person on the map, so possession always starts. `Villain.Convert` (tests) ignores the gap.
+
 Saves (game flow's slots, key `Villain`): every checkpoint, manual and quick save stores the tarnished (by Lives person
 id, else level actor name; runtime-spawned crowd bodies are not stored), the host and its seconds left, and the
 tallies. A load re-tarnishes them through the usual path (so the meter comes back through `ReportInfected`), retrying
@@ -149,7 +152,9 @@ Scripts: `Tools/Villain/build_villain_materials.py`, `build_villain_niagara.py`,
   cooldown with crafting) and homes on the Tarnish. It is ignored while the crafting screen is open.
 - Dodging needs only movement and jump, so keyboard and controller both work.
 
-## The fight (about 30 to 60 seconds at default tuning: 6 Final Spell hits; retuned after playtest Run 3)
+## The fight (about 20 s standing still, longer while dodging: 10 Final Spell hits from train #13)
+
+Every attack now also winds up on his body: rim, cracks, eyes and heart brighten over the telegraph and drop at the strike, so a player learns to dodge on the peak (train #13).
 
 It manifests when the player comes within 32 m of the arena. 1000 health; a Final Spell hit does 125 (8 hits);
 anything else does 3% of its damage (and it says so). Three telegraphed attacks:
@@ -164,6 +169,8 @@ Defeat: a 3.4 s dissolve, then game flow's `ShowVictory()` 2.5 s later. Checkpoi
 the finale quietly (no banner), and it never starts twice.
 
 ## For the map owner
+
+**Gray London (since 21:05, the only map: one side, World Partition, no world anchors).** Possession switches on for game flow's New Game map (from the next train, compiled 21:16), so it no longer needs anchors. Place exactly one **Reflections Villain Arena** at the centre of the finale floor (Tower district) with **Is Spatially Loaded** off; the villain keeps looking for it every 2 s and moves a waiting true form onto it when it loads. With no world jump the banners name no side ("It rises from the cracked glass of the city"). Not yet tested on Gray London. The notes below about Frostside's tower and the mock city describe the earlier three-side maps (deleted 21:05).
 
 Place a **Reflections Villain Arena** actor at the top of Frostside's tower (`ArenaRadius`, default 14 m: leave
 open floor to dodge). Without one, the arena is the White-side mirror page's position (cached at map start), then the
@@ -199,9 +206,9 @@ From train #8 he rises when the player is within min(`Villain.ManifestRadius`, a
 
 ## Tuning (console variables, live)
 
-`Villain.HostLifetime` 28, `Villain.InfectInterval` 16, `Villain.InfectRadius` 2200, `Villain.HopRadius` 4000,
+`Villain.ConvertInterval` 85 (train #13: seconds between tackle conversions; first two at ~40%, each page -10% down to 70%), `Villain.HostLifetime` 28, `Villain.InfectInterval` 16, `Villain.InfectRadius` 2200, `Villain.HopRadius` 4000,
 `Villain.RiftDelay` 9, `Villain.RiftChance` 0.6, `Villain.MaxInfected` 30, `Villain.StartDelay` 20,
-`Villain.KillHostsOnBurnout` 1, `Villain.RangedSpread` 0 from train #8 (1 = the old ranged wisp), `Villain.VeinOverlay` 0, `Villain.BossHealth` 750 (was 1000 before the merged #11/#12 build, playtest Run 3),
+`Villain.KillHostsOnBurnout` 1, `Villain.RangedSpread` 0 from train #8 (1 = the old ranged wisp), `Villain.VeinOverlay` 0, `Villain.BossHealth` 1250 from train #13 (10 hits; 750 in the merged #11/#12 build was an 8 s fight, 1000 before it was unwinnable),
 `Villain.FinalSpellDamage` 125, `Villain.OtherSpellScale` 0.03, `Villain.FinalSpellMana` 20 (was 35),
 `Villain.FinalSpellCooldown` 1.2 (was 2), `Villain.ManifestRadius` 3200, `Villain.AttackDamageScale` 0.4 (was 1),
 `Villain.TelegraphScale` 1, `Villain.AutoStart` 1.

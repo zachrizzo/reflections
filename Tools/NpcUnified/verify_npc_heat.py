@@ -59,16 +59,46 @@ async def shot(name):
         result.setdefault('shot_errors', []).append(name + ': ' + repr(error))
 
 
+# retargeted: positions are relative to where the hero stands when PIE starts (see retarget_checks.py)
+_frame = {}
+
+
+def W(x, y, z=0.0):
+    """A position of the old test level, as the same offset from where the hero stood when PIE started."""
+    if not _frame:
+        game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+        hero = unreal.GameplayStatics.get_player_pawn(game, 0)
+        here = hero.get_actor_location()
+        ahead = hero.get_actor_forward_vector()
+        ahead = unreal.Vector(ahead.x, ahead.y, 0.0).normal()
+        _frame.update(here=here, ahead=ahead, right=unreal.Vector(-ahead.y, ahead.x, 0.0))
+    sites = ((1500.0, 500.0), (-700.0, 350.0))
+    ox, oy = min(sites, key=lambda s: (x - s[0]) ** 2 + (y - s[1]) ** 2)
+    forward, right = -(y - oy), x - ox          # the old checks looked down -Y, with +X to their right
+    here, a, r = _frame['here'], _frame['ahead'], _frame['right']
+    return unreal.Vector(here.x + a.x * forward + r.x * right, here.y + a.y * forward + r.y * right, here.z - 90.0 + z)
+
+
+async def hero_is_down():
+    """Waits (up to 20 s) until PIE has a hero that has stopped falling, then fixes the frame W() measures from."""
+    for _ in range(40):
+        await asyncio.sleep(0.5)
+        game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+        hero = unreal.GameplayStatics.get_player_pawn(game, 0) if game else None
+        if hero and abs(hero.get_velocity().z) < 5.0:
+            break
+    await asyncio.sleep(1.0)
+    W(1500.0, 500.0, 90.0)
+
+
 open_map = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world().get_name()
 if unwrap(await call_tool('EditorToolset.EditorAppToolset.IsPIERunning')):
     result['abort'] = 'PIE is already running (someone else is testing); nothing was started.'
-elif open_map != 'Lvl_HeroSampleCrowd':
-    result['abort'] = 'The editor has %s open, not Lvl_HeroSampleCrowd. Nothing was started.' % open_map
 else:
     console('Squads.StartPatrol 0')
     await call_tool('EditorToolset.EditorAppToolset.StartPIE')
     try:
-        await asyncio.sleep(3.0)
+        await hero_is_down()
         world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
         console('Squads.Clear', world)
         console('Npc.Heat 1', world)
@@ -110,10 +140,10 @@ else:
             return round(unreal.Vector(delta.x, delta.y, 0).length())
 
         # ---- H: a crime in front of a guard ---------------------------------------------------------
-        player.set_actor_location(unreal.Vector(-700, 350, 90), False, True)
-        victim = npcs.spawn_npc('Civilian', unreal.Vector(-700, -50, 0), 90.0, None)
-        witness = npcs.spawn_npc('Civilian', unreal.Vector(-1050, -150, 0), 45.0, None)
-        guard = npcs.spawn_npc('Guard', unreal.Vector(-330, 150, 0), 135.0, None)
+        player.set_actor_location(W(-700, 350, 90), False, True)
+        victim = npcs.spawn_npc('Civilian', W(-700, -50, 0), 90.0, None)
+        witness = npcs.spawn_npc('Civilian', W(-1050, -150, 0), 45.0, None)
+        guard = npcs.spawn_npc('Guard', W(-330, 150, 0), 135.0, None)
         await asyncio.sleep(1.5)
         result['H0'] = {'heat': heat(), 'guard': reaction(guard), 'victim_health': health(victim)}
         cast(unreal.HeroSpell.FIRE, victim)
@@ -151,9 +181,9 @@ else:
 
         # ---- A: an allied soldier against one of the tarnished --------------------------------------
         npcs.clear_player_heat()
-        player.set_actor_location(unreal.Vector(1500, 900, 90), False, True)
-        ally = npcs.spawn_npc('AlliedSoldier', unreal.Vector(1500, -250, 0), -90.0, None)
-        foe = npcs.spawn_npc('Civilian', unreal.Vector(1500, -850, 0), 90.0, None)
+        player.set_actor_location(W(1500, 900, 90), False, True)
+        ally = npcs.spawn_npc('AlliedSoldier', W(1500, -250, 0), -90.0, None)
+        foe = npcs.spawn_npc('Civilian', W(1500, -850, 0), 90.0, None)
         await asyncio.sleep(1.5)
         if ally is None:
             result['A1'] = 'this build has no AlliedSoldier archetype'
@@ -188,20 +218,20 @@ else:
                 unreal.GameplayStatics.apply_damage(actor, 999.0, None, None, unreal.DamageType)
 
         # ---- K: the least-worn look first -----------------------------------------------------------
-        player.set_actor_location(unreal.Vector(-700, 350, 90), False, True)
-        crowd = [npcs.spawn_npc('Civilian', unreal.Vector(-1100 + i * 160, -700, 0), 90.0, None) for i in range(6)]
+        player.set_actor_location(W(-700, 350, 90), False, True)
+        crowd = [npcs.spawn_npc('Civilian', W(-1100 + i * 160, -700, 0), 90.0, None) for i in range(6)]
         await asyncio.sleep(1.2)
         looks = [actor.get_class().get_name() for actor in crowd if actor]
-        pool = len(npcs.get_looks_at('Civilian', unreal.Vector(-1100, -700, 0))) if hasattr(npcs, 'get_looks_at') else None
+        pool = len(npcs.get_looks_at('Civilian', W(-1100, -700, 0))) if hasattr(npcs, 'get_looks_at') else None
         counts = None
         if hasattr(npcs, 'get_look_use_count'):
             try:
                 counts = sorted({actor.get_class().get_name(): npcs.get_look_use_count(actor.get_class()) for actor in crowd if actor}.items())
             except Exception as error:
                 counts = repr(error)[:200]
-        result['K1'] = {'looks': looks, 'different': len(set(looks)), 'pool': pool, 'side': str(npcs.get_side_at(unreal.Vector(-1100, -700, 0))) if hasattr(npcs, 'get_side_at') else None, 'use_counts': counts}
+        result['K1'] = {'looks': looks, 'different': len(set(looks)), 'pool': pool, 'side': str(npcs.get_side_at(W(-1100, -700, 0))) if hasattr(npcs, 'get_side_at') else None, 'use_counts': counts}
         check('K1_six_townspeople_wear_different_looks', len(set(looks)) >= min(6, pool or 6), result['K1'])
-        controller.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(player.get_actor_location(), unreal.Vector(-700, -700, 100)))
+        controller.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(player.get_actor_location(), W(-700, -700, 100)))
         await asyncio.sleep(0.3)
         await shot('K1_six_townspeople')
     except Exception as error:

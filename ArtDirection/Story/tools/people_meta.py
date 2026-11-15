@@ -267,4 +267,16 @@ LOOK_PINS = {
     "dov_merriman": "GiltGlassman", "petra_lisle": "GiltDrummer",
     "mother_rook": "FrostHyeon", "kit_marrow": "FrostIven", "fen_lowry": "FrostNia", "gunnar_skarre": "FrostSilas",
     "brenna_cold": "FrostSaran",
+    # Pewterside: crowd-looks' grey PewLook_* copies of the Giltside outfits (same faces, re-tinted). The sides are offset
+    # copies far apart, so a Pew face and its Giltside twin are never on screen together. Free faces go to Bet, Sid and Frank;
+    # Edie wears Nell's face on purpose (her granddaughter). Ada is left to runtime casting (7 women, 6 women's looks).
+    "hester_quaile": "PewLook_Maren", "edie_bramley": "PewLook_BridgeGuard", "ivy_harker": "PewLook_Rowena",
+    "winnie_cobb": "PewLook_CoinClerk", "bet_crawley": "PewLook_Priya", "agnes_moth": "PewLook_Drummer",
+    "walter_dunmore": "PewLook_Barnaby", "horace_pratt": "PewLook_Glassman", "sid_kettle": "PewLook_Ferryman",
+    "frank_dunning": "PewLook_Ramon", "ned_lusk": "PewLook_Archivist",
 }
+
+# Until cast.json lists the Pewterside looks (relayed by the orchestrator for crowd-looks, 2026-11-14 evening).
+PEW_LOOKS = {f"PewLook_{n}": {"id": f"PewLook_{n}", "sex": s, "side": "Pewterside"} for n, s in [
+    ("Archivist", "M"), ("Barnaby", "M"), ("BridgeGuard", "F"), ("CoinClerk", "F"), ("Drummer", "F"), ("Ferryman", "M"),
+    ("Glassman", "M"), ("Haruto", "M"), ("Maren", "F"), ("Priya", "F"), ("Ramon", "M"), ("Rowena", "F")]}

@@ -20,6 +20,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/StaticMesh.h"
 #include "Sound/SoundBase.h"
+#include "Components/AudioComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Animation/Skeleton.h"
 #include "Materials/MaterialInterface.h"
@@ -113,8 +114,12 @@ AReflectionsSquad::AReflectionsSquad()
     ShieldMesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TEXT("/Game/LanthorneAssets/Giltside/Props/SM_Giltside_PatrolShield.SM_Giltside_PatrolShield")));
     WalkerChannelAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Combat/Melee/AS_Melee_Wand_Channel_Walker.AS_Melee_Wand_Channel_Walker")));
     WalkerReleaseAnimation = TSoftObjectPtr<UAnimSequenceBase>(FSoftObjectPath(TEXT("/Game/Combat/Melee/AS_Melee_Wand_Flick_Walker.AS_Melee_Wand_Flick_Walker")));
+    MarchLoop = TSoftObjectPtr<USoundBase>(FSoftObjectPath(TEXT("/Game/Audio/Jam/Cues/SCue_March_Loop.SCue_March_Loop")));
+    ShieldHitSounds.Add(TSoftObjectPtr<USoundBase>(FSoftObjectPath(TEXT("/Game/Audio/Jam/Cues/SCue_Sword_ShieldHit.SCue_Sword_ShieldHit"))));
+    ShieldHitSounds.Add(TSoftObjectPtr<USoundBase>(FSoftObjectPath(TEXT("/Game/Audio/Jam/Cues/SCue_Shield_BlockHeavy.SCue_Shield_BlockHeavy"))));
     MeleeWeapon = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TEXT("/Game/LanthorneAssets/Frostside/Props/SM_Frostside_MirrorSword.SM_Frostside_MirrorSword")));
-    CasterWeapon = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TEXT("/Game/LanthorneAssets/Pewterside/Props/SM_Pewterside_ReaderWand.SM_Pewterside_ReaderWand")));
+    // User: every soldier holds a sword (casters cast from the sword hand) and a shield on the left arm.
+    CasterWeapon = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TEXT("/Game/LanthorneAssets/Frostside/Props/SM_Frostside_MirrorSword.SM_Frostside_MirrorSword")));
     // Kimodo march cycle (Tools/Squads/author_march.py), one copy per soldier skeleton.
     MarchAnimations.Add(TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Squads/Animation/AS_Soldier_March_Iven.AS_Soldier_March_Iven"))));
     MarchAnimations.Add(TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Squads/Animation/AS_Soldier_March_BridgeGuard.AS_Soldier_March_BridgeGuard"))));
@@ -539,8 +544,10 @@ void AReflectionsSquad::SpawnSquad()
     TArray<TSoftClassPtr<AActor>> ArchetypeCasters;
     if (bUseArchetypeLooks)
     {
-        ReflectionsSquadNpc::GetSideLooks(this, bAllied ? FName(TEXT("AlliedSoldier")) : FName(TEXT("Soldier")), AnchorLocation, Side, ArchetypeMelee);
-        ReflectionsSquadNpc::GetSideLooks(this, bAllied ? FName(TEXT("AlliedSoldierCaster")) : FName(TEXT("SoldierCaster")), AnchorLocation, Side, ArchetypeCasters);
+        // A squad off the side levels (the sample map) dresses as its faction: Frost in rags, Gilt in red.
+        const FString LookSide = !Side.IsEmpty() ? Side : bAllied ? FString(TEXT("Giltside")) : FString(TEXT("Frostside"));
+        ReflectionsSquadNpc::GetSideLooks(this, bAllied ? FName(TEXT("AlliedSoldier")) : FName(TEXT("Soldier")), AnchorLocation, LookSide, ArchetypeMelee);
+        ReflectionsSquadNpc::GetSideLooks(this, bAllied ? FName(TEXT("AlliedSoldierCaster")) : FName(TEXT("SoldierCaster")), AnchorLocation, LookSide, ArchetypeCasters);
     }
     TArray<TSoftClassPtr<AActor>> GiltGuards;
     if (Side == TEXT("Giltside") || bAllied)
@@ -609,10 +616,7 @@ void AReflectionsSquad::SpawnSquad()
         Spec.MeleeDamage = MeleeDamage;
         ReflectionsSquadNpc::Enrol(Soldier, Spec);
         AttachWeapon(Soldier, bCaster);
-        if (bAllied && !bCaster)
-        {
-            AttachShield(Soldier);
-        }
+        AttachShield(Soldier);
 
         FReflectionsSquadMember& Member = Members.AddDefaulted_GetRef();
         Member.Actor = Soldier;
@@ -703,6 +707,7 @@ void AReflectionsSquad::Tick(float DeltaSeconds)
     }
     AggravationGrace = FMath::Max(0.0f, AggravationGrace - DeltaSeconds);
     RefreshMembers();
+    UpdateMarchSound();
     if (GetAliveCount() == 0)
     {
         RespawnTimer = RespawnDelay;
@@ -785,12 +790,20 @@ void AReflectionsSquad::RefreshMembers()
         const float Health = ReflectionsSquadNpc::GetHealth(Member.Actor);
         if (!Member.bShieldPlaced && Member.State != EReflectionsSquadMemberState::Pending)
         {
-            Member.bShieldPlaced = true;
-            PlaceShield(Member);
+            // Fit only once the body animates (hands below the chest): a grip fitted to a T-posed arm would be wrong
+            // for every real pose. Give up after ~10 s and leave the shield hidden.
+            Member.bShieldPlaced = PlaceShield(Member) || ++Member.ShieldTries > 600;
         }
         if (Member.LastHealth >= 0.0f && Health < Member.LastHealth - 0.01f)
         {
             bHit = true;
+            if (ShieldHitSounds.Num() > 0 && HasShield(Member.Actor))
+            {
+                if (USoundBase* Sound = ShieldHitSounds[FMath::RandHelper(ShieldHitSounds.Num())].LoadSynchronous())
+                {
+                    UGameplayStatics::PlaySoundAtLocation(this, Sound, Member.Actor->GetActorLocation() + FVector(0.0, 0.0, 110.0));
+                }
+            }
         }
         Member.LastHealth = Health;
         // The NPC system heard magic or got hit and wants to fight: the whole squad breaks formation.
@@ -1010,14 +1023,16 @@ void AReflectionsSquad::AttachWeapon(AActor* Soldier, bool bCaster)
 
 void AReflectionsSquad::AttachShield(AActor* Soldier)
 {
-    // Some looks already wear a shield of their own (the Gilt guards' skinned round shield): never give them a second.
-    TInlineComponentArray<UPrimitiveComponent*> Parts(Soldier);
-    for (const UPrimitiveComponent* Part : Parts)
+    // One owner per hand: the NPC system's own shield (Combat.ShieldProp) wins when the archetype has one.
+    if (ReflectionsSquadNpc::NpcCarriesShield(Soldier))
     {
-        if (Part && Part->GetName().Contains(TEXT("Shield")))
-        {
-            return;
-        }
+        return;
+    }
+    // Exactly one shield per soldier: the look's own (the Gilt guards' skinned round shield) or the NPC system's
+    // (npc-unify owns the hands from train #14) always wins over the squad's.
+    if (HasOtherShield(Soldier))
+    {
+        return;
     }
     USkeletalMeshComponent* Body = ReflectionsSquadNpc::GetBody(Soldier);
     UStaticMesh* Mesh = ShieldMesh.IsNull() ? nullptr : ShieldMesh.LoadSynchronous();
@@ -1031,14 +1046,26 @@ void AReflectionsSquad::AttachShield(AActor* Soldier)
     }
 }
 
-void AReflectionsSquad::PlaceShield(FReflectionsSquadMember& Member)
+bool AReflectionsSquad::PlaceShield(FReflectionsSquadMember& Member)
 {
     UStaticMeshComponent* Shield = Member.Actor ? Member.Actor->FindComponentByTag<UStaticMeshComponent>(TEXT("SquadShield")) : nullptr;
     USkeletalMeshComponent* Body = ReflectionsSquadNpc::GetBody(Member.Actor);
     ACharacter* Driver = ReflectionsSquadNpc::GetDriver(Member.Actor);
     if (!Shield || !Body || !Driver)
     {
-        return;
+        return true;
+    }
+    if (HasOtherShield(Member.Actor) || ReflectionsSquadNpc::NpcCarriesShield(Member.Actor))
+    {
+        // The NPC system (or the look) brought its own after the squad attached one: step aside.
+        Shield->DestroyComponent();
+        return true;
+    }
+    const FName Chest = Body->DoesSocketExist(TEXT("clavicle_l")) ? FName(TEXT("clavicle_l")) : FName(TEXT("spine_04"));
+    if (ShieldGrip.Equals(FTransform::Identity) && Body->DoesSocketExist(Chest) &&
+        Body->GetSocketLocation(ShieldBone).Z > Body->GetSocketLocation(Chest).Z - 25.0f)
+    {
+        return false;
     }
     if (!ShieldGrip.Equals(FTransform::Identity))
     {
@@ -1057,6 +1084,7 @@ void AReflectionsSquad::PlaceShield(FReflectionsSquadMember& Member)
         Shield->SetRelativeTransform(World.GetRelativeTransform(Hand));
     }
     Shield->SetVisibility(true);
+    return true;
 }
 
 UStaticMeshComponent* AReflectionsSquad::AttachProp(AActor* Soldier, UStaticMesh* Mesh, FName Parent, const FTransform& Relative, FName Tag)
@@ -1404,9 +1432,16 @@ void AReflectionsSquad::OnMemberAttacked(AActor* Attacker)
     }
     if (Who && Who == Player)
     {
-        // Anyone who attacks a soldier is the enemy, allies included: the whole squad turns on the player.
-        bProvokedByPlayer = true;
-        Engage(Player);
+        // Anyone who attacks a soldier is the enemy, allies included: the whole squad turns on the player. Except
+        // a stray spell while allies fight a common enemy (a tarnished, Frost soldiers): that is friendly fire.
+        const AActor* Current = Foe.Get();
+        const bool bFriendlyFire = Faction == EReflectionsSquadFaction::Gilt && State == EReflectionsSquadState::Engaged &&
+            Current && Current != Player && !IsPlayerDown(const_cast<AActor*>(Current));
+        if (!bFriendlyFire)
+        {
+            bProvokedByPlayer = true;
+            Engage(Player);
+        }
     }
     else if (Who && IsHostileTarget(Who) && State != EReflectionsSquadState::Engaged)
     {
@@ -1651,6 +1686,84 @@ void AReflectionsSquad::BarkEvent(AActor* Speaker, FName Group, bool bFallback)
     if (!ReflectionsSquadNpc::PlayBark(Speaker, Group) && bFallback)
     {
         Bark(Speaker);
+    }
+}
+
+bool AReflectionsSquad::HasOtherShield(const AActor* Soldier)
+{
+    if (!Soldier)
+    {
+        return false;
+    }
+    TInlineComponentArray<UPrimitiveComponent*> Parts(Soldier);
+    for (const UPrimitiveComponent* Part : Parts)
+    {
+        if (!Part || Part->ComponentHasTag(TEXT("SquadShield")))
+        {
+            continue;
+        }
+        if (Part->GetName().Contains(TEXT("Shield")))
+        {
+            return true;
+        }
+        for (const FName& Tag : Part->ComponentTags)
+        {
+            if (Tag.ToString().Contains(TEXT("Shield")))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool AReflectionsSquad::HasShield(const AActor* Soldier)
+{
+    if (!Soldier)
+    {
+        return false;
+    }
+    TInlineComponentArray<UPrimitiveComponent*> Parts(Soldier);
+    for (const UPrimitiveComponent* Part : Parts)
+    {
+        if (Part && (Part->GetName().Contains(TEXT("Shield")) || Part->ComponentHasTag(TEXT("SquadShield"))))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void AReflectionsSquad::UpdateMarchSound()
+{
+    const bool bWant = State == EReflectionsSquadState::Marching || State == EReflectionsSquadState::Reforming;
+    AActor* Carrier = bWant ? FirstActiveSoldier() : nullptr;
+    if (!Carrier || Carrier != MarchAudioCarrier.Get())
+    {
+        if (MarchAudio)
+        {
+            MarchAudio->FadeOut(0.4f, 0.0f);
+            MarchAudio = nullptr;
+        }
+        MarchAudioCarrier.Reset();
+    }
+    if (!Carrier || MarchAudio)
+    {
+        return;
+    }
+    USoundBase* Loop = MarchLoop.IsNull() ? nullptr : MarchLoop.LoadSynchronous();
+    USceneComponent* Attach = Carrier->GetAttachParentActor() ? Carrier->GetAttachParentActor()->GetRootComponent() : Carrier->GetRootComponent();
+    if (Loop && Attach)
+    {
+        // Louder the fuller the squad; the loop itself is a loose group of five.
+        const float Volume = FMath::Clamp(static_cast<float>(GetAliveCount()) / 5.0f, 0.4f, 1.2f);
+        MarchAudio = UGameplayStatics::SpawnSoundAttached(Loop, Attach, NAME_None, FVector::ZeroVector, EAttachLocation::SnapToTarget, true,
+            Volume, 1.0f, 0.0f, nullptr, nullptr, false);
+        if (MarchAudio)
+        {
+            MarchAudio->FadeIn(0.5f, Volume);
+        }
+        MarchAudioCarrier = Carrier;
     }
 }
 

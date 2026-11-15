@@ -12,9 +12,10 @@ class AReflectionsSquad;
  *
  * Console (non-shipping): Squads.SpawnTest [count] | Squads.Clear | Squads.Engage | Squads.Reform |
  * Squads.Cast | Squads.KillAll | Squads.Dump. CVar Squads.AutoTest 1 spawns two test squads automatically
- * when Lvl_HeroSampleCrowd begins play. CVar Squads.Debug 1/2 draws routes, anchors and slots.
+ * when a start-patrol map begins play. CVar Squads.Debug 1/2 draws routes, anchors and slots. Test routes are fitted
+ * around the player (street-sized loops or out-and-back lines), so they work on any map.
  * CVar Squads.StartPatrol (default 1) raises one squad patrolling in sight of the player start on the showcase maps
- * (Lvl_HeroSampleCrowd, Lvl_MockCity) when no squad already patrols within 40 m of it; set 0 before PIE for an empty
+ * (Squads.StartPatrolMaps, default "GrayLondon"; faction Squads.StartPatrolFaction) when no squad already patrols within 40 m of it; set 0 before PIE for an empty
  * start. Squads.Clear removes it too.
  */
 UCLASS()

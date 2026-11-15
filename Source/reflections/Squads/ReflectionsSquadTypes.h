@@ -118,6 +118,8 @@ struct FReflectionsSquadMember
     float RepathTimer = 0.0f;
     /** Gilt melee: the shield has been fitted to the animating hand. */
     bool bShieldPlaced = false;
+    /** Ticks spent waiting for the body to leave its reference (T) pose before fitting the shield. */
+    int32 ShieldTries = 0;
     FVector ChargeWaypoint = FVector::ZeroVector;
     float FlankAngle = 0.0f;
     float LastHealth = -1.0f;

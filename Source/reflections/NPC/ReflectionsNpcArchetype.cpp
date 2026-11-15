@@ -1,4 +1,5 @@
 #include "NPC/ReflectionsNpcArchetype.h"
+#include "Materials/MaterialInterface.h"
 
 #include "Animation/AnimSequence.h"
 #include "Engine/StaticMesh.h"
@@ -64,7 +65,7 @@ const TArray<FName>& UReflectionsNpcArchetype::BuiltInIds()
     static const TArray<FName> Ids = {
         TEXT("Civilian"), TEXT("Timid"), TEXT("Brave"), TEXT("Guard"),
         TEXT("Enemy"), TEXT("Hostile"), TEXT("Soldier"), TEXT("SoldierCaster"), TEXT("Infected"), TEXT("VillainHost"),
-        TEXT("AlliedSoldier") };
+        TEXT("AlliedSoldier"), TEXT("AlliedSoldierCaster") };
     return Ids;
 }
 
@@ -109,6 +110,7 @@ bool UReflectionsNpcArchetype::ApplyBuiltIn(FName Id)
     A->BarkOnAlert = Defaults->BarkOnAlert;
     A->BarkOnAttack = Defaults->BarkOnAttack;
     A->Looks = Defaults->Looks;
+    A->HiddenLookParts = Defaults->HiddenLookParts;
     A->bCuredOnDeath = Defaults->bCuredOnDeath;
     // The strike clip retargeted for the dressed guard (Tools/NpcCombat/setup_enemy.py makes it). Every crowd
     // body shares that MetaHuman skeleton. Where the clip is not in the project the strike is timed without it.
@@ -164,9 +166,30 @@ bool UReflectionsNpcArchetype::ApplyBuiltIn(FName Id)
         AddWalker({ TEXT("Sword_Slash_LR"), TEXT("Sword_Slash_RL"), TEXT("Sword_Stab"), TEXT("Sword_Overhead") });
         A->Combat.WeaponProp = Prop(TEXT("/Game/LanthorneAssets/Frostside/Props/SM_Frostside_MirrorSword"), TEXT("SM_Frostside_MirrorSword"));
     }
-    else if (Id == TEXT("SoldierCaster"))
-        A->Combat.WeaponProp = Prop(TEXT("/Game/LanthorneAssets/Pewterside/Props/SM_Pewterside_ReaderWand"), TEXT("SM_Pewterside_ReaderWand"));
-    else if (Id == TEXT("Infected") || Id == TEXT("VillainHost"))
+    else if (Id == TEXT("SoldierCaster") || Id == TEXT("AlliedSoldierCaster"))
+        // Casters are soldiers too: the same sword (they cast from the sword hand), no wand.
+        A->Combat.WeaponProp = Prop(TEXT("/Game/LanthorneAssets/Frostside/Props/SM_Frostside_MirrorSword"), TEXT("SM_Frostside_MirrorSword"));
+    // Every soldier carries a shield on the left arm and wears no armour over the gambeson. A look that already
+    // wears a shield keeps its own. Frostside has no shield mesh yet: its soldiers carry the same round shield in
+    // plain wood instead of Giltside's red.
+    const bool bGiltFighter = Id == TEXT("Guard") || Id == TEXT("AlliedSoldier") || Id == TEXT("AlliedSoldierCaster");
+    const bool bFrostFighter = Id == TEXT("Soldier") || Id == TEXT("SoldierCaster") || Id == TEXT("Enemy") || Id == TEXT("Hostile");
+    if (bGiltFighter || bFrostFighter)
+    {
+        A->Combat.ShieldProp = Prop(TEXT("/Game/LanthorneAssets/Giltside/Props/SM_Giltside_PatrolShield"), TEXT("SM_Giltside_PatrolShield"));
+        if (bFrostFighter && FPackageName::DoesPackageExist(TEXT("/Game/LanthorneAssets/Frostside/Props/Materials/M_Frostside_ProvisionCrate")))
+            A->Combat.ShieldMaterial = TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(
+                TEXT("/Game/LanthorneAssets/Frostside/Props/Materials/M_Frostside_ProvisionCrate.M_Frostside_ProvisionCrate")));
+        // No plate, and not the shield some looks carry as a part of the outfit (it hangs from the hand): every
+        // soldier's shield is the one this system straps to the forearm.
+        A->HiddenLookParts = { FName(TEXT("Armor")), FName(TEXT("Shield")) };
+        if (FPackageName::DoesPackageExist(TEXT("/Game/NPC/Anim/AS_Npc_ArmedHold_Add_Walker")))
+            A->Combat.WalkerArmedHold = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/NPC/Anim/AS_Npc_ArmedHold_Add_Walker.AS_Npc_ArmedHold_Add_Walker")));
+        // Sword and shield held at the ready: listed only when the clips are in the project.
+        A->Combat.WalkerGuardIdle = WalkerClip(TEXT("Shield_Guard_Idle"));
+        A->Combat.WalkerMarchHold = WalkerClip(TEXT("Shield_March_Hold"));
+    }
+    if (Id == TEXT("Infected") || Id == TEXT("VillainHost"))
     {
         // The tarnished are dark sorcerers: from 8 to 20 m with a clear line they stop and throw the Tarnish's
         // magic at the player, a bolt or now and then a slow wisp that follows; up close they claw, and they still
@@ -201,7 +224,7 @@ bool UReflectionsNpcArchetype::ApplyBuiltIn(FName Id)
             Look(*FString::Printf(TEXT("%sBP_WhiteLook_01_Plain.BP_WhiteLook_01_Plain_C"), WhiteLooks)),
             Look(*FString::Printf(TEXT("%sBP_WhiteLook_02_Cap.BP_WhiteLook_02_Cap_C"), WhiteLooks)) };
     }
-    else if (Id == TEXT("Guard") || Id == TEXT("AlliedSoldier"))
+    else if (Id == TEXT("Guard") || Id == TEXT("AlliedSoldier") || Id == TEXT("AlliedSoldierCaster"))
     {
         A->VoiceCharacter = Id == TEXT("Guard") ? TEXT("Guard") : TEXT("Soldier");
         A->BarkOnAlert = TEXT("Guard_Alert");
@@ -234,7 +257,7 @@ bool UReflectionsNpcArchetype::ApplyBuiltIn(FName Id)
         if (Id == TEXT("Civilian") || Id == TEXT("Timid") || Id == TEXT("Brave"))
             Cast = { TEXT("FrostHyeon"), TEXT("FrostSilas"), TEXT("GiltCoinClerk"), TEXT("GiltArchivist"), TEXT("GiltMaren"), TEXT("GiltBarnaby"),
                 TEXT("GiltDrummer"), TEXT("GiltFerryman"), TEXT("GiltPriya"), TEXT("GiltRamon"), TEXT("GiltGlassman"), TEXT("GiltHaruto") };
-        else if (Id == TEXT("Guard") || Id == TEXT("AlliedSoldier"))
+        else if (Id == TEXT("Guard") || Id == TEXT("AlliedSoldier") || Id == TEXT("AlliedSoldierCaster"))
             Cast = { TEXT("GiltBridgeGuard"), TEXT("GiltRowena") };
         else if (Id == TEXT("Soldier"))
             Cast = { TEXT("FrostIven"), TEXT("FrostSaran"), TEXT("FrostNia"), TEXT("FrostAmara") };
@@ -248,6 +271,20 @@ bool UReflectionsNpcArchetype::ApplyBuiltIn(FName Id)
             const FString Package = FString::Printf(TEXT("/Game/Characters/Lanthorne/Looks/BP_Look_%s"), LookId);
             if (FPackageName::DoesPackageExist(Package))
                 Finished.Add(Look(*FString::Printf(TEXT("%s.BP_Look_%s_C"), *Package, LookId)));
+        }
+        // Pewterside's own people (the crowd-looks session's /Game/Characters/Lanthorne/Looks/Pewterside/PewLook_<X>):
+        // townspeople and guards. The side-aware pick keeps them in Pewterside.
+        TArray<const TCHAR*> Pewter;
+        if (Id == TEXT("Civilian") || Id == TEXT("Timid") || Id == TEXT("Brave"))
+            Pewter = { TEXT("CoinClerk"), TEXT("Archivist"), TEXT("Maren"), TEXT("Barnaby"), TEXT("Drummer"), TEXT("Ferryman"),
+                TEXT("Priya"), TEXT("Ramon"), TEXT("Glassman"), TEXT("Haruto") };
+        else if (Id == TEXT("Guard") || Id == TEXT("AlliedSoldier") || Id == TEXT("AlliedSoldierCaster"))
+            Pewter = { TEXT("BridgeGuard"), TEXT("Rowena") };
+        for (const TCHAR* LookId : Pewter)
+        {
+            const FString Package = FString::Printf(TEXT("/Game/Characters/Lanthorne/Looks/Pewterside/PewLook_%s"), LookId);
+            if (FPackageName::DoesPackageExist(Package))
+                Finished.Add(Look(*FString::Printf(TEXT("%s.PewLook_%s_C"), *Package, LookId)));
         }
         if (Finished.Num() >= 2) A->Looks = MoveTemp(Finished);
     }
@@ -304,6 +341,33 @@ bool UReflectionsNpcArchetype::ApplyBuiltIn(FName Id)
         A->Combat.AttackDamage = 10.0f;
         A->Combat.AttackCooldown = 1.3f;
         A->Combat.ChaseInput = 0.8f;
+    }
+    else if (Id == TEXT("AlliedSoldierCaster"))
+    {
+        // Giltside's wand-bearers: on the player's side like the allied soldier, but they do not close in. They
+        // keep their distance, flinch away from a hit, and cast when their squad has them cast (the squad layer
+        // reads the Ranged block, as it does for the enemy's casters).
+        A->Disposition = EReflectionsNpcDisposition::Guard;
+        A->MaxHealth = 42.0f;
+        A->HomeWorld = EReflectionsNpcHomeWorld::Red;
+        A->GrantedTags.AddUnique(FName(TEXT("NPC_AlliedSoldier")));
+        A->Reaction.AwarenessRadius = 1800.0f;
+        A->Reaction.bRoamsWhenCalm = false;
+        A->Reaction.NoiseResponse = EReflectionsNpcNoiseResponse::Ignore;
+        A->Reaction.FearPerNoise = 0.0f;
+        A->Reaction.bFightsBack = false;
+        A->Reaction.bCanAttack = false;
+        A->Reaction.FleeBelowHealthFraction = 0.25f;
+        A->Reaction.ReactionSeconds = 2.5f;
+        A->Reaction.FleeDistance = 550.0f;
+        A->Reaction.ReactionSpeed = 260.0f;
+        A->Combat.bHuntPlayerOnSight = false;
+        A->Combat.bUseMeleeMotor = false;
+        A->Combat.SightRadius = 2200.0f;
+        A->Combat.bRangedCaster = true;
+        A->Combat.RangedSpells = { EHeroSpell::Fire, EHeroSpell::IceShard, EHeroSpell::ArcaneBolt };
+        A->Combat.RangedCastAnimation = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(
+            TEXT("/Game/Characters/Hero/Animation/CombatCasts/AS_Hero_CombatBoltRight.AS_Hero_CombatBoltRight")));
     }
     else if (Id == TEXT("Enemy") || Id == TEXT("Hostile"))
     {
@@ -370,7 +434,8 @@ bool UReflectionsNpcArchetype::ApplyBuiltIn(FName Id)
         A->Combat.bHuntsNpcs = true;
         A->Combat.bConvertsNpcs = true;
         A->Combat.bUseMeleeMotor = true;
-        A->Combat.SightRadius = 900.0f;
+        // 15 m: far enough to start casting from range (with 9 m they only ever noticed the player up close).
+        A->Combat.SightRadius = 1500.0f;
         A->Combat.AttackDamage = 8.0f;
         A->Combat.AttackCooldown = 1.4f;
         A->Combat.ChaseInput = 0.5f;

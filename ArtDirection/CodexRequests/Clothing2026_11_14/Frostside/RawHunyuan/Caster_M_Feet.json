@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\References\\Caster_M_Feet.png",
+  "output": "ArtDirection\\CodexRequests\\Clothing2026_11_14\\Frostside\\RawHunyuan\\Caster_M_Feet.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 12,
+  "resolution": 256,
+  "seed": 1103,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 286610,
+  "faces": 573216,
+  "seconds": 35.2,
+  "bounds": [
+    [
+      -0.5190840363502502,
+      -0.9971845149993896,
+      -0.9945319890975952
+    ],
+    [
+      0.5130451917648315,
+      0.9844281673431396,
+      0.9894900321960449
+    ]
+  ]
+}

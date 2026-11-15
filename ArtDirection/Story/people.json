@@ -3151,7 +3151,8 @@
      "Look_Side_Pewterside",
      "Look_Role_Civilian"
     ]
-   }
+   },
+   "look": "PewLook_BridgeGuard"
   },
   {
    "id": "hester_quaile",
@@ -3266,7 +3267,8 @@
      "Look_Side_Pewterside",
      "Look_Role_Civilian"
     ]
-   }
+   },
+   "look": "PewLook_Maren"
   },
   {
    "id": "walter_dunmore",
@@ -3375,7 +3377,8 @@
      "Look_Side_Pewterside",
      "Look_Role_Civilian"
     ]
-   }
+   },
+   "look": "PewLook_Barnaby"
   },
   {
    "id": "sid_kettle",
@@ -3488,7 +3491,8 @@
      "Look_Side_Pewterside",
      "Look_Role_Civilian"
     ]
-   }
+   },
+   "look": "PewLook_Ferryman"
   },
   {
    "id": "bet_crawley",
@@ -3592,7 +3596,8 @@
      "Look_Side_Pewterside",
      "Look_Role_Civilian"
     ]
-   }
+   },
+   "look": "PewLook_Priya"
   },
   {
    "id": "agnes_moth",
@@ -3703,7 +3708,8 @@
      "Look_Side_Pewterside",
      "Look_Role_Civilian"
     ]
-   }
+   },
+   "look": "PewLook_Drummer"
   },
   {
    "id": "ada_pollard",
@@ -3915,7 +3921,8 @@
      "Look_Side_Pewterside",
      "Look_Role_Civilian"
     ]
-   }
+   },
+   "look": "PewLook_Archivist"
   },
   {
    "id": "ivy_harker",
@@ -4023,7 +4030,8 @@
      "Look_Side_Pewterside",
      "Look_Role_Guard"
     ]
-   }
+   },
+   "look": "PewLook_Rowena"
   },
   {
    "id": "horace_pratt",
@@ -4133,7 +4141,8 @@
      "Look_Side_Pewterside",
      "Look_Role_Civilian"
     ]
-   }
+   },
+   "look": "PewLook_Glassman"
   },
   {
    "id": "winnie_cobb",
@@ -4243,7 +4252,8 @@
      "Look_Side_Pewterside",
      "Look_Role_Civilian"
     ]
-   }
+   },
+   "look": "PewLook_CoinClerk"
   },
   {
    "id": "frank_dunning",
@@ -4348,7 +4358,8 @@
      "Look_Side_Pewterside",
      "Look_Role_Civilian"
     ]
-   }
+   },
+   "look": "PewLook_Ramon"
   },
   {
    "id": "gunnar_skarre",

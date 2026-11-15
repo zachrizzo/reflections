@@ -8,7 +8,7 @@
     "GiltRowena"
   ],
   "front": "-Y",
-  "boot_drop_cm": "auto",
+  "boot_drop_cm": 0,
   "pieces": [
     {
       "name": "SK_Gilt_Soldier_F_Lower_BridgeGuard",

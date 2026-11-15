@@ -18,10 +18,15 @@ INTENT = {
     "Water_Shove": "a heavy wave of magic water slamming into a person, with a big splash and spray",
     "Body_Knockback": "a person thrown through the air landing hard on stone cobbles",
     "Burning_Loop": "flames burning on a person's clothes (looping)",
-    "March_Loop": "a squad of eight armoured soldiers marching in step on stone, boots and chain mail jingling (looping)",
+    "March_Loop": "a loose squad of five armoured soldiers marching on stone, boots and chain mail jingling (looping)",
     "March_Step": "one armoured soldier's boot step on stone with chain mail jingling",
     "Sword_ShieldHit": "a steel sword striking a wooden shield with a steel rim",
     "Shield_BlockHeavy": "a heavy blow absorbed by a soldier's wooden shield",
+    "Fire_Cast": "a fire spell cast from an open hand: flame igniting with a whoosh and crackle",
+    "Fire_Impact": "a fire bolt hitting its target: a punchy fiery burst with crackling embers",
+    "Water_Impact": "a water bolt slamming into stone: a heavy splash with spray and drips",
+    "Spell_BodyHit": "a short punchy hit on a person's body (a magic bolt striking them): low thud with a flesh or cloth slap",
+    "Spell_BodyHit_Heavy": "a heavy, meaty hit on a person's body from a big spell: hard transient, deep thud and a short sub drop",
 }
 
 

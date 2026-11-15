@@ -166,7 +166,8 @@ console commands:
      `Reflections Villain Arena` on the crown.
    - Giltside also needs a `Reflections Key`, somewhere near the Lantern Gate.
    - Pages and shards are `Reflections Book Page` and `Reflections World Coin` pickups. Copy them from the mock.
-6. **Navigation**: a `NavMeshBoundsVolume` over the playable area in each side map.
+6. **Navigation**: a `NavMeshBoundsVolume` over the playable area in each side map. On the `RecastNavMesh`, set
+   *Ledge Slope Filter Mode* = None, or keep stair steps at 15 cm or less; otherwise stairs never join the navmesh.
 7. **Crowd lanes and squad routes**: ZoneShapes with the `CitySidewalk` lane profile along the pavements, and
    `Reflections Squad Route` actors. Copy them from the mock and re-fit them.
 8. **Change the map setting**: point game-flow's New Game map at your persistent map. Nothing else names the mock.
@@ -247,8 +248,47 @@ was set to yaw 57 in place, so `Lvl_MockCity` was not regenerated and its crowd 
 - Screenshots are in `Screenshots/CityKit/`, and `00_before_after.png` puts them next to the 16:08 shots. Some 16:08
   shots were taken under cutscene overlays.
 
-**Open:**
-- **Frostside's look.** Even after the 16:13 tone-down it is nearly monochrome white, and from the Frost crown the
-  city disappears in fog. The Frostside fog and grade need another pass.
+## Frostside look pass and the Weigh-House stair (Nov 14, 20:07–20:11, queue row 9)
+
+**Frostside look.** It was nearly monochrome white, and the crown fogged out. The goal now is cold and bleached,
+with contrast.
+- Grade (`DA_WorldJumpConfig` > Worlds > Frostside > Grade): saturation 0.15 → 0.5, contrast 1.18, shadow gain
+  (0.86, 0.94, 1.12), white balance 5600 K, exposure +0.6 → −0.3, bloom 1.2 → 0.5.
+- Local fog: 0.45 / 0.3 → 0.1 / 0.06, with a bluer albedo.
+- Blockout colours: darker blue-grey streets, ground, water and ice.
+- Lights: every brazier is lit blue, and a blue glow sits on each ramp landing inside the Frost Tower.
+- See `Screenshots/CityKit/01_frostside_before_after.png`.
+
+**Weigh-House stair** (playtest run 3, blocker 3). The old top was a single 34 cm step with a 10 cm gap to the roof.
+It is now 40 steps of 25 cm (27.5 cm treads, 2.5 m wide), flush against the west wall, then a 3 m landing level with
+the roof at the west parapet gap. The drainpipe moved to the south face. The same stair exists on every side, so the
+Giltside roof (after stepping up) has its way down too.
+
+**Verified in PIE, with real movement (held input steered at waypoints):**
+- Up the Pewterside stair onto the roof: PASS.
+- Down from the Giltside roof to the street: PASS.
+
+Navmesh paths:
+
+| Path | Result |
+|---|---|
+| Key street → Gilt Tower door | Complete, 144 m. Run 3's "0 points" came from a teleport start on top of the key pedestal. |
+| Frost floor → crown | Complete |
+| Stair foot → roof | Partial at first; complete after the filter fix below |
+
+**Why the stair path was partial, and the fix (20:14–20:16).** Recast's ledge-slope filter marks a cell whose
+neighbours span more than the walkable climb (about 30 cm) as a ledge, so every 25 cm step was cut out.
+`Lvl_MockCity`'s `RecastNavMesh` now has *Ledge Slope Filter Mode* = None (`tools/nav_filter.py`; and
+`tools/mockcity_build.py` sets it on a rebuild). Drops still split the navmesh, and the agent-radius margin still
+applies. The real London's navmesh needs the same setting, or stairs with steps of 15 cm or less.
+
+After the nav rebuild, every win-path navmesh path is complete (not partial; each ends 0.4 m from its goal):
+
+| Path | Points | Length |
+|---|---|---|
+| Stair foot → Weigh-House roof (Pewterside) | 5 | 30.7 m |
+| Giltside roof → Lantern Gate | 15 | 272.8 m |
+| Key street → Gilt Tower door | 5 | 143.9 m |
+| Frost floor → crown | 22 | 92.7 m |
 - **Magic between jumps.** Two jumps back to back need about 40 s of magic regen (about 1.6 per second, 80 per jump).
   The test script waited too little once; the level is fine.

@@ -7,6 +7,8 @@ ARGS: run <Name> [skip] [map]
 Contact sheets: python Tools/Cinematics/make_contact_sheet.py <Name> (outside the editor).
 """
 import asyncio
+import importlib
+import sys
 import base64
 import json
 import time
@@ -163,13 +165,10 @@ async def run(name, skip, map_path):
 async def preview(names):
     """Camera framing check without the cutscene subsystem: in one PIE session, puts a cine camera at each shot's
     first and last key (anchor = the hero's feet and facing) and captures the view -> Saved/CinematicsTest/Preview."""
-    import importlib
-    import sys
     tools = str(PROJECT / 'Tools' / 'Cinematics')
     if tools not in sys.path:
         sys.path.insert(0, tools)
-    import cutscene_defs
-    importlib.reload(cutscene_defs)
+    cutscene_defs = importlib.reload(importlib.import_module('cutscene_defs'))
     out = ROOT / 'Preview'
     out.mkdir(parents=True, exist_ok=True)
     waited = 0.0
@@ -224,6 +223,86 @@ async def preview(names):
     return {'anchor': str(anchor), 'shots': [s for s in shots if s]}
 
 
+async def runall(names):
+    """One PIE session: each cutscene played to the end (8 frames for its contact sheet, control checked after),
+    then each played again and skipped 3 s in (control checked again). Saved/CinematicsTest/runall.json."""
+    report = {'started': time.strftime('%H:%M:%S'), 'cutscenes': {}}
+    waited = 0.0
+    while True:
+        holder = lock_holder()
+        if holder is None and not await call_tool(APP + 'IsPIERunning'):
+            write_lock('cutscene PIE proof runs (orchestrator slot, until 20:40)', 600)
+            await call_tool(APP + 'StartPIE')
+            break
+        await asyncio.sleep(5.0)
+        waited += 5.0
+        if waited > 60.0:
+            return {'error': 'PIE busy or locked: %s' % (holder,)}
+    try:
+        world = None
+        for _ in range(160):
+            await asyncio.sleep(0.5)
+            world = game_world()
+            pc = unreal.GameplayStatics.get_player_controller(world, 0) if world else None
+            if pc and pc.get_controlled_pawn():
+                break
+        await asyncio.sleep(4.0)
+        report['map'] = world.get_path_name()
+        sub = cutscenes(world)
+        for name in names:
+            out = ROOT / name
+            out.mkdir(parents=True, exist_ok=True)
+            entry = {'before': control_state(world)}
+            unreal.SystemLibrary.execute_console_command(world, 'Cutscene.Play ' + name)
+            await asyncio.sleep(0.3)
+            entry['started_ok'] = sub.is_cutscene_playing()
+            entry['anchor'] = sub.get_anchor_transform().translation.to_tuple()
+            length = LENGTHS.get(name, 30.0)
+            frames = []
+            for i, t in enumerate([length * (i + 0.5) / 8.0 for i in range(8)]):
+                for _ in range(900):
+                    if not sub.is_cutscene_playing() or sub.get_cutscene_time() >= t:
+                        break
+                    await asyncio.sleep(0.1)
+                if not sub.is_cutscene_playing():
+                    break
+                frames.append(await capture(out / ('frame_%d.png' % i)))
+                if i == 3:
+                    entry['during'] = control_state(world)
+            for _ in range(600):
+                if not sub.is_cutscene_playing():
+                    break
+                await asyncio.sleep(0.2)
+            await asyncio.sleep(2.0)
+            frames.append(await capture(out / 'after.png'))
+            entry['after'] = control_state(world)
+            entry['played'] = sub.has_played(name)
+            entry['frames'] = len([f for f in frames if f])
+            # Skip proof.
+            unreal.SystemLibrary.execute_console_command(world, 'Cutscene.Play ' + name)
+            await asyncio.sleep(3.0)
+            entry['skip_started'] = sub.is_cutscene_playing()
+            unreal.SystemLibrary.execute_console_command(world, 'Cutscene.Skip')
+            for _ in range(100):
+                if not sub.is_cutscene_playing():
+                    break
+                await asyncio.sleep(0.1)
+            await asyncio.sleep(1.2)
+            entry['after_skip'] = control_state(world)
+            ok = lambda s: (not s['playing']) and (not s['move_ignored']) and (not s['look_ignored']) and s['view_target'] == entry['before']['view_target'] and s['hero_can_be_damaged']
+            entry['pass'] = bool(entry['started_ok'] and entry['played'] and ok(entry['after']) and entry['skip_started'] and ok(entry['after_skip']))
+            report['cutscenes'][name] = entry
+            (ROOT / 'runall.json').write_text(json.dumps(report, indent=2, default=str))
+            write_lock('cutscene PIE proof runs (orchestrator slot, until 20:40)', 600)
+    finally:
+        if await call_tool(APP + 'IsPIERunning'):
+            await call_tool(APP + 'StopPIE')
+        release_lock()
+    report['ended'] = time.strftime('%H:%M:%S')
+    (ROOT / 'runall.json').write_text(json.dumps(report, indent=2, default=str))
+    return report
+
+
 def anchor_for(world, name):
     """Same rules as the subsystem: CutsceneAnchor_<Name> marker (yaw only, snapped to the ground), else None."""
     markers = unreal.get_world_subsystem(world, unreal.ReflectionsStoryMarkerSubsystem)
@@ -265,13 +344,10 @@ async def geometry(map_path):
     """In one PIE session on map_path: every camera key of every cutscene, placed at that map's anchor, checked for
     being inside a building or losing sight of its subject. Writes Saved/CinematicsTest/geometry.json with suggested
     anchor-space fixes (camera pulled toward its subject until clear)."""
-    import importlib
-    import sys
     tools = str(PROJECT / 'Tools' / 'Cinematics')
     if tools not in sys.path:
         sys.path.insert(0, tools)
-    import cutscene_defs
-    importlib.reload(cutscene_defs)
+    cutscene_defs = importlib.reload(importlib.import_module('cutscene_defs'))
     report = {}
     waited = 0.0
     while True:
@@ -338,8 +414,10 @@ async def geometry(map_path):
 
 _args = list(globals().get('ARGS', []) or [])
 if _args and _args[0] == 'geometry':
-    RESULT = json.dumps(await geometry(_args[1] if len(_args) > 1 else '/Game/MockCity/Lvl_MockCity'), default=str)
+    RESULT = json.dumps(await geometry(_args[1] if len(_args) > 1 else '/Game/GrayLondon/Maps/GrayLondon_Geodata'), default=str)
 if _args and _args[0] == 'preview':
     RESULT = json.dumps(await preview(_args[1:] or list(LENGTHS)), default=str)
 if _args and _args[0] == 'run':
     RESULT = json.dumps(await run(_args[1], 'skip' in _args[2:], next((a for a in _args[2:] if a.startswith('/Game')), None)), default=str)
+if _args and _args[0] == 'runall':
+    RESULT = json.dumps(await runall(_args[1:] or list(LENGTHS)), default=str)

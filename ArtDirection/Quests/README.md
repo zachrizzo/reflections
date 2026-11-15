@@ -14,7 +14,9 @@ Story content in JSON: `ArtDirection/Quests/data/`. Screenshots: `ArtDirection/Q
   objective, a delivery or a choice). Near a person: **E** (keyboard) or **D-pad Down** (gamepad) *Speak with...*.
 - **Talk card** (the non-voice path, which always works): the person's lines, then buttons such as *I'll do it* /
   *Not now* / *Hand it over* / the choices / *Any advice?* / *Goodbye*. A or Enter picks, B or Esc backs out, and the
-  mouse works too. The game pauses while the card is up.
+  mouse works too. Talking never pauses: the world keeps running. The person stops and turns to face the hero,
+  and the card closes by itself if the hero is hurt, walks more than 5 m away, or a menu opens. Only the journal
+  pauses. Quest subtitles sit above npc-dialogue's conversation panel while it shows.
 - **Journal**: **L**, or **Start > Journal** on a gamepad. The left side lists quests under way and finished ones;
   the right side shows the selected quest's notes, its objectives, a "so far" log including your choices, and the
   reward. A or Enter tracks the selected quest; B, Esc or L closes it.
@@ -61,9 +63,10 @@ Quest people the map doesn't have are spawned at their `QuestGiver_<Id>` marker 
 system and tagged `Person_<Id>`. If you place or spawn people yourself, tag them `Person_<PersonId>` and nothing is
 spawned for them. The Tarnish leaves quest givers the quest system spawned alone (`NoVillain`).
 
-**Check a map without the editor:** `python Tools/Quests/check_markers.py ArtDirection/MockCity/MARKERS.md` resolves
-every name the story quests ask for, the way the game does. On 2026-11-14 it reported 43 names, 0 auto-placed and
-0 stand-ins for the mock Lanthorne. A real map's own marker list can be checked the same way.
+**Check a map without the editor:** `python Tools/Quests/check_markers.py` resolves every name the story quests ask
+for, the way the game does. It reads world-jump's `ArtDirection/WorldJump/graylondon_markers.json` by default, or
+any MARKERS.md table. On 2026-11-14 at 21:20 it reported 54 names, 0 auto-placed and 0 stand-ins for Gray London
+(main and SQ1 to SQ12).
 
 ## For other systems
 
@@ -210,7 +213,8 @@ saving an asset, run `Quest.LoadJson ArtDirection/Quests/data/story_quests.json 
 `ArtDirection/Story/tools/build_quests.py` from `main-quest.md` and `side-quests.md`; change the generator, not the
 JSON. It holds:
 - **The main quest:** "The Mirror Made Whole". It replaces the built-in one below.
-- **Side quests:** `sq1_cellar` … `sq9_unsigned`.
+- **Side quests:** `sq1_cellar` … `sq12_empty_chair`. SQ10 to SQ12 cover the Watch book, the Third at the canal
+  rift and the Fennicks.
 - **An item list:** item names for the HUD.
 
 `Tools/Quests/import_story.py` builds the asset from it. `ArtDirection/Quests/data/story_quests.json` is an older
@@ -226,6 +230,12 @@ Story fields the parser understands on top of the format above:
 - **Cutscenes and spawns:** `cutscene`, `cutsceneOnComplete`, and `spawnMarker`.
 - **Cures:** a `spellHit` with `cure` / `requireInfected` counts only the cure itself, the `NpcCured` event. Its
   target is a person, or anyone when it's `Infected` or has a `fallbackTarget`.
+- **Branches and the law:**
+  - `ifKilledNext` on a step: when the hero kills a tarnished target there instead of curing it, the quest goes to
+    that step, and the kill counts there. SQ11: `cure_wat` → `cut_wat`.
+  - `offerIfWanted` on a quest: the giver says those lines and holds the offer while heat is 0.5 or more. SQ11:
+    Mayne.
+  - The `Silverer_RecordClean` unlock (SQ10's reward) calls npc-unify's `ClearPlayerHeat`.
 
 Story intent the code doesn't act on yet: `ifInfected`, `linesIfTargetWasCured`, `linesOnFail`, `meterLines`,
 `squadLines`, `ifCutsceneSkipped`, `pauseLinesWhenOutside`, `spawnAfterObjective`, `scriptedHold`,
@@ -257,6 +267,16 @@ how anything plays. The story pack replaces it with the same beats, richer.
 
 The story bible's main quest replaces this with its own beats on the same events.
 
+## One London (Gray London, no world jump)
+
+When the map has no world anchors (world-jump's `IsWorldJumpActive()` is false), the three-Londons story still
+plays:
+- `worldJump` objectives finish by themselves.
+- Side filters on objectives always match.
+- `PageFound <Side>` means the Nth page found: Pewterside the 1st, Giltside the 2nd, Frostside the 3rd.
+- Shards from any side count.
+- `goTo` radii are at least 25 m, since the walks between beats are 300–600 m.
+
 ## The story catches up
 
 The main quest's steps come in order, but the world doesn't wait for that order. Each tick, if a later main-quest
@@ -267,12 +287,16 @@ step's progress has already happened (`PageFound`, `KeyFound`, `BookComplete`, `
 
 - **Side quest:** the test quest, start to finish on `Lvl_WorldJumpTest` (2026-11-14 16:41). Offer, accept,
   pickup, Fire cast at the brazier, delivery, choice, turn-in, reward and journal (`01_…` to `16_…`).
-- **Main quest:** start to victory on `Lvl_MockCity` (2026-11-14 19:12). The intro fallback, then the tracker
-  (`20_main_start`), then every step (`22_main_NN_<step>`), ending Completed with `Quest_main`. The Bell Square
-  goTo was done for real; steps the test can't act out were forced with `Quest.CompleteStep`. No quest marker was
-  auto-placed.
-- Still to run: SQ9 *Unsigned* through the talk card, and the deaths, heat and catch-up code (these land in the
-  19:30 build).
+- **Main quest:** start to victory on `Lvl_MockCity`, train #11+12 (2026-11-14 20:05). The intro fallback leads to
+  the tracker (`20_main_start`).
+  - **Catch-up:** with the story still at `lantern_row`, picking up the real Pewterside page jumped it straight to
+    `hold_line` ("Step back up into Giltside", `21_catchup_after_page`).
+  - **The rest of the walk:** `22_main_NN_<step>`, ending Completed with `Quest_main` (`29_victory`). The steps the
+    test can't act out (world jumps from script, the key, the boss outside the finale) were forced with
+    `Quest.CompleteStep`.
+  - **Markers:** nothing was auto-placed (`GetAutoPlacedNames` was empty).
+- Still to run: SQ9 *Unsigned* through the talk card, and the deaths and heat code (in the build, not yet driven in
+  PIE).
 
 ## Saving
 

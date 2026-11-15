@@ -6,7 +6,7 @@
 
 /**
  * The ring crowd: a fixed number of civilians kept around the hero on the ZoneGraph sidewalk lanes of a city map
- * (Crowd.Ring.Maps, default Lvl_MockCity), so the streets look lived in at a fixed cost.
+ * (Crowd.Ring.Maps, default GrayLondon_Geodata), so the streets look lived in at a fixed cost.
  *
  * - Walkers are spawned through the unified NPC system (UReflectionsNpcSubsystem::SpawnNpc with the Civilian
  *   archetype), so they wear the finished civilian looks and react, flee, die and talk like every NPC.
@@ -55,6 +55,8 @@ private:
     void RemoveAll();
 
     TArray<FRingWalker> Walkers;
+    /** The archetype's looks, loaded in the background at the start so a spawn never waits on a synchronous load. */
+    TSharedPtr<struct FStreamableHandle> LookPreload;
     double NextCheck = 0.0;
     double StartAt = 0.0;
     bool bActiveMap = false;

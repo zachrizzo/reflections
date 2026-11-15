@@ -27,7 +27,7 @@ Status as of **2026-11-14 ~10:35 local (Sat)**. Deadline is Sun Nov 15, 8:59 PM 
    The script runs:
    ```
    RunUAT.bat BuildCookRun -project=<reflections.uproject> -noP4 -platform=Win64 -clientconfig=Development -target=reflections
-     -nocompileeditor -cook -map=/Game/Characters/Hero/Sample/Lvl_HeroSampleCrowd -stage -pak -iostore -compressed -nodebuginfo
+     -nocompileeditor -cook -map=/Game/GrayLondon/Maps/GrayLondon_Geodata -stage -pak -iostore -compressed -nodebuginfo
      -stagingdirectory=<project>\Saved\JamBuild -unattended -utf8output
      -AdditionalCookerOptions=-NeverCookListFile=%TEMP%\ReflectionsJamNeverCook.txt
    ```
@@ -72,7 +72,7 @@ To list what's in the pak: `"C:\Program Files\Epic Games\UE_5.9\Engine\Binaries\
 | Shader code (all materials, SM5 + SM6) | 134 MB | **160 MB** | Grows with every new material, especially the London map's. |
 | Hero body, cloak, GASP locomotion (hero-cloak, spell-combat) | 89 MB | **100 MB** | `UEFN_Mannequin` (motion-matching animations) is 48 MB of it. |
 | Engine + plugin content | 13 MB | **15 MB** | |
-| London map / level art (map teammate) | 9 MB | **120 MB** | Not in this map yet. |
+| London map / level art (map teammate) | 9 MB | **120 MB** | Not in this map yet. **Gray London (landed Sat 21:00) is estimated at 250–470 MB cooked, about 350 MB likely**: well over this budget. See "Gray London cook plan" in the Sunday plan. |
 | Audio | 12 MB | **20 MB** | |
 | Spells + VFX, spell crafting, world jump | 3 MB | **15 MB** | |
 | NPC dialogue relay (dialogue session): loose `NpcDialogueRelay.exe` + `_internal` | 0 | **15 MB** | **Opt-in, pending the user's decision:** `PackageJamBuild.bat --with-npc-relay`. After staging, it copies the helper from `Content/NpcDialogue/Relay/` (falling back to `Tools/RealtimeVoice/dist/NpcDialogueRelay`) loose to `<stage>/reflections/Content/NpcDialogue/Relay/`. There's deliberately no `DirectoriesToAlwaysStageAsNonUFS` line, so the helper ships only with this flag. Measured 23.9 MB raw, **13.5 MB zipped**, 47 files. Key files (`keys.json`, `*.env`, `*.key`) are excluded from the copy, and the staged folder is checked afterwards. A local `keys.json` for editor testing is fine. The game only starts the helper when the user puts `keys.json` next to the exe after packaging. Risk: PyInstaller executables often trip antivirus or SmartScreen, so scan the final zip with Defender before upload. |
@@ -86,7 +86,7 @@ If the total runs over: drop SM5 (DX11) shaders, about −65 MB (`DefaultEngine.
 
 ### `Config/DefaultGame.ini`, `[/Script/UnrealEd.ProjectPackagingSettings]` (additive)
 
-- `+MapsToCook=Lvl_HeroSampleCrowd`, so the editor's Package Project cooks only the start map.
+- `+MapsToCook=/Game/GrayLondon/Maps/GrayLondon_Geodata` (since Sat 21:05; it was `Lvl_HeroSampleCrowd`, then the mock city), so the editor's Package Project cooks only the start map. A World Partition map's actors and streaming cells come with it.
 - `+DirectoriesToAlwaysCook` for folders C++ loads by **string path at runtime**, which the cooker can't see:
   - `/Game/Characters/Hero/Gameplay`: `BP_HeroPlayer` (spell defaults) and `BP_HeroAnimation`
   - `/Game/Characters/Hero/Animation/CombatCasts`, `/Game/Characters/Hero/SpellVFX`, `/Game/Input`
@@ -173,7 +173,7 @@ Cause: `%APPDATA%\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml` (dated 2
 
 ## Sunday plan
 
-0. **Start map switch (pending the orchestrator's go):** the real playthrough map is `/Game/MockCity/Lvl_MockCity`, which has the three sides, anchors, towers and pages. `Lvl_HeroSampleCrowd` has no world anchors, so world jump can't run there by design. Once the orchestrator and game flow confirm (game flow's `GameFlow.NewGameMap` lands in train #8), change the three places that name the start map:
+0. **Start map switch. Superseded Sat 21:05:** London is the main map, and the mock city and `Lvl_HeroSampleCrowd` are deleted. See "Gray London cook plan" below. History: the real playthrough map is `/Game/MockCity/Lvl_MockCity`, which has the three sides, anchors, towers and pages. `Lvl_HeroSampleCrowd` has no world anchors, so world jump can't run there by design. Once the orchestrator and game flow confirm (game flow's `GameFlow.NewGameMap` lands in train #8), change the three places that name the start map:
    - `DefaultEngine.ini` `GameDefaultMap`: the orchestrator switches it, along with game flow's `NewGameMap`, once world jump confirms the mock city plays. `EditorStartupMap` stays the sample so editor restarts stay light.
    - `DefaultGame.ini` `+MapsToCook`: add `Lvl_MockCity` and the side maps `Lvl_MockCity_Giltside` / `_Pewterside` / `_Frostside` if they're streamed by name.
    - `PackageJamBuild.bat` `-map=`: list each map, separated by `+`.
@@ -188,13 +188,80 @@ Cause: `%APPDATA%\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml` (dated 2
      - Then the staged folder is scanned for key-named files and for key-shaped strings (`AIza…`, `sk-…`) in text files. On a hit, it deletes the staged relay and exits 9.
      - Tested on a scratch copy with `keys - Copy.json`, `keys.json.txt` and `.env` decoys, which stayed behind, and a planted `AIza…` string, which was caught. (findstr couldn't do it: it silently gives up on search strings over 127 bytes.)
    - `PackageJamBuild.bat` now **fails** when `Content/Lives/DA_PeopleBook` is older than `ArtDirection/Story/people.json`; a dry run only warns. At 19:20 it's stale (15:10 vs 19:04), and npc-lives was asked to re-import.
-   - Still open: J4. The AndroidFileServer section and its SecurityToken in `DefaultEngine.ini` belong to the orchestrator (plugin off in the uproject, section deleted).
+   - J4: the orchestrator blanked the AndroidFileServer SecurityToken in `DefaultEngine.ini` (19:4x) for the local checkpoint commit.
+   - NPC reaction clips and sounds (npc-unify, via the orchestrator, 19:4x): `/Game/Combat/Melee` and `/Game/NPC/Archetypes` were **already** in `DirectoriesToAlwaysCook`, and `/Game/Combat/Melee/Source` (Kimodo takes) is never-cooked. I checked the NPC code's string paths against the cook rules:
+     - All 20 `BP_Look_*` built by `BP_Look_%s` are soft-referenced by the `DA_Npc_*` assets.
+     - `BP_SampleCMCClean2` (the NPC driver) comes in through the always-cooked `BP_HeroSampleCleanTest`.
+     - The `BP_WhiteLook_01/02` and SimpleRed fallbacks are only used when fewer than 2 finished looks exist.
+     - No gaps.
 
    **Also measure the new NPC cast in that cook** (crowd-looks `local_ac448871`, Sat 18:4x):
    - `/Game/Characters/Lanthorne/` replaces the old spawn pools: 20 look Blueprints reached through soft refs in the always-cooked `/Game/NPC/Archetypes/DA_Npc_*`, 13 new MetaHumans plus 7 re-groomed faces. Uncooked it's ~1.4 GB plus 435 MB of `People/Common`; the grooms are 461 MB uncooked, strands included.
    - Report the cooked MB for `/Game/Characters/Lanthorne` against the **320 MB NPC budget** to crowd-looks. If it's over, crowd-looks cuts grooms first (cards-only strands), then the number of new faces.
    - Check these drop out of the pak: `/Game/Characters/CrowdMotion/SimpleRed` (once crowd swaps the 6 placed walkers), `/Game/Characters/WhiteLondon/CrowdPreview` (once squads read the archetype lists), and `RedLondon/Crowd/Variants`.
    - `COL_CrowdPrototype_CoinClerk` (108 MB uncooked) still comes in because `/Game/Crowd/City` is always-cooked, though Mass is a no-go for the jam. Ask crowd (`local_3627acc6`) to drop that always-cook entry before the rehearsal.
+
+   **Gray London cook plan** (orchestrator, Sat 20:5x). Jah's `/Game/GrayLondon/Maps/GrayLondon_Geodata` landed in the working copy at the 21:00 train. It becomes the main map once world-jump's integration passes. This was planned without the editor: from the LFS sizes on `origin/main` (`4aac7d0d`) and from the name tables of the landed files. Licences, trademarks and ODbL are covered in [gray-london-review.md](../Submission/gray-london-review.md).
+
+   - **What's in it.** 3,620 packages, 376 MB:
+     - 1,462 assets in `/Game/GrayLondon`;
+     - 2,057 actor packages in `__ExternalActors__`: 1,926 static mesh actors, 721 HISM components, 110 PCG volumes, plus the sky, fog, lights and a PlayerStart;
+     - 99 `__ExternalObjects__`.
+
+     The placed actors reference essentially every asset in `/Game/GrayLondon`, so nearly all 376 MB cooks.
+   - **Estimated cooked size: 250–470 MB, most likely ~350 MB**, against the 120 MB London budget. By part:
+
+     | Part | Source | Cooked estimate | Why |
+     |---|---|---|---|
+     | Meshes | ~245 MB, ~6.5 M triangles (142 MB is the 117 city tiles, 4.0 M faces) | **150–260 MB** | No Nanite on the tiles. 188 meshes use **complex-as-simple collision**, all 117 tiles included (161 MB of source), so ~4.3 M triangles also cook as collision. Lightmap UVs are generated though static lighting is off. |
+     | Textures | 105 assets, 102 MB | **60–100 MB** | `TEXTUREGROUP_World` / `WorldNormalMap`, so the 2048 cap in `DefaultDeviceProfiles.ini` applies. |
+     | Shader code | 293 materials, **all base materials, no instances** | **+30–90 MB** | Each one compiles its own SM5 + SM6 shaders. Shader code is 134 MB for the whole game today. |
+     | World Partition cells | 19 MB of actors | **10–20 MB** | HISM instance data (4,626 trees, 1,300 shopfronts, props) and the baked PCG instances. |
+     | PCG graphs | 4.6 MB | ~0–3 MB | They look editor-only, so they're probably not cooked. That's harmless: see PCG below. |
+   - **Package total.** 734 MB at train #5, plus unmeasured growth since then (the new NPC cast, the mock city, the villain), plus London: about **1.0–1.3 GB**. It's likely over 1 GB unless something is cut. Measure it in the first cook.
+   - **Levers, biggest safe ones first:**
+     1. **World texture cap 2048 → 1024** in `DefaultDeviceProfiles.ini` (`World`, `WorldNormalMap`, `WorldSpecular`). Config only, packaging's. About **−40 to −70 MB** from London. It also softens props up close. **Approved and staged Sat 21:2x.**
+     2. **Drop SM5** (B6, the user's call): −65 MB now, plus about half of London's shader cost (**−80 to −110 MB** total).
+     3. **Cut the shipped area** to the playable radius. The city plus its park ring is ~12.5 km across. This is the biggest lever; Jah and world-jump decide the radius.
+     4. **Turn the 293 materials into instances of a few masters.** That removes most of London's shader cost. Asset work for the map owner, so probably not before Sunday.
+     5. **Collision on the city tiles**, likely 40–70 MB of the mesh cost. Changing it affects walking, so not before Sunday.
+     6. **The Albert Memorial scan** (19 MB source, 649k triangles) has to go for a sale anyway (provenance). Reverting it saves ~15 MB.
+   - **PCG is baked: no runtime generation.**
+     - All 110 PCG volumes (Green Park fences, the B01 awnings) are `GenerateOnDemand`.
+     - All are `bGenerated`, with their `PCGManagedISMComponent` instances saved in the actor packages.
+     - None are partitioned, and none use procedural instances.
+     - The engine's `UPCGComponent::BeginPlay` only generates `GenerateOnLoad` components that aren't generated yet, so the packaged game shows the saved instances and runs no PCG.
+     - Keep it that way. Don't switch them to `GenerateAtRuntime`: that needs the runtime scheduler, causes hitches near the player, and editor-only graphs wouldn't be in the pak.
+   - **World Partition.**
+     - The map uses a `WorldPartitionRuntimeHashSet` (a main LH grid partition plus a persistent one) and two HLOD layers, `_HLODLayer_Instanced` and `_HLODLayer_Merged`.
+     - The cooker generates the streaming cells from the map and pulls in the actors and their assets itself. So **don't** add `/Game/GrayLondon` or `__ExternalActors__` to `DirectoriesToAlwaysCook`.
+     - **The HLODs aren't built: 0 HLOD actors.** The cook doesn't build them, so in a package nothing beyond the loading range shows, and the skyline vanishes at distance. Fix, owned by Jah and world-jump, under a save freeze:
+       - Build only the Instanced layer (WorldPartitionBuilderCommandlet, HLODs builder). It's cheap and writes new actor packages into the map.
+       - Leave Merged unbuilt: it bakes meshes and textures, +20–80 MB.
+       - Or set a few landmarks to not spatially loaded, so they're always present.
+     - **There's no navmesh:** no `NavMeshBoundsVolume` and no `RecastNavMesh`. Without one, NPCs, squads and crowd lanes can't path in London, and neither can the playtest walker.
+       - Dynamic navmesh around navigation invokers adds nothing to the cook.
+       - A bounded volume over the playable area cooks nav data that grows with the area.
+       - Owners: world-jump and NPC.
+   - **Three Londons (world jump).** A World Partition map can't be a sublevel. So it's either duplicate-in-place (route A) or three maps (route B).
+     - Route A: the side step must be about **1.3 M uu**, not 150000, because the city is ~12.5 km across.
+     - Both routes share the meshes, so the cook cost is mostly actor packages: **+20–40 MB** for two more copies, more if Red and White get their own dressing.
+     - Either way the destination cells have to stream in before the hero lands. The "all three loaded at once" assumption doesn't hold with World Partition.
+   - **London is the main map (orchestrator, Sat 21:05).** `Lvl_MockCity` and `Lvl_HeroSampleCrowd` were deleted.
+     - The orchestrator set `MapsToCook`, `NewGameMap`, `GameDefaultMap` and `EditorStartupMap` to `GrayLondon_Geodata`.
+     - **Done Sat 21:2x (packaging):** `PackageJamBuild.bat` `-map=` is now only `/Game/GrayLondon/Maps/GrayLondon_Geodata`, and no old map name is left in the bat. Dry run checked.
+     - Every `[AlwaysCookMaps]` package and `DirectoriesToAlwaysCook` folder still exists. The global game mode is still `ReflectionsSampleGameMode`, whose string-loaded pawn and controller stay always-cooked.
+   - **Decisions (orchestrator, Sat 21:2x):**
+     1. **World texture cap 1024: done.** `DefaultDeviceProfiles.ini` `[Windows DeviceProfile]` now caps `World`, `WorldNormalMap` and `WorldSpecular` at `MaxLODSize` / `MaxLODSize_VT` 1024. `Character*` stays at 2048, and the editor's own profile is unchanged. Side effect: any clothing, cloak or prop texture in a World group (the default group for imported textures) also cooks at 1K.
+     2. **Measurement cook tonight at ~00:30, with the editor closed** (2.7 GB of free virtual memory), after train #14's tests. The orchestrator gives the window and closes the editor.
+     3. **Dropping SM5:** the orchestrator is asking the user.
+     4. **Instanced-only HLODs and the navmesh:** world-jump owns them (`local_830b60d0`). Numbers sent Sat 21:2x.
+     5. **`DA_PeopleBook`:** re-imported in lives' row A.
+     6. **Area trimming** waits for the measured size.
+   - **Cook time.**
+     - The first cook with London is cold: SM5 shaders for 293 materials (the editor only compiled SM6) and 4.3 M triangles of collision. Expect **+15–40 min** on that first cook.
+     - So the "~25 min" final estimate doesn't hold for it. Run a measurement cook early, first thing Sunday or tonight if the orchestrator allows it, under a save freeze.
+   - **Done Sat 21:1x:** `PackageJamBuild.bat` copies [THIRD_PARTY_NOTICES.txt](../Submission/THIRD_PARTY_NOTICES.txt) next to `reflections.exe`, which puts it in the zip's top folder. It warns while the notices still have `[CONFIRM]` items. Tested with a dry run.
 1. **Rehearsal:** after any build train Sunday morning, run steps 1–6 above end to end and check the zip against the budget.
 2. **Final:** at the last build train before the 4 PM local target (6 PM ET), freeze content and source, then run steps 1–6. That's ~25 min including the train.
    - Zip as **`[TeamName]_Reflections.zip`** (jam rule `TeamName_GameName.zip`; the team name is still the user's decision), then upload. `reflections.exe` and the pak and folder names stay as they are.

@@ -7,7 +7,7 @@ Run in the editor's Python, not during PIE:  exec(open(r'<project>/Tools/NpcUnif
 import unreal
 
 HEALTH = {'Civilian': 20.0, 'Timid': 20.0, 'Brave': 28.0, 'Guard': 42.0, 'Enemy': 70.0, 'Hostile': 42.0,
-          'Soldier': 56.0, 'SoldierCaster': 42.0, 'Infected': 28.0, 'VillainHost': 70.0, 'AlliedSoldier': 56.0}
+          'Soldier': 56.0, 'SoldierCaster': 42.0, 'Infected': 28.0, 'VillainHost': 70.0, 'AlliedSoldier': 56.0, 'AlliedSoldierCaster': 42.0}
 
 
 def set_archetype_health(dry_run=False):

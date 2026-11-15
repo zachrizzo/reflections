@@ -161,6 +161,14 @@ private:
     void StartPerformance(const struct FReflectionsCutscenePerformance& Take);
     void StartLine(const struct FReflectionsCutsceneLine& Line);
     void NotifyQuests(FName Name);
+    void ClearTheSet();
+    void RestoreTheSet();
+    struct FClearedActor
+    {
+        TWeakObjectPtr<AActor> Actor;
+        bool bAddedHoldTag = false;
+    };
+    TArray<FClearedActor> ClearedActors;
     bool IsLineAllowed(const struct FReflectionsCutsceneLine& Line) const;
     void StartConversion(const struct FReflectionsCutsceneCue& Cue);
     AActor* FindNearestNpc(const struct FReflectionsCutsceneCastMember& Member) const;

@@ -35,6 +35,11 @@ public:
     UFUNCTION(BlueprintPure, Category="NPC Dialogue")
     AActor* GetTalkTarget() const { return Target.Get(); }
 
+    /** The dialogue panel's top edge above the screen bottom, in Slate units (DPI-scaled, like viewport widget
+     *  padding), measured each frame; 0 when the panel shows nothing. Other HUD text can sit above it. */
+    UFUNCTION(BlueprintPure, Category="NPC Dialogue")
+    float GetPanelTopFromBottom() const;
+
     UReflectionsRealtimeVoiceComponent* GetVoice() const { return Voice; }
 
     // ---- Read-outs for tests and tools ----
@@ -91,6 +96,7 @@ private:
     TWeakObjectPtr<AActor> MutedNpc;
     float CandidateTime = 0.0f;
     float FarTime = 0.0f;
+    float LastPlayerHealth = -1.0f;  // a drop closes the typing box (UI-only input would leave the player stuck)
     bool bHeld = false;
     bool bNoticeShown = false;
 };

@@ -194,6 +194,14 @@ public:
     void ReleaseNpc(AActor* Actor);
 
     /**
+     * Turns an NPC to face a point at its own turning pace; call it every tick for as long as it should keep
+     * facing (while it is held for a talk, say). A walking NPC is turned through its hidden walker and the body
+     * follows: do not set the visible actor's own rotation, it is attached to the walker.
+     */
+    UFUNCTION(BlueprintCallable, Category="NPC")
+    void TurnNpcTowards(AActor* Actor, FVector Point, float DeltaTime);
+
+    /**
      * Asks the villain system to run its conversion sequence on a hunter and the NPC it reached, and holds both
      * for its length. False (nothing held) when there is no villain system, it refuses, or the victim is no NPC.
      * Called by the NPC component; the villain ends it with SetInfection(Victim, Infected, Attacker).

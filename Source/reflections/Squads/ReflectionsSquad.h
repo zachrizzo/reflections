@@ -266,6 +266,14 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Squad|Animation")
     TArray<TSoftObjectPtr<UAnimSequence>> MarchAnimations;
 
+    /** Boots-in-step loop that rides on the lead soldier while the squad marches (audio's SCue_March_Loop). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Squad|Audio")
+    TSoftObjectPtr<USoundBase> MarchLoop;
+
+    /** Played on a shield-carrying soldier that takes a blow (one of the two at random). */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Squad|Audio")
+    TArray<TSoftObjectPtr<USoundBase>> ShieldHitSounds;
+
     /** Ground speed the march loops were authored at; their play rate follows each soldier's real speed. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Squad|Animation", meta=(Units="cm/s"))
     float MarchAnimationSpeed = 155.0f;
@@ -343,13 +351,19 @@ private:
     void EndCast(FReflectionsSquadMember& Member, bool bRestoreAnimation);
     void UpdateMarchAnimation(FReflectionsSquadMember& Member, bool bMarching);
     void Bark(AActor* Speaker);
+    /** Start, follow or fade the march loop with the squad's state. */
+    void UpdateMarchSound();
+    static bool HasShield(const AActor* Soldier);
+    /** A shield that is not the squad's own: the look's, or the NPC system's (named or tagged "...Shield..."). */
+    static bool HasOtherShield(const AActor* Soldier);
     /** A battle line (audio's Soldier_* groups) from Speaker; with bFallback the command cue when it has none. */
     void BarkEvent(AActor* Speaker, FName Group, bool bFallback = false);
     AActor* FirstActiveSoldier() const;
     void AttachWeapon(AActor* Soldier, bool bCaster);
     void AttachShield(AActor* Soldier);
     /** Once the soldier is animating: set the shield's grip (fitted from the live hand unless ShieldGrip is set). */
-    void PlaceShield(FReflectionsSquadMember& Member);
+    /** True once placed (or nothing to place); false while the body is still in its reference pose. */
+    bool PlaceShield(FReflectionsSquadMember& Member);
     class UStaticMeshComponent* AttachProp(AActor* Soldier, UStaticMesh* Mesh, FName Parent, const FTransform& Relative, FName Tag);
     /** A soldier of this squad was hit or killed by Attacker (spell caster, killer). */
     void OnMemberAttacked(AActor* Attacker);
@@ -429,6 +443,8 @@ private:
     float BarkTimer = 0.0f;
     bool bWarnedCastClip = false;
     float SightCheckTimer = 0.0f;
+    UPROPERTY(Transient) TObjectPtr<class UAudioComponent> MarchAudio;
+    TWeakObjectPtr<AActor> MarchAudioCarrier;
     /** Gilt: the player attacked us or a civilian near us; hostile to the player until the squad stands down. */
     bool bProvokedByPlayer = false;
     bool bFoeInSight = true;

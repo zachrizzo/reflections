@@ -475,7 +475,7 @@ FALLBACK = {
 FALLBACK_LOOPS = {'AS_BurningEyes_Hero_26': 3}
 
 
-# ---- Camera fixes from the geometry check (test_cutscenes_pie.py geometry on Lvl_MockCity) -----------------------
+# ---- Camera fixes from the geometry check (test_cutscenes_pie.py geometry on GrayLondon_Geodata) -----------------
 # {(cutscene, shot index, key index): (x, y, z)} anchor-space camera positions that replace clipping keys.
 CAMERA_FIX = {}
 

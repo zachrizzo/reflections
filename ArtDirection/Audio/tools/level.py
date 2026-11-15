@@ -25,9 +25,13 @@ TARGET = {
     "Villain_Hurt": -14, "Villain_Death": -14, "FinalSpell_Cast": -12,
     "Fireball_Explode": -11, "Water_Shove": -13, "Shock_Loop": -20, "Shock_Collapse": -14, "Body_Knockback": -15,
     "Burning_Loop": -21, "March_Loop": -21, "March_Step": -22, "Sword_ShieldHit": -15, "Shield_BlockHeavy": -15,
+    "Spell_BodyHit": -15, "Spell_BodyHit_Heavy": -13, "Spell_BodyHit_Fire": -19, "Spell_BodyHit_Ice": -19,
+    "Spell_BodyHit_Lightning": -18, "Spell_BodyHit_Water": -19,
     "MUS_Gray_Loop": -20, "MUS_Red_Loop": -20, "MUS_White_Loop": -20, "MUS_Combat_Layer": -21, "MUS_Victory_Sting": -17,
 }
 CEILING_DB = -1.0
+# ElevenLabs free-tier SFX replaced by procedural versions (not cleared for a commercial release; orchestrator 2026-11-14)
+FORCE_PROCEDURAL = {"Fire_Cast", "Fire_Impact", "Water_Impact"}
 MAX_LIMIT_DB = 3.0
 
 
@@ -111,7 +115,7 @@ def pick(name, is_music):
                 return src, [p]
         return None, []
     el = sorted(glob.glob(P("sfx", f"{name}_[0-9][0-9].wav")))
-    if el:
+    if el and name not in FORCE_PROCEDURAL:
         return "elevenlabs", el
     return "procedural", sorted(glob.glob(P("synth", f"{name}_[0-9][0-9].wav")))
 

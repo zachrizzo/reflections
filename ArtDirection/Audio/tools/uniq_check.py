@@ -36,11 +36,31 @@ _VOCAL = re.compile(r"^(?:a+r*g+h*|a+h+|a+|o+h+|o+|u+g+h+|u+h+|u+|n+g+h*|n+n+h*|
                     r"y+a+|a+h+a+|h+a+a+|o+o+f+|u+n+h+|g+a+|a+g+h+)$")
 
 
+_WORDS = []
+
+
+def _corpus_words():
+    """Every token used as a word anywhere in the worded script (the wordless group itself left out)."""
+    if not _WORDS:
+        ws = set()
+        for lid, _spk, text in collect():
+            if not lid.startswith("B_React_Effort_"):
+                ws.update(norm(text.replace("-", " ")).split())
+        _WORDS.append(ws - {t for t in ws if _VOCAL.match(t)})
+    return _WORDS[0]
+
+
 def is_wordless(text):
-    """True for a line made only of vocal sounds (Hnngh!, Oof!, Ah-ah-AH!). These carry no phrase, so the
-    no-shared-phrase rule does not apply to them (user rule: no two PHRASES the same across characters)."""
+    """True for a line made only of vocal sounds (Hnngh!, Oof!, HUK!, Ah-ah-AH!). These carry no phrase, so the
+    no-shared-phrase rule does not apply to them (user rule: no two PHRASES the same across characters).
+    A token is a sound if it matches the common vocal shapes, or is short and never used as a word in the script."""
     toks = norm(text.replace("-", " ")).split()
-    return bool(toks) and all(_VOCAL.match(t) for t in toks)
+    if not toks:
+        return False
+    if all(_VOCAL.match(t) for t in toks):
+        return True
+    words = _corpus_words()
+    return all(_VOCAL.match(t) or (t.isalpha() and len(t) <= 6 and t not in words) for t in toks)
 
 
 def _j(name):

@@ -1128,6 +1128,82 @@ void UReflectionsCutsceneSubsystem::SpawnCast()
         Entry.OriginalTransform = Hero->GetActorTransform();
         CastEntries.Add(Entry);
     }
+    ClearTheSet();
+}
+
+void UReflectionsCutsceneSubsystem::ClearTheSet()
+{
+    // Bystanders near the stage walk into close shots: hide every NPC that isn't cast within this radius of the
+    // anchor (and hold it in place), and bring them all back exactly as they were afterwards.
+    ClearedActors.Reset();
+    UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(this);
+    if (!Npcs || !Current || Current->ClearRadius <= 0.0f)
+    {
+        return;
+    }
+    TSet<AActor*> CastRoots;
+    for (const FCastEntry& Entry : CastEntries)
+    {
+        if (AActor* Actor = Entry.Actor.Get())
+        {
+            CastRoots.Add(RootOf(Actor));
+            CastRoots.Add(DriverOf(Actor));
+            CastRoots.Add(Actor);
+        }
+    }
+    const float RadiusSq = FMath::Square(Current->ClearRadius);
+    for (AActor* Npc : Npcs->GetNpcActors())
+    {
+        if (!Npc || CastRoots.Contains(Npc) || CastRoots.Contains(RootOf(Npc)) || CastRoots.Contains(DriverOf(Npc)))
+        {
+            continue;
+        }
+        if (FVector::DistSquared(DriverOf(Npc)->GetActorLocation(), Anchor.GetLocation()) > RadiusSq)
+        {
+            continue;
+        }
+        TArray<AActor*> Group;
+        Group.Add(Npc);
+        Group.AddUnique(RootOf(Npc));
+        Group.AddUnique(DriverOf(Npc));
+        Npc->GetAttachedActors(Group, false, true);
+        for (AActor* Member : Group)
+        {
+            if (Member && !Member->IsHidden())
+            {
+                FClearedActor Cleared;
+                Cleared.Actor = Member;
+                Cleared.bAddedHoldTag = !Member->Tags.Contains(TEXT("Lives_Hold"));
+                ClearedActors.Add(Cleared);
+                Member->SetActorHiddenInGame(true);
+                if (Cleared.bAddedHoldTag)
+                {
+                    Member->Tags.Add(TEXT("Lives_Hold"));
+                }
+            }
+        }
+    }
+    if (ClearedActors.Num() > 0)
+    {
+        UE_LOG(LogReflectionsCutscene, Log, TEXT("Cutscene %s: cleared %d bystander actors within %.0f m."), *CurrentName.ToString(),
+            ClearedActors.Num(), Current->ClearRadius / 100.0f);
+    }
+}
+
+void UReflectionsCutsceneSubsystem::RestoreTheSet()
+{
+    for (const FClearedActor& Cleared : ClearedActors)
+    {
+        if (AActor* Actor = Cleared.Actor.Get())
+        {
+            Actor->SetActorHiddenInGame(false);
+            if (Cleared.bAddedHoldTag)
+            {
+                Actor->Tags.Remove(TEXT("Lives_Hold"));
+            }
+        }
+    }
+    ClearedActors.Reset();
 }
 
 // ---- Sequence ----------------------------------------------------------------------------------------------
@@ -1528,6 +1604,7 @@ void UReflectionsCutsceneSubsystem::Cleanup(bool bBlendCamera)
         }
     }
     CastEntries.Reset();
+    RestoreTheSet();
 
     // Camera back to the hero: from where the last shot was, onto a gameplay camera pointing along his facing.
     APlayerController* PC = TakenController.Get();

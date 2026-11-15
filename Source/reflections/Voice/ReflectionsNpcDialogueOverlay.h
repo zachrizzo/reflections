@@ -33,6 +33,8 @@ public:
     void CloseTyping();
     bool IsTyping() const { return bTyping; }
     TSharedPtr<SEditableTextBox> GetTypingBox() const { return TypingBox; }
+    /** The panel's top edge above the screen bottom, in Slate units, as of the last frame; 0 when nothing shows. */
+    float GetPanelTopFromBottom() const { return PanelTopFromBottom; }
 
     TFunction<void(const FString&)> OnTypedLine;
     TFunction<void()> OnTypingCancelled;
@@ -55,4 +57,6 @@ private:
     double LineHoldSeconds = 5.0;
     double NoticeUntil = 0.0;
     TSharedPtr<SEditableTextBox> TypingBox;
+    float PanelTopFromBottom = 0.0f;
+    static constexpr float BottomMargin = 215.0f;  // above the spell bar (health, mana, spell slots)
 };

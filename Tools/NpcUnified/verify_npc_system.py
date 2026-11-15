@@ -48,12 +48,44 @@ async def shot(name):
         result.setdefault('shot_errors', []).append(name + ': ' + repr(error))
 
 
+# retargeted: positions are relative to where the hero stands when PIE starts (see retarget_checks.py)
+_frame = {}
+
+
+def W(x, y, z=0.0):
+    """A position of the old test level, as the same offset from where the hero stood when PIE started."""
+    if not _frame:
+        game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+        hero = unreal.GameplayStatics.get_player_pawn(game, 0)
+        here = hero.get_actor_location()
+        ahead = hero.get_actor_forward_vector()
+        ahead = unreal.Vector(ahead.x, ahead.y, 0.0).normal()
+        _frame.update(here=here, ahead=ahead, right=unreal.Vector(-ahead.y, ahead.x, 0.0))
+    sites = ((1500.0, 500.0), (-700.0, 350.0))
+    ox, oy = min(sites, key=lambda s: (x - s[0]) ** 2 + (y - s[1]) ** 2)
+    forward, right = -(y - oy), x - ox          # the old checks looked down -Y, with +X to their right
+    here, a, r = _frame['here'], _frame['ahead'], _frame['right']
+    return unreal.Vector(here.x + a.x * forward + r.x * right, here.y + a.y * forward + r.y * right, here.z - 90.0 + z)
+
+
+async def hero_is_down():
+    """Waits (up to 20 s) until PIE has a hero that has stopped falling, then fixes the frame W() measures from."""
+    for _ in range(40):
+        await asyncio.sleep(0.5)
+        game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+        hero = unreal.GameplayStatics.get_player_pawn(game, 0) if game else None
+        if hero and abs(hero.get_velocity().z) < 5.0:
+            break
+    await asyncio.sleep(1.0)
+    W(1500.0, 500.0, 90.0)
+
+
 if unwrap(await call_tool('EditorToolset.EditorAppToolset.IsPIERunning')):
     result['abort'] = 'PIE is already running (someone else is testing); nothing was started.'
 else:
     await call_tool('EditorToolset.EditorAppToolset.StartPIE')
     try:
-        await asyncio.sleep(3.0)
+        await hero_is_down()
         world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
         player = unreal.GameplayStatics.get_player_pawn(world, 0)
         controller = player.get_controller()
@@ -134,7 +166,7 @@ else:
 
         async def kill_and_picture(tag, actor, spell, aim_feet):
             """Stands the player 450 cm north of the NPC, leaves it one hit from death, casts, pictures before and after."""
-            spot = player.get_actor_location() + unreal.Vector(0, -450, -90)
+            spot = player.get_actor_location() + W(0, -450, -90)
             place(actor, spot)
             await asyncio.sleep(0.5)
             unreal.GameplayStatics.apply_damage(actor, max(0.0, health(actor) - 5.0), None, player, unreal.DamageType)
@@ -167,10 +199,10 @@ else:
         # ---- A: fireball on a civilian ---------------------------------------------------------------
         # Staged in the empty south-west of the practice ground so nothing stands between caster and target.
         clerk = actors['Crowd Preview - Red 02']
-        place(clerk, unreal.Vector(-700, -800, 0))
-        place(actors['Crowd Preview - Red 01'], unreal.Vector(-900, -1000, 0))
-        place(actors['BP_BridgeGuard'], unreal.Vector(-300, -1150, 0))
-        player.set_actor_location(unreal.Vector(-700, -300, 90), False, True)
+        place(clerk, W(-700, -800, 0))
+        place(actors['Crowd Preview - Red 01'], W(-900, -1000, 0))
+        place(actors['BP_BridgeGuard'], W(-300, -1150, 0))
+        player.set_actor_location(W(-700, -300, 90), False, True)
         await asyncio.sleep(0.4)
         clerk_health = health(clerk)
         point = clerk.get_actor_location() + unreal.Vector(0, 0, 30)
@@ -194,8 +226,8 @@ else:
         # ---- B: late-spawned enemy fights back -------------------------------------------------------
         enemy_class = unreal.load_class(None, '/Game/Characters/CrowdMotion/SimpleRed/BridgeGuard/BP_BridgeGuard_SimpleRed.BP_BridgeGuard_SimpleRed_C')
         # A clear lane down the east edge: the player 1400 cm north of the enemy, outside its 1200 cm sight.
-        player.set_actor_location(unreal.Vector(1500, 500, 90), False, True)
-        spawn = unreal.Transform(location=unreal.Vector(1500, -900, 0), rotation=unreal.Rotator(0, 0, 90), scale=unreal.Vector(1, 1, 1))
+        player.set_actor_location(W(1500, 500, 90), False, True)
+        spawn = unreal.Transform(location=W(1500, -900, 0), rotation=unreal.Rotator(0, 0, 90), scale=unreal.Vector(1, 1, 1))
         enemy = unreal.ReflectionsWorldLibrary.spawn_actor_into_world(world, enemy_class, spawn)
         enemy.set_editor_property('tags', [unreal.Name(tag) for tag in ('NPC_Reactive', 'NPC_HitProxy', 'NPC_SampleLocomotion', 'NPC_CombatEnemy')])
         await asyncio.sleep(1.0)
@@ -250,7 +282,7 @@ else:
 
         # ---- C: lethal hit ragdolls (no NPC_Ragdoll tag on this one) ---------------------------------
         victim = actors['Crowd Preview - Red 01']
-        place(victim, player.get_actor_location() + unreal.Vector(0, -420, -90))
+        place(victim, player.get_actor_location() + W(0, -420, -90))
         await asyncio.sleep(0.3)
         unreal.GameplayStatics.apply_damage(victim, max(0.0, health(victim) - 5.0), None, player, unreal.DamageType)
         body = next(m for m in victim.get_components_by_class(unreal.SkeletalMeshComponent) if m.get_name() == 'Body')
@@ -276,8 +308,8 @@ else:
 
         # ---- E: a nonlethal hit reads (flinch, stumble, flash) --------------------------------------
         struck = actors['Crowd Preview - Red 03']
-        player.set_actor_location(unreal.Vector(1200, 1300, 90), False, True)
-        place(struck, unreal.Vector(1200, 900, 0))
+        player.set_actor_location(W(1200, 1300, 90), False, True)
+        place(struck, W(1200, 900, 0))
         await asyncio.sleep(0.4)
         struck_health = health(struck)
         struck_before = struck.get_actor_location()
@@ -309,7 +341,7 @@ else:
 
         # ---- D (part 2): infection meter -------------------------------------------------------------
         host = actors['Crowd Preview - White 02']
-        place(host, player.get_actor_location() + unreal.Vector(-350, 250, -90))
+        place(host, player.get_actor_location() + W(-350, 250, -90))
         await asyncio.sleep(0.3)
         count_before = flow.get_infection_count() if flow else None
         friendly_before = host.actor_has_tag('Friendly')
@@ -337,11 +369,11 @@ else:
         check('D_friendly_restored', host.actor_has_tag('Friendly') == friendly_before, host.actor_has_tag('Friendly'))
 
         # ---- F: deaths with before/after pictures ---------------------------------------------------
-        player.set_actor_location(unreal.Vector(-1200, 1300, 90), False, True)
+        player.set_actor_location(W(-1200, 1300, 90), False, True)
         await kill_and_picture('F_guard_fireball', actors['BP_BridgeGuard'], unreal.HeroSpell.FIRESTORM, True)
         soldier_class = unreal.load_class(None, '/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_06_GuardBoldRunes.BP_WhiteLook_06_GuardBoldRunes_C')
-        player.set_actor_location(unreal.Vector(-1200, 300, 90), False, True)
-        place_at = unreal.Transform(location=unreal.Vector(-1200, -150, 0), rotation=unreal.Rotator(0, 0, 90), scale=unreal.Vector(1, 1, 1))
+        player.set_actor_location(W(-1200, 300, 90), False, True)
+        place_at = unreal.Transform(location=W(-1200, -150, 0), rotation=unreal.Rotator(0, 0, 90), scale=unreal.Vector(1, 1, 1))
         soldier = unreal.ReflectionsWorldLibrary.spawn_actor_into_world(world, soldier_class, place_at)
         soldier.set_editor_property('tags', [unreal.Name(tag) for tag in ('NPC_HitProxy', 'NPC_SampleLocomotion')])
         npcs.enroll_actor(soldier, npcs.find_archetype('Soldier'))

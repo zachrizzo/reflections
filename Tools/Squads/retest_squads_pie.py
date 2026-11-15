@@ -154,8 +154,6 @@ def clear_spot(world, squad, player):
         for k in range(16):
             ang = math.radians(k * 22.5)
             p = unreal.Vector(c.x + math.cos(ang) * radius, c.y + math.sin(ang) * radius, 300)
-            if abs(p.x) > 1600 or abs(p.y) > 1600:
-                continue
             floor = unreal.SystemLibrary.line_trace_single(world, p, unreal.Vector(p.x, p.y, -300),
                                                            unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, ignore,
                                                            unreal.DrawDebugTrace.NONE, True)

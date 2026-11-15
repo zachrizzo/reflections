@@ -50,7 +50,8 @@ private:
     /** Per-element scorch / frost / wet / burn / dirt / rune mark under an impact; fades out over ~5 s. */
     void SpawnGroundMark(EHeroSpell Spell, const FVector& Location, const FVector& Normal, float Scale);
     void ShakeNear(const FVector& Location, float Strength);
-    void HitStop();
+    /** Freezes time for Seconds of real time (strong hits: 50-80 ms); rate-limited so area spells don't stack it. */
+    void HitStop(float Seconds = 0.06f);
 
     UFUNCTION() void OnProjectileDestroyed(AActor* Projectile);
     UFUNCTION() void OnSpellHit(const FReflectionsSpellHitData& Hit);
@@ -76,7 +77,20 @@ private:
         TWeakObjectPtr<UNiagaraComponent> Crackle;
         TWeakObjectPtr<class UAudioComponent> Loop;
         double EndTime = 0.0;
+        /** Body-effect kind for afflictions: 0 burn, 1 frost, 2 wet. */
+        int32 Kind = -1;
     };
+    /** Lingering burn / frost / wet effect on a body (NS_Spell_BodyFx), one per body; a new element replaces it. */
+    TMap<TWeakObjectPtr<AActor>, FBodyShock> Afflictions;
+    UPROPERTY(Transient) TObjectPtr<UNiagaraSystem> BodyFxSystem;
+    /** Optional body-hit sound layer (audio session): light, heavy, and per-element sweeteners indexed by element. */
+    UPROPERTY(Transient) TObjectPtr<class USoundBase> BodyHitCue;
+    UPROPERTY(Transient) TObjectPtr<class USoundBase> BodyHitHeavyCue;
+    UPROPERTY(Transient) TArray<TObjectPtr<class USoundBase>> BodyElementCues;
+    double LastHitShake = -1.0;
+    void AfflictBody(AActor* Target, int32 Kind, float Duration, float Magnitude);
+    /** Spawns System on a body's pelvis (or its middle), as a world-up capsule sized to the body. */
+    UNiagaraComponent* AttachToBody(UNiagaraSystem* System, AActor* Target, USceneComponent*& OutParent, FName& OutSocket);
     /** Bodies crackling now, by target; a new Electrify hit on the same body extends it. */
     TMap<TWeakObjectPtr<AActor>, FBodyShock> Shocks;
     FTimerHandle ShockTimer;

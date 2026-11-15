@@ -760,6 +760,16 @@ void UReflectionsLivesSubsystem::RefreshPopulation()
             Life.Move = EMove::None;
         }
     }
+    // The dead stay out of sight, whoever else shows or hides bodies.
+    for (int32 i = GoneBodies.Num() - 1; i >= 0; --i)
+    {
+        AActor* Gone = GoneBodies[i].Get();
+        if (!Gone) { GoneBodies.RemoveAt(i); continue; }
+        if (!Gone->IsHidden()) Gone->SetActorHiddenInGame(true);
+        if (UReflectionsNpcReactionComponent* GoneBrain = Npcs->FindNpc(Gone))
+            if (ACharacter* Driver = GoneBrain->GetLocomotionDriver())
+                if (!Driver->IsHidden()) Driver->SetActorHiddenInGame(true);
+    }
     for (const FName Id : GoneAmbient)
     {
         if (const FLife* Life = Lives.Find(Id)) UsedNames.Remove(Life->Person.Name);
@@ -860,6 +870,8 @@ UReflectionsLivesSubsystem::FLife* UReflectionsLivesSubsystem::Embody(AActor* Ac
                 {
                     Actor->Tags.AddUnique(NoLifeTag);
                     Actor->Tags.AddUnique(NoStrollTag);
+                    Actor->Tags.AddUnique(FName(TEXT("Lives_Gone")));
+                    GoneBodies.AddUnique(Actor);
                     Actor->SetActorHiddenInGame(true);
                     Actor->SetActorEnableCollision(false);
                     if (ACharacter* Driver = Brain->GetLocomotionDriver())
@@ -1020,7 +1032,13 @@ AActor* UReflectionsLivesSubsystem::SpawnLife(FLife& Life, const FVector& Where,
                         ++Wearers;
                         if (FVector::Dist2D(It->GetActorLocation(), Where) < 3000.0f) bNear = true;
                     }
-                const int32 Score = Wearers * 2 + (bNear ? 1000 : 0);
+                // Unused faces first, then the person's age band (Look_Age_*), and never a twin close by.
+                bool bAgeMismatch = false;
+                if (!Life.Person.Age.IsNone())
+                    for (const FName& Tag : Class->GetDefaultObject<AActor>()->Tags)
+                        if (Tag.ToString().StartsWith(TEXT("Look_Age_")))
+                            bAgeMismatch = !Tag.ToString().RightChop(9).Equals(Life.Person.Age.ToString(), ESearchCase::IgnoreCase);
+                const int32 Score = Wearers * 2 + (bAgeMismatch ? 1 : 0) + (bNear ? 1000 : 0);
                 if (Score < BestScore) { BestScore = Score; Best = Class; }
             }
             Look = Best;

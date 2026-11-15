@@ -132,7 +132,9 @@ def recliq(seed=11):
                 new.append({"CliqueId": f"C{next_id:02d}", "Side": side, "Voices": vs[:n]}); next_id += 1
                 vs = vs[n:]
             if vs:  # a lone voice joins the last clique of its side
-                same = [c for c in new if c["Side"] == side] or [c for c in keep if c["Side"] == side and len(c["Voices"]) < 4]
+                # only a NEW clique takes the lone voice: joining a kept clique would force its voiced conversations to be
+                # redrafted; otherwise the voice simply has no street conversations
+                same = [c for c in new if c["Side"] == side]
                 if same:
                     same[-1]["Voices"].append(vs[0])
                     convs.pop(same[-1]["CliqueId"], None)  # its cast changed, so redraft it

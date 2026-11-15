@@ -36,10 +36,12 @@ namespace
     // Off by default until the crowd's MetaHuman looks are finished (crowd-looks session); set 1 to stream it in.
     TAutoConsoleVariable<int32> CVarCrowdMassEnable(TEXT("Crowd.Mass.Enable"), 0,
         TEXT("City crowd (Mass / MetaHuman Crowd pedestrians on ZoneGraph lanes). 1 streams the crowd level in; 0 unloads it and every pedestrian."));
-    TAutoConsoleVariable<FString> CVarCrowdMassHostMap(TEXT("Crowd.Mass.HostMap"), TEXT("Lvl_HeroSampleCrowd"),
-        TEXT("Short name of the map the city crowd is streamed into."));
-    TAutoConsoleVariable<FString> CVarCrowdMassLevel(TEXT("Crowd.Mass.Level"), TEXT("/Game/Crowd/City/Lvl_HeroSampleCrowd_City"),
-        TEXT("Long package name of the crowd level (ZoneGraph lanes, annotations, Mass spawner)."));
+    // The Mass crowd is not used for the jam (the ring crowd of actor civilians is): no host map by default, and its old
+    // crowd level was removed with the sample maps. Set both to bring it back on a map with its own crowd level.
+    TAutoConsoleVariable<FString> CVarCrowdMassHostMap(TEXT("Crowd.Mass.HostMap"), TEXT(""),
+        TEXT("Short name of the map the Mass city crowd is streamed into (empty: none)."));
+    TAutoConsoleVariable<FString> CVarCrowdMassLevel(TEXT("Crowd.Mass.Level"), TEXT(""),
+        TEXT("Long package name of the Mass crowd level (ZoneGraph lanes, annotations, Mass spawner)."));
     TAutoConsoleVariable<float> CVarCrowdMassDangerRadius(TEXT("Crowd.Mass.DangerRadius"), 1500.0f,
         TEXT("Smallest radius (cm) of the lane danger area an NPC stimulus creates."));
     TAutoConsoleVariable<float> CVarCrowdMassDangerSeconds(TEXT("Crowd.Mass.DangerSeconds"), 6.0f,
@@ -142,7 +144,8 @@ void UReflectionsCrowdCitySubsystem::OnWorldBeginPlay(UWorld& InWorld)
     Super::OnWorldBeginPlay(InWorld);
     // PIE worlds carry a UEDPIE_N_ prefix; compare the map's short name without it.
     const FString MapName = UWorld::RemovePIEPrefix(InWorld.GetMapName());
-    bHostMap = MapName == CVarCrowdMassHostMap.GetValueOnGameThread();
+    const FString HostMap = CVarCrowdMassHostMap.GetValueOnGameThread();
+    bHostMap = !HostMap.IsEmpty() && MapName == HostMap;
     CrowdLevelPath = CVarCrowdMassLevel.GetValueOnGameThread();
     if (UReflectionsNpcSubsystem* Npcs = InWorld.GetSubsystem<UReflectionsNpcSubsystem>())
     {

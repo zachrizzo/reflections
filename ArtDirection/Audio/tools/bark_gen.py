@@ -100,9 +100,35 @@ GROUPS = {
         ["sound the alarm", "point out where he is", "call the squad to arms", "warn that he is dangerous"],
         ["Alarm! The Silverer's turned!", "To arms! It's him, by the well!", "Squad, on me! Hostile caster!",
          "He's dangerous, keep your distance!"]),
+    # squads' battle events (soldier-squads session fires one group per event)
+    "Soldier_Charge": ("soldier", 2, 6,
+        "shouted by a soldier as their squad breaks formation and charges the enemy: fierce and rallying",
+        ["a battle cry for their own side of the city", "order the charge"],
+        ["For the Gilt! CHARGE!", "With me, NOW!", "Break ranks, take them!"]),
+    "Soldier_Hold": ("soldier", 1, 6,
+        "a soldier steadying the line as the squad's casters open a volley: steady and commanding",
+        ["order the volley or hold the line steady"],
+        ["Casters, LOOSE!", "Hold... hold... NOW!"]),
+    "Soldier_AllyDown": ("soldier", 1, 6,
+        "a soldier seeing a squadmate fall beside them: shocked and urgent, the grief cut short",
+        ["call out that a comrade has fallen"],
+        ["Man down! Cover him!", "No! Tam's DOWN!"]),
+    "Soldier_EnemyDown": ("soldier", 2, 6,
+        "a soldier as the enemy they were fighting drops: grim satisfaction, short",
+        ["confirm the enemy is down", "move straight on to the next"],
+        ["Got one!", "That's one. NEXT!"]),
+    "Soldier_Retreat": ("soldier", 1, 6,
+        "a soldier standing the squad down after losing the target: grudging and wary",
+        ["order the stand-down and regroup"],
+        ["Lost them. Fall in!", "Back to the line, lads."]),
+    "Soldier_Victory": ("soldier", 1, 6,
+        "a soldier when the fight is won and nobody is left: relief and pride, catching their breath",
+        ["mark the win"],
+        ["That's the lot. Well fought!", "It's done. Breathe."]),
 }
 WORDLESS = {"React_Effort"}  # vocal sounds only: exempt from the no-shared-phrase rule and from the transcript check
-EVERY_INTENT = set()  # groups whose intents must all be covered by every voice (one line per intent, no rotation)
+EVERY_INTENT = {"Soldier_Charge", "Soldier_Hold", "Soldier_AllyDown", "Soldier_EnemyDown", "Soldier_Retreat",
+                "Soldier_Victory"}  # groups whose intents must all be covered by every voice (one line per intent, no rotation)
 CANON_EXAMPLES = {
     "Pewterside": '"Did you see their eyes?" / "Someone get help!" / "Get inside, quick!"',
     "Giltside": '"Silverer! Thank the light." / "The lanterns are going dark!" / "Keep the children close."',

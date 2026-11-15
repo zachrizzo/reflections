@@ -55,6 +55,38 @@ async def shot(name):
         result.setdefault('shot_errors', []).append(name + ': ' + repr(error))
 
 
+# retargeted: positions are relative to where the hero stands when PIE starts (see retarget_checks.py)
+_frame = {}
+
+
+def W(x, y, z=0.0):
+    """A position of the old test level, as the same offset from where the hero stood when PIE started."""
+    if not _frame:
+        game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+        hero = unreal.GameplayStatics.get_player_pawn(game, 0)
+        here = hero.get_actor_location()
+        ahead = hero.get_actor_forward_vector()
+        ahead = unreal.Vector(ahead.x, ahead.y, 0.0).normal()
+        _frame.update(here=here, ahead=ahead, right=unreal.Vector(-ahead.y, ahead.x, 0.0))
+    sites = ((1500.0, 500.0), (-700.0, 350.0))
+    ox, oy = min(sites, key=lambda s: (x - s[0]) ** 2 + (y - s[1]) ** 2)
+    forward, right = -(y - oy), x - ox          # the old checks looked down -Y, with +X to their right
+    here, a, r = _frame['here'], _frame['ahead'], _frame['right']
+    return unreal.Vector(here.x + a.x * forward + r.x * right, here.y + a.y * forward + r.y * right, here.z - 90.0 + z)
+
+
+async def hero_is_down():
+    """Waits (up to 20 s) until PIE has a hero that has stopped falling, then fixes the frame W() measures from."""
+    for _ in range(40):
+        await asyncio.sleep(0.5)
+        game = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
+        hero = unreal.GameplayStatics.get_player_pawn(game, 0) if game else None
+        if hero and abs(hero.get_velocity().z) < 5.0:
+            break
+    await asyncio.sleep(1.0)
+    W(1500.0, 500.0, 90.0)
+
+
 open_map = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world().get_name()
 LOG_PATH = Path(unreal.Paths.project_log_dir()) / 'reflections.log'
 try:
@@ -69,14 +101,12 @@ def console(command, world=None):
 
 if unwrap(await call_tool('EditorToolset.EditorAppToolset.IsPIERunning')):
     result['abort'] = 'PIE is already running (someone else is testing); nothing was started.'
-elif open_map != 'Lvl_HeroSampleCrowd':
-    result['abort'] = 'The editor has %s open, not Lvl_HeroSampleCrowd. Nothing was started.' % open_map
 else:
     # The squad that patrols by the player start from train #11 would join in: this check wants an empty start.
     console('Squads.StartPatrol 0')
     await call_tool('EditorToolset.EditorAppToolset.StartPIE')
     try:
-        await asyncio.sleep(3.0)
+        await hero_is_down()
         world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_game_world()
         console('Squads.Clear', world)
         player = unreal.GameplayStatics.get_player_pawn(world, 0)
@@ -151,8 +181,8 @@ else:
             result['L'] = 'this build has no side-aware look pools'
 
         # ---- T: a tarnished NPC casts at the player from range -------------------------------------
-        player.set_actor_location(unreal.Vector(1500, 500, 90), False, True)
-        sorcerer = npcs.spawn_npc('Civilian', unreal.Vector(1500, -700, 0), 90.0, None)
+        player.set_actor_location(W(1500, 500, 90), False, True)
+        sorcerer = npcs.spawn_npc('Civilian', W(1500, -700, 0), 90.0, None)
         await asyncio.sleep(1.2)
         face(sorcerer.get_actor_location() + unreal.Vector(0, 0, 100))
         start_health = hero_health()
@@ -202,8 +232,8 @@ else:
         await asyncio.sleep(0.5)
 
         # ---- W: a guard holds a sword ----------------------------------------------------------------
-        player.set_actor_location(unreal.Vector(-700, 350, 90), False, True)
-        guard = npcs.spawn_npc('Guard', unreal.Vector(-700, 120, 0), 90.0, None)
+        player.set_actor_location(W(-700, 350, 90), False, True)
+        guard = npcs.spawn_npc('Guard', W(-700, 120, 0), 90.0, None)
         await asyncio.sleep(1.5)
         props = []
         for part in guard.get_components_by_class(unreal.StaticMeshComponent):
@@ -224,8 +254,8 @@ else:
         walker_clip = os.path.exists(os.path.join(unreal.Paths.project_content_dir(), 'Combat', 'Melee', 'AS_Melee_Sword_Slash_LR_Walker.uasset'))
         result['D'] = {'walker_clip_on_disk': walker_clip, 'walker_strikes_listed': switched['Enemy']['walker_strikes']}
         if walker_clip and switched['Enemy']['walker_strikes'] > 0 and globals().get('RUN_DIE_MID_STRIKE', True):
-            player.set_actor_location(unreal.Vector(1500, 500, 90), False, True)
-            fighter = npcs.spawn_npc('Enemy', unreal.Vector(1500, 150, 0), 90.0, None)
+            player.set_actor_location(W(1500, 500, 90), False, True)
+            fighter = npcs.spawn_npc('Enemy', W(1500, 150, 0), 90.0, None)
             await asyncio.sleep(1.0)
             face(fighter.get_actor_location() + unreal.Vector(0, 0, 100))
             motor = fighter.get_component_by_class(unreal.ReflectionsNpcCombatComponent)

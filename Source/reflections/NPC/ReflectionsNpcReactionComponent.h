@@ -160,6 +160,9 @@ public:
     /** The player's record was wiped: one that was after them for it (not an enemy) stands down. */
     void ForgivePlayer();
 
+    /** Turns it toward a point at its turning pace: the walker turns, the body follows. */
+    void FacePoint(const FVector& Point, float DeltaTime);
+
     /**
      * Plays a clip made for the hidden walker's skeleton as a montage on the walker (slot DefaultSlot); the visible
      * body follows it. False when this NPC has no walker, or the clip is for another skeleton. Nothing about the
@@ -208,6 +211,9 @@ private:
     void EndCastTelegraph();
     void FaceTowards(const AActor* Target, float DeltaTime);
     void RefreshWeaponProp();
+    /** The shield on the left forearm, and the parts of the look this archetype goes without. */
+    void RefreshShieldProp();
+    void HideLookParts();
     /** spell-combat's tarnish caster on this actor, added on first use; null when that code is not in the build. */
     UActorComponent* FindOrAddTarnishCaster();
     void CancelTarnishCast();
@@ -250,9 +256,55 @@ private:
     float CastCooldownRemaining = 0.0f;
     EHeroSpell PendingSpell = EHeroSpell::ArcaneBolt;
     bool bPendingHoming = false;
+    bool bLastCastWasWisp = false;
+
+    /** A body that has only just been spawned stays unseen until its walker has a pose that is not its reference pose. */
+    void TickReveal(float DeltaTime);
+    bool bHiddenUntilPosed = false;
+
+    /**
+     * A hit that lands with physics: the hidden walker's upper body simulates for a moment, blended over its
+     * animation and fading out. The visible body is never simulated; it copies the walker's pose after physics.
+     */
+    bool StartWalkerJolt(const FVector& Direction, float Strength);
+    void EndWalkerJolt();
+    bool bWalkerJolting = false;
+    float WalkerJoltRemaining = 0.0f;
+    float WalkerJoltDuration = 0.0f;
+    float WalkerJoltPeak = 0.0f;
+    TEnumAsByte<ETickingGroup> BodyTickGroupBefore = TG_PrePhysics;
+    TEnumAsByte<ECollisionEnabled::Type> WalkerCollisionBefore = ECollisionEnabled::NoCollision;
+
+    /**
+     * Knocked off its feet: the hidden walker falls as a ragdoll (the visible body is attached to it and copies
+     * it), lies a moment, then gets up with a clip while the physics fades out.
+     */
+    enum class EWalkerDown : uint8 { None, Down, Rising };
+    bool StartWalkerKnockdown(const FVector& Velocity);
+    void TickWalkerKnockdown(float DeltaTime);
+    void BeginWalkerGetUp();
+    void EndWalkerKnockdown(bool bLeaveWhereItLies = false);
+    EWalkerDown WalkerDown = EWalkerDown::None;
+    float WalkerDownTime = 0.0f;
+    float WalkerStillTime = 0.0f;
+    float WalkerRiseRemaining = 0.0f;
+    float WalkerRiseBlend = 0.0f;
+    FTransform WalkerMeshRelative;
+    TEnumAsByte<ECollisionEnabled::Type> WalkerCapsuleCollisionBefore = ECollisionEnabled::QueryAndPhysics;
+
+    /** Armed NPCs hold sword and shield at the ready: a looping hold on the walker that yields to every other montage. */
+    void TickStance(float DeltaTime);
+    UPROPERTY(Transient) TObjectPtr<class UAnimMontage> StanceMontage;
+    float StanceStillFor = 0.0f;
+    float StanceCheckIn = 0.0f;
+    bool bStanceIsMarch = false;
+    float RevealTimeout = 0.0f;
+    float RevealElapsed = 0.0f;
+    int32 RevealGoodFrames = 0;
     UPROPERTY(Transient) TObjectPtr<class UPointLightComponent> CastLight;
     UPROPERTY(Transient) TObjectPtr<class UNiagaraComponent> CastGlow;
     UPROPERTY(Transient) TObjectPtr<class UStaticMeshComponent> WeaponProp;
+    UPROPERTY(Transient) TObjectPtr<class UStaticMeshComponent> ShieldProp;
     bool bRemarksMuted = false;
     float RemarkCheckIn = 0.0f;
     float NextRemarkTime = 0.0f;

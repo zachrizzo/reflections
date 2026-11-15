@@ -71,6 +71,9 @@ namespace ReflectionsSquadNpc
     /** The NPC system itself puts a weapon in this soldier's hand (its archetype names a WeaponProp). */
     bool NpcCarriesWeapon(AActor* Soldier);
 
+    /** The NPC system itself puts a shield on this soldier's left arm (its archetype names a Combat.ShieldProp). */
+    bool NpcCarriesShield(AActor* Soldier);
+
     /** Soldier looks the NPC system keeps on the Soldier / SoldierCaster archetype (crowd looks fills them). */
     bool GetArchetypeLooks(const UObject* WorldContext, bool bCaster, TArray<TSoftClassPtr<AActor>>& Out);
 

@@ -64,6 +64,17 @@ void UReflectionsWorldJumpSubsystem::RestoreProgress(const TMap<EReflectionsWorl
     OnProgressRestored.Broadcast();
 }
 
+EReflectionsWorld UReflectionsWorldJumpSubsystem::GetCurrentWorld() const
+{
+    if (bHasCurrentWorld)
+    {
+        return CurrentWorld;
+    }
+    // Nothing has set the side yet (a one-London map never jumps): agree with GetWorldAtLocation's default.
+    const UReflectionsWorldJumpConfig* Config = UReflectionsWorldJumpConfig::Get(this);
+    return Config ? Config->DefaultWorld : CurrentWorld;
+}
+
 void UReflectionsWorldJumpSubsystem::SetCurrentWorld(EReflectionsWorld World, bool bBroadcast)
 {
     const EReflectionsWorld Previous = CurrentWorld;

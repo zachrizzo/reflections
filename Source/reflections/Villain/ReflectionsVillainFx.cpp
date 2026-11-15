@@ -31,11 +31,14 @@ namespace
     TAutoConsoleVariable<float> CVarInfectInterval(TEXT("Villain.InfectInterval"), 16.0f, TEXT("Seconds between infections spread by the host."));
     TAutoConsoleVariable<float> CVarInfectRadius(TEXT("Villain.InfectRadius"), 2200.0f, TEXT("How far (cm) a host reaches to infect another NPC."));
     TAutoConsoleVariable<float> CVarHopRadius(TEXT("Villain.HopRadius"), 4000.0f, TEXT("Preferred distance (cm) for a hop to a fresh host."));
+    TAutoConsoleVariable<float> CVarConvertInterval(TEXT("Villain.ConvertInterval"), 85.0f,
+        TEXT("Seconds between tackle conversions (the first two come at about 40% of it; each page found shortens it 10%, to 70%). "
+             "About 25 minutes to a full meter if the player ignores the Tarnish."));
     TAutoConsoleVariable<float> CVarSeedRadius(TEXT("Villain.SeedRadius"), 9000.0f, TEXT("Search radius (cm) around the player when no host is near."));
     TAutoConsoleVariable<float> CVarRiftDelay(TEXT("Villain.RiftDelay"), 9.0f, TEXT("Seconds after infection before an infected NPC may be sent to another side."));
     TAutoConsoleVariable<float> CVarRiftChance(TEXT("Villain.RiftChance"), 0.6f, TEXT("Chance an infected NPC is sent to another side (world-jump maps only)."));
     TAutoConsoleVariable<int32> CVarKillHosts(TEXT("Villain.KillHostsOnBurnout"), 1, TEXT("1: a burnt-out host dies (damage). 0: it is left scorched."));
-    TAutoConsoleVariable<float> CVarBossHealth(TEXT("Villain.BossHealth"), 750.0f, TEXT("Health of his true form."));
+    TAutoConsoleVariable<float> CVarBossHealth(TEXT("Villain.BossHealth"), 1250.0f, TEXT("Health of his true form."));
     TAutoConsoleVariable<float> CVarFinalDamage(TEXT("Villain.FinalSpellDamage"), 125.0f, TEXT("Damage of one Final Spell hit."));
     TAutoConsoleVariable<float> CVarOtherScale(TEXT("Villain.OtherSpellScale"), 0.03f, TEXT("Fraction of damage his true form takes from anything but the Final Spell."));
     TAutoConsoleVariable<float> CVarFinalMana(TEXT("Villain.FinalSpellMana"), 20.0f, TEXT("Mana cost of the Final Spell."));
@@ -54,6 +57,7 @@ float ReflectionsVillainTuning::HostLifetime() { return FMath::Max(3.0f, CVarHos
 float ReflectionsVillainTuning::InfectInterval() { return FMath::Max(1.0f, CVarInfectInterval.GetValueOnGameThread()); }
 float ReflectionsVillainTuning::InfectRadius() { return FMath::Max(100.0f, CVarInfectRadius.GetValueOnGameThread()); }
 float ReflectionsVillainTuning::HopRadius() { return FMath::Max(100.0f, CVarHopRadius.GetValueOnGameThread()); }
+float ReflectionsVillainTuning::ConvertInterval() { return FMath::Max(5.0f, CVarConvertInterval.GetValueOnGameThread()); }
 float ReflectionsVillainTuning::SeedRadius() { return FMath::Max(100.0f, CVarSeedRadius.GetValueOnGameThread()); }
 float ReflectionsVillainTuning::RiftDelay() { return FMath::Max(0.5f, CVarRiftDelay.GetValueOnGameThread()); }
 float ReflectionsVillainTuning::RiftChance() { return FMath::Clamp(CVarRiftChance.GetValueOnGameThread(), 0.0f, 1.0f); }

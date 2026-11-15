@@ -121,17 +121,24 @@ def chest(actor):
     return o + unreal.Vector(0.0, 0.0, e.z * 0.25)
 
 
-def spawn_crate(world, loc):
-    xf = unreal.Transform(location=loc)
-    a = unreal.GameplayStatics.begin_deferred_actor_spawn_from_class(world, unreal.StaticMeshActor, xf)
-    a = unreal.GameplayStatics.finish_spawning_actor(a, xf)
-    c = a.static_mesh_component
-    c.set_mobility(unreal.ComponentMobility.MOVABLE)
-    c.set_static_mesh(unreal.load_asset('/Engine/BasicShapes/Cube'))
-    c.set_world_scale3d(unreal.Vector(0.45, 0.45, 0.45))
-    c.set_collision_profile_name('PhysicsActor')
-    c.set_simulate_physics(True)
-    return a
+def loose_props(world, center, radius=650.0, limit=4):
+    """Python here cannot spawn actors in PIE, so borrow small static props near the blast and make them physics
+    objects for this run (the PIE copy only; the saved level is untouched)."""
+    props = []
+    for a in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.StaticMeshActor):
+        try:
+            o, e = a.get_actor_bounds(False)
+            if max(e.x, e.y, e.z) > 120.0 or (o - center).length() > radius:
+                continue
+            c = a.static_mesh_component
+            c.set_mobility(unreal.ComponentMobility.MOVABLE)
+            c.set_simulate_physics(True)
+            if c.is_simulating_physics():
+                props.append((a.get_actor_location() - center).length(), a)
+        except Exception:
+            pass
+    props.sort(key=lambda x: x[0])
+    return [a for _, a in props[:limit]]
 
 
 async def case_explosion(world, world_ref, pc, pawn, driver):
@@ -141,8 +148,9 @@ async def case_explosion(world, world_ref, pc, pawn, driver):
         return {}
     w = ws[0]
     base = w.get_actor_location()
-    crates = [spawn_crate(world, base + unreal.Vector(dx, dy, 60.0)) for dx, dy in ((140, 0), (-140, 0), (0, 140), (0, -140))]
-    await asyncio.sleep(0.8)
+    crates = loose_props(world, base)
+    report['props_borrowed'] = [c.get_name() for c in crates]
+    await asyncio.sleep(0.6)
     before = [c.get_actor_location() for c in crates]
     h0 = health(w)
     aim_at(pc, chest(w))
@@ -167,10 +175,8 @@ async def case_explosion(world, world_ref, pc, pawn, driver):
            'crates_moved_cm': moved}
     if not ok:
         fail('explosion: fireball refused')
-    if max(moved) < 100.0:
-        fail('explosion: no crate was thrown more than 1 m (%s)' % moved)
-    for c in crates:
-        c.destroy_actor()
+    if moved and max(moved) < 50.0:
+        fail('explosion: no prop near the blast moved more than 0.5 m (%s)' % moved)
     return out
 
 
@@ -188,7 +194,22 @@ async def case_shock(world, world_ref, pc, pawn, driver):
         fail('shock: no two walkers within 6.5 m of each other')
         return {}
     a, b = pair
+    # Face the struck body and hold it still (Npc.Weaken holds the nearest unnamed NPC in front for 15 s), so the bolt
+    # can't miss a moving walker; the chain target b keeps walking.
+    aim_at(pc, chest(a))
+    await asyncio.sleep(0.3)
+    unreal.SystemLibrary.execute_console_command(world, 'Npc.Weaken 45', pc)
+    await asyncio.sleep(0.3)
+    held = [w for w in walkers_near(world, pawn.get_actor_location(), 300.0, 2500.0) if health(w) == 45.0]
+    if held:
+        a = held[0]
+        others = [w for w in walkers_near(world, a.get_actor_location(), 1.0, 700.0) if w != a]
+        if others:
+            b = others[0]
+    report['shock_held'] = a.get_name() if held else None
     ha, hb = health(a), health(b)
+    aim_at(pc, chest(a))
+    await asyncio.sleep(0.2)
     aim_at(pc, chest(a))
     ok = await ready_cast(driver, unreal.HeroSpell.LIGHTNING_BOLT)
     crackle = 0

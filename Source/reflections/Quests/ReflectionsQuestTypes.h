@@ -231,6 +231,8 @@ struct FReflectionsQuestStep
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest") bool bOrdered = false;
     /** Quest items handed over when the step starts (the letter to deliver). */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest") TArray<FName> GiveItems;
+    /** If the step's target is killed instead (a cure step whose tarnished dies at the hero's hand): go here. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest") FName IfKilledNext;
     /** Step after this one. None: the next in the list. "End" finishes the quest. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest") FName NextStep;
     /** Given when the step completes. */
@@ -264,6 +266,8 @@ struct FReflectionsQuestDef
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest") bool bTurnIn = true;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest") TArray<FReflectionsQuestLineDef> OfferLines;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest") TArray<FReflectionsQuestLineDef> AcceptLines;
+    /** Said instead of the offer while the hero is wanted (heat 0.5+); the quest isn't offered until the heat clears. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest") TArray<FReflectionsQuestLineDef> WantedLines;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest") TArray<FReflectionsQuestLineDef> DeclineLines;
     /** Said by the giver while the quest is under way. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest") TArray<FReflectionsQuestLineDef> ReminderLines;

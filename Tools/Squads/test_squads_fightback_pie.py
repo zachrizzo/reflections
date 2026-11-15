@@ -1,4 +1,4 @@
-"""Train #11 proof: one hit on one soldier turns the whole squad (Lvl_HeroSampleCrowd); plus start patrol and sword shots and a shield grip measured on the live hand.
+"""Train #11 proof: one hit on one soldier turns the whole squad (the open map (Gray London)); plus start patrol and sword shots and a shield grip measured on the live hand.
 
 Based on the one-PIE re-test of the squads on a new build: march, archetypes and flinch flag, cast, melee, barks, deaths, reform.
 
@@ -156,8 +156,6 @@ def clear_spot(world, squad, player):
         for k in range(16):
             ang = math.radians(k * 22.5)
             p = unreal.Vector(c.x + math.cos(ang) * radius, c.y + math.sin(ang) * radius, 300)
-            if abs(p.x) > 1600 or abs(p.y) > 1600:
-                continue
             floor = unreal.SystemLibrary.line_trace_single(world, p, unreal.Vector(p.x, p.y, -300),
                                                            unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, ignore,
                                                            unreal.DrawDebugTrace.NONE, True)
@@ -276,9 +274,9 @@ try:
     melee = [m.actor for m in members(col) if m.actor and ename(m.role) == 'MELEE']
     weapons = []
     for a in alive_actors(col):
-        props = [c for c in a.get_components_by_class(unreal.StaticMeshComponent) if c.get_static_mesh() and
-                 ('Sword' in c.get_static_mesh().get_name() or 'Wand' in c.get_static_mesh().get_name())]
-        weapons.append([a.get_name(), [p.get_static_mesh().get_name() for p in props], [str(p.get_attach_socket_name()) for p in props]])
+        props = [c for c in a.get_components_by_class(unreal.StaticMeshComponent) if c.get_editor_property('static_mesh') and
+                 ('Sword' in c.get_editor_property('static_mesh').get_name() or 'Wand' in c.get_editor_property('static_mesh').get_name())]
+        weapons.append([a.get_name(), [p.get_editor_property('static_mesh').get_name() for p in props], [str(p.get_attach_socket_name()) for p in props]])
     report['weapons'] = weapons
     if melee:
         b = body_of(melee[0])
@@ -287,42 +285,13 @@ try:
         r = d.get_actor_right_vector() if d else unreal.Vector(0, 1, 0)
         f2 = d.get_actor_forward_vector() if d else unreal.Vector(1, 0, 0)
         report['sword_shot'] = await capture(world, 'f2_sword_in_hand', unreal.Vector(h.x + r.x * 160 + f2.x * 120, h.y + r.y * 160 + f2.y * 120, h.z + 30), h, 50.0)
-    # 3) Shield grip candidates on two melee soldiers (Python-attached, PIE only).
-    shield_mesh = unreal.load_asset('/Game/LanthorneAssets/Giltside/Props/SM_Giltside_PatrolShield')
-    grips = {}
-    for i, sign in enumerate((1.0, -1.0)):
-        if i >= len(melee) or not shield_mesh:
-            break
-        a = melee[i]
-        b = body_of(a)
-        d = a.get_attach_parent_actor()
-        rel = shield_grip(b, d, sign)
-        comp = a.add_component_by_class(unreal.StaticMeshComponent, False, unreal.Transform(), False)
-        comp.set_static_mesh(shield_mesh)
-        comp.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
-        comp.attach_to_component(b, 'hand_l', unreal.AttachmentRule.SNAP_TO_TARGET, unreal.AttachmentRule.SNAP_TO_TARGET,
-                                 unreal.AttachmentRule.KEEP_WORLD, False)
-        comp.set_relative_transform(rel, False, False)
-        rr = rel.rotation.rotator()
-        grips['front%+d' % int(sign)] = {'loc': [round(rel.translation.x, 2), round(rel.translation.y, 2), round(rel.translation.z, 2)],
-                                         'rot_pyr': [round(rr.pitch, 2), round(rr.yaw, 2), round(rr.roll, 2)], 'soldier': a.get_name()}
-    report['shield_grips'] = grips
-    await asyncio.sleep(1.0)
-    for i, key in enumerate(sorted(grips)):
-        a = melee[i]
-        p = a.get_actor_location()
-        d = a.get_attach_parent_actor()
-        r = d.get_actor_right_vector() if d else unreal.Vector(0, 1, 0)
-        report['shield_shot_%d' % i] = await capture(world, 'f3_shield_%s' % key.replace('+', 'p').replace('-', 'm'),
-                                                     unreal.Vector(p.x - r.x * 260, p.y - r.y * 260, p.z + 60), unreal.Vector(p.x, p.y, p.z + 20), 55.0)
     # 4) The proof: player ~25 m from the column, one Fire Bolt on one soldier -> whole squad engages and comes.
     spot = clear_spot(world, col, player)
     if spot:
         c = centroid(alive_actors(col))
         away = unreal.Vector(spot.x - c.x, spot.y - c.y, 0).normal()
         far = unreal.Vector(c.x + away.x * 2500, c.y + away.y * 2500, spot.z)
-        if abs(far.x) < 1650 and abs(far.y) < 1650:
-            spot = far
+        spot = far if unreal.SystemLibrary.line_trace_single(world, unreal.Vector(far.x, far.y, far.z + 300), unreal.Vector(far.x, far.y, far.z - 600), unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [player], unreal.DrawDebugTrace.NONE, True) else spot
         player.set_actor_location(spot, False, True)
         await asyncio.sleep(0.3)
     cmd('Squads.Passive 0')

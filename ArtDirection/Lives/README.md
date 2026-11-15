@@ -135,6 +135,14 @@ Packaging: re-import after the story file changes (Python):
   Gilt or Red is Giltside, Frost, White or Rag is Frostside. Spawned looks also match sex and job. The least-worn face
   is picked, never one already worn within 30 m.
 
+**Map.** From train #13 the only map is Gray London (`/Game/GrayLondon/Maps/GrayLondon_Geodata`). It is "one London for
+now", with no side switching. Lives has no map names in its code: homes and workplaces resolve by the story markers'
+names, which world-jump places in the Tower district. `Tools/Lives/verify_lives.py` and `verify_consequences.py` use
+this map by default. They travel to it only when PIE isn't already on it, then wait until the townspeople exist. With
+every side on the same streets, a named person still takes only a body of their own side's look. If the map's crowd is
+all one side, the other sides' people are spawned in their own looks rather than cast onto those bodies. Side data stays
+as it is until the user says which peoples live there.
+
 ## Status (Nov 14, 15:55)
 
 **Verified in PIE on train #7 (Lvl_HeroSampleCrowd), 8 of 8 checks** (`Tools/Lives/verify_lives.py`, results and pictures in

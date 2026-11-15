@@ -55,7 +55,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 # Tight: the user wants garments formed to the body with no air gap (2026-11-14 18:50). Skin that a garment covers
 # is removed from a per-outfit body copy (hide_body), so these small offsets don't need to hide skin in motion.
-OFFSET = {'upper': 0.003, 'lower': 0.003, 'skirt': 0.004, 'feet': 0.003, 'gloves': 0.002,
+OFFSET = {'upper': 0.003, 'coat': 0.003, 'lower': 0.003, 'skirt': 0.004, 'feet': 0.003, 'gloves': 0.002,
           'helmet': 0.004}   # metres above the target surface
 LAYER_GAP = 0.003          # extra gap over a garment fitted earlier
 MIN_CLEAR = 0.0015         # nothing ends up closer than this to the body
@@ -269,6 +269,27 @@ def coarse_fit(g, kind, rep):
         foot = [mw @ v.co for k, v in enumerate(BODY.data.vertices)
                 if side_of(BODY_DOM[k]) == 'l' and any(t in BODY_DOM[k] for t in ('foot', 'ball', 'toe'))]
         z0 = min(zs)
+        xe = max(p.x for p in pts) - min(p.x for p in pts)
+        ye = max(p.y for p in pts) - min(p.y for p in pts)
+        if xe < 0.6 * ye:     # a pair side by side is about as wide as long; one boot is well under 0.6 of its length
+            # One boot delivered: mirror it into a pair (right boot = the left mirrored in X), 12 cm either side.
+            bx = (max(p.x for p in pts) + min(p.x for p in pts)) / 2
+            bm = bmesh.new()
+            bm.from_mesh(me)
+            for v in bm.verts:
+                v.co.x += 0.12 - bx
+            dup = bmesh.ops.duplicate(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:])
+            dverts = [e for e in dup['geom'] if isinstance(e, bmesh.types.BMVert)]
+            for v in dverts:
+                v.co.x = -v.co.x
+            dfaces = [e for e in dup['geom'] if isinstance(e, bmesh.types.BMFace)]
+            bmesh.ops.reverse_faces(bm, faces=dfaces)
+            bm.to_mesh(me)
+            bm.free()
+            me.update()
+            pts = [v.co.copy() for v in me.vertices]
+            zs = [p.z for p in pts]
+            rep['mirrored_single_boot'] = True
         boot = [p for p in pts if p.x > 0 and p.z < z0 + 0.07]      # the foot part, below the ankle
         if len(foot) < 10 or len(boot) < 10:
             return
@@ -284,9 +305,19 @@ def coarse_fit(g, kind, rep):
         me.update()
         rep['coarse'] = {'scale': round(sc, 3), 'foot_len_cm': round(foot_len * 100, 1), 'boot_len_cm': round(boot_len * 100, 1)}
         return
-    if kind == 'upper':
+    if kind == 'skirt':
+        # A skirt stands off the legs below the hips, so skin distance would shrink it: size it waist to ankle.
+        anchor = J['pelvis'].z + 0.10
+        sc = (anchor - 0.10) / max(1e-3, top - min(zs))
+        for v in me.vertices:
+            p = v.co
+            v.co = Vector(((p.x - cx) * sc, (p.y - cy) * sc + J['pelvis'].y, anchor + (p.z - top) * sc))
+        me.update()
+        rep['coarse'] = {'scale': round(sc, 3), 'top_z_cm': round(anchor * 100, 1), 'by': 'height waist..ankle'}
+        return
+    if kind in ('upper', 'coat'):
         anchor, body_y = BODY_TOP + 0.04, J['spine_05'].y
-    elif kind in ('lower', 'skirt'):
+    elif kind == 'lower':
         anchor, body_y = J['pelvis'].z + 0.10, J['pelvis'].y
     else:
         return
@@ -338,10 +369,12 @@ def icp_align(g, target_bvh, kind, rep):
             loc, nrm, d = signed(target_bvh, p)
             if loc is None:
                 continue
-            if kind == 'upper':
+            if kind in ('upper', 'coat'):
                 bi = BODY_KD.find(loc)[1]
                 if is_arm(BODY_DOM[bi]):
                     continue   # sleeves are posed separately
+            if kind in ('skirt', 'coat') and p.z < J['thigh_l'].z - 0.10:
+                continue       # below the crotch a skirt or coat stands off the legs by design
             q = loc + nrm * off
             pairs.append((abs(d - off), i, q))
         pairs.sort(key=lambda x: x[0])
@@ -358,8 +391,10 @@ def icp_align(g, target_bvh, kind, rep):
             s = max(0.85, min(1.15, s))
             if kind == 'feet':
                 s = 1.0     # boot soles and toe boxes sit well off the skin: fitting scale to them shrinks the boot
-                if a == 2:
-                    T[a] = 0.0      # and its height: a thick sole would pull the boot down into the floor
+                if a in (0, 2):
+                    # Height: a thick sole would pull the boot down into the floor. Sideways: the pair must stay
+                    # centred, or the left/right split cuts a boot in two (each boot is centred on its foot later).
+                    T[a] = 0.0
                     S[a] = 1.0
                     continue
             S[a] = s
@@ -379,8 +414,9 @@ def align_feet(g, rep):
     mw = BODY.matrix_world
     rot = mw.to_3x3().normalized()
     out = {}
+    pair_cx = (max(v.co.x for v in me.vertices) + min(v.co.x for v in me.vertices)) / 2
     for s, sx in (('l', 1), ('r', -1)):
-        idx = [v.index for v in me.vertices if v.co.x * sx > 0]
+        idx = [v.index for v in me.vertices if (v.co.x - pair_cx) * sx > 0]
         if len(idx) < 50:
             continue
         top = max(me.vertices[i].co.z for i in idx)
@@ -401,7 +437,7 @@ def align_feet(g, rep):
         # 1) Height. The MetaHuman foot stands at z = 0. Whether a delivered boot's outsole or its insole is at
         #    z = 0 depends on how it was modelled, so the drop is set per delivery in the config after looking at it
         #    ("boot_drop_cm"); a ray measure of the insole is unreliable under a toe box.
-        drop = CFG.get('boot_drop_cm', 'auto')
+        drop = CFG.get('boot_drop_cm', 'auto' if not CFG.get('hide_body', True) else 0.0)
         insole = None
         if drop == 'auto':
             # Under the heel a vertical ray meets only the sole stack (outsole, heel block, insole): the highest
@@ -449,6 +485,8 @@ def align_feet(g, rep):
         # Smallest change in length and width (about the heel) that holds the foot: <= 3 % of foot points whose
         # outward ray misses the boot. If nothing reaches that, the size with the fewest misses.
         grid = [0.94 + 0.02 * k for k in range(16)]     # 0.94 .. 1.24
+        if CFG.get('hide_body', True):
+            grid = [1.0]     # the foot inside is hidden: keep the delivered proportions (and both boots alike)
         tried = []
         for syy in grid[:11]:           # length 0.94 .. 1.14
             for sxx in grid:
@@ -470,85 +508,139 @@ def align_feet(g, rep):
 
 
 def align_helmet(g, rep):
-    """Helmets are rigid: centre over the scalp, then the smallest uniform scale (0.92..1.25) at which the helmet can be
-    lowered until it rests on the head with the scalp inside it. No conform, so the metal keeps its shape."""
+    """Helmets are rigid, and Hunyuan delivers them as closed solids. Fit = the smallest uniform scale, and the lowest
+    seat at that scale, at which the skull cap (face-mesh points 11 cm or more above the head joint) lies inside the
+    helmet while the eyes stay outside it (the open face). Centred over the scalp. No conform: the metal keeps its
+    shape. Inside/outside is the side of the nearest helmet face (Hunyuan normals point outward)."""
     if FACE is None:
         rep['helmet'] = 'no face mesh: left as delivered'
         return
     me = g.data
     fm = FACE.matrix_world
-    frot = fm.to_3x3().normalized()
     hz = J['head'].z
-    scalp = [(fm @ v.co, (frot @ v.normal).normalized()) for v in FACE.data.vertices
-             if (fm @ v.co).z > hz + 0.11]     # the skull cap above the ears; an open helmet leaves face and nape bare
-    if len(scalp) < 20:
-        rep['helmet'] = 'too few scalp points'
+    fpts = [fm @ v.co for v in FACE.data.vertices]
+    scalp = [p for p in fpts if p.z > hz + 0.11]
+    crown = max(p.z for p in fpts)
+    band = [p for p in fpts if hz + 0.06 < p.z < hz + 0.10]
+    if len(scalp) < 20 or not band:
+        rep['helmet'] = 'too few head points'
         return
+    yfront = min(p.y for p in band)
+    eyes = [p for p in band if p.y < yfront + 0.02]
+    temples = [p for p in fpts if hz + 0.12 < p.z < hz + 0.14]
+    head_w = (max(p.x for p in temples) - min(p.x for p in temples)) if temples else 0.16
     orig = [v.co.copy() for v in me.vertices]
     polys = [list(p.vertices) for p in me.polygons]
-    # Coarse size first (Codex's first pieces came ~1.45x): outer width ~1.25x the head's width at the temples.
-    head = [fm @ v.co for v in FACE.data.vertices if (fm @ v.co).z > hz + 0.06]
-    head_w = max(p.x for p in head) - min(p.x for p in head)
+    cx = (max(c.x for c in orig) + min(c.x for c in orig)) / 2
+    cy = (max(c.y for c in orig) + min(c.y for c in orig)) / 2
+    top = max(c.z for c in orig)
     helm_w = max(c.x for c in orig) - min(c.x for c in orig)
-    s0 = 1.25 * head_w / helm_w if helm_w > 0 else 1.0
-    if abs(s0 - 1.0) > 0.08:
-        ctr = Vector(((max(c.x for c in orig) + min(c.x for c in orig)) / 2, (max(c.y for c in orig) + min(c.y for c in orig)) / 2,
-                      max(c.z for c in orig)))
-        orig = [ctr + (c - ctr) * s0 for c in orig]
-    else:
-        s0 = 1.0
-    top = max(c.z for c in orig)
-    upper = [c for c in orig if c.z > top - 0.12]
-    hx = sum(c.x for c in upper) / len(upper)
-    hy = sum(c.y for c in upper) / len(upper)
-    sx = sum(p.x for p, n in scalp) / len(scalp)
-    sy = sum(p.y for p, n in scalp) / len(scalp)
-    crown = max(p.z for p, n in scalp)
-    pivot = Vector((hx, hy, top))
+    sx = (max(p.x for p in scalp) + min(p.x for p in scalp)) / 2
+    sy = (max(p.y for p in scalp) + min(p.y for p in scalp)) / 2
+    guess = (head_w + 0.04) / helm_w if helm_w > 0 else 1.0
 
-    def placed(scale, dz):
-        # The helmet's own top starts 3 cm above the crown; seating lowers it until the crown would poke through.
-        return [Vector((sx + (c.x - hx) * scale, sy + (c.y - hy) * scale, crown + 0.03 + (c.z - top) * scale + dz))
-                for c in orig]
+    def placed(sc, dz):
+        return [Vector((sx + (c.x - cx) * sc, sy + (c.y - cy) * sc, crown + dz + (c.z - top) * sc)) for c in orig]
 
-    def poking(pts):
-        bvh = BVHTree.FromPolygons(pts, polys, all_triangles=False)
-        return sum(1 for p, n in scalp if bvh.ray_cast(p + n * 0.001, n, 0.08)[0] is None) / len(scalp)
+    def inside(bvh, pts):
+        n = 0
+        for q in pts:
+            loc, nrm, fi, d = bvh.find_nearest(q, 1.0)
+            if loc is not None and (q - loc).dot(nrm) < 0:
+                n += 1
+        return n / max(1, len(pts))
 
-    # Hunyuan helmets are closed solids with no room for a head: place at the crown, then trim what lies inside it.
-    for v, c in zip(me.vertices, [Vector((sx + (c.x - hx), sy + (c.y - hy), crown + 0.015 + (c.z - top))) for c in orig]):
-        v.co = c
-    me.update()
-    sub = {}
-    trim_caps(g, 'helmet', sub)
-    rep['helmet_trimmed_faces'] = sub.get('trimmed_faces')
-    orig = [v.co.copy() for v in me.vertices]
-    polys = [list(p.vertices) for p in me.polygons]
-    top = max(c.z for c in orig)
-    upper = [c for c in orig if c.z > top - 0.12]
-    hx = sum(c.x for c in upper) / len(upper)
-    hy = sum(c.y for c in upper) / len(upper)
     best = None
-    # Codex sizes helmets on a MetaHuman proxy: keep the delivered size if it seats, else the smallest growth that does.
-    for scale in [1.0 + 0.02 * k for k in range(13)] + [0.98, 0.96, 0.94]:
-        seat = None
-        for step in range(60):          # lower from 3 cm above the crown in 2 mm steps
-            dz = -0.002 * step
-            if poking(placed(scale, dz)) <= 0.02:
-                seat = dz
-            elif seat is not None:
+    for k in range(14):
+        sc = guess * (0.88 + 0.03 * k)
+        low = None
+        for step in range(45):
+            dz = 0.06 - 0.004 * step            # helmet top from 6 cm above the crown to 12 cm below
+            bvh = BVHTree.FromPolygons(placed(sc, dz), polys, all_triangles=False)
+            if inside(bvh, scalp) >= 0.97 and inside(bvh, eyes) <= 0.05:
+                low = dz
+            elif low is not None:
                 break
-        if seat is not None:
-            best = (scale, seat)
+        if low is not None:
+            best = (sc, low)
             break
     if best is None:
-        rep['helmet'] = 'no seat found: left as delivered'
-        return
+        best = (guess, float(CFG.get('helmet_top_over_crown_cm', 6.0)) / 100.0)   # brow clear of the eyes (checked in UE)
+        rep['helmet_note'] = 'no scale/seat kept the skull in and the eyes out; placed by width guess'
     for v, c in zip(me.vertices, placed(*best)):
         v.co = c
     me.update()
-    rep['helmet'] = {'coarse_scale': round(s0, 3), 'scale': round(best[0], 3), 'seat_cm': round(best[1] * 100, 2),
-                     'scalp_out_pct': round(poking([v.co.copy() for v in me.vertices]) * 100, 1)}
+    # Open the face. Image-to-3D closes a helmet's face opening and only paints it dark; like the neck and cuff caps,
+    # that cap is trimmed: forward-facing helmet faces lying in front of the eyes, nose and mouth (within 4 cm).
+    face_front = [p for p in fpts if hz - 0.04 < p.z < hz + 0.095 and p.y < yfront + 0.05 and abs(p.x) < 0.065]
+    if face_front:
+        kd = kdtree.KDTree(len(face_front))
+        for i, q in enumerate(face_front):
+            kd.insert(q, i)
+        kd.balance()
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        cut = [f for f in bm.faces if f.normal.y < -0.3 and kd.find(f.calc_center_median())[2] < 0.04
+               and f.calc_center_median().z < hz + 0.095]
+        bmesh.ops.delete(bm, geom=cut, context='FACES')
+        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+        bm.to_mesh(me)
+        bm.free()
+        me.update()
+        rep['helmet_face_opening_faces'] = len(cut)
+        polys = [list(p.vertices) for p in me.polygons]
+    bvh = BVHTree.FromPolygons([v.co.copy() for v in me.vertices], polys, all_triangles=False)
+    rep['helmet'] = {'scale': round(best[0], 3), 'width_guess': round(guess, 3), 'top_over_crown_cm': round(best[1] * 100, 1),
+                     'skull_inside_pct': round(inside(bvh, scalp) * 100, 1), 'eyes_inside_pct': round(inside(bvh, eyes) * 100, 1),
+                     'z_cm': [round(min(v.co.z for v in me.vertices) * 100, 1), round(max(v.co.z for v in me.vertices) * 100, 1)]}
+
+
+def contain_legs(g, rep):
+    """A straight pencil skirt is narrower at the ankle than this body's stance, so the legs pass through it. Below the
+    crotch, each height band of the skirt is scaled in X about its centre to the legs' width there + 2 cm (bands are
+    smoothed so the hem line stays clean). Only ever widens."""
+    me = g.data
+    mw = BODY.matrix_world
+    crotch = J['thigh_l'].z - 0.10
+    legs = {}
+    for i, v in enumerate(BODY.data.vertices):
+        p = mw @ v.co
+        if p.z < crotch and not is_arm(BODY_DOM[i]):
+            k = int(p.z * 50)
+            lo, hi = legs.get(k, (1e9, -1e9))
+            legs[k] = (min(lo, p.x), max(hi, p.x))
+    bands = {}
+    for v in me.vertices:
+        if v.co.z < crotch:
+            k = int(v.co.z * 50)
+            lo, hi = bands.get(k, (1e9, -1e9))
+            bands[k] = (min(lo, v.co.x), max(hi, v.co.x))
+    scale = {}
+    for k, (lo, hi) in bands.items():
+        need = None
+        for dk in (0, -1, 1, -2, 2):
+            if k + dk in legs:
+                need = legs[k + dk]
+                break
+        if need is None or hi - lo < 1e-3:
+            continue
+        want = (need[1] - need[0]) + 0.04
+        scale[k] = max(1.0, want / (hi - lo))
+    if not scale:
+        return
+    ks = sorted(scale)
+    smooth = {k: sum(scale.get(k + d, scale[k]) for d in range(-2, 3)) / 5.0 for k in ks}
+    for v in me.vertices:
+        if v.co.z < crotch:
+            k = int(v.co.z * 50)
+            sc = smooth.get(k)
+            if sc and sc > 1.0:
+                lo, hi = bands[k]
+                cx = (lo + hi) / 2
+                w = smoothstep(crotch, crotch - 0.08, v.co.z)     # blend in below the crotch
+                v.co.x = cx + (v.co.x - cx) * (1.0 + (sc - 1.0) * w)
+    me.update()
+    rep['skirt_widened'] = {'max_scale': round(max(smooth.values()), 3), 'bands': len(smooth)}
 
 
 def pca_axis(points):
@@ -568,41 +660,163 @@ def pca_axis(points):
 
 
 def align_sleeves(g, rep):
-    """Rotate each sleeve about its shoulder so its axis matches the body's arm in the bind pose."""
+    """Re-pose the sleeves to the body's bind pose by skinning, not by hand-rotating vertices:
+      1. pose the body's own upperarm and lowerarm bones so each matches the garment's sleeve (upper sleeve from the
+         shoulder, then forearm sleeve from the posed elbow): the body now stands in the garment's arm pose;
+      2. bind every garment vertex to that posed body (weights interpolated from the nearest posed body triangle, then
+         smoothed over the garment);
+      3. apply the inverse of that skinning, which brings the garment back to the bind pose with a smooth bend through
+         elbow and shoulder (per-vertex rotations about guessed pivots tore and folded sleeves).
+    Then the forearm part of each sleeve is hemmed so the cuff ends 1 cm past the wrist."""
     me = g.data
     out = {}
-    arm_skin = {s: [BODY.matrix_world @ v.co for i, v in enumerate(BODY.data.vertices)
-                    if side_of(BODY_DOM[i]) == s and is_arm(BODY_DOM[i])] for s in ('l', 'r')}
-    for s in ('l', 'r'):
-        sh = J['upperarm_' + s]
-        sx = 1 if sh.x > 0 else -1
-        for rnd in range(3):
-            # Compare directions from the shoulder joint to the centroid of the sleeve and of the arm skin over the
-            # same distance band, so short and long sleeves both give a sound axis.
-            sleeve = [v.co.copy() for v in me.vertices if v.co.x * sx > abs(sh.x) + 0.04 and v.co.z < sh.z + 0.05
-                      and (v.co - sh).length > 0.08]
-            if len(sleeve) < 30:
-                break
-            reach = sorted((p - sh).length for p in sleeve)[int(len(sleeve) * 0.95)]
-            body_pts = [p for p in arm_skin[s] if 0.08 < (p - sh).length < reach]
-            if len(body_pts) < 10:
-                break
-            ab = (sum(body_pts, Vector()) / len(body_pts) - sh).normalized()
-            ag = (sum(sleeve, Vector()) / len(sleeve) - sh).normalized()
-            ang = math.degrees(ab.angle(ag))
-            out.setdefault(s, []).append(round(ang, 1))
-            if ang < 2.0:
-                break
-            rot = ag.rotation_difference(ab).to_matrix()
-            for v in me.vertices:
-                t = (v.co - sh).dot(ab)
-                w = smoothstep(-0.04, 0.10, t) * smoothstep(abs(sh.x) - 0.06, abs(sh.x) + 0.04, v.co.x * sx)
-                if w <= 0:
-                    continue
-                moved = sh + rot @ (v.co - sh)
-                v.co = v.co.lerp(moved, w)
-            me.update()
+    mw = BODY.matrix_world
+    # Sleeve vertices (geometric): outside the torso width at that height and within 20 cm of that arm.
+    bins = {}
+    for i, v in enumerate(BODY.data.vertices):
+        if is_arm(BODY_DOM[i]):
+            continue
+        p = mw @ v.co
+        k = int(p.z * 50)
+        bins[k] = max(bins.get(k, 0.0), abs(p.x))
+    top_k = int((min(J['upperarm_l'].z, J['upperarm_r'].z) - 0.06) * 50)
+
+    def half_width(z):
+        k = min(int(z * 50), top_k)
+        for dk in range(6):
+            for kk in (k - dk, k + dk):
+                if kk in bins:
+                    return bins[kk]
+        return 0.18
+
+    def seg_dist(p, a, b):
+        ab = b - a
+        t = max(0.0, min(1.0, (p - a).dot(ab) / max(ab.length_squared, 1e-9)))
+        return (p - (a + ab * t)).length
+
+    owner = []
+    for v in me.vertices:
+        o = ''
+        if abs(v.co.x) > half_width(v.co.z) + 0.015:
+            sd = 'l' if (v.co.x > 0) == (J['upperarm_l'].x > 0) else 'r'
+            sh, el, hd = J['upperarm_' + sd], J['lowerarm_' + sd], J['hand_' + sd]
+            if v.co.z < sh.z + 0.06 and min(seg_dist(v.co, sh, el), seg_dist(v.co, el, hd)) < 0.20:
+                o = sd
+        owner.append(o)
+
+    # 1) Pose the body's arms into the garment's arm pose.
+    select_only(RIG)
+    bpy.ops.object.mode_set(mode='POSE')
+    for pb in RIG.pose.bones:
+        pb.matrix_basis = Matrix()
+    bpy.context.view_layer.update()
+    rw = RIG.matrix_world
+    rwi = rw.inverted()
+
+    def bone_head(name):
+        return rw @ RIG.pose.bones[name].head
+
+    def turn_bone(name, pivot, frm, to):
+        pb = RIG.pose.bones[name]
+        q = frm.rotation_difference(to)
+        m_world = rw @ pb.matrix
+        m_world = Matrix.Translation(pivot) @ q.to_matrix().to_4x4() @ Matrix.Translation(-pivot) @ m_world
+        pb.matrix = rwi @ m_world
+        bpy.context.view_layer.update()
+
+    for sd in ('l', 'r'):
+        mine = [me.vertices[i].co.copy() for i, o in enumerate(owner) if o == sd]
+        if len(mine) < 40:
+            continue
+        sh = bone_head('upperarm_' + sd)
+        el = bone_head('lowerarm_' + sd)
+        ua_len = (el - sh).length
+        upper = [c for c in mine if 0.08 < (c - sh).length < ua_len * 0.85]
+        if len(upper) < 15:
+            continue
+        ag = (sum(upper, Vector()) / len(upper) - sh).normalized()
+        out[sd + '_upper_deg'] = round(math.degrees((el - sh).normalized().angle(ag)), 1)
+        turn_bone('upperarm_' + sd, sh, (el - sh).normalized(), ag)
+        el2 = bone_head('lowerarm_' + sd)
+        hd2 = bone_head('hand_' + sd)
+        fore = [c for c in mine if (c - sh).dot(ag) > ua_len * 0.95]
+        if len(fore) < 15:
+            continue
+        af = (sum(fore, Vector()) / len(fore) - el2).normalized()
+        out[sd + '_fore_deg'] = round(math.degrees((hd2 - el2).normalized().angle(af)), 1)
+        turn_bone('lowerarm_' + sd, el2, (hd2 - el2).normalized(), af)
+
+    # 2) Bind the garment to the posed body: weights from the nearest posed body triangle, smoothed on the garment.
+    dg = bpy.context.evaluated_depsgraph_get()
+    ev = BODY.evaluated_get(dg)
+    bme = ev.to_mesh()
+    P = [mw @ v.co for v in bme.vertices]
+    F = [list(f.vertices) for f in bme.polygons]
+    ev.to_mesh_clear()
+    bvh = BVHTree.FromPolygons(P, F, all_triangles=False)
+    gname = {gg.index: gg.name for gg in BODY.vertex_groups}
+    VW = [{gname[x.group]: x.weight for x in v.groups} for v in BODY.data.vertices]
+    W = []
+    for v in me.vertices:
+        loc, nrm, fi, d = bvh.find_nearest(v.co, 2.0)
+        poly = F[fi]
+        ws = [1.0 / max((P[j] - loc).length, 1e-4) for j in poly]
+        tot = sum(ws)
+        acc = {}
+        for j, w in zip(poly, ws):
+            for b, x in VW[j].items():
+                acc[b] = acc.get(b, 0.0) + x * w / tot
+        W.append(acc)
+    nb = mesh_neighbours(me)
+    for _ in range(3):
+        W = [{b: 0.5 * W[i].get(b, 0.0) + 0.5 * sum(W[j].get(b, 0.0) for j in n) / len(n)
+              for b in set(W[i]).union(*[W[j] for j in n])} if n else W[i] for i, n in enumerate(nb)]
+
+    # 3) Inverse skinning: posed -> rest for every vertex (bones that did not move contribute identity).
+    M = {}
+    for pb in RIG.pose.bones:
+        rest = pb.bone.matrix_local
+        M[pb.name] = rw @ rest @ pb.matrix.inverted() @ rwi
+    moved = 0
+    for i, v in enumerate(me.vertices):
+        w = W[i]
+        tot = sum(w.values())
+        if tot <= 0:
+            continue
+        acc = Vector()
+        for b, x in w.items():
+            m = M.get(b)
+            acc += (m @ v.co if m is not None else v.co) * (x / tot)
+        if (acc - v.co).length > 1e-5:
+            moved += 1
+        v.co = acc
+    me.update()
+    for pb in RIG.pose.bones:
+        pb.matrix_basis = Matrix()
+    bpy.context.view_layer.update()
+    bpy.ops.object.mode_set(mode='OBJECT')
+    out['moved_verts'] = moved
+
+    # 4) Hem: cuffs end 1 cm past the wrist.
+    hem = {}
+    for sd in ('l', 'r'):
+        el, hd = J['lowerarm_' + sd], J['hand_' + sd]
+        axis = (hd - el).normalized()
+        wrist = (hd - el).length
+        idx = [i for i, o in enumerate(owner) if o == sd and (me.vertices[i].co - el).dot(axis) > 0.0]
+        if not idx:
+            continue
+        reach = max((me.vertices[i].co - el).dot(axis) for i in idx)
+        if reach > wrist + 0.015:
+            k = (wrist + 0.01) / reach
+            for i in idx:
+                v = me.vertices[i]
+                t = (v.co - el).dot(axis)
+                v.co = v.co - axis * (t * (1.0 - k))
+            hem[sd] = {'cuff_past_wrist_cm': round((reach - wrist) * 100, 1), 'forearm_scale': round(k, 3)}
+    me.update()
     rep['sleeve_angle_deg'] = out
+    rep['sleeve_hem'] = hem
 
 
 # ------------------------------------------------------------------ 2. trim caps
@@ -618,7 +832,12 @@ def trim_caps(g, kind, rep):
     bm.from_mesh(me)
     bm.faces.ensure_lookup_table()
     kill = []
+    crotch = J['thigh_l'].z - 0.10
     for f in bm.faces:
+        if kind == 'skirt' and f.calc_center_median().z < crotch:
+            if abs(f.normal.z) > 0.9 and all(v.co.z < zmin + 0.03 for v in f.verts):
+                kill.append(f)
+            continue                # legs pass through a pencil skirt below the crotch; that is not a cap
         if all(depth[v.index] < -TRIM_CM / 100 for v in f.verts):
             # A cap runs ACROSS the limb or neck (its normal is roughly perpendicular to the skin's normal there).
             # Garment surface that only sank into a bigger body runs ALONG the skin; that is pushed out later, never cut.
@@ -694,12 +913,22 @@ def surface_heights(P, N, bvh, depths, reach=REACH):
     return out
 
 
-def outer_heights(P, N, bvh, reach=0.08):
-    """Height of a surface's OUTERMOST sheet above each skin point (ray from outside inward), within 8 cm."""
+def outer_heights(P, N, bvh, reach=0.08, skin_bvh=None):
+    """Height of a surface's OUTERMOST sheet above each skin point (ray from outside inward), within 8 cm. A hit only
+    counts if it belongs over this skin point (its nearest skin point is within 5 cm): between the legs, a ray from
+    one calf starts inside the other leg's trousers or boot, and must not push this leg's garment across the gap."""
     out = []
     for p, n in zip(P, N):
         hit = bvh.ray_cast(p + n * reach, -n, reach + 0.02)
-        out.append(None if hit[0] is None else reach - hit[3])
+        if hit[0] is None:
+            out.append(None)
+            continue
+        if skin_bvh is not None:
+            near = skin_bvh.find_nearest(hit[0], 0.3)
+            if near[0] is None or (near[0] - p).length > 0.05:
+                out.append(None)
+                continue
+        out.append(reach - hit[3])
     return out
 
 
@@ -730,8 +959,12 @@ def conform(g, kind, layers, rep):
     me = g.data
     P, N, F, NB, skin_bvh = skin_domain()
     depths = skin_depths(P, N, skin_bvh)
+    skip_pts = set()
+    if kind == 'feet' and CFG.get('hide_body', True):
+        # Feet inside boots are hidden: pushing the boot off them would only bow the sole into the floor.
+        skip_pts = {i for i in range(min(len(P), len(BODY_DOM))) if any(t in BODY_DOM[i] for t in ('foot', 'ball', 'toe'))}
     layer_bvh = world_bvh(layers)[0] if layers else None
-    lay_h = outer_heights(P, N, layer_bvh) if layer_bvh else [None] * len(P)
+    lay_h = outer_heights(P, N, layer_bvh, skin_bvh=skin_bvh) if layer_bvh else [None] * len(P)
     off = OFFSET[kind]
     pelvis_z = J['pelvis'].z
     crotch_z = J['thigh_l'].z - 0.10
@@ -739,7 +972,7 @@ def conform(g, kind, layers, rep):
     def tight_at(p):
         if kind == 'feet':
             return 0.0      # boots keep their last (toe box, heel): only pushed out where the foot pokes through
-        if kind == 'skirt' and p.z < crotch_z:
+        if kind in ('skirt', 'coat') and p.z < crotch_z:
             return 0.0      # a fitted ankle skirt hugs waist and hips, then falls straight: only push out below
         if kind == 'upper' and p.z < pelvis_z - 0.04:
             return 0.8      # tight brief: hems below the waist only keep a little of their flare
@@ -773,7 +1006,7 @@ def conform(g, kind, layers, rep):
         val = []
         worst, n_low, outliers = 1.0, 0, 0
         for i, p in enumerate(P):
-            if h[i] is None:
+            if h[i] is None or (i in skip_pts):
                 val.append(None)
                 continue
             floor = MIN_CLEAR if lay_h[i] is None else lay_h[i] + LAYER_GAP
@@ -802,7 +1035,7 @@ def conform(g, kind, layers, rep):
     # along the skin normal, with half of that push shared by its direct neighbours so no spike forms.
     nbv = mesh_neighbours(me)
     last = []
-    for rnd in range(4):
+    for rnd in range(0 if (kind == 'feet' and CFG.get('hide_body', True)) else 4):
         push = {}
         for v in me.vertices:
             loc, nrm, fi, d = skin_bvh.find_nearest(v.co, 0.2)
@@ -866,7 +1099,7 @@ def skin(g, kind, rep):
     names = [vg.name for vg in g.vertex_groups]
     W = [{names[x.group]: x.weight for x in v.groups if x.weight > 0} for v in me.vertices]
     pelvis_z = J['pelvis'].z
-    if kind in ('skirt', 'upper'):
+    if kind in ('skirt', 'upper', 'coat'):
         # Hanging hems: blend toward pelvis + both thighs so the hem moves as one piece instead of splitting.
         top = pelvis_z - (0.02 if kind == 'upper' else 0.10)
         for i, v in enumerate(me.vertices):
@@ -965,6 +1198,26 @@ def hide_body(garments, rep):
     """A copy of the body without the skin the outfit covers, for this outfit's looks to wear in place of the body.
     Covered skin is eroded by HIDE_MARGIN_RINGS so skin stays under every cuff, collar and hem."""
     cov = covered_skin(garments, BODY)
+    # Skin is hidden only if the garments still cover it in motion (walk and run as well as the rest pose): legs
+    # leave a pencil skirt mid-stride, and a hidden leg there would show as a hole.
+    moving = {}
+    select_only(RIG)
+    bpy.ops.object.mode_set(mode='POSE')
+    for name in CFG.get('hide_poses', ['walk', 'run']):
+        for pb in RIG.pose.bones:
+            pb.matrix_basis = Matrix()
+        bpy.context.view_layer.update()
+        for bn, ax, deg in POSES[name]:
+            pb = RIG.pose.bones.get(bn)
+            if pb is not None:
+                rotate_world(pb, ax, deg)
+        posed = covered_skin(garments, BODY)
+        moving[name] = sum(1 for a, b in zip(cov, posed) if a and not b)
+        cov = [a and b for a, b in zip(cov, posed)]
+    for pb in RIG.pose.bones:
+        pb.matrix_basis = Matrix()
+    bpy.context.view_layer.update()
+    bpy.ops.object.mode_set(mode='OBJECT')
     me = BODY.data
     nb = mesh_neighbours(me)
     ok = cov[:]
@@ -991,7 +1244,8 @@ def hide_body(garments, rep):
         regions[key] = regions.get(key, 0) + 1
     rep['body_hide'] = {'name': hb.name, 'faces_hidden': len(hidden), 'faces_total': len(me.polygons),
                         'pct_hidden': round(100.0 * len(hidden) / len(me.polygons), 1),
-                        'covered_verts': sum(cov), 'by_region': dict(sorted(regions.items(), key=lambda x: -x[1]))}
+                        'covered_verts': sum(cov), 'uncovered_in_motion': moving,
+                        'by_region': dict(sorted(regions.items(), key=lambda x: -x[1]))}
     return hb, hidden
 
 
@@ -1060,11 +1314,22 @@ def pose_checks(garments, rep, hidden=frozenset()):
 
 # ------------------------------------------------------------------ 6. export + preview
 def export(g):
+    # The armature OBJECT must be named "Armature": UE's FBX importer drops a root node of that name. Any other name
+    # becomes an extra root bone, and importing onto an existing skeleton then REPLACES that skeleton's "root" bone
+    # (this broke two shared MetaHuman skeletons on 2026-11-14). The bone tree itself starts at "root".
     select_only(g, RIG)
     path = OUT / (g.name + '.fbx')
-    bpy.ops.export_scene.fbx(filepath=str(path), use_selection=True, object_types={'MESH', 'ARMATURE'},
-                             axis_forward='-Z', axis_up='Y', apply_unit_scale=True, add_leaf_bones=False,
-                             bake_anim=False, mesh_smooth_type='FACE', path_mode='COPY', embed_textures=False)
+    keep = RIG.name
+    other = bpy.data.objects.get('Armature')
+    if other is not None and other is not RIG:
+        other.name = 'Armature_face'
+    RIG.name = 'Armature'
+    try:
+        bpy.ops.export_scene.fbx(filepath=str(path), use_selection=True, object_types={'MESH', 'ARMATURE'},
+                                 axis_forward='-Z', axis_up='Y', apply_unit_scale=True, add_leaf_bones=False,
+                                 bake_anim=False, mesh_smooth_type='FACE', path_mode='COPY', embed_textures=False)
+    finally:
+        RIG.name = keep
     return rel(path)
 
 
@@ -1133,12 +1398,21 @@ for piece in CFG['pieces']:
     if piece.get('coarse', True):
         coarse_fit(g, piece['kind'], rep)
     icp_align(g, bvh, piece['kind'], rep)
-    if piece['kind'] == 'upper':
+    if piece['kind'] in ('upper', 'coat'):
         align_sleeves(g, rep)
+        if os.environ.get('FIT_DEBUG_STOP') == 'after_sleeves':
+            bpy.ops.wm.save_as_mainfile(filepath=str(OUT / 'debug_after_sleeves.blend'))
+            raise SystemExit(0)
     if piece['kind'] == 'feet':
         align_feet(g, rep)
+    if piece['kind'] == 'skirt':
+        contain_legs(g, rep)
     trim_caps(g, piece['kind'], rep)
-    conform(g, piece['kind'], [f for f in fitted if REPORT['pieces'][f.name]['kind'] != 'helmet'], rep)
+    if piece['kind'] == 'feet' and CFG.get('hide_body', True):
+        # Rigid boots: the leg inside is hidden, and conforming a shaft to the leg traces the boot's uneven inside.
+        rep['conform'] = {'skipped': 'rigid boot (body hiding on)'}
+    else:
+        conform(g, piece['kind'], [f for f in fitted if REPORT['pieces'][f.name]['kind'] != 'helmet'], rep)
     skin(g, piece['kind'], rep)
     rep['verts_out'] = len(g.data.vertices)
     fitted.append(g)

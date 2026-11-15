@@ -61,6 +61,17 @@ They have no collision and stay in the hand through ragdoll. The NPC system now 
 SoldierCaster hands from the archetype's `Combat.WeaponProp`, and it owns soldier weapons. The squad attaches its own
 (`MeleeWeapon` / `CasterWeapon`) only when the archetype names no weapon, so each hand holds one prop. Not yet checked in PIE: grip and scale on the moving hand. Known gap: the fingers stay open.
 
+**Gray London (train #14):** the user deleted the old maps (`Lvl_HeroSampleCrowd`, `Lvl_MockCity`). The start patrol
+and `Squads.AutoTest` run on the maps listed in `Squads.StartPatrolMaps` (default `GrayLondon`). The start patrol's
+faction is set by `Squads.StartPatrolFaction` (0 Frost, the default; 1 Gilt). Routes for the start patrol and the test
+squads are fitted around the player so they suit a street:
+- In each direction it tries a 14 × 8 m loop 8–16 m out (or 3/4 of that).
+- Failing that, a straight out-and-back line from 6 m out.
+- Every point must be on walkable ground at the same level, in view of the start, and on the navmesh when there is one,
+  with no wall across any leg.
+
+The sections below about `Lvl_HeroSampleCrowd` and the mock city are history: those maps are gone.
+
 **Start patrol (train #11):** `Squads.StartPatrol` (default 1) raises one squad on `Lvl_HeroSampleCrowd` and
 `Lvl_MockCity`, so a player who presses Play sees soldiers. It's a column of 5 on a 14 × 8 m loop, 8–16 m from the
 player start. The loop is ahead if there's room, otherwise to the right, left or behind, and is checked for clear
@@ -187,6 +198,33 @@ March cycle authoring: `Tools/Squads/author_march.py` (Kimodo; stages `source`, 
 Checked in PIE on `Lvl_HeroSampleCrowd` between 11:52 and 12:48 on the 11:45, 12:03 and 12:33 builds
 (`Tools/Squads/test_squads_pie.py`, `test_squads_combat_pie.py`, `test_squads_kill_pie.py`; images and reports in
 `ArtDirection/Squads/images/`).
+
+**Sword and shield, no armour (train #13; user request 20:00, not yet in PIE):**
+- **Equipment:** every soldier (Frost and Gilt, melee and casters) carries a sword in the right hand (the NPC system's
+  `Combat.WeaponProp`; casters cast from the sword hand) and a shield on the left arm.
+- **Shield source, exactly one per soldier:** the look's own (the BridgeGuard round shield), or the NPC system's
+  (npc-unify owns both hands from train #14: any component named or tagged "...Shield...", or `Combat.ShieldProp`).
+  Only when neither exists do squads attach `SM_Giltside_PatrolShield`, fitted to the hand once the body is out of
+  its reference T-pose. If the NPC system's shield appears later, the squad's removes itself.
+- **Armour:** looks come only from npc-unify's per-side pools. Armour-free soldier looks from crowd-looks replace the
+  armoured BridgeGuard-body looks (the only ones with Armor parts).
+- **T-pose:** in the 20:00 run, every soldier on the BridgeGuard body T-posed (GiltBridgeGuard, GiltRowena). The root
+  cause and a layered sword-and-shield hold on the walker are npc-unify's.
+
+**PIE on the merged 19:30 build (20:00, `Lvl_HeroSampleCrowd`):** `test_squads_fightback_pie.py`,
+`test_squads_gilt_pie.py`; reports `images/*-build1930.json`.
+- **One hit turns the whole squad:** one Fire Bolt on one soldier, and both test squads were Engaged within a second (the
+  second through the alarm). All five members of the hit squad fought. Melee closed from 4–6 m to under 2.3 m in about
+  a second, and the NPC motor (now with the sword strike on the walker) started 5–6 attacks each and landed 15 hits.
+  The casters threw 2 spells each in 12 s (`images/build1930_one_hit_whole_squad.png`).
+- **Gilt allies:**
+  - Faction Gilt, NPC type AlliedSoldier, each guard's own round shield (no second one), sword in hand.
+  - With the player standing 4 m beside them for 5 s, they kept marching.
+  - A spawned tarnished was engaged within 0.2 s and killed. The squad stood down, then engaged a Frost soldier
+    (`images/build1930_gilt_vs_frost.png`). The player was never attacked (health 92).
+- **Seen and fixed for #13:** on this build the Frost test squads on the sample map still wear Gilt looks (the
+  location lookup), and so did the start patrol that attacked the idle player in the orchestrator's 19:38 smoke run.
+  #13 dresses a squad for its faction and gives the start patrol no sight of the player.
 
 **Mock city (Lanthorne), train #10, PIE runs at 17:52 and 17:56.** The script travels to `/Game/MockCity/Lvl_MockCity`
 inside PIE, so the editor's open map isn't switched (`Tools/Squads/test_squads_mockcity_pie.py`,

@@ -150,3 +150,23 @@ How each scene adapts when a person isn't on the map:
 
 - **Cooking:** cutscenes are loaded by path, so `/Game/Cinematics` must be in `DirectoriesToAlwaysCook`.
 - **Size:** a sequence and its data asset are a few hundred KB. Kimodo takes are about 1–3 MB each before compression. Stand-ins reuse existing characters.
+
+## Status: PIE proof, Sat 14 Nov, 20:26–20:41 (Lvl_HeroSampleCrowd, train #12)
+
+`Tools/Cinematics/test_cutscenes_pie.py runall` plays each cutscene to the end, capturing 8 frames, then plays it again and skips it 3 s in. After each, it checks that the cutscene stopped, that move and look input aren't ignored, that the view target is the one from before the cutscene, and that the hero can be damaged. Results: `Saved/CinematicsTest/runall.json`.
+
+| Cutscene | Played | Skipped | Control restored | Contact sheet |
+|---|---|---|---|---|
+| Intro | yes | yes | yes, both times | `ContactSheet_Intro.png` |
+| BurningEyes | yes | yes | yes, both times | `ContactSheet_BurningEyes.png` |
+| FirstPage | yes | yes | yes, both times | `ContactSheet_FirstPage.png` |
+| GiltTower | yes (8 frames) | not reached: stopped at the slot's deadline | — | `ContactSheet_GiltTower.png` |
+| MirrorWhole | not run yet | | | |
+| Ending | not run yet | | | |
+
+What the frames show:
+- **Working:** the letterbox, title card, theme caption, subtitles with gold speaker names, the location card, the skip prompt and the Wren close-ups.
+- **Known problems** (fixes in progress):
+  - On the small test map, the high wide shots show the slab's edge in empty space. They need a city around them (`Lvl_MockCity`, or the real map).
+  - Crowd NPCs stand inside close shots. Fix: "clear the set" (train #13, `ClearRadius` on the asset) hides non-cast NPCs within 15 m of the anchor during the scene.
+  - Two BurningEyes shots frame empty ground: the cast stood off their marks. To be rechecked on the mock city with the set cleared.

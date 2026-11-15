@@ -37,9 +37,17 @@ for pid in IDS:
     donor = unreal.load_asset(DONORS[P['body']])
     if not sub.is_object_added_for_editing(mhc):
         sub.try_add_object_to_edit(mhc)
-    if not sub.is_object_added_for_editing(donor):
+    was_open = sub.is_object_added_for_editing(donor)
+    if not was_open:
         sub.try_add_object_to_edit(donor)
-    sub.set_body_constraints(mhc, sub.get_body_constraints(donor))
+    cons = sub.get_body_constraints(donor)
+    if not was_open:
+        # Opening the donor rebuilds its preview on the SHARED Common skeleton in memory: close it at once and
+        # reload anything it dirtied (never save a shared skeleton).
+        sub.remove_object_to_edit(donor)
+    exec(open(PROJECT + 'Tools/CrowdLooks/skel_guard.py', encoding='utf-8').read(), globals())
+    row['skel_reloaded_after_donor'] = skel_guard()
+    sub.set_body_constraints(mhc, cons)
     sub.commit_body_state(mhc)
     rp = unreal.MetaHumanCharacterAutoRiggingRequestParams()
     rp.set_editor_property('rig_type', unreal.MetaHumanRigType.JOINTS_ONLY)

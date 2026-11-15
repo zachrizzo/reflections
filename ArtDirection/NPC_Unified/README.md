@@ -1,16 +1,14 @@
 # One NPC system: how every NPC reacts to spells and world events
 
-Status (2026-11-14, 19:20): **loaded and verified in PIE on the 17:43 build (train #10)**: spell reactions, lethal
-hits ragdolling (including a real Fire Bolt kill), the tarnished hunting and converting townspeople, roster voices
-that differ per NPC and match sex, character and the look's side, passing remarks, the 20 finished looks as the look
-pools, walkers with no camera and no sample foley.
-
-**In the 19:28 build (train #11), compile-checked but NOT yet run in PIE** (section "Consequences" below): the
-tarnished cast dark magic at the player, sword strikes as montages on the hidden walker with weapon props, look pools
-by side (rags only in Frostside, red only in Giltside), lower health, what each kind of spell does to a living NPC
-(`Npc.ElementReactions`, default 0), crime and heat (`Npc.Heat`, default 0), and Giltside's allied soldiers. The old
-strike clips on the visible body stay off: they crashed the editor (16:16). Section 4 has the evidence, what went
-wrong and what does not work.
+Status (2026-11-14, 20:00): **loaded and verified in PIE on the 19:32 build (trains #11 and #12 merged)**. On top
+of what the 17:43 build already did (spell reactions, lethal hits ragdolling, the tarnished hunting and converting
+townspeople, roster voices, passing remarks, the finished looks, lean walkers), these have now run and passed: the
+tarnished casting dark magic at the player, sword strikes as montages on the hidden walker with a sword in the hand,
+dying in the middle of a strike, look pools by side, the lower health, what each kind of spell does to a living NPC,
+crime and heat with guards turning on the player, and a Giltside allied soldier killing one of the tarnished. The
+section "Consequences" has the numbers and what the runs turned up (throws too far, tarnished sight too short,
+Pewterside still borrowing Giltside's looks). The old strike clips on the visible body stay off: they crashed the
+editor (16:16).
 
 ## 1. Where things stood (audit, 2026-11-14)
 
@@ -380,14 +378,64 @@ in the sessions' shared notes.
 made its build fail on `ReflectionsNpcCombatComponent.cpp` (new .cpp against the pre-edit headers) and it had to be
 rerun from the last checked state. Since then NPC source only changes after the orchestrator says so.
 
-### Consequences: in the 19:28 build (train #11), compile-checked, NOT yet run in PIE
+### Consequences: in the 19:32 build, run in PIE 19:51 to 19:57
 
 Written after the user's playtest ("when they get to the player, nothing happens", "they don't even die", "there
-needs to be reactions for everything"). Nothing in this section has been seen working yet; the three checks named at
-the end run right after the build loads, and this heading changes when they have.
+needs to be reactions for everything"). Four short PIE runs on `Lvl_HeroSampleCrowd`, no crash, no pose warning in any
+of them. Pictures: `ArtDirection/NPC_Unified/images/consequences_1957.png`; results: `Saved/NpcUnified/verify_sorcery.json`,
+`verify_reactions.json`, `verify_reactions2.json`, `verify_heat.json`, `diag_tarnish_cast.json`.
 
-**The tarnished are dark sorcerers.** `Infected` and `VillainHost` (`Combat.bCastsAtPlayer`) stop between 4 and 20 m
-from a player they can see, face them, gather for 0.9 s (a glow and a light at the chest, a cast gesture on the
+| What | Seen |
+|---|---|
+| Sword strike | montage on the walker, body stays on its animation blueprint; enemy killed mid-swing: ordinary ragdoll |
+| Sword prop | `SM_Frostside_MirrorSword` on the guard's `hand_r` |
+| Tarnished casting | from 6.3 m it holds its distance; bolt at 1.0 s (player 100 to 89), wisp at 5.5 s (to 80); burst up close |
+| Fireball on a soldier | thrown 9.7 m, 1.2 m high, alive (56 to 36), body never simulated |
+| Lightning Bolt on that soldier | 36 to 15, ticks to 12 and 9 while it stands convulsing 1.4 s, then drops into the ragdoll |
+| Lightning Bolt on a guard, killed 0.6 s in | ordinary ragdoll |
+| Water Orb on a soldier | shoved 6.7 m (56 to 44); killed while thrown: ordinary ragdoll |
+| Ice Shard on a soldier | walker clock at 0.05 for 2.5 s, then 1.0 again; alive |
+| Fire Bolt on a townsperson | 20 to 6, runs |
+| Lightning Bolt on a townsperson | dead at once, ragdoll, hands still moving 1 s later |
+| Assault in front of a guard | heat 0.34, 7 witnesses, the guard investigates |
+| Murder | heat 0.94, the guard is on the player 0.25 s later |
+| `ClearPlayerHeat` | heat 0, the guard stands down |
+| Allied soldier and one of the tarnished | goes for it at once, kills it, loses 14 health, never turns on the player |
+| Six townspeople spawned with no look | six different looks |
+
+What the runs turned up:
+
+- **The tarnished did not cast from 12 m.** With a sight radius of 9 m they never noticed a player further off, and
+  with townspeople nearer than the player they went for those instead. The Infected asset now has sight 15 m (data,
+  saved 19:56); the built-in gets the same number on train #13.
+- **Throws are about twice too far** (9.7 m and 6.7 m). The launch speeds are halved on train #13.
+- **The first reactions run could not judge three cases**: its unguided spells missed townspeople and a guard who had
+  wandered off. `verify_npc_reactions2.py` repeats them from 2.6 m (6 of 6).
+- **"Drops at or under half health" after a shock also applied to the villain's host.** It is exempt from train #13.
+- **Pewterside still borrows Giltside's looks.** The crowd-looks session made twelve grey Pewterside looks at 19:49
+  (`/Game/Characters/Lanthorne/Looks/Pewterside/PewLook_<X>`), but the side test in the 19:32 build only knows the
+  name `Look_Pewter`. Train #13 reads them as Pewterside and adds them to the pools.
+- **Bystanders and soldiers standing with their arms out (the user saw it too): two causes.**
+  (1) The body skeleton that five bodies share (`RedLondon/BridgeGuard/Assembled/Common/.../metahuman_base_skel`,
+  used by BridgeGuard, GlassArtisan, ArchiveApprentice, FestivalDrummer, FerryPilot) was saved at 19:28 without its
+  `root` bone: the version in git commit e9f3c59 starts root, pelvis; the saved one starts pelvis and carries the new
+  name `Rig_FerryPilot`. Every look on those bodies has stood in the reference pose since (about half the cast); at
+  17:57 the same body walked normally (`run10_N_new_looks.png`). The fix is to put the file back from e9f3c59 with the
+  editor closed, which the orchestrator does at the train #13 restart; it is not an NPC code change.
+  (2) Any NPC shows the reference pose for its first moments after spawning, until the walker's animation has run.
+  Train #13 keeps a just-spawned NPC unseen for that moment (`Npc.HideUntilPosed`, default 1).
+- **Soldiers (the user at 20:00: no armour, sword and shield in hand).** Train #13: every soldier and caster carries
+  the sword (`Combat.WeaponProp`); `Combat.ShieldProp` puts a shield on the left forearm of looks that do not wear
+  one already (placed from the body's reference pose, `Combat.ShieldOffset` tunes it, `Combat.ShieldMaterial` gives
+  Frostside's a plain wood face); `HiddenLookParts` on the archetype hides parts of the look by name, and the
+  fighters go without `Armor`. A guard stance for a standing soldier needs two new walker clips and is train #14.
+- The archetype assets were re-synced to the build and saved at 19:56 (eleven; `DA_Npc_AlliedSoldier` is new), which
+  is what switched the walker strikes, the props and the casting on outside these checks.
+- `Npc.ElementReactions` and `Npc.Heat` are 0 in the 19:32 build's code. `Config/DefaultEngine.ini` sets both to 1
+  from the next editor start; train #13 makes 1 the default in code.
+
+**The tarnished are dark sorcerers.** `Infected` and `VillainHost` (`Combat.bCastsAtPlayer`) notice a player inside
+their sight radius (15 m and 16 m), then stop anywhere between 4 and 20 m with a clear line, face them, gather for 0.9 s (a glow and a light at the chest, a cast gesture on the
 walker), then throw: a dark bolt, 35 % of the time a slower one that follows, a burst inside 3 m. 2.5 to 4 s between
 casts. The spell side's `UReflectionsTarnishCasterComponent` does the magic when it is in the build (called by name);
 without it the NPC fires `AReflectionsSpellProjectile` itself. They still run townspeople down to turn them.
@@ -443,9 +491,10 @@ Infected NPC it sees inside its sight radius, and never for the player on sight.
 player. Guards do not have the flag set.
 
 Checks, each one short PIE run on `Lvl_HeroSampleCrowd`: `Tools/NpcUnified/verify_npc_sorcery.py` (casting, sword,
-walker strike and dying mid-swing, side pools), `verify_npc_reactions.py` (every reaction above, and dying
-mid-convulsion, mid-throw and at the end of a shock), `verify_npc_heat.py` (assault, murder, guard turning, record
-cleared, an allied soldier against one of the tarnished, six different looks).
+walker strike and dying mid-swing, side pools), `verify_npc_reactions.py` and `verify_npc_reactions2.py` (every
+reaction above, and dying mid-convulsion, mid-throw and at the end of a shock), `verify_npc_heat.py` (assault,
+murder, guard turning, record cleared, an allied soldier against one of the tarnished, six different looks),
+`diag_tarnish_cast.py` (one tarnished watched from 7 m and 13 m with every other NPC held).
 
 ### What still doesn't work
 
@@ -465,11 +514,9 @@ cleared, an allied soldier against one of the tarnished, six different looks).
   `Looks` were rewritten (`Tools/NpcUnified/apply_cast_looks.py`, 17:58). A re-sync is needed whenever a build adds an
   archetype field or changes a built-in number, and it is safe again from the 17:43 build on (on the 15:59 and 16:20
   builds it would have switched the strike clips on).
-- **Melee strikes have no animation until the walker route has passed its check.** On the 17:43 build the windup is
-  timed (0.8 s) and the damage lands, but the body does not swing. The old code that played strike clips on the
-  visible body (`/Game/Combat/Melee/AS_Melee_Sword_<Move>_<Body>`) is switched off in code because it crashed the
-  editor (see "What went wrong"), and stays off. The 19:28 build plays the walker's versions as montages on the hidden
-  walker instead (see "Consequences"); the archetype assets only list them once `verify_npc_sorcery.py` has passed.
+- **The old strike clips on the visible body stay off.** The code that played `/Game/Combat/Melee/AS_Melee_Sword_<Move>_<Body>`
+  on the body (`PlayAnimation`, then back to the animation blueprint) crashed the editor (see "What went wrong") and
+  is refused in code whatever an archetype lists. Strikes are the walker's montages now (see "Consequences").
   `verify_npc_melee.py` runs the old path only with `RUN_MELEE_CLIPS = True`; do not set it in a shared editor.
 - **There is no knockdown and get-up.** A thrown NPC is launched on its feet and staggers; only death is a ragdoll.
   Getting a living body back out of a ragdoll is the kind of step that lost the pose before, so it was left out.

@@ -7,7 +7,7 @@
     "(two new Giltside soldier faces from crowd-looks)"
   ],
   "front": "-Y",
-  "boot_drop_cm": "auto",
+  "boot_drop_cm": 0,
   "pieces": [
     {
       "name": "SK_Gilt_Soldier_M_Lower_ArchiveApprentice",
@@ -23,13 +23,8 @@
       "name": "SK_Gilt_Soldier_M_Upper_ArchiveApprentice",
       "fbx": "ArtDirection/CodexRequests/Clothing2026_11_14/Giltside/MedievalSoldier_M_Upper.fbx",
       "kind": "upper"
-    },
-    {
-      "name": "SK_Gilt_Soldier_M_Helmet_ArchiveApprentice",
-      "fbx": "ArtDirection/CodexRequests/Clothing2026_11_14/Giltside/MedievalSoldier_M_Helmet.fbx",
-      "kind": "helmet"
     }
   ],
   "out_dir": "Intermediate/ClothingFit2026_11_14/Out/Gilt_MedievalSoldier_M_ArchiveApprentice",
-  "note": "Tall boots go over the trousers (trousers tucked in), so lower is fitted before feet."
+  "note": "Plain redo 20:15: tight deep-red tunic, trousers, one boot (mirrored). No helmet or armour (user, 20:10)."
 }

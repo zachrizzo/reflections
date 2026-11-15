@@ -28,8 +28,8 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogReflectionsNpc, Log, All);
 
-static TAutoConsoleVariable<int32> CVarNpcHeat(TEXT("Npc.Heat"), 0,
-    TEXT("1: the player's crimes against NPCs raise heat, witnesses call out and guards turn on the player. 0 (default until tested): off."));
+static TAutoConsoleVariable<int32> CVarNpcHeat(TEXT("Npc.Heat"), 1,
+    TEXT("1 (default): the player's crimes against NPCs raise heat, witnesses call out and guards turn on the player. 0: off."));
 
 namespace
 {
@@ -327,6 +327,8 @@ namespace
     FName SideOfLook(const TSoftClassPtr<AActor>& Look)
     {
         const FString Path = Look.ToSoftObjectPath().ToString();
+        // Pewterside's looks are grey copies of Giltside outfits in their own folder (PewLook_<X>): asked first.
+        if (Path.Contains(TEXT("/Pewterside/")) || Path.Contains(TEXT("PewLook_"))) return PewtersideName;
         if (Path.Contains(TEXT("Look_Gilt")) || Path.Contains(TEXT("SimpleRed")) || Path.Contains(TEXT("RedLondon"))) return GiltsideName;
         if (Path.Contains(TEXT("Look_Frost")) || Path.Contains(TEXT("WhiteLook")) || Path.Contains(TEXT("WhiteLondon"))) return FrostsideName;
         if (Path.Contains(TEXT("Look_Pewter")) || Path.Contains(TEXT("GrayLondon")) || Path.Contains(TEXT("GreyLondon"))) return PewtersideName;
@@ -337,7 +339,8 @@ namespace
     TArray<FName> LookRoles(FName ArchetypeId)
     {
         static const FName Civilian(TEXT("Civilian")), Guard(TEXT("Guard")), Soldier(TEXT("Soldier")), Caster(TEXT("SoldierCaster")),
-            Enemy(TEXT("Enemy")), Hostile(TEXT("Hostile")), Allied(TEXT("AlliedSoldier"));
+            Enemy(TEXT("Enemy")), Hostile(TEXT("Hostile")), Allied(TEXT("AlliedSoldier")), AlliedCaster(TEXT("AlliedSoldierCaster"));
+        if (ArchetypeId == AlliedCaster) return { AlliedCaster, Allied, Guard, Caster, Civilian };
         if (ArchetypeId == Guard) return { Guard, Allied, Soldier, Enemy, Civilian };
         if (ArchetypeId == Allied) return { Allied, Guard, Soldier, Civilian };
         if (ArchetypeId == Soldier) return { Soldier, Guard, Enemy, Caster, Civilian };
@@ -1144,6 +1147,11 @@ void UReflectionsNpcSubsystem::HoldNpc(AActor* Actor, float Seconds)
 void UReflectionsNpcSubsystem::ReleaseNpc(AActor* Actor)
 {
     if (UReflectionsNpcReactionComponent* Npc = FindNpc(Actor)) Npc->EndScriptedHold();
+}
+
+void UReflectionsNpcSubsystem::TurnNpcTowards(AActor* Actor, FVector Point, float DeltaTime)
+{
+    if (UReflectionsNpcReactionComponent* Npc = FindNpc(Actor)) Npc->FacePoint(Point, DeltaTime);
 }
 
 bool UReflectionsNpcSubsystem::TryBeginConversion(UReflectionsNpcReactionComponent* Attacker, AActor* Victim)
