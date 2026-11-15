@@ -1,14 +1,20 @@
 # Gray London medieval conversion
 
-The playable Gray London map is the city to improve. Replace ordinary modern
-building shells with complete, varied late-medieval buildings on surveyed city
-plots, then extend the approach across the playable city. Use reusable kits
-and procedural placement where they produce coherent streets; use individually
-authored or image-to-3D assets when they improve difficult landmarks. The aim
-is an inhabited city with distinct streets and visible enemy strongholds that
-players can reclaim to win back the city. The separate people workstream owns
-characters and crowds; integrate the city objectives with the existing game
-systems without taking over that work.
+The playable Gray London map is the city to rebuild. Remove the ordinary modern
+building shells from surveyed plots and replace them with complete, varied
+late-medieval buildings, extending the approach across the playable city. Build
+whole streets and neighborhoods with reusable kits and procedural placement;
+use individually authored or image-to-3D assets when they improve difficult
+landmarks. The aim is a lived-in city with distinct streets and enemy
+strongholds that players can reclaim to win back the city. The separate people
+workstream owns characters and crowds; integrate city objectives with the
+existing game systems without taking over that work.
+
+Replace buildings in verified sections, preserving the street network,
+essential landmarks and gameplay routes. Keep the original source geometry
+recoverable while replacements are tested. Work on `main` and push verified
+progress incrementally, coordinating shared editor access with the other
+workstreams.
 
 ## Completion checks
 
@@ -60,6 +66,12 @@ material binding, collision and streaming have not yet been tested in Unreal.
 An offline watch-gate kit provides occupied and reclaimed pennant variants.
 Its quest example and LAN visual controller are prototypes; no reclaimable
 stronghold has been placed or verified in the playable level yet.
+
+The active tracked goal remains in progress. The current game and standalone
+have not yet received a verified full-building replacement; the first priority
+is to prove the source section mapping and safely review the pilot in the real
+playable map. Subsequent neighborhoods, reclaim gameplay, streaming and a
+refreshed standalone remain completion work.
 
 Coordinate any editor or PIE session through `Saved/PIE_LOCK.json` and the
 shared editor queue. Save only explicitly identified London-owned packages;
