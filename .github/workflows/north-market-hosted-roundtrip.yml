@@ -110,7 +110,7 @@ jobs:
           tar -xJf "$archive" -C "$RUNNER_TEMP"
           "$RUNNER_TEMP/blender-4.5.3-linux-x64/blender" --version
 
-      - name: Export and reimport this FBX in clean Blender processes
+      - name: Preserve and verify authored normals in clean Blender processes
         shell: bash
         run: |
           set -euo pipefail
