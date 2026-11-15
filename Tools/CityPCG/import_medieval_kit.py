@@ -3,10 +3,10 @@
 import json
 from pathlib import Path
 
-from apply_facade_pcg import LEVEL
+from apply_facade_pcg import LEVEL, MEDIEVAL_DESTINATION
 from import_facade_kit import check_type, import_options, make_material, new_import, source_path, verify_mesh
 
-DESTINATION = "/Game/GrayLondon/MedievalOpening/Kit"
+DESTINATION = f"{MEDIEVAL_DESTINATION}/Kit"
 ART_DIR = "ArtDirection/CityPCG/MedievalOpening"
 
 

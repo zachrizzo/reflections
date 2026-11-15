@@ -1,0 +1,312 @@
+{
+  "coordinate_system": "ue_local_m",
+  "source": "Tile_p03_p00",
+  "attribution": "Base geometry: OpenStreetMap contributors, ODbL 1.0.",
+  "source_geometry": {
+    "facade_primitive": 0,
+    "origin_m": [
+      3000,
+      0,
+      0
+    ],
+    "road_primitive": 2
+  },
+  "frontages": [
+    {
+      "id": "Tile_p03_p00_65444949b015",
+      "start": [
+        3208.066,
+        306.514,
+        0.2
+      ],
+      "end": [
+        3223.692,
+        297.676,
+        0.2
+      ],
+      "height_m": 15.8,
+      "outward": [
+        0.4923,
+        0.8704
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    },
+    {
+      "id": "Tile_p03_p00_dee910be9d54",
+      "start": [
+        3235.964,
+        273.494,
+        0.2
+      ],
+      "end": [
+        3239.724,
+        271.267,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.5096,
+        -0.8604
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    },
+    {
+      "id": "Tile_p03_p00_460649862f10",
+      "start": [
+        3239.724,
+        271.267,
+        0.2
+      ],
+      "end": [
+        3243.621,
+        268.799,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.535,
+        -0.8448
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    },
+    {
+      "id": "Tile_p03_p00_bf35b92bbdc6",
+      "start": [
+        3243.43,
+        286.966,
+        0.2
+      ],
+      "end": [
+        3247.318,
+        284.864,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.4756,
+        0.8797
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    },
+    {
+      "id": "Tile_p03_p00_219ba43b850a",
+      "start": [
+        3243.621,
+        268.799,
+        0.2
+      ],
+      "end": [
+        3247.723,
+        266.514,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.4866,
+        -0.8736
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    },
+    {
+      "id": "Tile_p03_p00_75b969c36aae",
+      "start": [
+        3247.318,
+        284.864,
+        0.2
+      ],
+      "end": [
+        3250.895,
+        282.955,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.4708,
+        0.8822
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    },
+    {
+      "id": "Tile_p03_p00_5279fba4e154",
+      "start": [
+        3247.723,
+        266.514,
+        0.2
+      ],
+      "end": [
+        3251.56,
+        264.478,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.4687,
+        -0.8833
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    },
+    {
+      "id": "Tile_p03_p00_b5fcb5175ef3",
+      "start": [
+        3248.726,
+        310.874,
+        0.2
+      ],
+      "end": [
+        3252.712,
+        308.731,
+        0.2
+      ],
+      "height_m": 15.8,
+      "outward": [
+        -0.4735,
+        -0.8808
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    },
+    {
+      "id": "Tile_p03_p00_c4e9f04b4c37",
+      "start": [
+        3250.895,
+        282.955,
+        0.2
+      ],
+      "end": [
+        3255.661,
+        280.209,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.4992,
+        0.8665
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    },
+    {
+      "id": "Tile_p03_p00_a173d04f6f3c",
+      "start": [
+        3255.661,
+        280.209,
+        0.2
+      ],
+      "end": [
+        3259.808,
+        277.803,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.5018,
+        0.865
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    },
+    {
+      "id": "Tile_p03_p00_3461b566ea76",
+      "start": [
+        3256.005,
+        307.381,
+        0.2
+      ],
+      "end": [
+        3259.867,
+        305.457,
+        0.2
+      ],
+      "height_m": 15.8,
+      "outward": [
+        -0.4459,
+        -0.8951
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    },
+    {
+      "id": "Tile_p03_p00_1b2e3d30b0ca",
+      "start": [
+        3259.158,
+        276.896,
+        0.2
+      ],
+      "end": [
+        3266.857,
+        272.724,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.4764,
+        0.8792
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    },
+    {
+      "id": "Tile_p03_p00_f514fe0aa80e",
+      "start": [
+        3266.857,
+        272.724,
+        0.2
+      ],
+      "end": [
+        3270.463,
+        270.771,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        0.4762,
+        0.8793
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_surface_visible"
+    }
+  ],
+  "protected_mesh_filters": [
+    {
+      "overlay": "AnonymousShops_Tile_p03_p00.glb",
+      "origin_m": [
+        3000.0,
+        0.0,
+        0.0
+      ],
+      "excluded_ids": [
+        "Tile_p03_p00_b0e6d078161d",
+        "Tile_p03_p00_73dce15dbcb6",
+        "Tile_p03_p00_10817ed2475a",
+        "Tile_p03_p00_df7c8b640d66",
+        "Tile_p03_p00_98ecde2efbbf",
+        "Tile_p03_p00_2c0ca7fd8c25",
+        "Tile_p03_p00_5c795a644787",
+        "Tile_p03_p00_4c889ec9cdb2",
+        "Tile_p03_p00_9bc207e5310e",
+        "Tile_p03_p00_9a120d9e6a33",
+        "Tile_p03_p00_7459e23b7709",
+        "Tile_p03_p00_4479c81c220e",
+        "Tile_p03_p00_4bd471572d31",
+        "Tile_p03_p00_743f2808b62f",
+        "Tile_p03_p00_b4db879ac8ea"
+      ]
+    }
+  ],
+  "review_scope": {
+    "bounds_m": [
+      3209,
+      263,
+      3272,
+      312
+    ],
+    "purpose": "West opening continuation, separated from the authored east and south frontage clips."
+  }
+}

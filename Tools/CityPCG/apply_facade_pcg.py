@@ -18,6 +18,7 @@ import time
 LEVEL = '/Game/GrayLondon/Maps/GrayLondon_Geodata'
 DESTINATION = '/Game/GrayLondon/CityPCG'
 MESH_ROOT = f'{DESTINATION}/Kit'
+MEDIEVAL_DESTINATION = '/Game/GrayLondon/MedievalOpening'
 ACTOR_PACKAGES = '/Game/__ExternalActors__/GrayLondon/Maps/GrayLondon_Geodata/'
 NAME = re.compile(r'[A-Za-z0-9_]+\Z')
 
@@ -129,8 +130,8 @@ def configure_spawner(unreal, settings, mesh):
     selector.set_editor_property('mesh_entries', [entry])
 
 
-def create_graph(unreal, pcg, identifier, groups, meshes):
-    graph = pcg.create_graph(graph_name(identifier), f'{DESTINATION}/Graphs')
+def create_graph(unreal, pcg, identifier, groups, meshes, destination):
+    graph = pcg.create_graph(graph_name(identifier), f'{destination}/Graphs')
     if not graph or graph.get_name() != graph_name(identifier):
         raise RuntimeError(f'Could not create the exact graph name for {identifier}.')
     output = graph.get_output_node()
@@ -200,16 +201,18 @@ async def generate(unreal, pcg, graph, identifier, groups):
     return actor, dict(generated)
 
 
-async def run(plan_path, mode='preview', cell_id=None):
+async def run(plan_path, mode='preview', cell_id=None, destination=DESTINATION):
     import unreal
 
     if mode not in ('preview', 'save') or (mode == 'save' and cell_id is None):
         raise ValueError('Use preview or explicitly request save with one cell_id.')
+    if destination not in (DESTINATION, MEDIEVAL_DESTINATION):
+        raise ValueError('Choose a Gray London facade kit destination.')
     cells = read_plan(plan_path)
     if cell_id is not None:
         cells = {cell_id: cells[cell_id]}
     needed = sorted({mesh_id for groups in cells.values() for mesh_id in groups})
-    paths = {mesh_id: f'{MESH_ROOT}/{mesh_id}' for mesh_id in needed}
+    paths = {mesh_id: f'{destination}/Kit/{mesh_id}' for mesh_id in needed}
     missing = [path for path in paths.values() if not unreal.EditorAssetLibrary.does_asset_exist(path)]
     summary = {identifier: {mesh_id: len(rows) for mesh_id, rows in groups.items()}
                for identifier, groups in cells.items()}
@@ -219,7 +222,7 @@ async def run(plan_path, mode='preview', cell_id=None):
     verify_editor(unreal)
     if missing:
         raise RuntimeError(f'Import and verify the missing kit meshes first: {missing}')
-    graph_path = f'{DESTINATION}/Graphs/{graph_name(cell_id)}'
+    graph_path = f'{destination}/Graphs/{graph_name(cell_id)}'
     level_editor = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     labels = {str(desc.get_editor_property('label')) for desc in unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []}
     labels.update(actor.get_actor_label() for actor in level_editor.get_all_level_actors())
@@ -231,7 +234,7 @@ async def run(plan_path, mode='preview', cell_id=None):
 
     pcg = unreal.get_editor_subsystem(unreal.PCGEditorSubsystem)
     groups = cells[cell_id]
-    graph = create_graph(unreal, pcg, cell_id, groups, meshes)
+    graph = create_graph(unreal, pcg, cell_id, groups, meshes, destination)
     actor, counts = await generate(unreal, pcg, graph, cell_id, groups)
     verify_editor(unreal)
     packages = [graph.get_package(), actor.get_package()]
