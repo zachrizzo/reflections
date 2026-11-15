@@ -1,8 +1,10 @@
 # Goal: rebuild Gray London as a medieval city
 
-Rebuild the playable Gray London map as a lived-in, late-medieval London.
-Replace the city's modern building shells with complete period buildings.
-Extend the replacement across the playable city, not just the opening street.
+Rebuild Gray London as the game's only playable city: a lived-in,
+late-medieval London. Remove the modern building shells in surveyed sections
+and replace them with newly built, complete period buildings, rather than
+trying to remodel the modern shells. Extend the rebuild across the playable
+city, not just the opening street.
 
 Create a varied, reusable medieval building kit and use procedural placement
 to build whole streets and neighborhoods efficiently. Use individually authored
@@ -30,7 +32,8 @@ workstreams.
 - Enemy-held areas are visually legible as distinct strongholds. Players can
   clear defenders and reclaim the bases to win back the city, with progress
   saved and synchronized for a LAN host and guests.
-- Work is visually inspected from the real player spawn and representative
+- The real game entry path reaches Gray London as the only playable location.
+  Work is visually inspected from the real player spawn and representative
   streets, then checked for movement, streaming and playable performance in
   gameplay, a refreshed standalone build and a LAN session.
 - Verified London changes are committed and pushed to `main` incrementally.
@@ -80,12 +83,14 @@ review. These are candidates, not generated or approved replacements; the
 original tile and overlay exports, current protections and live actor evidence
 must be rechecked before use. The remaining tiles still need surveying.
 
-At city scale, keep each surveyed outer footprint and use spatially grouped
-building geometry and repeated details where feasible. The current individual
-models have too many separate material sections to assume they will scale;
-measure the result in the playable map before approving it. Nine review-only
-grouped meshes now contain the 14 models in 97 sections instead of 149;
-material binding, collision and streaming have not yet been tested in Unreal.
+At city scale, use surveyed footprints and bounds to guide placement, with
+spatially grouped building geometry and repeated details where feasible. New
+medieval footprints may differ from the modern shells when they preserve
+validated routes, gameplay spaces and access. The current individual models
+have too many separate material sections to assume they will scale; measure
+the result in the playable map before approving it. Nine review-only grouped
+meshes now contain the 14 models in 97 sections instead of 149; material
+binding, collision and streaming have not yet been tested in Unreal.
 
 An offline watch-gate kit provides occupied and reclaimed pennant variants.
 Its quest example, LAN visual controller and separate campaign rules are
