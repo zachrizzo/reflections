@@ -5,14 +5,15 @@
 #include "ReflectionsWorldTypes.generated.h"
 
 class USoundBase;
+class UStaticMesh;
 
 /** The three stacked Londons, bottom to top. */
 UENUM(BlueprintType)
 enum class EReflectionsWorld : uint8
 {
-    Gray  UMETA(DisplayName = "Gray London"),
-    Red   UMETA(DisplayName = "Red London"),
-    White UMETA(DisplayName = "White London"),
+    Gray  UMETA(DisplayName = "Pewterside"),
+    Red   UMETA(DisplayName = "Giltside"),
+    White UMETA(DisplayName = "Frostside"),
 };
 
 /** How the three Londons are laid out on disk. */
@@ -50,6 +51,25 @@ enum class EReflectionsJumpDirection : uint8
     Down,
 };
 
+/** How a pickup looks: a mesh fitted to a display size, turned to face the player. */
+USTRUCT(BlueprintType)
+struct FReflectionsPickupLook
+{
+    GENERATED_BODY()
+
+    /** Empty: the gray-box shape. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup")
+    TObjectPtr<UStaticMesh> Mesh;
+
+    /** The mesh is scaled so its longest side is this long (real-scale props are tiny as pickups). 0: the mesh's own size. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup", meta = (ClampMin = "0", Units = "cm"))
+    float DisplaySize = 40.0f;
+
+    /** Turn applied under the spin, for example Roll 90 to stand a flat coin on its edge. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup")
+    FRotator Rotation = FRotator::ZeroRotator;
+};
+
 /** Look and data for one London. */
 USTRUCT(BlueprintType)
 struct FReflectionsWorldInfo
@@ -74,9 +94,17 @@ struct FReflectionsWorldInfo
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "World")
     FLinearColor ThemeColor = FLinearColor::White;
 
+    /** Where this side's mirror page is found, for page pickups with no title of their own ("the Gilt Tower"). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "World")
+    FText PageSource;
+
     /** Colour of this London's coins. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "World")
     FLinearColor CoinColor = FLinearColor::White;
+
+    /** What this London's coin (mirror shard) pickups look like. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "World")
+    FReflectionsPickupLook CoinLook;
 
     /** Music loop for this London (2D). Empty: no world-jump music here. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "World")

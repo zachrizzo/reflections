@@ -12,12 +12,13 @@ const TCHAR* UReflectionsWorldJumpConfig::DefaultAssetPath = TEXT("/Game/Worlds/
 
 namespace
 {
-    FReflectionsWorldInfo MakeWorld(EReflectionsWorld World, const TCHAR* Name, const FLinearColor& Coat,
+    FReflectionsWorldInfo MakeWorld(EReflectionsWorld World, const TCHAR* Name, const TCHAR* PageSource, const FLinearColor& Coat,
         const FLinearColor& Theme, const FLinearColor& Coin)
     {
         FReflectionsWorldInfo Info;
         Info.World = World;
         Info.DisplayName = FText::FromString(Name);
+        Info.PageSource = FText::FromString(PageSource);
         Info.CoatTint = Coat;
         Info.ThemeColor = Theme;
         Info.CoinColor = Coin;
@@ -27,11 +28,11 @@ namespace
 
 UReflectionsWorldJumpConfig::UReflectionsWorldJumpConfig()
 {
-    Worlds.Add(MakeWorld(EReflectionsWorld::Gray, TEXT("Gray London"),
+    Worlds.Add(MakeWorld(EReflectionsWorld::Gray, TEXT("Pewterside"), TEXT("Pewterside's high spot"),
         FLinearColor(0.16f, 0.16f, 0.17f), FLinearColor(0.62f, 0.64f, 0.68f), FLinearColor(0.55f, 0.57f, 0.60f)));
-    Worlds.Add(MakeWorld(EReflectionsWorld::Red, TEXT("Red London"),
+    Worlds.Add(MakeWorld(EReflectionsWorld::Red, TEXT("Giltside"), TEXT("the Gilt Tower"),
         FLinearColor(0.42f, 0.02f, 0.02f), FLinearColor(0.95f, 0.18f, 0.12f), FLinearColor(0.95f, 0.12f, 0.05f)));
-    Worlds.Add(MakeWorld(EReflectionsWorld::White, TEXT("White London"),
+    Worlds.Add(MakeWorld(EReflectionsWorld::White, TEXT("Frostside"), TEXT("the Frost Tower"),
         FLinearColor(0.80f, 0.80f, 0.76f), FLinearColor(0.93f, 0.95f, 1.00f), FLinearColor(0.97f, 0.97f, 1.00f)));
 
     // Gray: drained of colour. Red: warm and red. White: bleached, pale and bright.

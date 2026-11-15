@@ -8,6 +8,8 @@
 #include "Hero/ReflectionsSpellCombat.h"
 #include "Hero/ReflectionsSpellEventSubsystem.h"
 #include "Interfaces/CombatDamageable.h"
+#include "NPC/ReflectionsNpcReactionComponent.h"
+#include "NPC/ReflectionsNpcSubsystem.h"
 
 #include "Components/PrimitiveComponent.h"
 #include "Engine/OverlapResult.h"
@@ -23,8 +25,108 @@
 #include "Components/AudioComponent.h"
 #include "Sound/SoundBase.h"
 
+#include <concepts>
+
 namespace
 {
+    /** A fire burst this wide (cm) or wider is a blast (Explosion); smaller fire hits set the target alight (Burn). */
+    constexpr float BlastReactionRadius = 150.0f;
+
+    /** What a crafted hit does to a body: the element's reaction, agreed with spell-combat for catalog spells. */
+    EReflectionsSpellReaction CraftedReaction(const FCraftedSpellResolved& Spell, bool bBlast)
+    {
+        switch (Spell.Recipe.Element)
+        {
+        case ECraftedSpellElement::Fire: return bBlast ? EReflectionsSpellReaction::Explosion : EReflectionsSpellReaction::Burn;
+        case ECraftedSpellElement::Lightning: return EReflectionsSpellReaction::Electrify;
+        case ECraftedSpellElement::Water: return EReflectionsSpellReaction::Push;
+        case ECraftedSpellElement::Earth: return EReflectionsSpellReaction::Knockdown;
+        case ECraftedSpellElement::Air: return EReflectionsSpellReaction::Lift;
+        case ECraftedSpellElement::Ice: return EReflectionsSpellReaction::Freeze;
+        case ECraftedSpellElement::Life: return EReflectionsSpellReaction::Push;
+        default: return EReflectionsSpellReaction::Hit;
+        }
+    }
+
+    /** Reactions that last, so repeated quiet hits (beams, pools, rain) keep them going. */
+    bool NeedsUpkeep(EReflectionsSpellReaction Reaction)
+    {
+        return Reaction == EReflectionsSpellReaction::Electrify || Reaction == EReflectionsSpellReaction::Burn
+            || Reaction == EReflectionsSpellReaction::Freeze || Reaction == EReflectionsSpellReaction::Pull
+            || Reaction == EReflectionsSpellReaction::Lift;
+    }
+
+    /** Seconds the reaction lasts: the shock latch, the burn, the slow. */
+    float ReactionSeconds(const FCraftedSpellResolved& Spell, EReflectionsSpellReaction Reaction, float Scale)
+    {
+        switch (Reaction)
+        {
+        case EReflectionsSpellReaction::Electrify: return FMath::Clamp(0.8f + 0.3f * Spell.Recipe.Power, 1.0f, 2.0f);
+        case EReflectionsSpellReaction::Burn: return Spell.StatusSeconds > 0.0f ? Spell.StatusSeconds : 2.5f;
+        case EReflectionsSpellReaction::Freeze: return (Spell.StatusSeconds > 0.0f ? Spell.StatusSeconds : 2.5f) * FMath::Clamp(Scale, 0.5f, 1.5f);
+        default: return 0.0f;
+        }
+    }
+
+    /**
+     * Allegiance comes from the NPC subsystem, the one answer shared with catalog spells and aim assist: it reads each
+     * NPC's archetype, so a civilian the villain infects turns hostile without tag edits. Detected at compile time so
+     * a change on that side drops crafting back to the Friendly tag instead of breaking the build.
+     */
+    template <typename T>
+    concept CNpcAllegiance = requires(const T* Npcs, const AActor* Actor) {
+        { T::Get(Actor) };
+        { Npcs->IsAllyOf(Actor, Actor) } -> std::convertible_to<bool>;
+        { Npcs->CanBeHarmedBy(Actor, Actor) } -> std::convertible_to<bool>;
+    };
+
+    /** True with the NPC subsystem's answer in bOutAlly, or false when there is no subsystem (bOutAlly untouched). */
+    template <typename T = UReflectionsNpcSubsystem>
+    bool NpcIsAlly(const AActor* Target, const AActor* Caster, bool& bOutAlly)
+    {
+        if constexpr (CNpcAllegiance<T>)
+        {
+            if (const T* Npcs = T::Get(Target))
+            {
+                bOutAlly = Npcs->IsAllyOf(Target, Caster);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** NPC crowd bodies are moved by a hidden locomotion character; pulls launch that one. */
+    template <typename T>
+    concept CNpcMover = requires(const T* Npcs, const AActor* Actor) {
+        { Npcs->FindNpc(Actor)->GetMovementCharacter() } -> std::convertible_to<ACharacter*>;
+    };
+
+    template <typename T = UReflectionsNpcSubsystem>
+    ACharacter* MovementCharacter(AActor* Target)
+    {
+        if (ACharacter* Character = Cast<ACharacter>(Target)) return Character;
+        if constexpr (CNpcMover<T>)
+        {
+            if (const T* Npcs = T::Get(Target))
+                if (const auto* Npc = Npcs->FindNpc(Target)) return Npc->GetMovementCharacter();
+        }
+        return nullptr;
+    }
+
+    template <typename T = UReflectionsNpcSubsystem>
+    bool NpcCanHarm(const AActor* Target, const AActor* Caster, bool& bOutHarm)
+    {
+        if constexpr (CNpcAllegiance<T>)
+        {
+            if (const T* Npcs = T::Get(Target))
+            {
+                bOutHarm = Npcs->CanBeHarmedBy(Target, Caster);
+                return true;
+            }
+        }
+        return false;
+    }
+
     const TCHAR* CraftedFolder = TEXT("/Game/SpellCrafting/VFX/");
     const TCHAR* CoreFolder = TEXT("/Game/Characters/Hero/SpellVFX/Systems/");
 
@@ -133,6 +235,14 @@ void UReflectionsCraftedSpellSubsystem::Tick(float DeltaTime)
     {
         AttachClock = 0.5f;
         EnsureCraftingComponents();
+        if (ReactionSent.Num() > 64)
+        {
+            const double Now = GetWorld()->GetTimeSeconds();
+            for (auto It = ReactionSent.CreateIterator(); It; ++It)
+            {
+                if (!It.Key().IsValid() || Now - It.Value() > 3.0) It.RemoveCurrent();
+            }
+        }
     }
 
     for (int32 i = Burns.Num() - 1; i >= 0; --i)
@@ -197,23 +307,39 @@ void UReflectionsCraftedSpellSubsystem::Tick(float DeltaTime)
 bool UReflectionsCraftedSpellSubsystem::IsEnemy(const AActor* Actor, const AActor* Caster)
 {
     if (!IsValid(Actor) || Actor == Caster || Actor->IsHidden() || IsAttachedTo(Actor, Caster)) return false;
-    if (Actor->ActorHasTag(TEXT("Friendly")) || Actor->ActorHasTag(TEXT("Player"))) return false;
+    // Friendly civilians are harmable, as they are for the catalog spells; IsHostile keeps spells from seeking them.
+    if (Actor->ActorHasTag(TEXT("Player"))) return false;
     if (Actor->IsA<AReflectionsCraftedSpell>()) return false;
+    bool bHarm = true;
+    if (NpcCanHarm(Actor, Caster, bHarm) && !bHarm) return false;
     return IsAlive(Actor);
+}
+
+bool UReflectionsCraftedSpellSubsystem::IsHostile(const AActor* Actor, const AActor* Caster)
+{
+    if (!IsEnemy(Actor, Caster)) return false;
+    bool bAlly = false;
+    if (NpcIsAlly(Actor, Caster, bAlly)) return !bAlly;
+    return !Actor->ActorHasTag(TEXT("Friendly"));
 }
 
 bool UReflectionsCraftedSpellSubsystem::IsAlly(const AActor* Actor, const AActor* Caster)
 {
-    return IsValid(Actor) && (Actor == Caster || Actor->ActorHasTag(TEXT("Friendly"))) && IsAlive(Actor);
+    if (!IsValid(Actor) || !IsAlive(Actor)) return false;
+    if (Actor == Caster) return true;
+    bool bAlly = false;
+    if (NpcIsAlly(Actor, Caster, bAlly)) return bAlly;
+    return Actor->ActorHasTag(TEXT("Friendly"));
 }
 
-void UReflectionsCraftedSpellSubsystem::FindEnemies(const FVector& Location, float Radius, const AActor* Caster, TArray<AActor*>& Out) const
+void UReflectionsCraftedSpellSubsystem::FindEnemies(const FVector& Location, float Radius, const AActor* Caster, TArray<AActor*>& Out,
+    bool bHostileOnly) const
 {
     TArray<AActor*> All;
     OverlapActors(GetWorld(), Location, Radius, Caster, All);
     for (AActor* Actor : All)
     {
-        if (!IsEnemy(Actor, Caster)) continue;
+        if (!(bHostileOnly ? IsHostile(Actor, Caster) : IsEnemy(Actor, Caster))) continue;
         // Static set dressing that only happens to be WorldDynamic is ignored unless it can take a hit or move.
         const UPrimitiveComponent* Root = Cast<UPrimitiveComponent>(Actor->GetRootComponent());
         const bool bCanReact = Actor->IsA<APawn>() || Actor->Implements<UCombatDamageable>()
@@ -236,7 +362,7 @@ AActor* UReflectionsCraftedSpellSubsystem::NearestEnemy(const FVector& Location,
     const TSet<TWeakObjectPtr<AActor>>* Exclude, const FVector* Direction, float ConeCos) const
 {
     TArray<AActor*> Candidates;
-    FindEnemies(Location, Range, Caster, Candidates);
+    FindEnemies(Location, Range, Caster, Candidates, true);
     AActor* Best = nullptr;
     float BestScore = TNumericLimits<float>::Max();
     for (AActor* Actor : Candidates)
@@ -271,14 +397,11 @@ float UReflectionsCraftedSpellSubsystem::HealActor(AActor* Target, float Amount,
 }
 
 float UReflectionsCraftedSpellSubsystem::ApplyHit(const FCraftedSpellResolved& Spell, AActor* Target, AActor* Caster, float Scale,
-    const FVector& Origin, const FHitResult* DirectHit, bool bQuiet)
+    const FVector& Origin, const FHitResult* DirectHit, bool bQuiet, float BlastRadius)
 {
     if (!IsValid(Target) || Scale <= 0.0f) return 0.0f;
-    if (Spell.Heal > 0.0f && IsAlly(Target, Caster))
-    {
-        HealActor(Target, Spell.Heal * Scale, Caster);
-        return 0.0f;
-    }
+    // A healing spell never hurts a friend; its ally pass (FindAllies at each call site) does the healing, once.
+    if (Spell.Heal > 0.0f && IsAlly(Target, Caster)) return 0.0f;
     if (!IsEnemy(Target, Caster)) return 0.0f;
 
     FVector Direction = (Target->GetActorLocation() - Origin).GetSafeNormal2D();
@@ -317,7 +440,20 @@ float UReflectionsCraftedSpellSubsystem::ApplyHit(const FCraftedSpellResolved& S
     if (Spell.BurnDps > 0.0f) AddBurn(Target, Caster, Spell.BurnDps * Scale, Spell.StatusSeconds);
     if (Spell.SlowFactor < 1.0f) AddSlow(Target, Spell.SlowFactor, Spell.StatusSeconds * FMath::Clamp(Scale, 0.5f, 1.5f));
 
-    UReflectionsSpellEventSubsystem* Events = bQuiet ? nullptr : GetWorld()->GetSubsystem<UReflectionsSpellEventSubsystem>();
+    // The body's reaction (NPCs pick the animation): a fire burst explodes, a fire bolt burns, lightning electrifies...
+    const EReflectionsSpellReaction Reaction = CraftedReaction(Spell, !bQuiet && BlastRadius >= BlastReactionRadius);
+    // 1 is a full-power hit at point blank (power-3 fire orb ~0.64, water wave ~1, lightning bolt ~0.34).
+    float Magnitude = FMath::Clamp(0.5f * Damage / 28.0f + 0.5f * Push / 800.0f, 0.05f, 1.0f);
+    if (BlastRadius > 0.0f)
+    {
+        Magnitude *= 1.0f - 0.6f * FMath::Clamp(FVector::Dist(Target->GetActorLocation(), Origin) / BlastRadius, 0.0f, 1.0f);
+    }
+    if (Spell.Recipe.Element == ECraftedSpellElement::Life) Magnitude = FMath::Min(Magnitude * 0.5f, 0.35f);
+    bool bRepeat = false;
+    const bool bSend = !bQuiet || (NeedsUpkeep(Reaction) && TakeReactionSlot(Target, true, bRepeat));
+    if (!bQuiet) TakeReactionSlot(Target, false, bRepeat);
+
+    UReflectionsSpellEventSubsystem* Events = bSend ? GetWorld()->GetSubsystem<UReflectionsSpellEventSubsystem>() : nullptr;
     if (Events)
     {
         // Listeners (hit marker, hit-stop, ragdoll, NPC reactions, reputation) treat this like any other spell hit.
@@ -330,11 +466,16 @@ float UReflectionsCraftedSpellSubsystem::ApplyHit(const FCraftedSpellResolved& S
         Data.ImpactNormal = Hit.ImpactNormal;
         Data.Bone = Hit.BoneName;
         Data.Surface = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
+        Data.Reaction = Reaction;
+        Data.Magnitude = Magnitude;
+        Data.Duration = ReactionSeconds(Spell, Reaction, Scale);
+        Data.Origin = Reaction == EReflectionsSpellReaction::Explosion ? Origin : Point;
+        Data.bRepeat = bRepeat;
         Events->OnSpellHit.Broadcast(Data);
     }
-    else if (Caster)
+    if ((!Events || bRepeat) && Caster)
     {
-        // Quiet hits still show the hit marker.
+        // Quiet hits still show the hit marker (repeat reaction ticks skip the event's own marker).
         if (UReflectionsSpellAimComponent* Aim = Caster->FindComponentByClass<UReflectionsSpellAimComponent>())
         {
             Aim->NotifyHit(!IsAlive(Target));
@@ -385,14 +526,36 @@ void UReflectionsCraftedSpellSubsystem::AddSlow(AActor* Target, float Factor, fl
     Target->CustomTimeDilation = Slow.Factor;
 }
 
-void UReflectionsCraftedSpellSubsystem::Pull(AActor* Target, const FVector& Center, float Strength, float Radius, bool bLift, float DeltaTime)
+void UReflectionsCraftedSpellSubsystem::Pull(AActor* Target, const FVector& Center, float Strength, float Radius, bool bLift, float DeltaTime,
+    const FCraftedSpellResolved* Spell, AActor* Caster)
 {
     if (!IsValid(Target) || Strength <= 0.0f || Radius <= 0.0f) return;
     const FVector To = Center - Target->GetActorLocation();
     const float Distance = To.Size2D();
     if (Distance > Radius) return;
     const float Falloff = 0.35f + 0.65f * (1.0f - Distance / Radius);
-    if (ACharacter* Character = Cast<ACharacter>(Target))
+    bool bRepeat = false;
+    if (Spell && TakeReactionSlot(Target, true, bRepeat))
+    {
+        // Being dragged (or lifted, for Updraft) is a reaction of its own; resent every 0.5 s while it lasts.
+        if (UReflectionsSpellEventSubsystem* Events = GetWorld()->GetSubsystem<UReflectionsSpellEventSubsystem>())
+        {
+            FReflectionsSpellHitData Data;
+            Data.Spell = UReflectionsSpellCraftingLibrary::EventProxy(Spell->Recipe.Element);
+            Data.Caster = Caster;
+            Data.Target = Target;
+            Data.Location = Target->GetActorLocation();
+            Data.Impulse = bLift ? FVector(0.0f, 0.0f, FMath::Lerp(380.0f, 720.0f, Falloff)) : To.GetSafeNormal2D() * Strength * Falloff;
+            Data.ImpactNormal = -To.GetSafeNormal();
+            Data.Reaction = bLift ? EReflectionsSpellReaction::Lift : EReflectionsSpellReaction::Pull;
+            Data.Magnitude = FMath::Clamp(Strength * Falloff / 900.0f, 0.1f, 1.0f);
+            Data.Duration = 0.6f;
+            Data.Origin = Center;
+            Data.bRepeat = bRepeat;
+            Events->OnSpellHit.Broadcast(Data);
+        }
+    }
+    if (ACharacter* Character = MovementCharacter(Target))
     {
         // Re-launch at most ten times a second: enough to drag a crowd without fighting the movement solver every frame.
         const double Now = GetWorld()->GetTimeSeconds();
@@ -412,6 +575,22 @@ void UReflectionsCraftedSpellSubsystem::Pull(AActor* Target, const FVector& Cent
             Primitive->AddForce(Direction * Strength * Falloff * 4.0f, NAME_None, true);
         }
     }
+}
+
+bool UReflectionsCraftedSpellSubsystem::TakeReactionSlot(AActor* Target, bool bQuiet, bool& bOutRepeat)
+{
+    const double Now = GetWorld()->GetTimeSeconds();
+    double& Last = ReactionSent.FindOrAdd(Target, -1000.0);
+    if (!bQuiet)
+    {
+        bOutRepeat = false;
+        Last = Now;
+        return true;
+    }
+    if (Now - Last < 0.5) return false;
+    bOutRepeat = Now - Last < 1.5;
+    Last = Now;
+    return true;
 }
 
 UNiagaraSystem* UReflectionsCraftedSpellSubsystem::SystemFor(ECraftedFx Kind, bool& bFallback)

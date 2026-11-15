@@ -1,18 +1,8 @@
 #include "NPC/ReflectionsReputationSubsystem.h"
-#include "NPC/ReflectionsNpcReactionComponent.h"
-#include "GameFramework/Pawn.h"
+#include "GameFramework/Actor.h"
 
-void UReflectionsReputationSubsystem::OnWorldBeginPlay(UWorld& World)
-{
-    Super::OnWorldBeginPlay(World);
-    if (UReflectionsSpellEventSubsystem* Events = World.GetSubsystem<UReflectionsSpellEventSubsystem>())
-        Events->OnSpellHit.AddUniqueDynamic(this, &UReflectionsReputationSubsystem::HandleSpellHit);
-}
 void UReflectionsReputationSubsystem::Deinitialize()
 {
-    if (UWorld* World = GetWorld())
-        if (UReflectionsSpellEventSubsystem* Events = World->GetSubsystem<UReflectionsSpellEventSubsystem>())
-            Events->OnSpellHit.RemoveDynamic(this, &UReflectionsReputationSubsystem::HandleSpellHit);
     Scores.Empty();
     Super::Deinitialize();
 }
@@ -29,11 +19,4 @@ void UReflectionsReputationSubsystem::AdjustReputation(AActor* Player, float Del
     const float New = FMath::Clamp(Old + Delta, -100.0f, 100.0f);
     Scores.Add(Player, New);
     if (!FMath::IsNearlyEqual(Old, New)) OnReputationChanged.Broadcast(Player, Old, New);
-}
-void UReflectionsReputationSubsystem::HandleSpellHit(const FReflectionsSpellHitData& Hit)
-{
-    const APawn* Caster = Cast<APawn>(Hit.Caster);
-    if (Caster && Caster->IsPlayerControlled() && IsValid(Hit.Target) &&
-        Hit.Target->FindComponentByClass<UReflectionsNpcReactionComponent>())
-        AdjustReputation(Hit.Caster, -8.0f);
 }

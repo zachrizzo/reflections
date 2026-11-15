@@ -8,6 +8,8 @@
 class UNiagaraComponent;
 class UNiagaraSystem;
 class UMaterialInterface;
+class UDecalComponent;
+class USceneComponent;
 class AReflectionsSpellProjectile;
 
 /**
@@ -26,10 +28,27 @@ public:
     virtual void OnWorldBeginPlay(UWorld& InWorld) override;
     virtual void Deinitialize() override;
 
+    /** Tarnish (enemy) magic hit, or with bMuzzle the small flash at the caster's hand: black-violet smoke, sickly
+     *  silver sparks, a violet shock ring and a dark stain on the ground. Scale is about 1 for a bolt, 4 for a burst. */
+    void SpawnTarnishImpact(const FVector& Location, const FVector& Normal, AActor* Caster, float Scale, bool bMuzzle);
+    /** The wind-up gather at a tarnished caster's hand. The caller ramps User.Scale and destroys it. */
+    UNiagaraComponent* SpawnTarnishTelegraph(USceneComponent* Parent, FName Socket);
+    /** Ground warning circle for a tarnish burst. The caller ramps the "Strength" parameter (0-1) and destroys it. */
+    UDecalComponent* SpawnTarnishWarning(const FVector& Center, float Radius);
+
 private:
     void OnActorSpawned(AActor* Actor);
     void AttachProjectileVisual(TWeakObjectPtr<AReflectionsSpellProjectile> Projectile);
     void SpawnImpact(EHeroSpell Spell, const FVector& Location, const FVector& Normal, float Scale, bool bMuzzle);
+    void AttachTarnishVisual(AReflectionsSpellProjectile* Projectile);
+    /** Traces for the surface under Location and lays a M_Spell_GroundMark decal of the given Kind on it. Fading marks
+     *  join the capped GroundMarks list; a non-fading one (a warning) belongs to the caller. */
+    UDecalComponent* PlaceGroundMark(float Kind, float Strength, const FLinearColor& Color, const FVector& Location,
+        const FVector& Normal, float Radius, bool bFade);
+    /** Spawns every spell system once, far out of view, at map start so first casts do not compile PSOs mid-fight. */
+    void WarmUpSpellEffects(UWorld& InWorld);
+    /** Per-element scorch / frost / wet / burn / dirt / rune mark under an impact; fades out over ~5 s. */
+    void SpawnGroundMark(EHeroSpell Spell, const FVector& Location, const FVector& Normal, float Scale);
     void ShakeNear(const FVector& Location, float Strength);
     void HitStop();
 
@@ -44,8 +63,31 @@ private:
     UPROPERTY(Transient) TObjectPtr<UNiagaraSystem> ImpactSystem;
     UPROPERTY(Transient) TObjectPtr<UNiagaraSystem> HealSystem;
     UPROPERTY(Transient) TObjectPtr<UNiagaraSystem> WardSystem;
+    /** Tarnish bolt / wisp in flight and wind-up gather (NS_Tarnish_Bolt) and its burst (NS_Tarnish_Burst). Without
+     *  them the shared projectile and impact systems stand in, tinted violet and silver. */
+    UPROPERTY(Transient) TObjectPtr<UNiagaraSystem> TarnishSystem;
+    UPROPERTY(Transient) TObjectPtr<UNiagaraSystem> TarnishBurstSystem;
+    UPROPERTY(Transient) TObjectPtr<class USoundBase> ExplosionCue;
+    /** Crackle on a body hit by an Electrify reaction (NS_Spell_Shock) and its optional loop (SCue_Shock_Loop). */
+    UPROPERTY(Transient) TObjectPtr<UNiagaraSystem> ShockSystem;
+    UPROPERTY(Transient) TObjectPtr<class USoundBase> ShockLoopCue;
+    struct FBodyShock
+    {
+        TWeakObjectPtr<UNiagaraComponent> Crackle;
+        TWeakObjectPtr<class UAudioComponent> Loop;
+        double EndTime = 0.0;
+    };
+    /** Bodies crackling now, by target; a new Electrify hit on the same body extends it. */
+    TMap<TWeakObjectPtr<AActor>, FBodyShock> Shocks;
+    FTimerHandle ShockTimer;
+    void ElectrifyBody(AActor* Target, float Duration, float Magnitude);
+    void TickShocks();
     UPROPERTY(Transient) TObjectPtr<UNiagaraSystem> BloodImpact;
     UPROPERTY(Transient) TObjectPtr<UMaterialInterface> BloodSpatter;
+    UPROPERTY(Transient) TObjectPtr<UMaterialInterface> GroundMarkMaterial;
+    /** Live ground marks, oldest first; capped so rapid fire never piles decals up. */
+    TArray<TWeakObjectPtr<UDecalComponent>> GroundMarks;
+    FTimerHandle WarmUpTimer;
 
     TMap<TWeakObjectPtr<AActor>, TWeakObjectPtr<UNiagaraComponent>> ProjectileTrails;
     FDelegateHandle SpawnHandle;

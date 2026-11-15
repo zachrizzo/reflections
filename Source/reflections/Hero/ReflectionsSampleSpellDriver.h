@@ -19,11 +19,12 @@ class UEnhancedInputComponent;
 struct FInputActionValue;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FReflectionsManaChanged, float, Mana, float, MaxMana);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FReflectionsRespawned);
 
 /** A spell from outside the catalog, cast through the normal windup / layered montage / follow-through / cancel flow. */
 struct FReflectionsExternalCast
 {
-    UAnimSequenceBase* Animation = nullptr;          // null: use AimProxy's usual clip
+    TWeakObjectPtr<UAnimSequenceBase> Animation;      // null: use AimProxy's usual clip (weak: the struct outlives frames in ActiveExternal)
     float ReleaseTime = 0.5f;                         // seconds into Animation
     FName Socket = NAME_None;                         // NAME_None: between both hands
     EHeroSpell AimProxy = EHeroSpell::ArcaneBolt;     // drives the windup timing and Aim->ResolveTarget
@@ -101,6 +102,14 @@ public:
     float ManaRegenPerSecond = 8.0f;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hero|Spells|Resources", meta=(ClampMin="0", Units="s"))
     float ManaRegenDelay = 0.8f;
+
+    /** Health the hero regains per second once out of combat (no damage for HealthRegenDelay). 0 turns it off. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hero|Spells|Resources", meta=(ClampMin="0"))
+    float HealthRegenPerSecond = 3.0f;
+
+    /** Seconds without taking damage before health starts coming back. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hero|Spells|Resources", meta=(ClampMin="0", Units="s"))
+    float HealthRegenDelay = 6.0f;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hero|Spells|Resources", meta=(ClampMin="0", Units="s"))
     float RespawnDelay = 5.0f;
 
@@ -116,6 +125,9 @@ public:
     /** Same as TrySpendMana without feedback text; spends nothing and returns false if Amount exceeds the bar. */
     UFUNCTION(BlueprintCallable, Category="Hero|Spells|Resources")
     bool SpendMagic(float Amount);
+    /** Adds mana up to the max (quest rewards, pickups). Ignored while defeated or for Amount <= 0. */
+    UFUNCTION(BlueprintCallable, Category="Hero|Spells|Resources")
+    void RestoreMana(float Amount) { if (!bDefeated && Amount > 0.0f) SetMana(Mana + Amount); }
     UFUNCTION(BlueprintPure, Category="Hero|Spells|Resources")
     float GetMagic() const { return Mana; }
     UFUNCTION(BlueprintPure, Category="Hero|Spells|Resources")
@@ -136,6 +148,17 @@ public:
     bool IsDefeated() const { return bDefeated; }
     UFUNCTION(BlueprintPure, Category="Hero|Spells")
     float GetRespawnTimeRemaining() const;
+    /** Where Respawn() puts the hero (game flow moves it to the latest checkpoint). Defaults to the BeginPlay transform. */
+    UFUNCTION(BlueprintCallable, Category="Hero|Spells")
+    void SetRespawnTransform(const FTransform& Transform);
+    UFUNCTION(BlueprintPure, Category="Hero|Spells")
+    FTransform GetRespawnTransform() const { return SpawnTransform; }
+    /** Fires at the end of Respawn(), after the teleport and the health and mana reset. */
+    UPROPERTY(BlueprintAssignable, Category="Hero|Spells")
+    FReflectionsRespawned OnRespawned;
+    /** Respawns now instead of waiting out RespawnDelay (the death screen's Respawn button). Does nothing unless defeated. */
+    UFUNCTION(BlueprintCallable, Category="Hero|Spells")
+    void RespawnNow() { if (bDefeated) Respawn(); }
     /** Short message after a refused cast (no mana, recharging); empty when there is nothing to say. */
     UFUNCTION(BlueprintPure, Category="Hero|Spells")
     FString GetCastFeedback() const;
@@ -164,6 +187,8 @@ private:
     void SetMana(float Value);
     void UpdateInputDevice(APlayerController* PC);
     void OnCastAction(const FInputActionValue& Value);
+    /** Swallows sample debug keys (see BindControls); does nothing on purpose. */
+    void IgnoreInput(const FInputActionValue& Value) {}
     void OnCastReleased(const FInputActionValue& Value);
     void SetFeedback(const FString& Text);
     UFUNCTION() void OnOwnerDied(AActor* Source);
@@ -198,10 +223,17 @@ private:
     float PreviewTime = 0.0f;
     float Mana = 100.0f;
     double LastCastTime = -100.0;
+    /** Out-of-combat health regen: when the hero last lost health, its last seen health, and regen not yet applied. */
+    double LastDamageTime = -100.0;
+    float LastSeenHealth = -1.0f;
+    float PendingRegen = 0.0f;
+    UFUNCTION()
+    void OnOwnerHealthChanged(float Health, float MaxHealth, AActor* Source);
     double FeedbackUntil = 0.0;
     double RespawnAt = 0.0;
     FString Feedback;
     FTransform SpawnTransform;
+    bool bRespawnTransformSet = false;
     TMap<EHeroSpell, double> CooldownUntil;
     bool bDefeated = false;
     bool bUsingGamepad = false;

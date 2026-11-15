@@ -1,9 +1,12 @@
 #include "Worlds/ReflectionsWorldLibrary.h"
 
+#include "Components/BrushComponent.h"
 #include "Engine/LevelStreamingAlwaysLoaded.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Volume.h"
+#include "PhysicsEngine/BodySetup.h"
 #include "Hero/ReflectionsSpellCombat.h"
 #include "Worlds/ReflectionsWorldJumpComponent.h"
 #include "Worlds/ReflectionsWorldJumpSubsystem.h"
@@ -98,6 +101,24 @@ ULevelStreaming* UReflectionsWorldLibrary::AddOffsetSublevel(UWorld* World, TSof
     World->AddStreamingLevel(Streaming);
     World->MarkPackageDirty();
     return Streaming;
+}
+
+bool UReflectionsWorldLibrary::SetVolumeBox(AVolume* Volume, FVector HalfExtent)
+{
+    UBrushComponent* BrushComp = Volume ? Volume->GetBrushComponent() : nullptr;
+    if (!BrushComp || HalfExtent.GetMin() <= 0.0)
+    {
+        return false;
+    }
+    // A spawned volume has no brush. Bounds then come from the brush body setup (editor and cooked alike),
+    // so a single box element is enough for nav mesh bounds; no BSP or editor brush builder is needed.
+    UBodySetup* Body = NewObject<UBodySetup>(BrushComp, NAME_None, RF_Transactional);
+    Body->CollisionTraceFlag = CTF_UseSimpleAsComplex;
+    Body->AggGeom.BoxElems.Add(FKBoxElem(float(HalfExtent.X * 2.0), float(HalfExtent.Y * 2.0), float(HalfExtent.Z * 2.0)));
+    BrushComp->BrushBodySetup = Body;
+    BrushComp->UpdateBounds();
+    Volume->MarkPackageDirty();
+    return true;
 }
 
 // ---- Native ------------------------------------------------------------------------------------------------

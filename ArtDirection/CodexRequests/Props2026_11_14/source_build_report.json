@@ -1,0 +1,171 @@
+[
+  {
+    "asset": "NellsLetter",
+    "group": "Quest",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_NellsLetter.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\Textures\\T_NellsLetter_BaseColor.png",
+    "triangles": 12498,
+    "dimensions_cm": [
+      18.01,
+      6.57,
+      12.28
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "TramTicket",
+    "group": "Quest",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_TramTicket.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\Textures\\T_TramTicket_BaseColor.png",
+    "triangles": 12500,
+    "dimensions_cm": [
+      9.0,
+      0.88,
+      4.35
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "JorysFiddle",
+    "group": "Quest",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_JorysFiddle.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\Textures\\T_JorysFiddle_BaseColor.png",
+    "triangles": 12500,
+    "dimensions_cm": [
+      35.48,
+      11.35,
+      65.02
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "GlaziersEyeglass",
+    "group": "Quest",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_GlaziersEyeglass.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\Textures\\T_GlaziersEyeglass_BaseColor.png",
+    "triangles": 12500,
+    "dimensions_cm": [
+      6.0,
+      1.27,
+      3.39
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "LampOilBarrel",
+    "group": "Quest",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_LampOilBarrel.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\Textures\\T_LampOilBarrel_BaseColor.png",
+    "triangles": 12500,
+    "dimensions_cm": [
+      27.81,
+      32.59,
+      40.01
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "BoltOfWool",
+    "group": "Quest",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_BoltOfWool.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\Textures\\T_BoltOfWool_BaseColor.png",
+    "triangles": 12500,
+    "dimensions_cm": [
+      39.97,
+      16.04,
+      13.86
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "BarnabysShears",
+    "group": "Quest",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\SM_BarnabysShears.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Quest\\Textures\\T_BarnabysShears_BaseColor.png",
+    "triangles": 12500,
+    "dimensions_cm": [
+      28.0,
+      2.48,
+      12.04
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "PewtersideCoin",
+    "group": "Pickups",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_PewtersideCoin.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\Textures\\T_PewtersideCoin_BaseColor.png",
+    "triangles": 12500,
+    "dimensions_cm": [
+      3.39,
+      0.3,
+      3.5
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "GiltsideCoin",
+    "group": "Pickups",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_GiltsideCoin.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\Textures\\T_GiltsideCoin_BaseColor.png",
+    "triangles": 12500,
+    "dimensions_cm": [
+      3.5,
+      1.04,
+      2.45
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "FrostsideCoin",
+    "group": "Pickups",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_FrostsideCoin.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\Textures\\T_FrostsideCoin_BaseColor.png",
+    "triangles": 12500,
+    "dimensions_cm": [
+      3.5,
+      0.62,
+      3.5
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "MirrorShard",
+    "group": "Pickups",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_MirrorShard.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\Textures\\T_MirrorShard_BaseColor.png",
+    "triangles": 12500,
+    "dimensions_cm": [
+      10.06,
+      0.7,
+      25.0
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "MirrorPage",
+    "group": "Pickups",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_MirrorPage.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\Textures\\T_MirrorPage_BaseColor.png",
+    "triangles": 12500,
+    "dimensions_cm": [
+      14.11,
+      0.61,
+      20.0
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "GiltTowerKey",
+    "group": "Pickups",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\SM_GiltTowerKey.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\Source\\Pickups\\Textures\\T_GiltTowerKey_BaseColor.png",
+    "triangles": 12500,
+    "dimensions_cm": [
+      7.88,
+      1.67,
+      20.0
+    ],
+    "pivot": "bottom-centre"
+  }
+]

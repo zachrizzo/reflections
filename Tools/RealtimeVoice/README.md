@@ -1,16 +1,13 @@
-# Local NPC voice prototype
+# NPC dialogue relay
 
-This local development prototype connects the microphone to an NPC through the OpenAI Realtime API. It is not a production multiplayer service. The local Python relay listens on `127.0.0.1` only, requires a random per-launch token, and holds the OpenAI key in its own process rather than giving the key to Unreal. It allows one conversation at a time. It does not write audio, transcripts, tokens, or API keys to a log or file.
+The relay behind NPC talk-back. Design, costs, hosting options and status: [ArtDirection/NpcDialogue/README.md](../../ArtDirection/NpcDialogue/README.md).
 
-**Validation status:** the Unreal module builds and the relay passes local mock protocol tests. A Play-in-Editor session attached the component to the player, captured microphone audio and sent it to a local mock, and played a synthetic test tone through an NPC audio component. A separate Play-in-Editor test confirmed that pressing T near an NPC triggered the connection status. The mock-audio test invoked the press/release functions programmatically; an uninterrupted T-held audio conversation and a live OpenAI connection have not yet been verified. An OpenAI API key has not been configured in the inspected environment.
+- Install: `python -m pip install -r requirements.txt` (websockets, httpx).
+- Gemini only: one Gemini API key (`GEMINI_API_KEY`, `keys.json` next to the helper exe, or `~/.gemini/api_key`). Hearing `gemini.py` (gemini-3.5-transcribe-live), replies and moderation `gemini.py` (gemini-3.5-flash-lite), speech `tts.py` (gemini-3.8-flash-tts, the NPC's designed voice), session flow `pipeline.py`. OpenAI (`decider.py`, `openai_key.py`, `REFLECTIONS_NPC_MODE=realtime`) is development only and never used by the shipped path.
+- Local relay for Play in Editor: `.\Start-NpcDialogueRelay.ps1` (`-Foreground` to watch it, `-Stop` to stop). It reads the key itself, listens on 127.0.0.1:8765, and writes a per-launch token to `Saved/NpcDialogue/relay.token` for the editor. Cache, stats and log: `Saved/NpcDialogue/`.
+- Models this key can use: `python relay.py --list-models`.
+- Packaged helper: `.\Build-NpcDialogueHelper.ps1`, then copy `dist\NpcDialogueRelay` to `Content\NpcDialogue\Relay` (never with a keys.json).
+- Tests: `python -m unittest -v test_relay` (mocked, no network); `python live_check.py` (real Gemini API, about 2 cents: normal talk, a spoken line, a cache repeat and the four guardrail lines, with latency and cost per turn); `python run_pie_locked.py test_npc_dialogue_pie.py` (PIE, through the editor MCP, under the PIE lock).
+- Hosted relay (not deployed; needs approval): `hosted_relay.py`, `Dockerfile`, `fly.toml`.
 
-The protocol follows OpenAI's [Realtime conversation guide](https://developers.openai.com/api/docs/guides/realtime-conversations) and [WebSocket authentication guidance](https://developers.openai.com/api/docs/guides/voice-websockets). Speech is transmitted to OpenAI while talking; API usage is billable according to [current pricing](https://developers.openai.com/api/docs/pricing). The selected model defaults to `gpt-realtime-2.1`; set `REFLECTIONS_VOICE_MODEL` to an accessible Realtime model if needed.
-
-1. Install Python with `websockets` 15 or 16 (`python -m pip install "websockets>=15,<17"`).
-2. Close the existing Unreal Editor, then run `Tools/RealtimeVoice/Start-VoiceDevelopment.ps1` in PowerShell. The script asks for an OpenAI API key without echoing it and launches a relay and a fresh editor. It removes the key from the environment before launching Unreal. It does not save the key. The key must have access and billing configured for the chosen model.
-3. In Play, approach a character tagged `NPC_Reactive` within 400 cm and hold **T**. The on-screen status shows connection, listening, and response. Release T to send the audio and hear the answer. Let the response finish before speaking again; interruption is not implemented. Microphone permission and a working input/output device are required.
-4. Close Unreal to stop the relay. Never package this script, its local token, or an API key into a shipping client; a real multiplayer deployment needs a separately authenticated backend, TLS, user controls, and usage limits.
-
-The relay defaults to 120 seconds per utterance, adjustable with `REFLECTIONS_VOICE_TURN_SECONDS`, and 3600 seconds per session, adjustable downward with `REFLECTIONS_VOICE_SESSION_SECONDS`. The Realtime API limits a session to 60 minutes. The NPC name and current reaction state are supplied as initial context; the existing world does not yet provide a canonical persona, faction or live conversation memory. Mood is captured when the connection begins and is not yet refreshed mid-conversation. No game actions are executed by the model.
-
-Run local protocol tests with `python -m unittest -v test_relay` in this folder. They use a local mock server and do not contact OpenAI. Successful mock tests do not establish that a real API key, microphone, audio device, NPC targeting, or cloud session works.
+Never package this folder, a token or a key with the game.

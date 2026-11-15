@@ -1,0 +1,217 @@
+{
+  "summary": {
+    "files": 5,
+    "mesh_objects": 5,
+    "meshes_with_uvs": 5,
+    "meshes_with_materials": 5,
+    "identity_transform_violations": 0,
+    "violations": 0,
+    "note": "Semantic +X facing requires visual verification in Unreal."
+  },
+  "assets": [
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Giltside\\City\\SM_Giltside_FacadeCorner.fbx",
+      "object": "SM_Giltside_FacadeCorner",
+      "mesh": "SM_Giltside_FacadeCorner_Mesh",
+      "vertices": 64,
+      "polygons": 48,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Giltside_Facade_Wall",
+        "M_Giltside_Facade_Trim",
+        "M_Giltside_Facade_Glass"
+      ],
+      "used_material_indices": [
+        0,
+        1,
+        2
+      ],
+      "material_indices_valid": true,
+      "textures": [],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Giltside\\City\\SM_Giltside_FacadeCornice.fbx",
+      "object": "SM_Giltside_FacadeCornice",
+      "mesh": "SM_Giltside_FacadeCornice_Mesh",
+      "vertices": 64,
+      "polygons": 48,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Giltside_Facade_Wall",
+        "M_Giltside_Facade_Trim"
+      ],
+      "used_material_indices": [
+        0,
+        1
+      ],
+      "material_indices_valid": true,
+      "textures": [],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Giltside\\City\\SM_Giltside_FacadeGround.fbx",
+      "object": "SM_Giltside_FacadeGround",
+      "mesh": "SM_Giltside_FacadeGround_Mesh",
+      "vertices": 72,
+      "polygons": 54,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Giltside_Facade_Wall",
+        "M_Giltside_Facade_Trim",
+        "M_Giltside_Facade_Accent"
+      ],
+      "used_material_indices": [
+        0,
+        1,
+        2
+      ],
+      "material_indices_valid": true,
+      "textures": [],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Giltside\\City\\SM_Giltside_FacadeUpper.fbx",
+      "object": "SM_Giltside_FacadeUpper",
+      "mesh": "SM_Giltside_FacadeUpper_Mesh",
+      "vertices": 120,
+      "polygons": 90,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Giltside_Facade_Wall",
+        "M_Giltside_Facade_Trim",
+        "M_Giltside_Facade_Glass"
+      ],
+      "used_material_indices": [
+        0,
+        1,
+        2
+      ],
+      "material_indices_valid": true,
+      "textures": [],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    },
+    {
+      "file": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Giltside\\City\\SM_Giltside_LanternPost.fbx",
+      "object": "SM_Giltside_LanternPost",
+      "mesh": "SM_Giltside_LanternPost_Mesh",
+      "vertices": 1992,
+      "polygons": 3999,
+      "uv_layers": [
+        "UVMap"
+      ],
+      "active_render_uv": "UVMap",
+      "materials": [
+        "M_Giltside_CityLamp"
+      ],
+      "used_material_indices": [
+        0
+      ],
+      "material_indices_valid": true,
+      "textures": [
+        {
+          "image": "Giltside_LanternPost_Reference.png",
+          "source": "FILE",
+          "path": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Giltside\\City\\SM_Giltside_LanternPost.fbm\\T_Giltside_LanternPost_BaseColor.png",
+          "packed": false,
+          "exists": true,
+          "resolved": true
+        }
+      ],
+      "color_attributes": [],
+      "location": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation_degrees": [
+        -9.334666828389418e-06,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "identity_transform": true
+    }
+  ],
+  "violations": []
+}

@@ -1,20 +1,95 @@
 #include "Hero/ReflectionsHeroClothTools.h"
 
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 
 #if WITH_EDITOR
 #include "ClothingAsset.h"
 #include "ClothingAssetFactory.h"
-#include "Engine/SkeletalMesh.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 #include "Rendering/SkeletalMeshLODModel.h"
 #include "Rendering/SkeletalMeshModel.h"
 #include "SkinnedAssetCompiler.h"
 #endif
 
+#if WITH_EDITOR
+namespace
+{
+	struct FCoatClothProfile
+	{
+		// The original tail profile: 48 cm * SmoothStep(0.12, 1, depth), no backstop maps touched.
+		bool bLegacyTailProfile = true;
+		float PinnedDepth = 0.12f;
+		float MaxDistanceAtHem = 48.0f;
+		float GradientExponent = 1.0f;
+		float BackstopDistance = 0.0f;
+		float BackstopRadius = 0.0f;
+	};
+
+	float ProfileMaxDistance(const FCoatClothProfile& Profile, float Depth)
+	{
+		if (Profile.bLegacyTailProfile)
+		{
+			return Profile.MaxDistanceAtHem * FMath::SmoothStep(Profile.PinnedDepth, 1.0f, Depth);
+		}
+		if (Depth <= Profile.PinnedDepth)
+		{
+			return 0.0f;
+		}
+		// Continuous from zero at the pinned band to the full distance at the hem: no hard pinned/free edge.
+		const float Span = FMath::Max(1.0f - Profile.PinnedDepth, KINDA_SMALL_NUMBER);
+		const float T = FMath::Clamp((Depth - Profile.PinnedDepth) / Span, 0.0f, 1.0f);
+		return Profile.MaxDistanceAtHem * FMath::Pow(T, FMath::Max(Profile.GradientExponent, 0.1f));
+	}
+
+	FPointWeightMap& ReplaceWeightMap(FClothLODDataCommon& Lod, EWeightMapTargetCommon Target, const TCHAR* Name, int32 NumPoints)
+	{
+		Lod.PointWeightMaps.RemoveAll([Target](const FPointWeightMap& Map)
+		{
+			return Map.CurrentTarget == static_cast<uint8>(Target);
+		});
+		FPointWeightMap& Map = Lod.PointWeightMaps.Emplace_GetRef(NumPoints);
+		Map.Name = FName(Name);
+		Map.CurrentTarget = static_cast<uint8>(Target);
+		Map.bEnabled = true;
+		return Map;
+	}
+
+	bool BuildCoatCloth(USkeletalMesh* TailMesh, UPhysicsAsset* CollisionAsset, const FCoatClothProfile& Profile);
+}
+#endif
+
 bool UReflectionsHeroClothTools::BuildCoatTailSimulation(USkeletalMesh* TailMesh, UPhysicsAsset* CollisionAsset)
 {
 #if WITH_EDITOR
+	return BuildCoatCloth(TailMesh, CollisionAsset, FCoatClothProfile());
+#else
+	return false;
+#endif
+}
+
+bool UReflectionsHeroClothTools::BuildCoatClothProfile(USkeletalMesh* CoatMesh, UPhysicsAsset* CollisionAsset,
+	float PinnedDepth, float MaxDistanceAtHem, float GradientExponent, float BackstopDistance, float BackstopRadius)
+{
+#if WITH_EDITOR
+	FCoatClothProfile Profile;
+	Profile.bLegacyTailProfile = false;
+	Profile.PinnedDepth = FMath::Clamp(PinnedDepth, 0.0f, 0.95f);
+	Profile.MaxDistanceAtHem = FMath::Max(MaxDistanceAtHem, 0.0f);
+	Profile.GradientExponent = GradientExponent;
+	Profile.BackstopDistance = BackstopDistance;
+	Profile.BackstopRadius = FMath::Max(BackstopRadius, 0.0f);
+	return BuildCoatCloth(CoatMesh, CollisionAsset, Profile);
+#else
+	return false;
+#endif
+}
+
+#if WITH_EDITOR
+namespace
+{
+bool BuildCoatCloth(USkeletalMesh* TailMesh, UPhysicsAsset* CollisionAsset, const FCoatClothProfile& Profile)
+{
 	if (!TailMesh || !CollisionAsset)
 	{
 		return false;
@@ -77,18 +152,45 @@ bool UReflectionsHeroClothTools::BuildCoatTailSimulation(USkeletalMesh* TailMesh
 		return false;
 	}
 
-	Lod.PointWeightMaps.RemoveAll([](const FPointWeightMap& Map)
-	{
-		return Map.CurrentTarget == static_cast<uint8>(EWeightMapTargetCommon::MaxDistance);
-	});
-	FPointWeightMap& Movement = Lod.PointWeightMaps.Emplace_GetRef(Positions.Num());
-	Movement.Name = FName(TEXT("Pinned waist to free hem"));
-	Movement.CurrentTarget = static_cast<uint8>(EWeightMapTargetCommon::MaxDistance);
-	Movement.bEnabled = true;
+	FPointWeightMap& Movement = ReplaceWeightMap(Lod, EWeightMapTargetCommon::MaxDistance,
+		Profile.bLegacyTailProfile ? TEXT("Pinned waist to free hem") : TEXT("Collar to hem gradient"), Positions.Num());
 	for (int32 Index = 0; Index < Positions.Num(); ++Index)
 	{
 		const float Depth = (Top - Positions[Index].Z) / (Top - Bottom);
-		Movement.Values[Index] = 48.0f * FMath::SmoothStep(0.12f, 1.0f, Depth);
+		Movement.Values[Index] = ProfileMaxDistance(Profile, Depth);
+	}
+	if (!Profile.bLegacyTailProfile)
+	{
+		// Non-legacy Chaos backstop: each particle may move at most BackstopDistance inward (against the
+		// animated normal) from its skinned position. A zero radius removes the backstop entirely.
+		if (Profile.BackstopRadius > 0.0f)
+		{
+			// Fill each map before adding the next: ReplaceWeightMap may reallocate PointWeightMaps.
+			{
+				FPointWeightMap& Distance = ReplaceWeightMap(Lod, EWeightMapTargetCommon::BackstopDistance,
+					TEXT("Backstop distance"), Positions.Num());
+				for (float& Value : Distance.Values)
+				{
+					Value = Profile.BackstopDistance;
+				}
+			}
+			{
+				FPointWeightMap& Radius = ReplaceWeightMap(Lod, EWeightMapTargetCommon::BackstopRadius,
+					TEXT("Backstop radius"), Positions.Num());
+				for (float& Value : Radius.Values)
+				{
+					Value = Profile.BackstopRadius;
+				}
+			}
+		}
+		else
+		{
+			Lod.PointWeightMaps.RemoveAll([](const FPointWeightMap& Map)
+			{
+				return Map.CurrentTarget == static_cast<uint8>(EWeightMapTargetCommon::BackstopDistance)
+					|| Map.CurrentTarget == static_cast<uint8>(EWeightMapTargetCommon::BackstopRadius);
+			});
+		}
 	}
 	Lod.bSmoothTransition = true;
 	if (bNewCloth)
@@ -122,10 +224,9 @@ bool UReflectionsHeroClothTools::BuildCoatTailSimulation(USkeletalMesh* TailMesh
 	UserSection.ClothingData = Section.ClothingData;
 	TailMesh->MarkPackageDirty();
 	return true;
-#else
-	return false;
-#endif
 }
+}
+#endif
 
 FString UReflectionsHeroClothTools::InspectCoatTailSimulation(USkeletalMeshComponent* TailComponent)
 {

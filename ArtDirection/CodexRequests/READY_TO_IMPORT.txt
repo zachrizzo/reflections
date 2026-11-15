@@ -1,0 +1,11 @@
+Mock city batch ready for Unreal import (2026-11-14 17:47 MST)
+
+15 static-mesh FBXs are ready under City2026_11_14/Source:
+- 12 facade modules: Ground, Upper, Corner, Cornice for Pewterside, Giltside, and Frostside
+- 3 lamps: Pewterside GasLamp, Giltside LanternPost, Frostside BrazierStand
+
+All source FBXs passed the Blender channel audit: material slots, UVs, and identity transforms present; 0 violations.
+Import target: /Game/LanthorneAssets/<Side>/City/
+Import script: ArtDirection/CodexRequests/import_city_to_unreal.py
+
+Do not start the commandlet while UnrealEditor.exe or an active C++ compile (cl/link/MSBuild/UnrealBuildTool) is present.

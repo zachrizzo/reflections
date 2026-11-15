@@ -1,5 +1,11 @@
 # World jump and tower hunt: how to plug in the real Londons
 
+> **Player-facing names (submission rename):** the three sides are **Pewterside** (Gray), **Giltside** (Red) and
+> **Frostside** (White). Coins are **mirror shards**, the book is **the mirror** with **mirror pages**, the Red tower
+> is the **Gilt Tower** (key id `GiltTowerKey`), a jump is **stepping through**, and the villain is **the Tarnish**.
+> This README and the code still use Gray / Red / White and London internally (`EReflectionsWorld::Gray`, the test
+> level names); only the on-screen text changed. The names live in `DA_WorldJumpConfig` > Worlds > Display Name.
+
 This covers the jump between Gray, Red and White London, the coins, the book pages, the Red tower key and its
 sealed door. All the code is in `Source/reflections/Worlds/`. All the assets are in `/Game/Worlds/`.
 
@@ -14,7 +20,7 @@ lands on whatever sits at that same spot in Red. That spot is how the win path w
 
 - **Gray to Red:** Gray's stairs climb to a high spot. Red needs something to stand on at that height and spot,
   such as a rooftop. If nothing is there, the jump is refused. The hero is never dropped into the void.
-- **Red's tower:** the door is sealed. Its key (`RedTowerKey`) is somewhere else in Red.
+- **Red's tower:** the door is sealed. Its key (`GiltTowerKey`) is somewhere else in Red.
 - **White's tower:** it is locked from the ground, so the only way in is to stand inside Red's tower and jump up.
   White's tower interior must sit where Red's tower interior is, at the same floor height. If something solid is
   there, the landing spot moves up to 1.5 m clear of it.
@@ -132,11 +138,31 @@ All of these are in Place Actors under "Reflections":
 
 - **Reflections World Coin**: set *Coin World*. Walk over it to pick it up.
 - **Reflections Book Page**: set a unique *Page Id* (for example `GrayTowerPage`, `RedTowerPage`,
-  `WhiteTowerPage`). When the book has *Pages For Book* distinct pages (3), it fires **OnBookComplete**, a
+  `WhiteTowerPage`). Leave *Page Title* empty. The player then sees "A page from …", built from the
+  **Page Source** of the side the page stands in (`DA_WorldJumpConfig` > Worlds: "the Gilt Tower", "the Frost
+  Tower", "Pewterside's high spot"). When the book has *Pages For Book* distinct pages (3), it fires **OnBookComplete**, a
   "The book is whole" banner comes up, and `IsBookComplete()` returns true.
-- **Reflections Key**: *Key Id* defaults to `RedTowerKey`.
-- **Reflections Sealed Door**: *Required Key* defaults to `RedTowerKey`. Without the key it blocks the way and
+- **Reflections Key**: *Key Id* defaults to `GiltTowerKey`.
+- **Reflections Sealed Door**: *Required Key* defaults to `GiltTowerKey`. Without the key it blocks the way and
   shows the locked message. With the key it slides up and stays open.
+
+### What the pickups look like
+
+The meshes come from `DA_WorldJumpConfig`, not from the actors, so placed pickups and enemy drops always match:
+
+- **Worlds > Coin Look**, one per side, is the coin (mirror shard) pickup.
+- **Pickups > Page Look** and **Pickups > Key Look** are the page and key.
+
+Each look has a *Mesh*, a *Display Size* (cm) and a *Rotation*:
+
+- **Display Size** scales the mesh so its longest side is that many centimetres, because real-scale props are too
+  small to read as pickups. 0 keeps the mesh's own size.
+- **Rotation** turns the mesh under the spin; for example, Roll 90 stands a flat coin on its edge.
+
+The mesh is centred on the spin axis and keeps its own materials. With *Mesh* empty, the gray-box shape is used.
+
+The trigger (a 90 cm sphere) and the bob and spin don't change. Each pickup's glow also flares briefly every
+*Glint Period* (2.6 s); set *Glint Strength* to 0 on the actor to turn this off.
 
 ## For enemy and NPC code
 
@@ -155,6 +181,9 @@ drops its *home* coin. Gameplay code can also call `NotifyDefeated()` on it.
 
 Blueprint events to hook UI, audio or quests into, on the **ReflectionsWorldJumpSubsystem** (game instance):
 `OnWorldChanged(From, To)`, `OnCoinsChanged`, `OnPagesChanged`, `OnBookComplete`, `OnKeyAdded`, `OnMessage`.
+For checkpoints, read `GetAllCoins()`, `GetPages()`, `GetKeys()` and `GetCurrentWorld()`. To load, call
+`RestoreProgress(Coins, Pages, Keys)`, which sets everything without firing pickup events (only
+`OnProgressRestored`), then teleport the pawn. World jump notices the London it's in by itself.
 
 ## Magic
 

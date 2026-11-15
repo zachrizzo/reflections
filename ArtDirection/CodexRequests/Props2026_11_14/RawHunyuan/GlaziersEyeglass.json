@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\References\\GlaziersEyeglass.png",
+  "output": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\RawHunyuan\\GlaziersEyeglass.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 20,
+  "resolution": 256,
+  "seed": 14112026,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 97820,
+  "faces": 195644,
+  "seconds": 28.2,
+  "bounds": [
+    [
+      -0.9983920454978943,
+      -0.5676270723342896,
+      -0.21417856216430664
+    ],
+    [
+      0.9898937344551086,
+      0.5567334294319153,
+      0.20663754642009735
+    ]
+  ]
+}

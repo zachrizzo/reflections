@@ -22,3 +22,9 @@
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Secrets and the built voice helper: never commit API keys or the 29 MB relay exe
+/Content/NpcDialogue/Relay/
+**/keys*.json
+!**/keys.json.example
+*.env

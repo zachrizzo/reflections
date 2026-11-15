@@ -1,4 +1,5 @@
 #include "Hero/ReflectionsSampleSpellDriver.h"
+#include "HAL/IConsoleManager.h"
 #include "Hero/ReflectionsHeroAnimInstance.h"
 #include "Hero/ReflectionsSpellAim.h"
 #include "Hero/ReflectionsSpellCombat.h"
@@ -26,6 +27,8 @@
 namespace
 {
     const TCHAR* CombatFolder = TEXT("/Game/Characters/Hero/Animation/CombatCasts/");
+    TAutoConsoleVariable<int32> CVarAimHoldV1(TEXT("Spell.AimHoldV1"), 0,
+        TEXT("Dev A/B: 1 = aim with the original hold pose (AS_Hero_CombatAimHold_V1) instead of the current one. Read when play starts."));
 
     /**
      * Short Kimodo combat casts (Tools/SpellVFX/author_combat_casts.py). Release seconds are the sampled
@@ -142,11 +145,25 @@ void UReflectionsSampleSpellDriver::BeginPlay()
     Aim->SetSelectedSpell(SelectedSpell);
     LoadCombatClips();
     Mana = MaxMana;
-    SpawnTransform = GetOwner()->GetActorTransform();
+    // A checkpoint set before BeginPlay (game flow restoring a save) wins over the placement transform.
+    if (!bRespawnTransformSet) SpawnTransform = GetOwner()->GetActorTransform();
     if (UReflectionsHealthComponent* Health = GetOwner()->FindComponentByClass<UReflectionsHealthComponent>())
     {
         Health->OnDeath.AddUniqueDynamic(this, &UReflectionsSampleSpellDriver::OnOwnerDied);
+        Health->OnHealthChanged.AddUniqueDynamic(this, &UReflectionsSampleSpellDriver::OnOwnerHealthChanged);
+        LastSeenHealth = Health->Health;
     }
+}
+
+void UReflectionsSampleSpellDriver::OnOwnerHealthChanged(float Health, float MaxHealth, AActor* Source)
+{
+    // Any loss (a hit, a fall, the Tarnish) restarts the out-of-combat timer; heals and loads do not.
+    if (LastSeenHealth >= 0.0f && Health < LastSeenHealth - KINDA_SMALL_NUMBER)
+    {
+        LastDamageTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+        PendingRegen = 0.0f;
+    }
+    LastSeenHealth = Health;
 }
 
 float UReflectionsSampleSpellDriver::GetSpellManaCost(EHeroSpell Spell) const
@@ -229,13 +246,21 @@ void UReflectionsSampleSpellDriver::Respawn()
     {
         Health->ResetHealth();
     }
+    OnRespawned.Broadcast();
+}
+
+void UReflectionsSampleSpellDriver::SetRespawnTransform(const FTransform& Transform)
+{
+    SpawnTransform = Transform;
+    bRespawnTransformSet = true;
 }
 
 void UReflectionsSampleSpellDriver::LoadCombatClips()
 {
     for (const FCombatCast* Entry : {&BoltRight, &BoltLeft, &HeavyPush, &Slam, &Sweep, &HealRaise, &AimHold})
     {
-        const FString Name = FString::Printf(TEXT("AS_Hero_Combat%s"), Entry->Name);
+        FString Name = FString::Printf(TEXT("AS_Hero_Combat%s"), Entry->Name);
+        if (Entry == &AimHold && CVarAimHoldV1.GetValueOnGameThread() != 0) Name += TEXT("_V1");
         if (UAnimSequenceBase* Clip = LoadObject<UAnimSequenceBase>(nullptr, *FString::Printf(TEXT("%s%s.%s"), CombatFolder, *Name, *Name)))
         {
             CombatClips.Add(Entry->Name, Clip);
@@ -281,6 +306,10 @@ void UReflectionsSampleSpellDriver::BindControls()
     UInputAction* PreviousAction = MakeAction(TEXT("IA_SpellPrevious"), true);
     UInputAction* ShiftAction = MakeAction(TEXT("IA_SpellShift"), false);
     UInputAction* PageNextAction = MakeAction(TEXT("IA_SpellPageNext"), true);
+    // Jam build: the GASP sample's IA_NextPawn (N) and IA_NextVisualOverride (F8) cycle the hero into third-party
+    // characters. This higher-priority context claims those keys with a consuming no-op so the sample actions never
+    // fire. IMC_Sandbox maps them on the keyboard only; no gamepad buttons.
+    UInputAction* BlockAction = MakeAction(TEXT("IA_SpellBlockSampleDebug"), true);
     UInputAction* PagePreviousAction = MakeAction(TEXT("IA_SpellPagePrevious"), true);
     UInputAction* SlotActions[4] = {MakeAction(TEXT("IA_SpellSlot1"), true), MakeAction(TEXT("IA_SpellSlot2"), true),
         MakeAction(TEXT("IA_SpellSlot3"), true), MakeAction(TEXT("IA_SpellSlot4"), true)};
@@ -288,6 +317,8 @@ void UReflectionsSampleSpellDriver::BindControls()
     SpellContext->MapKey(CastAction, EKeys::LeftMouseButton);
     SpellContext->MapKey(CastAction, EKeys::Gamepad_RightTrigger);
     SpellContext->MapKey(CastAction, EKeys::Q);
+    SpellContext->MapKey(BlockAction, EKeys::N);
+    SpellContext->MapKey(BlockAction, EKeys::F8);
     SpellContext->MapKey(ShiftAction, EKeys::LeftShift);
     {
         // Tab cycles forward unless Shift is held; Shift+Tab cycles back.
@@ -320,6 +351,7 @@ void UReflectionsSampleSpellDriver::BindControls()
     SpellInput = NewObject<UEnhancedInputComponent>(PC, TEXT("SampleSpellInput"));
     SpellInput->RegisterComponent();
     SpellInput->BindAction(CastAction, ETriggerEvent::Started, this, &UReflectionsSampleSpellDriver::OnCastAction);
+    SpellInput->BindAction(BlockAction, ETriggerEvent::Triggered, this, &UReflectionsSampleSpellDriver::IgnoreInput);
     SpellInput->BindAction(CastAction, ETriggerEvent::Completed, this, &UReflectionsSampleSpellDriver::OnCastReleased);
     SpellInput->BindAction(CastAction, ETriggerEvent::Canceled, this, &UReflectionsSampleSpellDriver::OnCastReleased);
     SpellInput->BindAction(NextAction, ETriggerEvent::Started, this, &UReflectionsSampleSpellDriver::NextSpell);
@@ -410,9 +442,9 @@ bool UReflectionsSampleSpellDriver::CastExternal(const FReflectionsExternalCast&
     }
     FHeroSpellDefinition Definition;
     bool bBoth = false;
-    if (External.Animation)
+    if (UAnimSequenceBase* Clip = External.Animation.Get())
     {
-        Definition.Animation = External.Animation;
+        Definition.Animation = Clip;
         Definition.ReleaseTime = External.ReleaseTime;
         Definition.ProjectileSocket = External.Socket;
         bBoth = External.Socket.IsNone();
@@ -709,6 +741,26 @@ void UReflectionsSampleSpellDriver::TickComponent(float DeltaTime, ELevelTick Ti
         {
             if (World->GetTimeSeconds() >= RespawnAt) Respawn();
             return;
+        }
+        // Health comes back slowly out of combat, in half-point steps so listeners aren't told every frame.
+        if (HealthRegenPerSecond > 0.0f && World->GetTimeSeconds() - LastDamageTime >= HealthRegenDelay)
+        {
+            if (UReflectionsHealthComponent* Health = GetOwner()->FindComponentByClass<UReflectionsHealthComponent>())
+            {
+                if (Health->Health > 0.0f && Health->Health < Health->MaxHealth)
+                {
+                    PendingRegen += HealthRegenPerSecond * DeltaTime;
+                    if (PendingRegen >= 0.5f)
+                    {
+                        Health->Heal(PendingRegen, GetOwner());
+                        PendingRegen = 0.0f;
+                    }
+                }
+                else
+                {
+                    PendingRegen = 0.0f;
+                }
+            }
         }
         if (World->GetTimeSeconds() - LastCastTime >= ManaRegenDelay && Mana < MaxMana)
         {

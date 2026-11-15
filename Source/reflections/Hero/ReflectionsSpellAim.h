@@ -79,6 +79,11 @@ public:
     UPROPERTY(EditAnywhere, Category="Aim|Assist")
     float AssistTurnRate = 5.0f;
 
+    /** Civilians (tag Friendly) are only picked when the reticle is right on them (this half-angle, not the assist
+     *  cone) and never pull the camera: hitting one stays the player's choice, which is what drives reputation. */
+    UPROPERTY(EditAnywhere, Category="Aim|Assist", meta=(Units="deg"))
+    float FriendlyConeDegrees = 1.5f;
+
     UFUNCTION(BlueprintPure, Category="Aim")
     bool IsAiming() const { return bAiming; }
 

@@ -1,6 +1,6 @@
 """Builds the parametric spell Niagara systems (run inside the Unreal 5.9 editor via its MCP Python tool).
 
-ARGS (prepended by the runner) selects systems: projectile, impact, heal, ward, or all.
+ARGS (prepended by the runner) selects systems: projectile, impact, heal, ward, tarnish_bolt, tarnish_burst, shock, or all.
 Every look is driven by User.* parameters that C++ (UReflectionsSpellVfxSubsystem) sets per element,
 so six elements share three attack systems instead of eighteen one-off assets.
 
@@ -279,15 +279,18 @@ async def build_projectile():
         ('Particles.Position', 'pos', 'float3(-Particles.Age * 320.0f, cos(Particles.Phase + Particles.Age * 18.0f) * Particles.Rad * (1.0f - %s * 0.5f), sin(Particles.Phase + Particles.Age * 18.0f) * Particles.Rad * (1.0f - %s * 0.5f))' % (NA, NA)),
         ('Particles.Color', 'color', 'float4(User.Color2.rgb * 6.0f * (1.0f - %s), 1.0f)' % NA)])
     await b.sprite(e, 'M_Spell_Glow')
-    # One dynamic light riding the projectile.
+    # The dynamic light riding the projectile: short-lived light particles respawned continuously, each fading
+    # out over its 0.1 s life (about four overlap, summing to a steady glow). When the projectile dies the system
+    # is deactivated, spawning stops and the light is gone within 0.1 s. A single long-lived light particle used
+    # to outlive Deactivate() and left a coloured light on the ground at every impact.
     e = await b.emitter('Light', local=True)
-    await b.burst(e, '1')
+    await b.rate(e, '40.0f')
     await b.setp(e, 'ParticleSpawnScript', [
-        ('Particles.Lifetime', 'float', '1000.0f'),
+        ('Particles.Lifetime', 'float', '0.1f'),
         ('Particles.Position', 'pos', 'float3(0.0f, 0.0f, 0.0f)'),
         ('Particles.LightRadius', 'float', '340.0f * User.Scale')])
     await b.setp(e, 'ParticleUpdateScript', [
-        ('Particles.Color', 'color', 'float4(User.Color.rgb * (20.0f + 6.0f * sin(Engine.Time * 37.0f)), 1.0f)')])
+        ('Particles.Color', 'color', 'float4(User.Color.rgb * (10.0f + 3.0f * sin(Engine.Time * 37.0f)) * (1.0f - %s), 1.0f)' % NA)])
     await b.light(e)
     return b
 
@@ -599,6 +602,283 @@ async def build_ward():
     return b
 
 
+# ----------------------------------------------------------------------------------------------- tarnish (enemy magic)
+# Tarnished NPCs' magic (UReflectionsTarnishCasterComponent): a black-violet core inside a violet rim, sickly silver
+# sparks and a smoke wake that darkens the scene. User.Gather > 0 turns the same system into the wind-up at the hand
+# (motes and smoke drawn inward, no wake); User.Wisp > 0 makes the slow homing orb with silver motes circling it.
+async def build_tarnish_bolt():
+    b = await new_system('NS_Tarnish_Bolt', [
+        ('Color', 'color', (0.30, 0.03, 0.55, 1.0)), ('Color2', 'color', (0.66, 0.70, 0.74, 1.0)),
+        ('SmokeColor', 'color', (0.025, 0.01, 0.04, 0.82)), ('Scale', 'float', 1.0), ('Gather', 'float', 0.0),
+        ('Wisp', 'float', 0.0)])
+    flying = '(1.0f - saturate(User.Gather))'
+    # Black core: a dark, dense puff that reads as a hole in the light.
+    e = await b.emitter('DarkCore', local=True)
+    await b.rate(e, '34.0f')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', '0.2f'),
+        ('Particles.Position', 'pos', 'float3(0.0f, 0.0f, 0.0f)'),
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * 30.0f * User.Scale * (1.0f + 0.5f * User.Wisp) * ' + rl(0.85, 1.15)),
+        ('Particles.SpriteRotation', 'float', 'rand(360.0f)')])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(0.006f, 0.002f, 0.012f, 0.95f * (1.0f - %s * %s))' % (NA, NA))])
+    await b.sprite(e, 'M_Spell_SoftPuff', sort='ViewDepth')
+    # Violet rim around the core.
+    e = await b.emitter('Rim', local=True)
+    await b.rate(e, '26.0f')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', '0.22f'),
+        ('Particles.Position', 'pos', 'float3(0.0f, 0.0f, 0.0f)'),
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * 74.0f * User.Scale * (1.0f + 0.4f * User.Wisp) * ' + rl(0.85, 1.15))])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color.rgb * 2.4f * (1.0f - %s), 1.0f)' % NA)])
+    await b.sprite(e, 'M_Spell_Glow')
+    # Smoke wake: dark puffs left behind in world space (none while gathering at the hand).
+    e = await b.emitter('Smoke')
+    await b.rate(e, '(70.0f + 30.0f * User.Wisp) * %s' % flying)
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.5, 0.95)),
+        ('Particles.Position', 'pos', 'Engine.Owner.Position + %s * 6.0f * User.Scale' % RU),
+        ('Particles.Velocity', 'vec3', '%s * %s' % (RU, rl(10, 45))),
+        ('Particles.BaseSize', 'float', rl(12, 22) + ' * User.Scale'),
+        ('Particles.SpriteRotation', 'float', 'rand(360.0f)')])
+    await b.drag(e, 2.0)
+    await b.curl(e, '140.0f')
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * Particles.BaseSize * (1.0f + %s * 2.2f)' % NA),
+        ('Particles.Color', 'color', 'float4(User.SmokeColor.rgb, User.SmokeColor.a * (1.0f - %s) * saturate(Particles.Age * 8.0f))' % NA)])
+    await b.solve(e)
+    await b.sprite(e, 'M_Spell_SoftPuff', sort='ViewDepth')
+    # Thin violet ribbon through the smoke.
+    e = await b.emitter('Trail', template='LocationBasedRibbon')
+    await b.rate(e, '140.0f * %s' % flying)
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', '0.28f'),
+        ('Particles.Position', 'pos', 'Engine.Owner.Position'),
+        ('Particles.Velocity', 'vec3', 'float3(0.0f, 0.0f, 0.0f)'),
+        ('Particles.RibbonWidth', 'float', '8.0f * User.Scale')])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.RibbonWidth', 'float', '8.0f * User.Scale * pow(1.0f - %s, 0.7f)' % NA),
+        ('Particles.Color', 'color', 'float4(User.Color.rgb * 1.8f * pow(1.0f - %s, 1.5f), 1.0f)' % NA)])
+    await b.renderer(e, {'material': {'refPath': MAT + 'M_Spell_Ribbon.M_Spell_Ribbon'}})
+    # Sickly silver sparks that flicker as they fall away.
+    e = await b.emitter('Sparks')
+    await b.rate(e, '(60.0f + 25.0f * User.Wisp) * (1.0f - 0.5f * saturate(User.Gather))')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.25, 0.6)),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Position', 'pos', 'Engine.Owner.Position + %s * 9.0f * User.Scale' % RU),
+        ('Particles.Velocity', 'vec3', '%s * %s * User.Scale + Engine.Owner.Velocity * 0.1f' % (RU, rl(60, 220))),
+        ('Particles.SpriteSize', 'vec2', 'float2(%s, %s) * User.Scale' % (rl(1.2, 2.2), rl(5, 12)))])
+    await b.gravity(e, 'float3(0.0f, 0.0f, -160.0f)')
+    await b.drag(e, 1.5)
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color2.rgb * 5.0f * (0.45f + 0.55f * sin(Particles.Age * 70.0f + Particles.Phase)) * (1.0f - %s), 1.0f)' % NA)])
+    await b.solve(e)
+    await b.sprite(e, 'M_Spell_Glow', alignment='VelocityAligned')
+    # Wind-up: silver motes and dark wisps spiral into the hand.
+    e = await b.emitter('GatherMotes', local=True)
+    await b.rate(e, '75.0f * saturate(User.Gather)')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.35, 0.55)),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Rad', 'float', rl(45, 95) + ' * (0.6f + User.Scale)'),
+        ('Particles.H', 'float', rl(-35, 35)),
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * ' + rl(2.5, 5.0))])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Position', 'pos', 'float3(cos(Particles.Phase + Particles.Age * 9.0f) * Particles.Rad * (1.0f - %s), sin(Particles.Phase + Particles.Age * 9.0f) * Particles.Rad * (1.0f - %s), Particles.H * (1.0f - %s))' % (NA, NA, NA)),
+        ('Particles.Color', 'color', 'float4(lerp(User.Color2.rgb * 4.0f, User.Color.rgb * 5.0f, %s) * saturate(%s * 4.0f), 1.0f)' % (NA, NA))])
+    await b.sprite(e, 'M_Spell_Glow')
+    e = await b.emitter('GatherSmoke', local=True)
+    await b.rate(e, '28.0f * saturate(User.Gather)')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.45, 0.7)),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Rad', 'float', rl(40, 80) + ' * (0.6f + User.Scale)'),
+        ('Particles.H', 'float', rl(-25, 25)),
+        ('Particles.SpriteRotation', 'float', 'rand(360.0f)'),
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * ' + rl(16, 30))])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Position', 'pos', 'float3(cos(Particles.Phase - Particles.Age * 6.0f) * Particles.Rad * (1.0f - %s), sin(Particles.Phase - Particles.Age * 6.0f) * Particles.Rad * (1.0f - %s), Particles.H * (1.0f - %s))' % (NA, NA, NA)),
+        ('Particles.Color', 'color', 'float4(User.SmokeColor.rgb, User.SmokeColor.a * 0.8f * saturate(%s * 3.0f) * (1.0f - %s * %s))' % (NA, NA, NA))])
+    await b.sprite(e, 'M_Spell_SoftPuff', sort='ViewDepth')
+    # Wisp: silver motes circling the orb in a helix behind it (local X = flight direction).
+    e = await b.emitter('WispOrbit', local=True)
+    await b.rate(e, '46.0f * saturate(User.Wisp) * %s' % flying)
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', '0.6f'),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Rad', 'float', rl(20, 34) + ' * User.Scale'),
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * User.Scale * ' + rl(3.0, 6.0))])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Position', 'pos', 'float3(-Particles.Age * 140.0f, cos(Particles.Phase + Particles.Age * 12.0f) * Particles.Rad, sin(Particles.Phase + Particles.Age * 12.0f) * Particles.Rad)'),
+        ('Particles.Color', 'color', 'float4(User.Color2.rgb * 5.0f * (1.0f - %s), 1.0f)' % NA)])
+    await b.sprite(e, 'M_Spell_Glow')
+    # Riding light: short-lived light particles respawned continuously, so it goes out with the projectile. The
+    # caster's own point light carries the wind-up, so this one dims while gathering.
+    e = await b.emitter('Light', local=True)
+    await b.rate(e, '40.0f')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', '0.1f'),
+        ('Particles.Position', 'pos', 'float3(0.0f, 0.0f, 0.0f)'),
+        ('Particles.LightRadius', 'float', '300.0f * User.Scale')])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color.rgb * (7.0f + 2.5f * sin(Engine.Time * 23.0f)) * (1.0f - 0.75f * saturate(User.Gather)) * (1.0f - %s), 1.0f)' % NA)])
+    await b.light(e)
+    return b
+
+
+async def build_tarnish_burst():
+    b = await new_system('NS_Tarnish_Burst', [
+        ('Color', 'color', (0.30, 0.03, 0.55, 1.0)), ('Color2', 'color', (0.66, 0.70, 0.74, 1.0)),
+        ('SmokeColor', 'color', (0.025, 0.01, 0.04, 0.82)), ('Scale', 'float', 1.0), ('Normal', 'vec3', (0.0, 0.0, 1.0)),
+        ('Amount', 'float', 1.0), ('LightScale', 'float', 1.0)])
+    up = 'User.Normal'
+    # A dark sphere that swells and thins: the light is swallowed before it flares.
+    e = await b.emitter('DarkFlash', loop=0.4)
+    await b.burst(e, '1')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', '0.38f'),
+        ('Particles.Position', 'pos', 'Engine.Owner.Position + %s * 12.0f' % up),
+        ('Particles.SpriteRotation', 'float', 'rand(360.0f)')])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * User.Scale * (0.35f + 0.65f * User.Amount) * lerp(50.0f, 230.0f, 1.0f - pow(1.0f - %s, 3.0f))' % NA),
+        ('Particles.Color', 'color', 'float4(0.006f, 0.002f, 0.012f, 0.92f * pow(1.0f - %s, 1.5f))' % NA)])
+    await b.sprite(e, 'M_Spell_SoftPuff', sort='ViewDepth')
+    e = await b.emitter('Flash', loop=0.2)
+    await b.burst(e, '1')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', '0.16f'),
+        ('Particles.Position', 'pos', 'Engine.Owner.Position + %s * 10.0f' % up),
+        ('Particles.SpriteRotation', 'float', 'rand(360.0f)')])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * User.Scale * (0.35f + 0.65f * User.LightScale) * lerp(140.0f, 280.0f, %s)' % NA),
+        ('Particles.Color', 'color', 'float4(User.Color.rgb * 9.0f * pow(1.0f - %s, 2.0f), 1.0f)' % NA)])
+    await b.sprite(e, 'M_Spell_Glow')
+    e = await b.emitter('Shock', loop=0.45)
+    await b.burst(e, '1')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', '0.42f'),
+        ('Particles.Position', 'pos', 'Engine.Owner.Position + %s * 4.0f' % up),
+        ('Particles.SpriteFacing', 'vec3', up),
+        ('Particles.SpriteAlignment', 'vec3', 'normalize(cross(%s, float3(0.31f, 0.71f, 0.63f)))' % up)])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * User.Scale * User.Amount * lerp(40.0f, 380.0f, 1.0f - pow(1.0f - %s, 3.0f))' % NA),
+        ('Particles.Color', 'color', 'float4(User.Color.rgb * 4.0f * pow(1.0f - %s, 1.5f), 1.0f)' % NA)])
+    await b.sprite(e, 'M_Spell_Shock', alignment='CustomAlignment', facing='CustomFacingVector')
+    e = await b.emitter('Sparks', loop=0.2)
+    await b.burst(e, '(int)(55.0f * User.Amount * sqrt(max(User.Scale, 0.3f)))')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.3, 0.85)),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Position', 'pos', 'Engine.Owner.Position + %s * 6.0f' % RU),
+        ('Particles.Velocity', 'vec3', 'normalize(%s + %s * 0.7f) * %s * sqrt(max(User.Scale, 0.3f))' % (RU, up, rl(280, 900))),
+        ('Particles.SpriteSize', 'vec2', 'float2(%s, %s)' % (rl(1.5, 2.6), rl(8, 20)))])
+    await b.gravity(e, 'float3(0.0f, 0.0f, -650.0f)')
+    await b.drag(e, 2.2)
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color2.rgb * 6.0f * (0.45f + 0.55f * sin(Particles.Age * 60.0f + Particles.Phase)) * (1.0f - %s), 1.0f)' % NA)])
+    await b.solve(e)
+    await b.sprite(e, 'M_Spell_Glow', alignment='VelocityAligned')
+    e = await b.emitter('Smoke', loop=0.2)
+    await b.burst(e, '(int)(14.0f * User.Amount * min(User.Scale, 3.0f))')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(1.0, 1.9)),
+        ('Particles.Position', 'pos', 'Engine.Owner.Position + %s * 22.0f * User.Scale + %s * 15.0f' % (RU, up)),
+        ('Particles.Velocity', 'vec3', '(%s * 80.0f + %s * 90.0f + float3(0.0f, 0.0f, 40.0f)) * sqrt(User.Scale)' % (RU, up)),
+        ('Particles.BaseSize', 'float', rl(50, 110) + ' * pow(User.Scale, 0.7f)'),
+        ('Particles.SpriteRotation', 'float', 'rand(360.0f)')])
+    await b.drag(e, 2.4)
+    await b.curl(e, '180.0f')
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * Particles.BaseSize * (1.0f + %s * 1.7f)' % NA),
+        ('Particles.Color', 'color', 'float4(User.SmokeColor.rgb, User.SmokeColor.a * (1.0f - %s) * saturate(Particles.Age * 6.0f))' % NA)])
+    await b.solve(e)
+    await b.sprite(e, 'M_Spell_SoftPuff', sort='ViewDepth')
+    # Violet motes that drift up out of the smoke.
+    e = await b.emitter('Motes', loop=0.2)
+    await b.burst(e, '(int)(26.0f * User.Amount)')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.8, 1.5)),
+        ('Particles.Position', 'pos', 'Engine.Owner.Position + %s * 25.0f * User.Scale' % RU),
+        ('Particles.Velocity', 'vec3', '%s * %s + %s * 40.0f' % (up, rl(60, 180), RU)),
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * ' + rl(2.5, 5.5))])
+    await b.gravity(e, 'float3(0.0f, 0.0f, 60.0f)')
+    await b.drag(e, 1.2)
+    await b.curl(e, '220.0f')
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color.rgb * 4.0f * (1.0f - %s), 1.0f)' % NA)])
+    await b.solve(e)
+    await b.sprite(e, 'M_Spell_Glow')
+    e = await b.emitter('Light', loop=0.3)
+    await b.burst(e, '1')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', '0.26f'),
+        ('Particles.Position', 'pos', 'Engine.Owner.Position + %s * 30.0f' % up),
+        ('Particles.LightRadius', 'float', '420.0f * sqrt(max(User.Scale, 0.3f))')])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color.rgb * 14.0f * User.LightScale * pow(1.0f - %s, 2.0f), 1.0f)' % NA)])
+    await b.light(e)
+    return b
+
+
+# ----------------------------------------------------------------------------------------------- shock (electrified body)
+# Attached at the middle of a body that took an Electrify hit, for the hit's Duration: arcs snapping all over a
+# capsule of User.Height x User.Radius (local space, Z up from the attach point), sparks spitting off it, a cold glow
+# and a flickering light. C++ sizes the capsule from the body's bounds and deactivates it when the shock ends.
+async def build_spell_shock():
+    b = await new_system('NS_Spell_Shock', [
+        ('Color', 'color', (0.42, 0.5, 1.0, 1.0)), ('Color2', 'color', (0.85, 0.9, 1.0, 1.0)), ('Scale', 'float', 1.0),
+        ('Height', 'float', 170.0), ('Radius', 'float', 26.0), ('Intensity', 'float', 1.0)])
+    on_body = ('float3(cos(Particles.Phase) * User.Radius * %s, sin(Particles.Phase) * User.Radius * %s, (rand(1.0f) - 0.5f) * User.Height)'
+               % (rl(0.7, 1.15), rl(0.7, 1.15)))
+    e = await b.emitter('Arcs', local=True)
+    await b.rate(e, '110.0f * User.Intensity')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.04, 0.1)),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Position', 'pos', on_body),
+        ('Particles.Velocity', 'vec3', RU),
+        ('Particles.SpriteSize', 'vec2', 'float2(%s, %s) * User.Scale' % (rl(1.5, 3.2), rl(18, 62)))])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color2.rgb * 16.0f * (1.0f - %s), 1.0f)' % NA)])
+    await b.sprite(e, 'M_Spell_Glow', alignment='VelocityAligned')
+    e = await b.emitter('Sparks')
+    await b.rate(e, '45.0f * User.Intensity')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', rl(0.2, 0.45)),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Position', 'pos', 'Engine.Owner.Position + ' + on_body),
+        ('Particles.Velocity', 'vec3', '%s * %s' % (RU, rl(120, 340))),
+        ('Particles.SpriteSize', 'vec2', 'float2(%s, %s)' % (rl(1.0, 1.8), rl(5, 12)))])
+    await b.gravity(e, 'float3(0.0f, 0.0f, -900.0f)')
+    await b.drag(e, 1.0)
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color2.rgb * 7.0f * (1.0f - %s), 1.0f)' % NA)])
+    await b.solve(e)
+    await b.sprite(e, 'M_Spell_Glow', alignment='VelocityAligned')
+    e = await b.emitter('Glow', local=True)
+    await b.rate(e, '24.0f * User.Intensity')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', '0.12f'),
+        ('Particles.Phase', 'float', 'rand(6.2832f)'),
+        ('Particles.Position', 'pos', 'float3(0.0f, 0.0f, (rand(1.0f) - 0.5f) * User.Height * 0.8f)'),
+        ('Particles.SpriteSize', 'vec2', 'float2(1.0f, 1.0f) * User.Radius * ' + rl(2.0, 3.4))])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color.rgb * 1.4f * (1.0f - %s), 1.0f)' % NA)])
+    await b.sprite(e, 'M_Spell_Glow')
+    e = await b.emitter('Light', local=True)
+    await b.rate(e, '40.0f')
+    await b.setp(e, 'ParticleSpawnScript', [
+        ('Particles.Lifetime', 'float', '0.1f'),
+        ('Particles.Position', 'pos', 'float3(0.0f, 0.0f, 0.0f)'),
+        ('Particles.LightRadius', 'float', '280.0f * User.Scale')])
+    await b.setp(e, 'ParticleUpdateScript', [
+        ('Particles.Color', 'color', 'float4(User.Color.rgb * User.Intensity * (3.0f + 7.0f * saturate(sin(Engine.Time * 53.0f) * sin(Engine.Time * 31.0f) + 0.3f)) * (1.0f - %s), 1.0f)' % NA)])
+    await b.light(e)
+    return b
+
+
 async def finish(b):
     s = b.S
     # GetSystemCompileState can report UpToDate before the VM compile has even started; opening the
@@ -626,7 +906,9 @@ async def finish(b):
 if await call_tool('EditorToolset.EditorAppToolset.IsPIERunning'):
     raise RuntimeError('PIE is running; Niagara assets cannot be edited now.')
 which = ARGS or ['all']
-builders = {'projectile': build_projectile, 'impact': build_impact, 'heal': build_heal, 'ward': build_ward}
+builders = {'projectile': build_projectile, 'impact': build_impact, 'heal': build_heal, 'ward': build_ward,
+            'tarnish_bolt': build_tarnish_bolt, 'tarnish_burst': build_tarnish_burst,
+            'shock': build_spell_shock}
 results = []
 for key, fn in builders.items():
     if 'all' in which or key in which:

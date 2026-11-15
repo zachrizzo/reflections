@@ -80,7 +80,7 @@ void UReflectionsWorldHudWidget::NativeOnInitialized()
     CoinRow = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
     AddRow(CoinRow, 2.0f);
     UTextBlock* CoinsTitle = MakeText(13, FLinearColor(0.85f, 0.82f, 0.74f));
-    CoinsTitle->SetText(LOCTEXT("CoinsTitle", "Coins"));
+    CoinsTitle->SetText(LOCTEXT("CoinsTitle", "Mirror shards"));
     CoinRow->AddChildToHorizontalBox(CoinsTitle)->SetPadding(FMargin(0.0f, 0.0f, 10.0f, 0.0f));
 
     PagesLabel = MakeText(13, FLinearColor(0.95f, 0.88f, 0.70f));
@@ -153,8 +153,8 @@ void UReflectionsWorldHudWidget::SetState(const FReflectionsWorldHudState& State
     }
 
     PagesLabel->SetText(State.bBookComplete
-        ? FText::Format(LOCTEXT("PagesDone", "Book pages {0} / {1}  -  the spell is ready"), State.Pages, State.PagesForBook)
-        : FText::Format(LOCTEXT("Pages", "Book pages {0} / {1}"), State.Pages, State.PagesForBook));
+        ? FText::Format(LOCTEXT("PagesDone", "Mirror pages {0} / {1}  -  the spell is ready"), State.Pages, State.PagesForBook)
+        : FText::Format(LOCTEXT("Pages", "Mirror pages {0} / {1}"), State.Pages, State.PagesForBook));
 
     if (State.Keys.Num() > 0)
     {
@@ -174,14 +174,14 @@ void UReflectionsWorldHudWidget::SetState(const FReflectionsWorldHudState& State
     if (State.bHasMagic)
     {
         MagicLabel->SetText(FText::Format(State.bMagicDrains
-                ? LOCTEXT("Magic", "Magic {0} / {1}  -  a crossing takes {2}")
-                : LOCTEXT("MagicNoDrain", "Magic {0} / {1}  -  a crossing takes {2} (not drained yet)"),
+                ? LOCTEXT("Magic", "Magic {0} / {1}  -  stepping through takes {2}")
+                : LOCTEXT("MagicNoDrain", "Magic {0} / {1}  -  stepping through takes {2} (not drained yet)"),
             FText::AsNumber(FMath::FloorToInt(State.Magic)), FText::AsNumber(FMath::RoundToInt(State.MaxMagic)),
             FText::AsNumber(FMath::RoundToInt(State.MagicCost))));
     }
     else
     {
-        MagicLabel->SetText(LOCTEXT("NoMagicSource", "Magic: no magic bar on this hero (crossings are free)"));
+        MagicLabel->SetText(LOCTEXT("NoMagicSource", "Magic: no magic bar on this hero (stepping through is free)"));
     }
 
     auto SetJump = [](UTextBlock* Label, const FReflectionsWorldHudJump& Jump, const FText& Verb)
@@ -195,7 +195,7 @@ void UReflectionsWorldHudWidget::SetState(const FReflectionsWorldHudState& State
         FText Need;
         if (!Jump.bHasCoin)
         {
-            Need = FText::Format(LOCTEXT("NeedsCoin", "  (needs a {0} coin)"), Jump.CoinName);
+            Need = FText::Format(LOCTEXT("NeedsCoin", "  (needs a {0} shard)"), Jump.CoinName);
         }
         else if (!Jump.bHasMagic)
         {
@@ -204,8 +204,8 @@ void UReflectionsWorldHudWidget::SetState(const FReflectionsWorldHudState& State
         Label->SetText(FText::Format(LOCTEXT("JumpPrompt", "Hold [{0}]  {1} {2}{3}"), Jump.Keys, Verb, Jump.Destination, Need));
         Label->SetColorAndOpacity(FSlateColor(Jump.bHasCoin && Jump.bHasMagic ? Jump.Color : Dim(Jump.Color)));
     };
-    SetJump(UpLabel, State.Up, LOCTEXT("RiseTo", "rise to"));
-    SetJump(DownLabel, State.Down, LOCTEXT("SinkTo", "sink to"));
+    SetJump(UpLabel, State.Up, LOCTEXT("RiseTo", "step up into"));
+    SetJump(DownLabel, State.Down, LOCTEXT("SinkTo", "step down into"));
 }
 
 void UReflectionsWorldHudWidget::ShowBanner(const FText& Title, const FLinearColor& Color, const FText& Subtitle)

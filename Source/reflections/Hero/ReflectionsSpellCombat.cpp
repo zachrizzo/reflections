@@ -2,13 +2,20 @@
 #include "Hero/ReflectionsSpellCatalog.h"
 #include "Hero/ReflectionsSpellEventSubsystem.h"
 
+#include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/OverlapResult.h"
+#include "Engine/World.h"
+#include "HAL/IConsoleManager.h"
+#include "GameFramework/DamageType.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/CombatDamageable.h"
+#include "NPC/ReflectionsNpcReactionComponent.h"
+#include "NPC/ReflectionsNpcSubsystem.h"
+#include "SpellVFX/ReflectionsSpellVfxSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInterface.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
@@ -16,11 +23,63 @@
 #include "TimerManager.h"
 #include "Sound/SoundBase.h"
 
+static TAutoConsoleVariable<int32> CVarSpellLogHits(TEXT("Spell.LogHits"), 0,
+    TEXT("1: log every spell projectile hit and every target a spell skips (actor, component, damage). Debug only."));
+
 namespace
 {
-    void AffectTarget(AActor* Target, AActor* Caster, EHeroSpell Spell, float Damage, float Push, const FVector& Origin, const FHitResult* DirectHit = nullptr)
+    /** The reaction a hit asks of the body (FReflectionsSpellHitData::Reaction and friends). */
+    struct FSpellReaction
+    {
+        EReflectionsSpellReaction Type = EReflectionsSpellReaction::Hit;
+        float Magnitude = 0.0f;
+        float Duration = 0.0f;
+    };
+
+    /** Element-driven default: fire burns (or blasts), lightning electrifies, water pushes, earth knocks down. */
+    FSpellReaction ReactionFor(EHeroSpell Spell, float Damage, float Push)
+    {
+        FSpellReaction R;
+        R.Magnitude = FMath::Clamp(Push / 900.0f + Damage / 40.0f, 0.1f, 1.0f);
+        if (!ReflectionsSpellCatalog::IsValid(Spell)) return R;
+        const FReflectionsSpellSpec& Spec = ReflectionsSpellCatalog::Get(Spell);
+        switch (Spec.Element)
+        {
+        case EReflectionsSpellElement::Fire:
+            if (Spec.Radius > 0.0f) R.Type = EReflectionsSpellReaction::Explosion;
+            else { R.Type = EReflectionsSpellReaction::Burn; R.Duration = 2.5f; }
+            break;
+        case EReflectionsSpellElement::Lightning:
+            R.Type = EReflectionsSpellReaction::Electrify;
+            R.Duration = Spec.Radius > 0.0f ? 1.0f : 1.5f;
+            R.Magnitude = FMath::Max(R.Magnitude, 0.6f);
+            break;
+        case EReflectionsSpellElement::Water: R.Type = EReflectionsSpellReaction::Push; break;
+        case EReflectionsSpellElement::Ice: R.Type = EReflectionsSpellReaction::Freeze; R.Duration = 2.5f; break;
+        case EReflectionsSpellElement::Earth: R.Type = EReflectionsSpellReaction::Knockdown; break;
+        case EReflectionsSpellElement::Air: R.Type = EReflectionsSpellReaction::Lift; break;
+        case EReflectionsSpellElement::Arcane:
+            if (Spell == EHeroSpell::ForcePush) R.Type = EReflectionsSpellReaction::Push;
+            break;
+        default: break;
+        }
+        return R;
+    }
+
+    void AffectTarget(AActor* Target, AActor* Caster, EHeroSpell Spell, float Damage, float Push, const FVector& Origin,
+        const FHitResult* DirectHit = nullptr, const FSpellReaction* Reaction = nullptr)
     {
         if (!Target || Target == Caster) return;
+        // NPC casters (enemy soldiers) spare their own side; the player's spells can still hit anyone.
+        const UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(Target);
+        if (Npcs && !Npcs->CanBeHarmedBy(Target, Caster))
+        {
+            UE_CLOG(CVarSpellLogHits.GetValueOnGameThread() != 0, LogTemp, Display, TEXT("Spell: %s spared %s (ally of the caster)"),
+                *GetNameSafe(Caster), *GetNameSafe(Target));
+            return;
+        }
+        const FSpellReaction React = Reaction ? *Reaction : ReactionFor(Spell, Damage, Push);
+        const bool bBlast = React.Type == EReflectionsSpellReaction::Explosion;
         const FVector Direction = (Target->GetActorLocation() - Origin).GetSafeNormal();
         UPrimitiveComponent* Primitive = DirectHit ? DirectHit->GetComponent() : Cast<UPrimitiveComponent>(Target->GetRootComponent());
         const FVector Point = DirectHit ? FVector(DirectHit->ImpactPoint) : Target->GetActorLocation();
@@ -35,19 +94,26 @@ namespace
                 UGameplayStatics::ApplyPointDamage(Target, Damage, Direction, Hit, Pawn ? Pawn->GetController() : nullptr, Caster, UDamageType::StaticClass());
             }
         }
+        // Blasts throw bodies up as well as away.
+        const FVector Velocity = Direction * Push + FVector(0.0f, 0.0f, Push * (bBlast ? 0.4f : 0.15f));
         if (Push > 0.0f)
         {
-            if (ACharacter* Character = Cast<ACharacter>(Target)) Character->LaunchCharacter(Direction * Push + FVector(0,0,Push * .15f), true, true);
-            else if (Primitive && Primitive->IsSimulatingPhysics(Hit.BoneName))
-                Primitive->AddImpulseAtLocation(Direction * Push, Point, Hit.BoneName);
+            if (ACharacter* Character = Cast<ACharacter>(Target)) Character->LaunchCharacter(Velocity, true, true);
+            else if (Primitive && Primitive->IsSimulatingPhysics(Hit.BoneName) && !(Npcs && Npcs->FindNpc(Target)))
+            {
+                // Loose props: a velocity kick, so a crate flies as far as a bottle. NPC bodies react on their own side.
+                Primitive->AddImpulseAtLocation(Velocity * Primitive->GetMass(), Point, Hit.BoneName);
+            }
         }
         if (UWorld* World = Target->GetWorld())
             if (UReflectionsSpellEventSubsystem* Events = World->GetSubsystem<UReflectionsSpellEventSubsystem>())
             {
                 FReflectionsSpellHitData Data;
                 Data.Spell = Spell; Data.Caster = Caster; Data.Target = Target; Data.Location = Point;
-                Data.Impulse = Direction * Push; Data.ImpactNormal = Hit.ImpactNormal; Data.Bone = Hit.BoneName;
+                Data.Impulse = Velocity; Data.ImpactNormal = Hit.ImpactNormal; Data.Bone = Hit.BoneName;
                 Data.Surface = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
+                Data.Reaction = React.Type; Data.Magnitude = React.Magnitude; Data.Duration = React.Duration;
+                Data.Origin = bBlast || React.Type == EReflectionsSpellReaction::Pull ? Origin : Point;
                 Events->OnSpellHit.Broadcast(Data);
             }
     }
@@ -64,6 +130,52 @@ namespace
         for (const FOverlapResult& Hit : Hits) if (AActor* Actor = Hit.GetActor()) if (Actor != Caster) Targets.Add(Actor);
         return Targets;
     }
+
+    /** A real explosion: damage and knock-back fall off from the centre (1 to 0.35), loose physics objects are thrown
+     *  radially, and every body gets an Explosion reaction with Origin = Center. DirectActor (what the projectile
+     *  struck) always takes the full blast. */
+    void ExplodeSpellAt(UWorld* World, AActor* Caster, EHeroSpell Spell, const FVector& Center, float Radius, float Damage, float Speed,
+        const TArray<AActor*>& Ignore, AActor* DirectActor = nullptr, const FHitResult* DirectHit = nullptr)
+    {
+        if (!World || Radius <= 0.0f) return;
+        TArray<FOverlapResult> Hits;
+        FCollisionObjectQueryParams Types;
+        Types.AddObjectTypesToQuery(ECC_Pawn); Types.AddObjectTypesToQuery(ECC_WorldDynamic); Types.AddObjectTypesToQuery(ECC_PhysicsBody);
+        FCollisionQueryParams Query(SCENE_QUERY_STAT(SpellExplosion), false, Caster);
+        World->OverlapMultiByObjectType(Hits, Center, FQuat::Identity, Types, FCollisionShape::MakeSphere(Radius), Query);
+        const UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(World);
+        TSet<AActor*> Done;
+        TSet<UPrimitiveComponent*> Thrown;
+        auto Blast = [&](AActor* Target, const FHitResult* Direct)
+        {
+            const float Alpha = Direct ? 0.0f : FMath::Clamp(FVector::Dist(Target->GetActorLocation(), Center) / Radius, 0.0f, 1.0f);
+            FSpellReaction React;
+            React.Type = EReflectionsSpellReaction::Explosion;
+            React.Magnitude = FMath::Lerp(1.0f, 0.35f, Alpha);
+            AffectTarget(Target, Caster, Spell, Damage * React.Magnitude, Speed * React.Magnitude, Center, Direct, &React);
+        };
+        for (const FOverlapResult& Hit : Hits)
+        {
+            AActor* Target = Hit.GetActor();
+            if (!Target || Target == Caster || Ignore.Contains(Target)) continue;
+            UPrimitiveComponent* Part = Hit.GetComponent();
+            if (Part && Part->IsSimulatingPhysics() && !Thrown.Contains(Part) && !(Npcs && Npcs->FindNpc(Target)))
+            {
+                Thrown.Add(Part);
+                Part->AddRadialImpulse(Center, Radius, Speed, ERadialImpulseFalloff::RIF_Linear, true);
+            }
+            if (Done.Contains(Target) || Target == DirectActor) continue;
+            Done.Add(Target);
+            Blast(Target, nullptr);
+        }
+        if (DirectActor && DirectActor != Caster && !Ignore.Contains(DirectActor)) Blast(DirectActor, DirectHit);
+    }
+}
+
+void ReflectionsSpellCombat::ApplyArea(UWorld* World, AActor* Caster, EHeroSpell Spell, const FVector& Center, float Radius,
+    float Damage, float Push, const TArray<AActor*>& Ignore)
+{
+    ExplodeSpellAt(World, Caster, Spell, Center, Radius, Damage, Push, Ignore);
 }
 
 UReflectionsHealthComponent::UReflectionsHealthComponent()
@@ -185,24 +297,108 @@ void AReflectionsSpellProjectile::Initialize(EHeroSpell InSpell, float InDamage,
     }
 }
 
-void AReflectionsSpellProjectile::InitializeCatalog(EHeroSpell InSpell, UStaticMesh* InMesh, UMaterialInterface* InMaterial)
+void AReflectionsSpellProjectile::InitializeCatalog(EHeroSpell InSpell, UStaticMesh* InMesh, UMaterialInterface* InMaterial, float DamageScale)
 {
     const FReflectionsSpellSpec& Spec = ReflectionsSpellCatalog::Get(InSpell);
     BlastRadius = Spec.Radius;
     HitImpulse = Spec.Impulse;
-    Initialize(InSpell, Spec.Power, Spec.Speed, Spec.Range, InMesh, InMaterial);
+    Initialize(InSpell, Spec.Power * FMath::Max(0.0f, DamageScale), Spec.Speed, Spec.Range, InMesh, InMaterial);
+    // A Lightning Bolt that strikes a body arcs on to up to two more nearby.
+    ChainsLeft = InSpell == EHeroSpell::LightningBolt ? 2 : 0;
 }
 
-void AReflectionsSpellProjectile::SetHomingTarget(AActor* Target)
+void AReflectionsSpellProjectile::ChainLightning(AActor* From, const FVector& Point)
+{
+    UWorld* World = GetWorld();
+    AActor* Caster = GetOwner();
+    if (!World || ChainsLeft <= 0 || !IsValid(From)) return;
+    const UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(World);
+    auto Body = [Npcs](AActor* Actor) -> AActor*
+    {
+        if (!Npcs || !Actor) return Actor;
+        const UReflectionsNpcReactionComponent* Npc = Npcs->FindNpc(Actor);
+        return Npc ? Npc->GetOwner() : Actor;
+    };
+    AActor* Struck = Body(From);
+    TArray<TPair<float, AActor*>> Next;
+    for (AActor* Candidate : OverlapTargets(World, Point, 750.0f, Caster))
+    {
+        AActor* Target = Body(Candidate);
+        if (!IsValid(Target) || Target == Struck || Target == Caster || Next.ContainsByPredicate([Target](const TPair<float, AActor*>& P) { return P.Value == Target; })) continue;
+        const UReflectionsHealthComponent* Health = Target->FindComponentByClass<UReflectionsHealthComponent>();
+        const bool bLiving = (Health && Health->Health > 0.0f) || (!Health && (Target->IsA<APawn>() || (Npcs && Npcs->FindNpc(Target))));
+        if (!bLiving || (Npcs && !Npcs->CanBeHarmedBy(Target, Caster))) continue;
+        Next.Add(TPair<float, AActor*>(FVector::DistSquared(Point, Target->GetActorLocation()), Target));
+    }
+    Next.Sort([](const TPair<float, AActor*>& A, const TPair<float, AActor*>& B) { return A.Key < B.Key; });
+    for (int32 Index = 0; Index < FMath::Min(Next.Num(), 2); ++Index)
+    {
+        AActor* Target = Next[Index].Value;
+        FVector Aim = Target->GetActorLocation();
+        if (const UReflectionsNpcReactionComponent* Npc = Npcs ? Npcs->FindNpc(Target) : nullptr) Aim = Npc->GetAimPoint();
+        const FVector Start = Point + (Aim - Point).GetSafeNormal() * 40.0f;
+        const FTransform Launch((Aim - Start).Rotation(), Start);
+        AReflectionsSpellProjectile* Arc = World->SpawnActorDeferred<AReflectionsSpellProjectile>(StaticClass(), Launch, Caster,
+            GetInstigator(), ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+        if (!Arc) continue;
+        // Faster and weaker than the bolt; the hop itself does not chain again.
+        Arc->Initialize(Spell, Damage * 0.6f, 3600.0f, 900.0f, nullptr, nullptr);
+        Arc->FinishSpawning(Launch);
+        Arc->Collision->IgnoreActorWhenMoving(From, true);
+        if (Struck != From) Arc->Collision->IgnoreActorWhenMoving(Struck, true);
+        Arc->SetHomingTarget(Target, 8.0f);
+    }
+    ChainsLeft = 0;
+}
+
+void AReflectionsSpellProjectile::SetHomingTarget(AActor* Target, float Strength)
 {
     if (!Target || !Target->GetRootComponent())
     {
         return;
     }
     Movement->bIsHomingProjectile = true;
-    Movement->HomingTargetComponent = Target->GetRootComponent();
+    // Characters home on their root capsule. Actor-only NPCs (the crowd MetaHumans) have their root at the feet or
+    // on a hidden driver; curve into their hit capsule so the bolt meets the visible body.
+    USceneComponent* Aim = Target->GetRootComponent();
+    if (!Target->IsA<ACharacter>())
+    {
+        if (UCapsuleComponent* Capsule = Target->FindComponentByClass<UCapsuleComponent>()) Aim = Capsule;
+    }
+    Movement->HomingTargetComponent = Aim;
     // Proportional to speed so fast bolts still bend a little, slow orbs a lot.
-    Movement->HomingAccelerationMagnitude = Movement->InitialSpeed * 2.2f;
+    Movement->HomingAccelerationMagnitude = Movement->InitialSpeed * FMath::Max(0.0f, Strength);
+}
+
+bool AReflectionsSpellProjectile::ResolvePointBlank(const FVector& From)
+{
+    UWorld* World = GetWorld();
+    if (!World || bImpacted) return false;
+    const FVector Muzzle = GetActorLocation();
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(SpellPointBlank), false, this);
+    if (AActor* Caster = GetOwner())
+    {
+        Query.AddIgnoredActor(Caster);
+        TArray<AActor*> Attached;
+        Caster->GetAttachedActors(Attached, true, true);
+        Query.AddIgnoredActors(Attached);
+    }
+    // Everything the projectile itself ignores (a caster's hidden pawn, squad mates) stays ignored.
+    Query.AddIgnoredActors(Collision->GetMoveIgnoreActors());
+    FHitResult Hit;
+    if (!World->SweepSingleByChannel(Hit, From, Muzzle, FQuat::Identity, Collision->GetCollisionObjectType(),
+        FCollisionShape::MakeSphere(Collision->GetScaledSphereRadius()), Query, FCollisionResponseParams(Collision->GetCollisionResponseToChannels())))
+    {
+        return false;
+    }
+    if (Hit.bStartPenetrating)
+    {
+        Hit.ImpactPoint = From;
+        Hit.Location = From;
+    }
+    SetActorLocation(Hit.Location);
+    OnProjectileHit(Collision, Hit.GetActor(), Hit.GetComponent(), FVector::ZeroVector, Hit);
+    return true;
 }
 
 void AReflectionsSpellProjectile::HideFallbackVisual()
@@ -234,20 +430,43 @@ void AReflectionsSpellProjectile::OnProjectileHit(UPrimitiveComponent* HitCompon
     }
     bImpacted = true;
     AActor* Caster = GetOwner();
-    if (BlastRadius > 0.0f)
+    UE_CLOG(CVarSpellLogHits.GetValueOnGameThread() != 0, LogTemp, Display,
+        TEXT("Spell hit: %s from %s struck %s (%s) at %s, damage %.1f, blast %.0f%s"), *GetNameSafe(this), *GetNameSafe(Caster),
+        *GetNameSafe(OtherActor), *GetNameSafe(OtherComponent), *Hit.ImpactPoint.ToCompactString(), Damage, BlastRadius,
+        Hit.bStartPenetrating ? TEXT(" (started inside)") : TEXT(""));
+    const bool bExplosion = BlastRadius > 0.0f && Look == EReflectionsSpellLook::Catalog && ReflectionsSpellCatalog::IsValid(Spell)
+        && ReflectionsSpellCatalog::Get(Spell).Element == EReflectionsSpellElement::Fire;
+    if (bExplosion)
+    {
+        // Fireball: a real explosion (falloff damage, bodies knocked back, props thrown), wider than the catalog radius.
+        ExplodeSpellAt(GetWorld(), Caster, Spell, Hit.ImpactPoint, FMath::Max(BlastRadius, 320.0f), Damage, 1100.0f, TArray<AActor*>(), OtherActor, &Hit);
+    }
+    else if (BlastRadius > 0.0f)
     {
         TSet<AActor*> Targets = OverlapTargets(GetWorld(), Hit.ImpactPoint, BlastRadius, Caster);
         if (OtherActor && OtherActor != Caster) Targets.Add(OtherActor);
         for (AActor* Target : Targets) AffectTarget(Target, Caster, Spell, Damage, HitImpulse, Hit.ImpactPoint, Target == OtherActor ? &Hit : nullptr);
     }
     else if (OtherActor) AffectTarget(OtherActor, Caster, Spell, Damage, HitImpulse, Hit.ImpactPoint - GetActorForwardVector() * 10.0f, &Hit);
+    if (ChainsLeft > 0 && OtherActor)
+    {
+        ChainLightning(OtherActor, Hit.ImpactPoint);
+    }
     if (UWorld* World = GetWorld())
     {
-        if (UReflectionsSpellEventSubsystem* Events = World->GetSubsystem<UReflectionsSpellEventSubsystem>())
+        FVector Normal = Hit.ImpactNormal.GetSafeNormal();
+        if (Normal.IsNearlyZero()) Normal = -GetActorForwardVector();
+        if (Look != EReflectionsSpellLook::Catalog)
         {
-            FVector Normal = Hit.ImpactNormal.GetSafeNormal();
-            if (Normal.IsNearlyZero()) Normal = -GetActorForwardVector();
-            Events->OnSpellImpactVisual.Broadcast(Spell, Hit.ImpactPoint, Normal, Caster, 0.8f + BlastRadius / 250.0f);
+            // Tarnish bolts and wisps burst into their own black-violet smoke, silver sparks and stain.
+            if (UReflectionsSpellVfxSubsystem* Vfx = World->GetSubsystem<UReflectionsSpellVfxSubsystem>())
+            {
+                Vfx->SpawnTarnishImpact(Hit.ImpactPoint, Normal, Caster, Look == EReflectionsSpellLook::TarnishWisp ? 1.15f : 0.9f, false);
+            }
+        }
+        else if (UReflectionsSpellEventSubsystem* Events = World->GetSubsystem<UReflectionsSpellEventSubsystem>())
+        {
+            Events->OnSpellImpactVisual.Broadcast(Spell, Hit.ImpactPoint, Normal, Caster, bExplosion ? 2.7f : 0.8f + BlastRadius / 250.0f);
         }
     }
     if (Caster)
@@ -363,7 +582,8 @@ void UReflectionsSpellCombatComponent::ReleaseSpellAt(EHeroSpell Spell, FTransfo
         {
             const FVector Offset = Victim->GetActorLocation() - CasterLocation;
             if (!bCone || FVector::DotProduct(Offset.GetSafeNormal2D(), Forward) > .35f)
-                AffectTarget(Victim, Caster, Spell, Spec.Power, Spec.Impulse, bCone ? CasterLocation : Center - FVector(0.0f, 0.0f, 60.0f));
+                AffectTarget(Victim, Caster, Spell, Spec.Power * FMath::Max(0.0f, DamageScale), Spec.Impulse,
+                    bCone ? CasterLocation : Center - FVector(0.0f, 0.0f, 60.0f));
         }
         return;
     }
@@ -385,9 +605,14 @@ void UReflectionsSpellCombatComponent::ReleaseSpellAt(EHeroSpell Spell, FTransfo
     if (Projectile)
     {
         const bool bWaterStyle = Spec.Element == EReflectionsSpellElement::Water || Spec.Element == EReflectionsSpellElement::Ice;
-        Projectile->InitializeCatalog(Spell, bWaterStyle ? WaterMesh.Get() : FireMesh.Get(), bWaterStyle ? WaterMaterial.Get() : FireMaterial.Get());
+        Projectile->InitializeCatalog(Spell, bWaterStyle ? WaterMesh.Get() : FireMesh.Get(), bWaterStyle ? WaterMaterial.Get() : FireMaterial.Get(),
+            DamageScale);
         Projectile->FinishSpawning(Launch);
-        Projectile->SetHomingTarget(AimTarget);
+        // A target in melee range may already be past the hand: strike it now.
+        if (!Projectile->ResolvePointBlank(Caster ? Caster->GetActorLocation() : Origin.GetLocation()))
+        {
+            Projectile->SetHomingTarget(AimTarget);
+        }
     }
 }
 

@@ -1,0 +1,757 @@
+{
+ "steps": [
+  {
+   "squads": [
+    [
+     "ReflectionsSquad_0",
+     "MARCHING",
+     5
+    ],
+    [
+     "ReflectionsSquad_1",
+     "MARCHING",
+     5
+    ]
+   ],
+   "step": "spawned",
+   "t": 18.0
+  },
+  {
+   "states": [
+    "MARCHING",
+    "MARCHING"
+   ],
+   "member_states": [
+    [
+     "IN_FORMATION",
+     "IN_FORMATION",
+     "IN_FORMATION",
+     "IN_FORMATION",
+     "IN_FORMATION"
+    ],
+    [
+     "IN_FORMATION",
+     "IN_FORMATION",
+     "IN_FORMATION",
+     "IN_FORMATION",
+     "IN_FORMATION"
+    ]
+   ],
+   "march_clip": [
+    [
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    [
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   ],
+   "step": "marching",
+   "t": 28.6
+  },
+  {
+   "spot": "<Struct 'Vector' (0x000002584AAE1508) {x: 1400.000000, y: 547.689538, z: 90.000000}>",
+   "melee_dist": [
+    348,
+    518,
+    688
+   ],
+   "step": "before_engage",
+   "t": 30.2
+  },
+  {
+   "states": [
+    "ENGAGED",
+    "MARCHING"
+   ],
+   "member_states": [
+    [
+     "FIGHTING",
+     "FIGHTING",
+     "FIGHTING",
+     "FIGHTING",
+     "FIGHTING"
+    ],
+    [
+     "IN_FORMATION",
+     "IN_FORMATION",
+     "IN_FORMATION",
+     "IN_FORMATION",
+     "IN_FORMATION"
+    ]
+   ],
+   "casts": [
+    [
+     0,
+     0,
+     0,
+     3,
+     3
+    ],
+    [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "forced_cast": false,
+   "projectile_seen": true,
+   "barks": [
+    [
+     "BP_WhiteLook_06_GuardBoldRunes_C_1",
+     "SCue_VO_Soldier_Command_F1"
+    ],
+    [
+     "BP_WhiteLook_06_GuardBoldRunes_C_2",
+     "SCue_VO_Soldier_Command_F3"
+    ]
+   ],
+   "melee_track": [
+    [
+     31.1,
+     [
+      163,
+      -113
+     ],
+     [
+      324,
+      -90
+     ],
+     [
+      482,
+      -81
+     ]
+    ],
+    [
+     32.9,
+     [
+      163,
+      -113
+     ],
+     [
+      149,
+      -90
+     ],
+     [
+      200,
+      -74
+     ]
+    ],
+    [
+     33.5,
+     [
+      207,
+      -113
+     ],
+     [
+      149,
+      -90
+     ],
+     [
+      154,
+      -74
+     ]
+    ],
+    [
+     34.5,
+     [
+      218,
+      -113
+     ],
+     [
+      206,
+      -90
+     ],
+     [
+      166,
+      -74
+     ]
+    ],
+    [
+     35.0,
+     [
+      165,
+      -113
+     ],
+     [
+      203,
+      -90
+     ],
+     [
+      212,
+      -74
+     ]
+    ],
+    [
+     35.6,
+     [
+      165,
+      -113
+     ],
+     [
+      169,
+      -90
+     ],
+     [
+      211,
+      -74
+     ]
+    ],
+    [
+     36.1,
+     [
+      197,
+      -113
+     ],
+     [
+      169,
+      -90
+     ],
+     [
+      164,
+      -74
+     ]
+    ],
+    [
+     36.6,
+     [
+      226,
+      -113
+     ],
+     [
+      206,
+      -90
+     ],
+     [
+      164,
+      -74
+     ]
+    ],
+    [
+     37.2,
+     [
+      220,
+      -113
+     ],
+     [
+      229,
+      -90
+     ],
+     [
+      181,
+      -74
+     ]
+    ],
+    [
+     37.7,
+     [
+      158,
+      -113
+     ],
+     [
+      215,
+      -90
+     ],
+     [
+      225,
+      -74
+     ]
+    ],
+    [
+     38.9,
+     [
+      208,
+      -113
+     ],
+     [
+      170,
+      -90
+     ],
+     [
+      166,
+      -74
+     ]
+    ],
+    [
+     40.2,
+     [
+      163,
+      -113
+     ],
+     [
+      227,
+      -90
+     ],
+     [
+      228,
+      -74
+     ]
+    ],
+    [
+     43.1,
+     [
+      171,
+      -113
+     ],
+     [
+      66,
+      -90
+     ],
+     [
+      70,
+      -74
+     ]
+    ],
+    [
+     44.3,
+     [
+      221,
+      -113
+     ],
+     [
+      122,
+      -90
+     ],
+     [
+      119,
+      -74
+     ]
+    ],
+    [
+     47.7,
+     [
+      210,
+      -113
+     ],
+     [
+      130,
+      -90
+     ],
+     [
+      134,
+      -74
+     ]
+    ],
+    [
+     49.0,
+     [
+      168,
+      -113
+     ],
+     [
+      166,
+      -90
+     ],
+     [
+      170,
+      -74
+     ]
+    ]
+   ],
+   "cast_anim_track": [
+    [
+     30.73,
+     "BP_WhiteLook_04_CapMantle_C_1",
+     "READY",
+     "ABP_Crowd_IvenRook_C",
+     0
+    ],
+    [
+     30.73,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "READY",
+     "ABP_Crowd_IvenRook_C",
+     0
+    ],
+    [
+     31.24,
+     "BP_WhiteLook_04_CapMantle_C_1",
+     "WINDUP",
+     "AS_Melee_Wand_Channel_IvenRook",
+     0
+    ],
+    [
+     31.89,
+     "BP_WhiteLook_04_CapMantle_C_1",
+     "WINDUP",
+     "AS_Melee_Wand_Flick_IvenRook",
+     0
+    ],
+    [
+     32.11,
+     "BP_WhiteLook_04_CapMantle_C_1",
+     "RECOVER",
+     "AS_Melee_Wand_Flick_IvenRook",
+     1
+    ],
+    [
+     33.19,
+     "BP_WhiteLook_04_CapMantle_C_1",
+     "READY",
+     "ABP_Crowd_IvenRook_C",
+     1
+    ],
+    [
+     33.42,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "WINDUP",
+     "AS_Melee_Wand_Channel_IvenRook",
+     0
+    ],
+    [
+     33.72,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "WINDUP",
+     "AS_Melee_Wand_Flick_IvenRook",
+     0
+    ],
+    [
+     34.2,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "RECOVER",
+     "AS_Melee_Wand_Flick_IvenRook",
+     1
+    ],
+    [
+     34.35,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "READY",
+     "ABP_Crowd_IvenRook_C",
+     1
+    ],
+    [
+     37.47,
+     "BP_WhiteLook_04_CapMantle_C_1",
+     "WINDUP",
+     "AS_Melee_Wand_Channel_IvenRook",
+     1
+    ],
+    [
+     37.95,
+     "BP_WhiteLook_04_CapMantle_C_1",
+     "WINDUP",
+     "AS_Melee_Wand_Flick_IvenRook",
+     1
+    ],
+    [
+     38.18,
+     "BP_WhiteLook_04_CapMantle_C_1",
+     "RECOVER",
+     "AS_Melee_Wand_Flick_IvenRook",
+     2
+    ],
+    [
+     38.43,
+     "BP_WhiteLook_04_CapMantle_C_1",
+     "READY",
+     "ABP_Crowd_IvenRook_C",
+     2
+    ],
+    [
+     38.68,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "WINDUP",
+     "AS_Melee_Wand_Channel_IvenRook",
+     1
+    ],
+    [
+     39.18,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "WINDUP",
+     "AS_Melee_Wand_Flick_IvenRook",
+     1
+    ],
+    [
+     39.43,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "RECOVER",
+     "AS_Melee_Wand_Flick_IvenRook",
+     2
+    ],
+    [
+     39.72,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "READY",
+     "ABP_Crowd_IvenRook_C",
+     2
+    ],
+    [
+     46.73,
+     "BP_WhiteLook_04_CapMantle_C_1",
+     "WINDUP",
+     "AS_Melee_Wand_Channel_IvenRook",
+     2
+    ],
+    [
+     47.17,
+     "BP_WhiteLook_04_CapMantle_C_1",
+     "WINDUP",
+     "AS_Melee_Wand_Flick_IvenRook",
+     2
+    ],
+    [
+     47.68,
+     "BP_WhiteLook_04_CapMantle_C_1",
+     "READY",
+     "ABP_Crowd_IvenRook_C",
+     3
+    ],
+    [
+     47.68,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "WINDUP",
+     "AS_Melee_Wand_Channel_IvenRook",
+     2
+    ],
+    [
+     47.94,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "WINDUP",
+     "AS_Melee_Wand_Flick_IvenRook",
+     2
+    ],
+    [
+     48.21,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "RECOVER",
+     "AS_Melee_Wand_Flick_IvenRook",
+     3
+    ],
+    [
+     48.48,
+     "BP_WhiteLook_03_Mantle_C_3",
+     "READY",
+     "ABP_Crowd_IvenRook_C",
+     3
+    ]
+   ],
+   "motor": [
+    [
+     "BP_WhiteLook_06_GuardBoldRunes_C_1",
+     "WINDUP",
+     6,
+     6
+    ],
+    [
+     "BP_WhiteLook_05_GuardRags_C_0",
+     "WINDUP",
+     6,
+     5
+    ],
+    [
+     "BP_WhiteLook_06_GuardBoldRunes_C_2",
+     "WINDUP",
+     6,
+     5
+    ]
+   ],
+   "hero_health": 48.79999923706055,
+   "step": "fight",
+   "t": 49.0
+  },
+  {
+   "targets": [
+    "BP_WhiteLook_06_GuardBoldRunes_C_1",
+    "BP_WhiteLook_05_GuardRags_C_0",
+    "BP_WhiteLook_06_GuardBoldRunes_C_2"
+   ],
+   "dead": [
+    {
+     "actor": "BP_WhiteLook_06_GuardBoldRunes_C_1",
+     "role": "MELEE",
+     "ragdoll": true,
+     "pelvis_z": 26
+    },
+    {
+     "actor": "BP_WhiteLook_05_GuardRags_C_0",
+     "role": "MELEE",
+     "ragdoll": true,
+     "pelvis_z": 15
+    },
+    {
+     "actor": "BP_WhiteLook_06_GuardBoldRunes_C_2",
+     "role": "MELEE",
+     "ragdoll": true,
+     "pelvis_z": 0
+    }
+   ],
+   "alive": 2,
+   "squad_state": "ENGAGED",
+   "coins_before": 0,
+   "coins_after": 3,
+   "step": "kills",
+   "t": 59.3
+  }
+ ],
+ "errors": [],
+ "roster": [
+  {
+   "squad": 0,
+   "look": "BP_WhiteLook_06_GuardBoldRunes_C",
+   "role": "MELEE",
+   "state": "IN_FORMATION",
+   "archetype": "Soldier",
+   "archetype_obj": "DA_Npc_Soldier",
+   "archetype_flinch": false,
+   "component_flinch": false,
+   "ragdoll_on_death": true,
+   "has_spell_component": false
+  },
+  {
+   "squad": 0,
+   "look": "BP_WhiteLook_05_GuardRags_C",
+   "role": "MELEE",
+   "state": "IN_FORMATION",
+   "archetype": "Soldier",
+   "archetype_obj": "DA_Npc_Soldier",
+   "archetype_flinch": false,
+   "component_flinch": false,
+   "ragdoll_on_death": true,
+   "has_spell_component": false
+  },
+  {
+   "squad": 0,
+   "look": "BP_WhiteLook_06_GuardBoldRunes_C",
+   "role": "MELEE",
+   "state": "IN_FORMATION",
+   "archetype": "Soldier",
+   "archetype_obj": "DA_Npc_Soldier",
+   "archetype_flinch": false,
+   "component_flinch": false,
+   "ragdoll_on_death": true,
+   "has_spell_component": false
+  },
+  {
+   "squad": 0,
+   "look": "BP_WhiteLook_04_CapMantle_C",
+   "role": "CASTER",
+   "state": "IN_FORMATION",
+   "archetype": "SoldierCaster",
+   "archetype_obj": "DA_Npc_SoldierCaster",
+   "archetype_flinch": false,
+   "component_flinch": false,
+   "ragdoll_on_death": true,
+   "has_spell_component": true
+  },
+  {
+   "squad": 0,
+   "look": "BP_WhiteLook_03_Mantle_C",
+   "role": "CASTER",
+   "state": "IN_FORMATION",
+   "archetype": "SoldierCaster",
+   "archetype_obj": "DA_Npc_SoldierCaster",
+   "archetype_flinch": false,
+   "component_flinch": false,
+   "ragdoll_on_death": true,
+   "has_spell_component": true
+  },
+  {
+   "squad": 1,
+   "look": "BP_WhiteLook_06_GuardBoldRunes_C",
+   "role": "MELEE",
+   "state": "IN_FORMATION",
+   "archetype": "Soldier",
+   "archetype_obj": "DA_Npc_Soldier",
+   "archetype_flinch": false,
+   "component_flinch": false,
+   "ragdoll_on_death": true,
+   "has_spell_component": false
+  },
+  {
+   "squad": 1,
+   "look": "BP_WhiteLook_05_GuardRags_C",
+   "role": "MELEE",
+   "state": "IN_FORMATION",
+   "archetype": "Soldier",
+   "archetype_obj": "DA_Npc_Soldier",
+   "archetype_flinch": false,
+   "component_flinch": false,
+   "ragdoll_on_death": true,
+   "has_spell_component": false
+  },
+  {
+   "squad": 1,
+   "look": "BP_WhiteLook_06_GuardBoldRunes_C",
+   "role": "MELEE",
+   "state": "IN_FORMATION",
+   "archetype": "Soldier",
+   "archetype_obj": "DA_Npc_Soldier",
+   "archetype_flinch": false,
+   "component_flinch": false,
+   "ragdoll_on_death": true,
+   "has_spell_component": false
+  },
+  {
+   "squad": 1,
+   "look": "BP_WhiteLook_04_CapMantle_C",
+   "role": "CASTER",
+   "state": "IN_FORMATION",
+   "archetype": "SoldierCaster",
+   "archetype_obj": "DA_Npc_SoldierCaster",
+   "archetype_flinch": false,
+   "component_flinch": false,
+   "ragdoll_on_death": true,
+   "has_spell_component": true
+  },
+  {
+   "squad": 1,
+   "look": "BP_WhiteLook_03_Mantle_C",
+   "role": "CASTER",
+   "state": "IN_FORMATION",
+   "archetype": "SoldierCaster",
+   "archetype_obj": "DA_Npc_SoldierCaster",
+   "archetype_flinch": false,
+   "component_flinch": false,
+   "ragdoll_on_death": true,
+   "has_spell_component": true
+  }
+ ],
+ "caster_tuning": [
+  {
+   "caster_min_range": "500.0",
+   "caster_max_range": "1400.0",
+   "cast_range": "2300.0",
+   "cast_cooldown": "<Struct 'Vector2D' (0x0000025D52BBBB08) {x: 3.000000, y: 5.000000}>",
+   "cast_windup": "0.699999988079071",
+   "caster_damage_scale": "0.6000000238418579",
+   "caster_spells": "[Fire, IceShard]",
+   "cast_animations": "[\"/Game/Characters/Hero/Animation/CombatCasts/AS_Hero_CombatBoltRight.AS_Hero_CombatBoltRight\"]"
+  },
+  {
+   "caster_min_range": "500.0",
+   "caster_max_range": "1400.0",
+   "cast_range": "2300.0",
+   "cast_cooldown": "<Struct 'Vector2D' (0x0000025D5CB12F08) {x: 3.000000, y: 5.000000}>",
+   "cast_windup": "0.699999988079071",
+   "caster_damage_scale": "0.6000000238418579",
+   "caster_spells": "[ArcaneBolt, Fire]",
+   "cast_animations": "[\"/Game/Characters/Hero/Animation/CombatCasts/AS_Hero_CombatBoltRight.AS_Hero_CombatBoltRight\"]"
+  }
+ ],
+ "flinch_on_from_build": [],
+ "march_column": "../../../../../../Users/zachc/Documents/Unreal Projects/reflections/Saved/SquadsTest\\r1_march_column.png",
+ "march_line": "../../../../../../Users/zachc/Documents/Unreal Projects/reflections/Saved/SquadsTest\\r2_march_line.png",
+ "perf_two_squads_marching": {
+  "frame": 86.71,
+  "game": 84.69,
+  "gpu": 7.04
+ },
+ "caster_mid_cast": [
+  "BP_WhiteLook_04_CapMantle_C_1",
+  "../../../../../../Users/zachc/Documents/Unreal Projects/reflections/Saved/SquadsTest\\r3_caster_mid_cast.png",
+  31.8
+ ],
+ "spell_in_flight": "../../../../../../Users/zachc/Documents/Unreal Projects/reflections/Saved/SquadsTest\\r4_spell_in_flight.png",
+ "melee_shot": "../../../../../../Users/zachc/Documents/Unreal Projects/reflections/Saved/SquadsTest\\r5_melee_closing_in.png",
+ "ragdoll_shot": "../../../../../../Users/zachc/Documents/Unreal Projects/reflections/Saved/SquadsTest\\r6_ragdoll.png",
+ "took": 61.0
+}

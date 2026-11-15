@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "ArtDirection\\CodexRequests\\City2026_11_14\\References\\Giltside_FacadeKit_Reference.png",
+  "output": "ArtDirection\\CodexRequests\\City2026_11_14\\RawHunyuan\\Giltside_FacadeKit.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 20,
+  "resolution": 256,
+  "seed": 412,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 146636,
+  "faces": 293284,
+  "seconds": 24.6,
+  "bounds": [
+    [
+      -0.9980723261833191,
+      -0.9116296768188477,
+      -0.1656942516565323
+    ],
+    [
+      0.9901536107063293,
+      0.901797354221344,
+      0.21439623832702637
+    ]
+  ]
+}

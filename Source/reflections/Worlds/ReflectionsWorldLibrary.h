@@ -7,6 +7,7 @@
 #include "ReflectionsWorldLibrary.generated.h"
 
 class AReflectionsCoinPickup;
+class AVolume;
 class ULevelStreaming;
 
 /**
@@ -53,6 +54,10 @@ public:
     /** Editor scripting: add an always-loaded sublevel with a transform (how three maps become offset copies). */
     UFUNCTION(BlueprintCallable, Category = "World Jump|Editor")
     static ULevelStreaming* AddOffsetSublevel(UWorld* World, TSoftObjectPtr<UWorld> Level, FTransform LevelTransform);
+
+    /** Editor scripting: give a spawned volume (nav mesh bounds and the like) a box shape, half-size in cm. */
+    UFUNCTION(BlueprintCallable, Category = "World Jump|Editor")
+    static bool SetVolumeBox(AVolume* Volume, FVector HalfExtent);
 };
 
 /**

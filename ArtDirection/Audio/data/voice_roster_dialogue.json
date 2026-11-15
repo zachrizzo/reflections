@@ -1,0 +1,1238 @@
+{
+ "_readme": "Write ArtDirection/Audio/data/voice_roster_dialogue.json for the NPC dialogue relay:\n{\"voices\": {\"V103\": {\"gemini_voice\": \"voice_...\", \"sex\": \"Male\", \"side\": \"Frostside\", \"persona\": \"...\", \"style\": \"...\",\n                      \"named\": \"person_id\" | null, \"cue_talk\": \"/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V103\"}}}\nstyle = the baseline delivery the baked lines use (named people: people.json delivery; others: the roster attitude).\nNo keys or secrets in this file. The designed voices only work with the project's own Gemini key.",
+ "voices": {
+  "V001": {
+   "gemini_voice": "voice_ei3d4fe99bso",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "a shopkeeper in Pewterside, brisk and practical",
+   "style": "brisk, practical",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V001"
+  },
+  "V002": {
+   "gemini_voice": "voice_ziqvm9dwk29n",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "Greta Holm, bone carver at the Bone Market, Frostside. Deadpan dark jokes; matter-of-fact about death; talks to her carvings.",
+   "style": "dry, rasping, deadpan",
+   "named": "greta_holm",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V002"
+  },
+  "V003": {
+   "gemini_voice": "voice_il5mdzuwec8w",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "Winnie Cobb, keeps the tea stall at Weigh-House Corner, Pewterside. Gossip passed on like a secret, everything with a cup. Meets fear with a joke.",
+   "style": "warm, confiding, chuckling",
+   "named": "winnie_cobb",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V003"
+  },
+  "V004": {
+   "gemini_voice": "voice_z8peagi2247p",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a apprentice in Giltside, gracious",
+   "style": "gracious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V004"
+  },
+  "V005": {
+   "gemini_voice": "voice_gctlp4hvflxx",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a festival musician in Giltside, cheerful and warm",
+   "style": "cheerful, warm",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V005"
+  },
+  "V006": {
+   "gemini_voice": "voice_sti0fc79ghj7",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a bone carver in Frostside, hollow and exhausted",
+   "style": "hollow, exhausted",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V006"
+  },
+  "V007": {
+   "gemini_voice": "voice_ip8kpbjq7nbb",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a war caster in Giltside, cheerful and warm",
+   "style": "cheerful, warm",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V007"
+  },
+  "V008": {
+   "gemini_voice": "voice_js0tn1fth2pv",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "Fen Lowry, street orphan; a drifter camped under the Lantern Gate, Frostside. Short, spat insults; always takes the last word, never gives a straight answer. Drops to a whisper when she means something.",
+   "style": "spiky, fast, guarded",
+   "named": "fen_lowry",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V008"
+  },
+  "V009": {
+   "gemini_voice": "voice_dulsre3thv36",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a flower seller in Giltside, earnest and eager",
+   "style": "earnest, eager",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V009"
+  },
+  "V010": {
+   "gemini_voice": "voice_g2o9x7svo9r7",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a beggar in Frostside, wary and suspicious",
+   "style": "wary, suspicious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V010"
+  },
+  "V011": {
+   "gemini_voice": "voice_x4fomjc3m8pz",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "Ada Pollard, pensioner; keeper of old stories, Pewterside. Rambling stories that wander off, then land on a point like a dropped knife. Talks to her late husband Arthur mid-sentence.",
+   "style": "rambling, warbling, cheerful",
+   "named": "ada_pollard",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V011"
+  },
+  "V012": {
+   "gemini_voice": "voice_fvk92w4rx1ds",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "Edie Bramley, tram conductor on the Coal Lane line, Pewterside. Says everything like a stop announcement. Short, plain, no adjectives.",
+   "style": "dry, precise, unhurried",
+   "named": "edie_bramley",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V012"
+  },
+  "V013": {
+   "gemini_voice": "voice_igoj14igbl47",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "Constable Ivy Harker, watch constable posted at the Old Weigh-House, Pewterside. Formal report language, notebook always out; takes everything literally.",
+   "style": "formal, crisp, nervous",
+   "named": "ivy_harker",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V013"
+  },
+  "V014": {
+   "gemini_voice": "voice_iwo5y9m7sj0k",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "Ilse Varrow, retired Silverer; sells candles on Lantern Row, Giltside. Short, dry sentences. Answers a question with a better question. Gives orders as if they were weather reports.",
+   "style": "dry, unhurried, quietly amused",
+   "named": "ilse_varrow",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V014"
+  },
+  "V015": {
+   "gemini_voice": "voice_eslhglhlp4kz",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a battle mage in Giltside, proud and confident",
+   "style": "proud, confident",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V015"
+  },
+  "V016": {
+   "gemini_voice": "voice_7zbsds4loeje",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a innkeeper in Giltside, cheerful and warm",
+   "style": "cheerful, warm",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V016"
+  },
+  "V017": {
+   "gemini_voice": "voice_s5d7me5rfpy6",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "Bet Crawley, fishmonger on the Fish Steps, Pewterside. Bellows prices, roasts her customers, and mixes the insults with kindness.",
+   "style": "brassy, loud, cackling",
+   "named": "bet_crawley",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V017"
+  },
+  "V018": {
+   "gemini_voice": "voice_44kwleeuzf4v",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "Agnes Moth, night nurse at the Wick Street infirmary, Pewterside. Clinical and short, with gallows humour. Talks in symptoms. Yawns in the middle of sentences.",
+   "style": "tired, flat, kind",
+   "named": "agnes_moth",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V018"
+  },
+  "V019": {
+   "gemini_voice": "voice_k3zv1pztjnes",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a salvage trader in Frostside, bitter and blunt",
+   "style": "bitter, blunt",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V019"
+  },
+  "V020": {
+   "gemini_voice": "voice_sqn1tav3b3wb",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "Hester Quaile, \"the Queen of Coal Lane\", pensioner; the street's self-appointed queen, Pewterside. Grand and theatrical; refers to the whole street as her subjects and gives orders from her doorstep. Deadly wit.",
+   "style": "grand, slow, wickedly funny",
+   "named": "hester_quaile",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V020"
+  },
+  "V021": {
+   "gemini_voice": "voice_e9s1a1yalw6q",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a battle mage in Giltside, teasing and playful",
+   "style": "teasing, playful",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V021"
+  },
+  "V022": {
+   "gemini_voice": "voice_beofjyo2nqec",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a festival musician in Giltside, gracious",
+   "style": "gracious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V022"
+  },
+  "V023": {
+   "gemini_voice": "voice_w52l1bsy5obz",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a apprentice in Giltside, gracious",
+   "style": "gracious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V023"
+  },
+  "V024": {
+   "gemini_voice": "voice_szgj8xpjr960",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "Captain Sela Brask, captain of the Third Lamp Company, Giltside. Orders, never questions. Short and low. Uses ranks, not names. Leaves sentences unfinished when the end is obvious.",
+   "style": "flat, low, commanding",
+   "named": "sela_brask",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V024"
+  },
+  "V025": {
+   "gemini_voice": "voice_ihfl3tl6lxkh",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "Ros Thrale, spear soldier, Third Lamp Company, Giltside. Cocky and fast, full of barracks slang; laughs at danger. Drops all of it the moment she's really scared.",
+   "style": "cocky, quick, grinning",
+   "named": "ros_thrale",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V025"
+  },
+  "V026": {
+   "gemini_voice": "voice_65pv4hyf5r54",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a lantern maker in Giltside, teasing and playful",
+   "style": "teasing, playful",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V026"
+  },
+  "V027": {
+   "gemini_voice": "voice_temsyexbxg8k",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "Marigold \"Goldie\" Fairweather, keeper of the Lamplight inn; Wren's landlady, Giltside. Big and motherly; talks over everyone, an endearment in every sentence. Goes very quiet when cornered.",
+   "style": "hearty, warm, laughing",
+   "named": "goldie_fairweather",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V027"
+  },
+  "V028": {
+   "gemini_voice": "voice_4uhz045grtet",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "Sergeant Maud Kettering, sergeant of the Lantern Watch at the Lantern Gate, Giltside. Clipped watch-report sentences. Calls everyone \"citizen\". Counts things out loud.",
+   "style": "brisk, clipped, dry",
+   "named": "maud_kettering",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V028"
+  },
+  "V029": {
+   "gemini_voice": "voice_tvdv7vuazteu",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a squad captain in Giltside, proud and confident",
+   "style": "proud, confident",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V029"
+  },
+  "V030": {
+   "gemini_voice": "voice_d865yhh63o7h",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "Hollis Greave, bridge guard of the Lantern Watch; Nell's corporal, Giltside. Flat, slow, sarcastic understatement. Sighs before she answers.",
+   "style": "deadpan, slow, weary",
+   "named": "hollis_greave",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V030"
+  },
+  "V031": {
+   "gemini_voice": "voice_7drnh1bz8ppg",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "Odette Vane, couturier; Barnaby's former apprentice and rival, Giltside. Cutting one-liners, low and amused. Precise as a French seam. Never raises her voice.",
+   "style": "slow, smoky, cutting",
+   "named": "odette_vane",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V031"
+  },
+  "V032": {
+   "gemini_voice": "voice_11uk95gprgjt",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a candle vendor in Giltside, proud and confident",
+   "style": "proud, confident",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V032"
+  },
+  "V033": {
+   "gemini_voice": "voice_9q46erslzk38",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a battle mage in Giltside, cheerful and warm",
+   "style": "cheerful, warm",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V033"
+  },
+  "V034": {
+   "gemini_voice": "voice_384w072aj76j",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a baker in Giltside, earnest and eager",
+   "style": "earnest, eager",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V034"
+  },
+  "V035": {
+   "gemini_voice": "voice_pbcat7saxth5",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a flower seller in Giltside, teasing and playful",
+   "style": "teasing, playful",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V035"
+  },
+  "V036": {
+   "gemini_voice": "voice_qnjge2fxbkya",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a soldier in Giltside, teasing and playful",
+   "style": "teasing, playful",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V036"
+  },
+  "V037": {
+   "gemini_voice": "voice_rgubeopkb6gq",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "Nell Bramley, bridge guard of the Lantern Watch, Giltside. Rushed and polite; over-explains, apologises, then corrects herself. Quotes Watch regulations.",
+   "style": "earnest, quick, a little breathless",
+   "named": "nell_bramley",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V037"
+  },
+  "V038": {
+   "gemini_voice": "voice_iiy8yow7jwjl",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a street performer in Giltside, gracious",
+   "style": "gracious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V038"
+  },
+  "V039": {
+   "gemini_voice": "voice_nh8f99yyh2pw",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a spice trader in Giltside, gracious",
+   "style": "gracious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V039"
+  },
+  "V040": {
+   "gemini_voice": "voice_dlr72c3jqop6",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "Petra Lisle, dancer; Lucan's partner, lost through the canal rift into Frostside, Giltside. Light and quick, counting her breath like music. Describes everything as steps and turns. Cold has made her sentences short.",
+   "style": "light, musical, hoarse",
+   "named": "petra_lisle",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V040"
+  },
+  "V041": {
+   "gemini_voice": "voice_d3kw5yyvwfd2",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a beggar in Frostside, gentle despite everything",
+   "style": "gentle despite everything",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V041"
+  },
+  "V042": {
+   "gemini_voice": "voice_4azmn1qwqt43",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a ruined noble in Frostside, hushed and fearful",
+   "style": "hushed, fearful",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V042"
+  },
+  "V043": {
+   "gemini_voice": "voice_sqvxgiwpyk3t",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a orphan in Frostside, gentle despite everything",
+   "style": "gentle despite everything",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V043"
+  },
+  "V044": {
+   "gemini_voice": "voice_0xynl4x5nugo",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a frost legion soldier in Frostside, fierce and defiant",
+   "style": "fierce, defiant",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V044"
+  },
+  "V045": {
+   "gemini_voice": "voice_g8n3ahj8l1l1",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a refugee in Frostside, bitter and blunt",
+   "style": "bitter, blunt",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V045"
+  },
+  "V046": {
+   "gemini_voice": "voice_gvjokvh3qty1",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a broth seller in Frostside, hollow and exhausted",
+   "style": "hollow, exhausted",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V046"
+  },
+  "V047": {
+   "gemini_voice": "voice_h7w1w2t15qa7",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a ruined noble in Frostside, hollow and exhausted",
+   "style": "hollow, exhausted",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V047"
+  },
+  "V048": {
+   "gemini_voice": "voice_4qvwjwbpwkrp",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "Agathe Rook, \"Mother Rook\", elder; remembers the song of the cut, Frostside. Riddles and old sayings, fragments of song; speaks in short pronouncements.",
+   "style": "incantatory, husky, fierce",
+   "named": "mother_rook",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V048"
+  },
+  "V049": {
+   "gemini_voice": "voice_e2jr39qz5sw3",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a ragged gate guard in Frostside, gentle despite everything",
+   "style": "gentle despite everything",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V049"
+  },
+  "V050": {
+   "gemini_voice": "voice_ngrkmqkym0bl",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "Dagny Thorn, guard at the gate that won't close, Frostside. Sarcastic complaints and mock salutes. Insults the gate as if it were a person.",
+   "style": "sardonic, slow, sour",
+   "named": "dagny_thorn",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V050"
+  },
+  "V051": {
+   "gemini_voice": "voice_mmycmh57akix",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a orphan in Frostside, wary and suspicious",
+   "style": "wary, suspicious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V051"
+  },
+  "V052": {
+   "gemini_voice": "voice_nnrrmrdnqhw4",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a bone carver in Frostside, wary and suspicious",
+   "style": "wary, suspicious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V052"
+  },
+  "V053": {
+   "gemini_voice": "voice_rz5591oeevv8",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "Tilly Frane, broth seller on the Ice Stairs, Frostside. Fast and cheeky; sells broth like a dare and dreams out loud about warm places.",
+   "style": "chirpy, quick, cheeky",
+   "named": "tilly_frane",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V053"
+  },
+  "V054": {
+   "gemini_voice": "voice_ro8blh08aees",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "Sorrel Vey, hedge healer; treats bites and frostbite, Frostside. Direct instructions, no comfort. Gets to the point. Talks about the Tarnish like a wound gone bad.",
+   "style": "brisk, dry, practical",
+   "named": "sorrel_vey",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V054"
+  },
+  "V055": {
+   "gemini_voice": "voice_7xxaxqwtd2r8",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a frostbitten elder in Frostside, wary and suspicious",
+   "style": "wary, suspicious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V055"
+  },
+  "V056": {
+   "gemini_voice": "voice_khr7xox0ag03",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a rune-marked sentry in Frostside, bitter and blunt",
+   "style": "bitter, blunt",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V056"
+  },
+  "V057": {
+   "gemini_voice": "voice_2lgr2gytid41",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a scavenger in Frostside, hollow and exhausted",
+   "style": "hollow, exhausted",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V057"
+  },
+  "V058": {
+   "gemini_voice": "voice_76w2ocsjvb0m",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "Marta Quarry, keeper of the Long Shelter, Frostside. Barked rules and headcounts. Kind in what she does, harsh in what she says. Everything is a job.",
+   "style": "commanding, brisk, carrying",
+   "named": "marta_quarry",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V058"
+  },
+  "V059": {
+   "gemini_voice": "voice_3d78yzgc9fvy",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a refugee in Frostside, bitter and blunt",
+   "style": "bitter, blunt",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V059"
+  },
+  "V060": {
+   "gemini_voice": "voice_aibn1c0uanaa",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "Brenna Cold, defender of the ice wall, Wall Company, Frostside. Flat soldier talk in numbers and distances. Drifts off mid-sentence when the fog comes up.",
+   "style": "even, quiet, distant",
+   "named": "brenna_cold",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V060"
+  },
+  "V061": {
+   "gemini_voice": "voice_pb4s5zxg59p4",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a war caster in Giltside, gracious",
+   "style": "gracious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V061"
+  },
+  "V062": {
+   "gemini_voice": "voice_ljc3k23edlmp",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a bone carver in Frostside, hollow and exhausted",
+   "style": "hollow, exhausted",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V062"
+  },
+  "V063": {
+   "gemini_voice": "voice_kqfrpgmrz1s6",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "Pim Ashgrove, bell-ringer's apprentice; runs errands for Ilse and the Professor, Giltside. Formal and careful, as if reciting a lesson. Asks permission for everything.",
+   "style": "polite, careful, hesitant",
+   "named": "pim_ashgrove",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V063"
+  },
+  "V064": {
+   "gemini_voice": "voice_ygbxwgy0gisd",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "Horace Pratt, ironmonger at Weigh-House Corner, Pewterside. Sour predictions of doom; haggles over everything. \"Mark my words.\"",
+   "style": "sour, creaking, disapproving",
+   "named": "horace_pratt",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V064"
+  },
+  "V065": {
+   "gemini_voice": "voice_9c39qe02krio",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "a watch constable in Pewterside, brisk and practical",
+   "style": "brisk, practical",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V065"
+  },
+  "V066": {
+   "gemini_voice": "voice_e62dmit4kj0w",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a festival musician in Giltside, cheerful and warm",
+   "style": "cheerful, warm",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V066"
+  },
+  "V067": {
+   "gemini_voice": "voice_x6x6wdtqa1do",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "Gunnar Skarre, ice-cutter on the Ice Stairs, Frostside. Few, heavy words; deadpan jokes about death. Talks to the ice like a coworker.",
+   "style": "slow, heavy, deadpan",
+   "named": "gunnar_skarre",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V067"
+  },
+  "V068": {
+   "gemini_voice": "voice_3sn546f0wpys",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "Ned Lusk, seamstress; mends collars for half of Coal Lane, Pewterside. Soft and sparing with words; describes colours he has never seen. Apologises for taking up room.",
+   "style": "shy, soft, whispery",
+   "named": "ned_lusk",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V068"
+  },
+  "V069": {
+   "gemini_voice": "voice_4jfbwqr72mpi",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a battle mage in Giltside, proud and confident",
+   "style": "proud, confident",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V069"
+  },
+  "V070": {
+   "gemini_voice": "voice_jwig1e3u4ec6",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a bone carver in Frostside, hollow and exhausted",
+   "style": "hollow, exhausted",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V070"
+  },
+  "V071": {
+   "gemini_voice": "voice_2vp02frdh27a",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "Lucan Marlowe, dancer; performs at the Bell Square fountain, Giltside. Theatrical and breathless, with a pose at the end of every sentence. Talks about himself in the third person when he's upset.",
+   "style": "theatrical, breathless, swooping",
+   "named": "lucan_marlowe",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V071"
+  },
+  "V072": {
+   "gemini_voice": "voice_m1b9c9l4zgf7",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "Walter Dunmore, pensioner; chess player at the tram shelter, Pewterside. Mutters half-finished complaints and chess talk. Brightens only around Hester.",
+   "style": "mumbling, gruff, slow",
+   "named": "walter_dunmore",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V072"
+  },
+  "V073": {
+   "gemini_voice": "voice_wrhy7k8ic0aw",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a dancer in Giltside, cheerful and warm",
+   "style": "cheerful, warm",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V073"
+  },
+  "V074": {
+   "gemini_voice": "voice_hfjb83ksxmib",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "Sid Kettle, laundryman at the Coal Lane steam laundry, Pewterside. Few words, long pauses, simple and literal. Says exactly what he means and nothing else.",
+   "style": "slow, soft, gentle",
+   "named": "sid_kettle",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V074"
+  },
+  "V075": {
+   "gemini_voice": "voice_ymf16msxxpep",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "Frank Dunning, newspaper seller; writes his own paper, the Coal Lane Clarion, Pewterside. Shouts headlines; every claim is wild, and then comes a real question in a whisper.",
+   "style": "brash, shouting, then whispering",
+   "named": "frank_dunning",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V075"
+  },
+  "V076": {
+   "gemini_voice": "voice_6krz5cglzzgr",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a refugee in Frostside, hollow and exhausted",
+   "style": "hollow, exhausted",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V076"
+  },
+  "V077": {
+   "gemini_voice": "voice_b9doql4yeqlp",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "a watch constable in Pewterside, weary but polite",
+   "style": "weary but polite",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V077"
+  },
+  "V078": {
+   "gemini_voice": "voice_hd0b21atk4b3",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "a night watchman in Pewterside, dry and matter-of-fact",
+   "style": "dry, matter-of-fact",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V078"
+  },
+  "V079": {
+   "gemini_voice": "voice_70bh0z7hxecx",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a ice-cutter in Frostside, fierce and defiant",
+   "style": "fierce, defiant",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V079"
+  },
+  "V080": {
+   "gemini_voice": "voice_nvhxi1r6nd2t",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a innkeeper in Giltside, cheerful and warm",
+   "style": "cheerful, warm",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V080"
+  },
+  "V081": {
+   "gemini_voice": "voice_s8ugjivmwydy",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "Tobin Lark, candle seller on Bell Lane, Giltside. Fast street patter that rhymes when he's selling; a cheeky nickname for everyone.",
+   "style": "fast, cheeky, sing-song",
+   "named": "tobin_lark",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V081"
+  },
+  "V082": {
+   "gemini_voice": "voice_ujxkbk90qb97",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a soldier in Giltside, gracious",
+   "style": "gracious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V082"
+  },
+  "V083": {
+   "gemini_voice": "voice_azf5h4u90yvq",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a battle mage in Giltside, loud and jolly",
+   "style": "loud, jolly",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V083"
+  },
+  "V084": {
+   "gemini_voice": "voice_xfucd9au9ywt",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a dancer in Giltside, teasing and playful",
+   "style": "teasing, playful",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V084"
+  },
+  "V085": {
+   "gemini_voice": "voice_25dq3q5dmm1p",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a squad captain in Giltside, earnest and eager",
+   "style": "earnest, eager",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V085"
+  },
+  "V086": {
+   "gemini_voice": "voice_w1jzgs1zshh4",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "Amos Saffery, spice trader, Giltside. Smooth salesman's patter; every sentence is a small offer. Uses \"friend\" the way other people use a hand on your shoulder.",
+   "style": "smooth, persuasive, smiling",
+   "named": "amos_saffery",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V086"
+  },
+  "V087": {
+   "gemini_voice": "voice_dtz95c7gc6fm",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a battle mage in Giltside, gracious",
+   "style": "gracious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V087"
+  },
+  "V088": {
+   "gemini_voice": "voice_gt7w45r8qnas",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "Barnaby Thrale, master tailor; cut Wren's silvered coat, Giltside. Talks in cloth: people are 'well cut' or 'badly hemmed'. Long sentences that trail off when he forgets the end.",
+   "style": "chatty, gentle, a little breathless",
+   "named": "barnaby_thrale",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V088"
+  },
+  "V089": {
+   "gemini_voice": "voice_r5c3wn5tc7h7",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a soldier in Giltside, gracious",
+   "style": "gracious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V089"
+  },
+  "V090": {
+   "gemini_voice": "voice_lt7scdtf9pea",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a street performer in Giltside, gracious",
+   "style": "gracious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V090"
+  },
+  "V091": {
+   "gemini_voice": "voice_dgzjpn435zam",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "Hal Fairweather, retired bridge guard; tarnished, hidden in the Lamplight's cellar, Giltside. Grumbles about everything he loves. Short, gruff sentences; goes soft on one word and covers it with a cough.",
+   "style": "gruff, slow, grumbling",
+   "named": "hal_fairweather",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V091"
+  },
+  "V092": {
+   "gemini_voice": "voice_uvitv3o0vrbi",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a dancer in Giltside, cheerful and warm",
+   "style": "cheerful, warm",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V092"
+  },
+  "V093": {
+   "gemini_voice": "voice_5ikofn6wwelo",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "Jory Pell, fiddler; plays the Lamplight and the festival squares, Giltside. Quick and musical; turns everything into a joke or a song title. Drums his fingers in rhythm while he talks.",
+   "style": "quick, playful, sing-song",
+   "named": "jory_pell",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V093"
+  },
+  "V094": {
+   "gemini_voice": "voice_xihomhy08hf5",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "Dov Merriman, glassblower; makes lantern glass, Giltside. Loud and blunt, all exclamation. Swears by heat. Insults the people he likes best.",
+   "style": "loud, warm, booming",
+   "named": "dov_merriman",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V094"
+  },
+  "V095": {
+   "gemini_voice": "voice_rwvn4qoh3jp8",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a squad captain in Giltside, teasing and playful",
+   "style": "teasing, playful",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V095"
+  },
+  "V096": {
+   "gemini_voice": "voice_rj6yxco6u9wu",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a city watch sergeant in Giltside, cheerful and warm",
+   "style": "cheerful, warm",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V096"
+  },
+  "V097": {
+   "gemini_voice": "voice_d7lmqd6pwnws",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a apprentice in Giltside, gracious",
+   "style": "gracious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V097"
+  },
+  "V098": {
+   "gemini_voice": "voice_ntnlqpp9ra4s",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "Corin Ashby, lantern maker; runs the Bell Lane lighting crew, Giltside. Earnest and formal; speaks about light the way other people speak about scripture. Repeats Lantern Law like a vow.",
+   "style": "solemn, careful, earnest",
+   "named": "corin_ashby",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V098"
+  },
+  "V099": {
+   "gemini_voice": "voice_7am70qn9ktzs",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "Professor Tobias Quell, scholar of the Glazier; keeps the Archive, Giltside. Lectures. Long words, corrects himself mid-sentence, adds footnotes out loud.",
+   "style": "eager, fast, lecturing",
+   "named": "tobias_quell",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V099"
+  },
+  "V100": {
+   "gemini_voice": "voice_nqxmq9ag937n",
+   "sex": "Male",
+   "side": "Giltside",
+   "persona": "a bridge guard in Giltside, cheerful and warm",
+   "style": "cheerful, warm",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V100"
+  },
+  "V101": {
+   "gemini_voice": "voice_a150bgsx2ahy",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a ruined noble in Frostside, fierce and defiant",
+   "style": "fierce, defiant",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V101"
+  },
+  "V102": {
+   "gemini_voice": "voice_w432mewgu0yi",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a broth seller in Frostside, fierce and defiant",
+   "style": "fierce, defiant",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V102"
+  },
+  "V103": {
+   "gemini_voice": "voice_dqlu0zgzhkx0",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a ragged gate guard in Frostside, bitter and blunt",
+   "style": "bitter, blunt",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V103"
+  },
+  "V104": {
+   "gemini_voice": "voice_lfbiwddk1r8k",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a ruined noble in Frostside, wary and suspicious",
+   "style": "wary, suspicious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V104"
+  },
+  "V105": {
+   "gemini_voice": "voice_mtas4p11wvw3",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a refugee in Frostside, wary and suspicious",
+   "style": "wary, suspicious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V105"
+  },
+  "V106": {
+   "gemini_voice": "voice_a08q2wm8312q",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a hedge healer in Frostside, fierce and defiant",
+   "style": "fierce, defiant",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V106"
+  },
+  "V107": {
+   "gemini_voice": "voice_jx31232gjcd4",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a ice-cutter in Frostside, bitter and blunt",
+   "style": "bitter, blunt",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V107"
+  },
+  "V108": {
+   "gemini_voice": "voice_02ed9f9v92gr",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a bone carver in Frostside, bitter and blunt",
+   "style": "bitter, blunt",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V108"
+  },
+  "V109": {
+   "gemini_voice": "voice_phrp3djg1kzh",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "Kit Marrow, scavenger; a drifter camped under the Lantern Gate, Frostside. Soft and polite, always offering something he found. Describes things by what they could be.",
+   "style": "soft, kind, hopeful",
+   "named": "kit_marrow",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V109"
+  },
+  "V110": {
+   "gemini_voice": "voice_czs914vz0v6j",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "Eskil Varn, soldier of the Wall Company, Frostside. A grumbling soldier who complains about warm-side troops, then turns halting and poetic about Marta.",
+   "style": "sour, slow, halting",
+   "named": "eskil_varn",
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V110"
+  },
+  "V111": {
+   "gemini_voice": "voice_3uhdiaxw1nde",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a ice-cutter in Frostside, hollow and exhausted",
+   "style": "hollow, exhausted",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V111"
+  },
+  "V112": {
+   "gemini_voice": "voice_0e9kaba99ccd",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a ice-wall defender in Frostside, bitter and blunt",
+   "style": "bitter, blunt",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Soldier_Talk/SCue_VO_Soldier_Talk_V112"
+  },
+  "V113": {
+   "gemini_voice": "voice_a4tmda744g8v",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a beggar in Frostside, wary and suspicious",
+   "style": "wary, suspicious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V113"
+  },
+  "V114": {
+   "gemini_voice": "voice_9ojt8ksu1m5j",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a broth seller in Frostside, bitter and blunt",
+   "style": "bitter, blunt",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V114"
+  },
+  "V115": {
+   "gemini_voice": "voice_mfbh05brp9xm",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a frostbitten elder in Frostside, gentle despite everything",
+   "style": "gentle despite everything",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V115"
+  },
+  "V116": {
+   "gemini_voice": "voice_zrfq7jo9o24u",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a frostbitten elder in Frostside, wary and suspicious",
+   "style": "wary, suspicious",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V116"
+  },
+  "V117": {
+   "gemini_voice": "voice_dtjeift132w6",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a shelter keeper in Frostside, fierce and defiant",
+   "style": "fierce, defiant",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V117"
+  },
+  "V118": {
+   "gemini_voice": "voice_yfx0yk1c47q1",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a ragged gate guard in Frostside, bitter and blunt",
+   "style": "bitter, blunt",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V118"
+  },
+  "V119": {
+   "gemini_voice": "voice_eccbqi505dag",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a salvage trader in Frostside, hollow and exhausted",
+   "style": "hollow, exhausted",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V119"
+  },
+  "V120": {
+   "gemini_voice": "voice_urz13tt2rj01",
+   "sex": "Male",
+   "side": "Frostside",
+   "persona": "a rune-marked sentry in Frostside, bitter and blunt",
+   "style": "bitter, blunt",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V120"
+  },
+  "V121": {
+   "gemini_voice": "voice_1553z1r5c9ee",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "a tram conductor in Pewterside, brisk and practical",
+   "style": "brisk, practical",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V121"
+  },
+  "V122": {
+   "gemini_voice": "voice_6r9f9oba3e28",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "a seamstress in Pewterside, quietly worried",
+   "style": "quietly worried",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V122"
+  },
+  "V123": {
+   "gemini_voice": "voice_nulahsiotdvj",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "a fishmonger in Pewterside, dry and matter-of-fact",
+   "style": "dry, matter-of-fact",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V123"
+  },
+  "V124": {
+   "gemini_voice": "voice_1yafocd4m9o8",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "a bookbinder in Pewterside, weary but polite",
+   "style": "weary but polite",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V124"
+  },
+  "V125": {
+   "gemini_voice": "voice_dwdn4tabluaz",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "a tea-stall keeper in Pewterside, kind but rushed",
+   "style": "kind but rushed",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V125"
+  },
+  "V126": {
+   "gemini_voice": "voice_fp808uejp1d9",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "a pensioner in Pewterside, gloomy and wry",
+   "style": "gloomy, wry",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V126"
+  },
+  "V127": {
+   "gemini_voice": "voice_ojcwrqdnk7vj",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "a newspaper seller in Pewterside, kind but rushed",
+   "style": "kind but rushed",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V127"
+  },
+  "V128": {
+   "gemini_voice": "voice_bco75iumgi4q",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "a newspaper seller in Pewterside, kind but rushed",
+   "style": "kind but rushed",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V128"
+  },
+  "V129": {
+   "gemini_voice": "voice_09kwnp624371",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "a tram conductor in Pewterside, dry and matter-of-fact",
+   "style": "dry, matter-of-fact",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V129"
+  },
+  "V130": {
+   "gemini_voice": "voice_vxxm87rba7u5",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "a fishmonger in Pewterside, gloomy and wry",
+   "style": "gloomy, wry",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V130"
+  },
+  "V131": {
+   "gemini_voice": "voice_xro451exvea5",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "a bookbinder in Pewterside, quietly worried",
+   "style": "quietly worried",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V131"
+  },
+  "V132": {
+   "gemini_voice": "voice_8txm392cdvyu",
+   "sex": "Male",
+   "side": "Pewterside",
+   "persona": "a seamstress in Pewterside, weary but polite",
+   "style": "weary but polite",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Civilian_Talk/SCue_VO_Civilian_Talk_V132"
+  },
+  "V133": {
+   "gemini_voice": "voice_irbmnvrcep6t",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a bridge guard in Giltside, proud and confident",
+   "style": "proud, confident",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V133"
+  },
+  "V134": {
+   "gemini_voice": "voice_j6vie7qz7j5s",
+   "sex": "Female",
+   "side": "Giltside",
+   "persona": "a city watch sergeant in Giltside, loud and jolly",
+   "style": "loud, jolly",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V134"
+  },
+  "V135": {
+   "gemini_voice": "voice_g1w9x2vozk1p",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "a watch constable in Pewterside, brisk and practical",
+   "style": "brisk, practical",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V135"
+  },
+  "V136": {
+   "gemini_voice": "voice_k9zipbde8y5z",
+   "sex": "Female",
+   "side": "Pewterside",
+   "persona": "a night watchman in Pewterside, gloomy and wry",
+   "style": "gloomy, wry",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V136"
+  },
+  "V137": {
+   "gemini_voice": "voice_nslsew6vqql8",
+   "sex": "Female",
+   "side": "Frostside",
+   "persona": "a rune-marked sentry in Frostside, fierce and defiant",
+   "style": "fierce, defiant",
+   "named": null,
+   "cue_talk": "/Game/Audio/Jam/Voice/Cues/Guard_Talk/SCue_VO_Guard_Talk_V137"
+  }
+ }
+}

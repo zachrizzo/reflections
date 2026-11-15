@@ -90,4 +90,6 @@ A standard web search (2026-11-14) found no game called "Three Takes", "Cut Cont
 
 ## Decision
 
-**Waiting on the team's choice.** Once a set is chosen, [rename-table.md](rename-table.md) lists every player-visible string with its file and owner, and each owner gets their rows.
+**Chosen 2026-11-14: set B, "Reflections".** The game is *Reflections*. The city is Lanthorne, with three sides: Pewterside, Giltside and Frostside. Shards are the coins, the jump is "step through", the coat is the silvered coat, the hero is Wren Hale, the Silverer, and the villain is the Tarnish.
+
+Set B's link to the theme is weak, so the team added two Director's Cut lines (see [README.md](README.md), decision 2). In game: "Lanthorne was cut into three reflections, and only one is the version its maker meant. The Tarnish wants the final cut." On the itch page and in the dev log, spell crafting is the director's cut. [rename-table.md](rename-table.md) lists every player-visible string with its file and owner. Each owner gets its rows by message.

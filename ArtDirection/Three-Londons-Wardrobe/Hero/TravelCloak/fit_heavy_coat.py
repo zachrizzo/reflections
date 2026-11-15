@@ -25,6 +25,7 @@ Hero_TravelCloak_Coat.blend next to this script. The source .blend is not modifi
 
 import json
 import math
+import os
 from pathlib import Path
 
 import bpy
@@ -35,13 +36,15 @@ from mathutils.bvhtree import BVHTree
 ART = Path(__file__).resolve().parent
 STAGING = ART.parents[3] / 'Intermediate/TravelCloak'
 STAGING.mkdir(parents=True, exist_ok=True)
-NAME = 'SK_HeroTravel_Drape_Coat'
+NAME = os.environ.get('COAT_NAME', 'SK_HeroTravel_Drape_Coat')
 
 BODY = bpy.data.objects['Native MetaHuman fitting body']
 RIG = next(mod.object for mod in BODY.modifiers if mod.type == 'ARMATURE')
 SHIRT = bpy.data.objects.get('SK_HeroTravel_Shirt')
 
-ACROSS, ROWS = 64, 50          # 65 x 51 vertices
+# 64 x 50 (3,315 vertices) was the first build; COAT_ACROSS/COAT_ROWS give a lighter sim mesh.
+ACROSS = int(os.environ.get('COAT_ACROSS', 64))
+ROWS = int(os.environ.get('COAT_ROWS', 50))
 TOP_Z, HEM_Z = 1.545, 0.135    # collar to just above the ankle
 ORIGIN_Y = -0.014              # body axis used by the original fit
 START_TOP, START_HEM = 1.15, 1.92  # half-opening (rad from the front) at collar and below the mantle
@@ -312,5 +315,5 @@ bpy.ops.export_scene.fbx(filepath=str(STAGING / (NAME + '.fbx')), use_selection=
 (STAGING / (NAME + '_report.json')).write_text(json.dumps(report, indent=2))
 (ART / (NAME + '_report.json')).write_text(json.dumps(report, indent=2))
 bpy.context.preferences.filepaths.save_version = 0
-bpy.ops.wm.save_as_mainfile(filepath=str(ART / 'Hero_TravelCloak_Coat.blend'))
+bpy.ops.wm.save_as_mainfile(filepath=str(ART / os.environ.get('COAT_BLEND', 'Hero_TravelCloak_Coat.blend')))
 print('COAT_REPORT=' + json.dumps(report))

@@ -1,6 +1,6 @@
 # Clothing fit audit — 13 November 2026
 
-These are measurements of **the Blender source fitting scenes**, not certified measurements of the meshes currently rendered by Unreal. The audit renders ten color views (eight rest poses and two synthetic Coin Clerk poses), and `fit-audit.json` contains the full per-object counts. The corresponding Blender source paths are embedded in that JSON. The hero's separate Chaos cloak is not included in `Hero_Wardrobe.blend`; see the separate hero-cloak work for that mesh and physics. The 14 November cloak fix (broken rest mesh, skinning and simulation settings) is written up in `HeroCoat-Cloth-Fix.md` in this folder.
+These are measurements of **the Blender source fitting scenes**, not certified measurements of the meshes currently rendered by Unreal. The audit renders ten color views (eight rest poses and two synthetic Coin Clerk poses), and `fit-audit.json` contains the full per-object counts. The corresponding Blender source paths are embedded in that JSON. The hero's separate Chaos cloak is not included in `Hero_Wardrobe.blend`; see the separate hero-cloak work for that mesh and physics. The 14 November cloak fix (broken rest mesh, skinning and simulation settings) is written up in `HeroCoat-Cloth-Fix.md` in this folder. The fix for the hero's hair trailing behind the head while running is in `HeroHair-Detach-Fix.md`.
 
 ## Reading the maps
 

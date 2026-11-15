@@ -25,6 +25,10 @@ public class reflections : ModuleRules
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime", "MassSpawner", "MassActors", "MassEntity", "MassCore", "MetaHumanCrowd", "Niagara", "WebSockets", "AudioCaptureCore", "AudioCapture", "Json" });
+		// City crowd on Mass + ZoneGraph (Crowd/*); all plugins already enabled in the .uproject.
+		PrivateDependencyModuleNames.AddRange(new string[] { "MassCommon", "MassMovement", "MassNavigation", "MassZoneGraphNavigation", "MassRepresentation", "MassLOD", "MassSignals", "MassCrowd", "ZoneGraph", "ZoneGraphAnnotations", "MassAIBehavior" });
+		// Cutscene player (Cinematics/*): Level Sequences with runtime bindings and a transform origin.
+		PrivateDependencyModuleNames.AddRange(new string[] { "LevelSequence", "MovieScene", "MovieSceneTracks" });
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.AddRange(new string[] {

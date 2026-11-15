@@ -308,7 +308,7 @@ async def build_body():
 # ------------------------------------------------------------------------------------------------ burst
 async def build_burst():
     """Payload detonation, shaped by the recipe. World space, one shot."""
-    b = await new_system('NS_Crafted_Burst', [('Normal', 'vec3', (0.0, 0.0, 1.0)), ('Radius', 'float', 200.0)])
+    b = await new_system('NS_Crafted_Burst', [('Normal', 'vec3', (0.0, 0.0, 1.0)), ('Radius', 'float', 45.0)])
     up = 'User.Normal'
     tan = 'normalize(cross(%s, float3(0.31f, 0.71f, 0.63f)))' % up
     bit = 'cross(%s, %s)' % (up, tan)

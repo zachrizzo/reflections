@@ -2,7 +2,11 @@
 #include "Hero/ReflectionsSpellAim.h"
 #include "Hero/ReflectionsSpellCatalog.h"
 #include "Hero/ReflectionsSpellCombat.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/DecalComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
@@ -15,10 +19,16 @@
 #include "TimerManager.h"
 #include "Components/AudioComponent.h"
 #include "Sound/SoundBase.h"
+#include "Misc/PackageName.h"
 
 namespace
 {
     const TCHAR* SystemsFolder = TEXT("/Game/Characters/Hero/SpellVFX/Systems/");
+    constexpr int32 MaxGroundMarks = 24;
+    // A mark holds for GroundMarkHold seconds, then fades over GroundMarkFade (M_Spell_GroundMark reads both through
+    // DecalLifetimeOpacity) and the component is destroyed.
+    constexpr float GroundMarkHold = 1.5f;
+    constexpr float GroundMarkFade = 3.5f;
 
     /** Everything that makes an element look like itself, fed to the shared systems' User.* parameters. */
     struct FElementStyle
@@ -46,6 +56,16 @@ namespace
         float ArcCount;
         float MoteCount;
     };
+
+    /** Tarnish (enemy magic): a black-violet core, sickly silver sparks and smoke that drinks the light. */
+    const FElementStyle& TarnishStyle()
+    {
+        static const FElementStyle Tarnish{
+            {0.30f, 0.03f, 0.55f, 1.0f}, {0.66f, 0.70f, 0.74f, 1.0f},
+            22.0f, 70.0f, -120.0f, 420.0f, 3.0f, 40.0f, 0.0f, 12.0f,
+            55.0f, -650.0f, 0.0f, 0.0f, {0.05f, 0.02f, 0.07f, 1.0f}, 16.0f, {0.025f, 0.01f, 0.04f, 0.82f}, 0.0f, 0.0f, 34.0f};
+        return Tarnish;
+    }
 
     const FElementStyle& StyleFor(EReflectionsSpellElement Element)
     {
@@ -105,6 +125,36 @@ namespace
     {
         Component->SetVariableLinearColor(TEXT("User.Color"), Style.Color);
         Component->SetVariableLinearColor(TEXT("User.Color2"), Style.Color2);
+    }
+
+    /** One impact or muzzle burst from the shared NS_Spell_Impact, styled by element (or tarnish). */
+    void SpawnStyledBurst(UObject* Context, UNiagaraSystem* ImpactSystem, const FElementStyle& Style, const FVector& Location,
+        const FVector& Normal, float Scale, bool bMuzzle)
+    {
+        if (!ImpactSystem) return;
+        FVector Up = Normal.GetSafeNormal();
+        if (Up.IsNearlyZero()) Up = FVector::UpVector;
+        UNiagaraComponent* Burst = UNiagaraFunctionLibrary::SpawnSystemAtLocation(Context, ImpactSystem, Location, Up.Rotation(), FVector(1.0f),
+            true, false, ENCPoolMethod::AutoRelease, true);
+        if (!Burst) return;
+        SetColors(Burst, Style);
+        Burst->SetVariableVec3(TEXT("User.Normal"), Up);
+        Burst->SetVariableFloat(TEXT("User.Scale"), Scale);
+        Burst->SetVariableFloat(TEXT("User.Turbulence"), Style.Turbulence);
+        Burst->SetVariableFloat(TEXT("User.SparkGravity"), Style.ImpactGravity);
+        // A muzzle flash is the same burst without the heavy parts.
+        const float Amount = bMuzzle ? 0.25f : 1.0f;
+        Burst->SetVariableFloat(TEXT("User.SparkCount"), FMath::RoundToFloat(Style.SparkCount * Amount * FMath::Sqrt(FMath::Max(Scale, 0.3f))));
+        Burst->SetVariableFloat(TEXT("User.DebrisCount"), bMuzzle ? 0.0f : FMath::RoundToFloat(Style.DebrisCount * FMath::Min(Scale, 2.0f)));
+        Burst->SetVariableFloat(TEXT("User.DebrisMesh"), Style.DebrisMesh);
+        Burst->SetVariableLinearColor(TEXT("User.DebrisColor"), Style.DebrisColor);
+        Burst->SetVariableFloat(TEXT("User.SmokeCount"), bMuzzle ? 0.0f : FMath::RoundToFloat(Style.SmokeCount * FMath::Min(Scale, 2.5f)));
+        Burst->SetVariableLinearColor(TEXT("User.SmokeColor"), Style.SmokeColor);
+        Burst->SetVariableFloat(TEXT("User.FlameCount"), FMath::RoundToFloat(Style.FlameCount * Amount * FMath::Min(Scale, 2.5f)));
+        Burst->SetVariableFloat(TEXT("User.ArcCount"), FMath::RoundToFloat(Style.ArcCount * Amount * FMath::Min(Scale, 2.0f)));
+        Burst->SetVariableFloat(TEXT("User.MoteCount"), FMath::RoundToFloat(Style.MoteCount * Amount));
+        Burst->SetVariableFloat(TEXT("User.LightScale"), bMuzzle ? 0.35f : 1.0f);
+        Burst->Activate(true);
     }
 
     APlayerController* LocalController(const UWorld* World)
@@ -186,8 +236,17 @@ void UReflectionsSpellVfxSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     ImpactSystem = LoadSystem(TEXT("NS_Spell_Impact"));
     HealSystem = LoadSystem(TEXT("NS_Spell_Heal"));
     WardSystem = LoadSystem(TEXT("NS_Spell_Ward"));
+    TarnishSystem = LoadSystem(TEXT("NS_Tarnish_Bolt"));
+    TarnishBurstSystem = LoadSystem(TEXT("NS_Tarnish_Burst"));
+    ShockSystem = LoadSystem(TEXT("NS_Spell_Shock"));
+    ShockLoopCue = FPackageName::DoesPackageExist(TEXT("/Game/Audio/Jam/Cues/SCue_Shock_Loop")) ? JamCue(TEXT("SCue_Shock_Loop")) : nullptr;
+    // Optional (audio session, train #12): checked first so a missing cue never logs a load failure.
+    ExplosionCue = FPackageName::DoesPackageExist(TEXT("/Game/Audio/Jam/Cues/SCue_Fireball_Explode"))
+        ? JamCue(TEXT("SCue_Fireball_Explode")) : nullptr;
     BloodImpact = LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/Blueprints/Combat/Blood/NS_BloodImpact.NS_BloodImpact"));
     BloodSpatter = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Blueprints/Combat/Blood/M_BloodSpatter.M_BloodSpatter"));
+    GroundMarkMaterial = LoadObject<UMaterialInterface>(nullptr,
+        TEXT("/Game/Characters/Hero/SpellVFX/Materials/M_Spell_GroundMark.M_Spell_GroundMark"));
     UE_CLOG(!ProjectileSystem || !ImpactSystem || !HealSystem, LogTemp, Warning,
         TEXT("Spell VFX: run Tools/SpellVFX/build_spell_niagara.py; some systems under %s are missing."), SystemsFolder);
     if (UReflectionsSpellEventSubsystem* Events = InWorld.GetSubsystem<UReflectionsSpellEventSubsystem>())
@@ -199,6 +258,46 @@ void UReflectionsSpellVfxSubsystem::OnWorldBeginPlay(UWorld& InWorld)
         Events->OnSpellReleaseVisual.AddUniqueDynamic(this, &UReflectionsSpellVfxSubsystem::OnReleaseVisual);
     }
     SpawnHandle = InWorld.AddOnActorSpawnedHandler(FOnActorSpawned::FDelegate::CreateUObject(this, &UReflectionsSpellVfxSubsystem::OnActorSpawned));
+    WarmUpSpellEffects(InWorld);
+}
+
+void UReflectionsSpellVfxSubsystem::WarmUpSpellEffects(UWorld& InWorld)
+{
+    // Perf (ArtDirection/Perf/README.md row 6): the first use of each spell system and its materials compiled PSOs
+    // in the middle of combat (470-535 misses in the first 12 s, 50 ms+ frames on the first casts). Registering a
+    // component precaches its renderers' PSOs, so spawn each system once far below the map and stop it shortly after.
+    TArray<UNiagaraSystem*> Systems{ProjectileSystem.Get(), ImpactSystem.Get(), HealSystem.Get(), WardSystem.Get(),
+        TarnishSystem.Get(), TarnishBurstSystem.Get(), ShockSystem.Get()};
+    // Crafted-spell systems (owned by the spell-crafting session) live in an always-cooked folder; warm them too.
+    TArray<FAssetData> Crafted;
+    FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get().GetAssetsByPath(
+        FName(TEXT("/Game/SpellCrafting/VFX")), Crafted, true);
+    for (const FAssetData& Asset : Crafted)
+    {
+        if (Asset.AssetClassPath == UNiagaraSystem::StaticClass()->GetClassPathName())
+        {
+            if (UNiagaraSystem* System = Cast<UNiagaraSystem>(Asset.GetAsset())) Systems.Add(System);
+        }
+    }
+    const FVector OutOfView(0.0f, 0.0f, -200000.0f);
+    TArray<TWeakObjectPtr<UNiagaraComponent>> Warm;
+    for (UNiagaraSystem* System : Systems)
+    {
+        if (!System) continue;
+        if (UNiagaraComponent* Component = UNiagaraFunctionLibrary::SpawnSystemAtLocation(&InWorld, System, OutOfView,
+            FRotator::ZeroRotator, FVector(1.0f), true, true, ENCPoolMethod::None, true))
+        {
+            Warm.Add(Component);
+        }
+    }
+    InWorld.GetTimerManager().SetTimer(WarmUpTimer, FTimerDelegate::CreateWeakLambda(this, [Warm]()
+    {
+        for (const TWeakObjectPtr<UNiagaraComponent>& Component : Warm)
+        {
+            if (Component.IsValid()) Component->DeactivateImmediate();
+        }
+    }), 0.5f, false);
+    UE_LOG(LogTemp, Log, TEXT("Spell VFX: warmed up %d spell systems at map start."), Warm.Num());
 }
 
 void UReflectionsSpellVfxSubsystem::Deinitialize()
@@ -207,6 +306,7 @@ void UReflectionsSpellVfxSubsystem::Deinitialize()
     {
         if (SpawnHandle.IsValid()) World->RemoveOnActorSpawnedHandler(SpawnHandle);
         World->GetTimerManager().ClearTimer(HitStopTimer);
+        World->GetTimerManager().ClearTimer(ShockTimer);
         if (UReflectionsSpellEventSubsystem* Events = World->GetSubsystem<UReflectionsSpellEventSubsystem>())
         {
             Events->OnSpellHit.RemoveDynamic(this, &UReflectionsSpellVfxSubsystem::OnSpellHit);
@@ -235,6 +335,11 @@ void UReflectionsSpellVfxSubsystem::AttachProjectileVisual(TWeakObjectPtr<ARefle
 {
     AReflectionsSpellProjectile* Projectile = WeakProjectile.Get();
     if (!Projectile || !ProjectileSystem || !Projectile->GetRootComponent()) return;
+    if (Projectile->GetLook() != EReflectionsSpellLook::Catalog)
+    {
+        AttachTarnishVisual(Projectile);
+        return;
+    }
     const EHeroSpell Spell = Projectile->GetSpell();
     if (!ReflectionsSpellCatalog::IsValid(Spell)) return;
     const FReflectionsSpellSpec& Spec = ReflectionsSpellCatalog::Get(Spell);
@@ -270,46 +375,218 @@ void UReflectionsSpellVfxSubsystem::OnProjectileDestroyed(AActor* Projectile)
     TWeakObjectPtr<UNiagaraComponent> Visual;
     if (ProjectileTrails.RemoveAndCopyValue(Projectile, Visual) && Visual.IsValid())
     {
-        // Let the trail and embers finish in the world instead of vanishing with the projectile.
+        // Let the trail and embers finish in the world instead of vanishing with the projectile. The riding light
+        // is made of 0.1 s particles, so it goes out as soon as spawning stops.
         Visual->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
         Visual->Deactivate();
+        // Backstop: nothing of a spent projectile may outlive ~2 s (the longest trail particle lives under 1 s).
+        if (UWorld* World = GetWorld())
+        {
+            FTimerHandle Handle;
+            World->GetTimerManager().SetTimer(Handle, FTimerDelegate::CreateWeakLambda(this, [Visual]()
+            {
+                if (Visual.IsValid() && Visual->IsActive() && !Visual->GetAttachParent())
+                {
+                    Visual->DeactivateImmediate();
+                }
+            }), 2.0f, false);
+        }
+    }
+}
+
+void UReflectionsSpellVfxSubsystem::AttachTarnishVisual(AReflectionsSpellProjectile* Projectile)
+{
+    UNiagaraSystem* System = TarnishSystem ? TarnishSystem.Get() : ProjectileSystem.Get();
+    if (!System) return;
+    const bool bWisp = Projectile->GetLook() == EReflectionsSpellLook::TarnishWisp;
+    const FElementStyle& Style = TarnishStyle();
+    UNiagaraComponent* Visual = UNiagaraFunctionLibrary::SpawnSystemAttached(System, Projectile->GetRootComponent(), NAME_None,
+        FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::KeepRelativeOffset, true, false, ENCPoolMethod::AutoRelease, true);
+    if (!Visual) return;
+    SetColors(Visual, Style);
+    Visual->SetVariableLinearColor(TEXT("User.SmokeColor"), Style.SmokeColor);
+    // The wisp is a slow, swollen orb with silver motes circling it; the bolt a tight dart with a smoke wake.
+    const float Scale = bWisp ? 1.3f : 1.0f;
+    Visual->SetVariableFloat(TEXT("User.Scale"), Scale);
+    Visual->SetVariableFloat(TEXT("User.Wisp"), bWisp ? 1.0f : 0.0f);
+    Visual->SetVariableFloat(TEXT("User.Gather"), 0.0f);
+    // Stand-in parameters for NS_Spell_Projectile when NS_Tarnish_Bolt is not built yet.
+    Visual->SetVariableFloat(TEXT("User.CoreSize"), Style.CoreSize);
+    Visual->SetVariableFloat(TEXT("User.SparkRate"), Style.SparkRate * Scale);
+    Visual->SetVariableFloat(TEXT("User.SparkGravity"), Style.SparkGravity);
+    Visual->SetVariableFloat(TEXT("User.Turbulence"), Style.Turbulence);
+    Visual->SetVariableFloat(TEXT("User.Jitter"), Style.Jitter);
+    Visual->SetVariableFloat(TEXT("User.Swirl"), bWisp ? 160.0f : Style.Swirl);
+    Visual->SetVariableFloat(TEXT("User.ArcRate"), 0.0f);
+    Visual->SetVariableFloat(TEXT("User.TrailWidth"), Style.TrailWidth * Scale);
+    Visual->Activate(true);
+    if (USoundBase* Loop = JamCue(TEXT("SCue_Projectile_Loop")))
+    {
+        UGameplayStatics::SpawnSoundAttached(Loop, Projectile->GetRootComponent(), NAME_None, FVector::ZeroVector,
+            EAttachLocation::KeepRelativeOffset, true, bWisp ? 0.7f : 0.9f, bWisp ? 0.6f : 0.8f);
+    }
+    Projectile->HideFallbackVisual();
+    ProjectileTrails.Add(Projectile, Visual);
+    Projectile->OnDestroyed.AddUniqueDynamic(this, &UReflectionsSpellVfxSubsystem::OnProjectileDestroyed);
+}
+
+UNiagaraComponent* UReflectionsSpellVfxSubsystem::SpawnTarnishTelegraph(USceneComponent* Parent, FName Socket)
+{
+    UNiagaraSystem* System = TarnishSystem ? TarnishSystem.Get() : ProjectileSystem.Get();
+    if (!System || !Parent) return nullptr;
+    UNiagaraComponent* Gather = UNiagaraFunctionLibrary::SpawnSystemAttached(System, Parent, Socket, FVector::ZeroVector,
+        FRotator::ZeroRotator, EAttachLocation::SnapToTarget, false, true, ENCPoolMethod::None, true);
+    if (!Gather) return nullptr;
+    const FElementStyle& Style = TarnishStyle();
+    SetColors(Gather, Style);
+    Gather->SetVariableLinearColor(TEXT("User.SmokeColor"), Style.SmokeColor);
+    Gather->SetVariableFloat(TEXT("User.Scale"), 0.25f);
+    Gather->SetVariableFloat(TEXT("User.Gather"), 1.0f);
+    Gather->SetVariableFloat(TEXT("User.Wisp"), 0.0f);
+    Gather->SetVariableFloat(TEXT("User.CoreSize"), 18.0f);
+    Gather->SetVariableFloat(TEXT("User.Swirl"), 90.0f);
+    Gather->SetVariableFloat(TEXT("User.SparkRate"), 40.0f);
+    Gather->SetVariableFloat(TEXT("User.Turbulence"), Style.Turbulence);
+    return Gather;
+}
+
+UDecalComponent* UReflectionsSpellVfxSubsystem::SpawnTarnishWarning(const FVector& Center, float Radius)
+{
+    // Kind 7 in M_Spell_GroundMark: a violet warning ring with a smoky fill; the caster ramps Strength to 1.
+    UDecalComponent* Warning = PlaceGroundMark(7.0f, 0.15f, TarnishStyle().Color, Center, FVector::UpVector, Radius, false);
+    if (Warning) Warning->SortOrder = 2;
+    return Warning;
+}
+
+void UReflectionsSpellVfxSubsystem::SpawnTarnishImpact(const FVector& Location, const FVector& Normal, AActor* Caster, float Scale, bool bMuzzle)
+{
+    FVector Up = Normal.GetSafeNormal();
+    if (Up.IsNearlyZero()) Up = FVector::UpVector;
+    const FElementStyle& Style = TarnishStyle();
+    if (TarnishBurstSystem)
+    {
+        if (UNiagaraComponent* Burst = UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, TarnishBurstSystem, Location, Up.Rotation(),
+            FVector(1.0f), true, false, ENCPoolMethod::AutoRelease, true))
+        {
+            SetColors(Burst, Style);
+            Burst->SetVariableLinearColor(TEXT("User.SmokeColor"), Style.SmokeColor);
+            Burst->SetVariableVec3(TEXT("User.Normal"), Up);
+            Burst->SetVariableFloat(TEXT("User.Scale"), Scale);
+            Burst->SetVariableFloat(TEXT("User.Amount"), bMuzzle ? 0.3f : 1.0f);
+            Burst->SetVariableFloat(TEXT("User.LightScale"), bMuzzle ? 0.35f : 1.0f);
+            Burst->Activate(true);
+        }
+    }
+    else
+    {
+        SpawnStyledBurst(this, ImpactSystem, Style, Location, Up, Scale, bMuzzle);
+    }
+    if (USoundBase* Sound = JamCue(bMuzzle ? TEXT("SCue_Arcane_Cast") : TEXT("SCue_Arcane_Impact")))
+    {
+        // Pitched down: the same voice as the player's arcane magic, but heavier and wrong.
+        UGameplayStatics::PlaySoundAtLocation(this, Sound, Location, 1.0f, 0.72f);
+    }
+    if (!bMuzzle)
+    {
+        PlaceGroundMark(6.0f, 1.0f, Style.Color, Location, Up, FMath::Clamp(40.0f + 48.0f * Scale, 60.0f, 320.0f), true);
+        ShakeNear(Location, FMath::Clamp(Scale, 0.5f, 2.0f) * 0.14f);
     }
 }
 
 void UReflectionsSpellVfxSubsystem::SpawnImpact(EHeroSpell Spell, const FVector& Location, const FVector& Normal, float Scale, bool bMuzzle)
 {
-    if (!ImpactSystem || !ReflectionsSpellCatalog::IsValid(Spell)) return;
+    if (!ReflectionsSpellCatalog::IsValid(Spell)) return;
+    SpawnStyledBurst(this, ImpactSystem, StyleFor(ReflectionsSpellCatalog::Get(Spell).Element), Location, Normal, Scale, bMuzzle);
+}
+
+void UReflectionsSpellVfxSubsystem::SpawnGroundMark(EHeroSpell Spell, const FVector& Location, const FVector& Normal, float Scale)
+{
+    UWorld* World = GetWorld();
+    if (!World || !GroundMarkMaterial || !ReflectionsSpellCatalog::IsValid(Spell)) return;
     const FReflectionsSpellSpec& Spec = ReflectionsSpellCatalog::Get(Spell);
-    const FElementStyle& Style = StyleFor(Spec.Element);
+    // Kind picks the look in M_Spell_GroundMark: 0 scorch, 1 frost, 2 wet, 3 lightning burn, 4 dirt, 5 arcane rune.
+    float Kind = 0.0f;
+    float Strength = 1.0f;
+    switch (Spec.Element)
+    {
+    case EReflectionsSpellElement::Fire: Kind = 0.0f; break;
+    case EReflectionsSpellElement::Ice: Kind = 1.0f; break;
+    case EReflectionsSpellElement::Water: Kind = 2.0f; break;
+    case EReflectionsSpellElement::Lightning: Kind = 3.0f; break;
+    case EReflectionsSpellElement::Earth: Kind = 4.0f; break;
+    case EReflectionsSpellElement::Air: Kind = 4.0f; Strength = 0.45f; break;
+    case EReflectionsSpellElement::Arcane: Kind = 5.0f; break;
+    default: return;  // Heals draw their own rune circle.
+    }
+    const float Radius = FMath::Clamp(35.0f + 35.0f * Scale + Spec.Radius * 0.3f, 55.0f, 300.0f);
+    PlaceGroundMark(Kind, Strength, StyleFor(Spec.Element).Color, Location, Normal, Radius, true);
+}
+
+UDecalComponent* UReflectionsSpellVfxSubsystem::PlaceGroundMark(float Kind, float Strength, const FLinearColor& Color,
+    const FVector& Location, const FVector& Normal, float Radius, bool bFade)
+{
+    UWorld* World = GetWorld();
+    if (!World || !GroundMarkMaterial) return nullptr;
+    // Mark the surface that was hit; a hit on a character (no static surface right behind it) marks the floor below.
     FVector Up = Normal.GetSafeNormal();
     if (Up.IsNearlyZero()) Up = FVector::UpVector;
-    UNiagaraComponent* Burst = UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactSystem, Location, Up.Rotation(), FVector(1.0f),
-        true, false, ENCPoolMethod::AutoRelease, true);
-    if (!Burst) return;
-    SetColors(Burst, Style);
-    Burst->SetVariableVec3(TEXT("User.Normal"), Up);
-    Burst->SetVariableFloat(TEXT("User.Scale"), Scale);
-    Burst->SetVariableFloat(TEXT("User.Turbulence"), Style.Turbulence);
-    Burst->SetVariableFloat(TEXT("User.SparkGravity"), Style.ImpactGravity);
-    // A muzzle flash is the same burst without the heavy parts.
-    const float Amount = bMuzzle ? 0.25f : 1.0f;
-    Burst->SetVariableFloat(TEXT("User.SparkCount"), FMath::RoundToFloat(Style.SparkCount * Amount * FMath::Sqrt(FMath::Max(Scale, 0.3f))));
-    Burst->SetVariableFloat(TEXT("User.DebrisCount"), bMuzzle ? 0.0f : FMath::RoundToFloat(Style.DebrisCount * FMath::Min(Scale, 2.0f)));
-    Burst->SetVariableFloat(TEXT("User.DebrisMesh"), Style.DebrisMesh);
-    Burst->SetVariableLinearColor(TEXT("User.DebrisColor"), Style.DebrisColor);
-    Burst->SetVariableFloat(TEXT("User.SmokeCount"), bMuzzle ? 0.0f : FMath::RoundToFloat(Style.SmokeCount * FMath::Min(Scale, 2.5f)));
-    Burst->SetVariableLinearColor(TEXT("User.SmokeColor"), Style.SmokeColor);
-    Burst->SetVariableFloat(TEXT("User.FlameCount"), FMath::RoundToFloat(Style.FlameCount * Amount * FMath::Min(Scale, 2.5f)));
-    Burst->SetVariableFloat(TEXT("User.ArcCount"), FMath::RoundToFloat(Style.ArcCount * Amount * FMath::Min(Scale, 2.0f)));
-    Burst->SetVariableFloat(TEXT("User.MoteCount"), FMath::RoundToFloat(Style.MoteCount * Amount));
-    Burst->SetVariableFloat(TEXT("User.LightScale"), bMuzzle ? 0.35f : 1.0f);
-    Burst->Activate(true);
+    const FCollisionObjectQueryParams Statics(ECC_TO_BITFIELD(ECC_WorldStatic));
+    const FCollisionQueryParams Query(SCENE_QUERY_STAT(SpellGroundMark), false);
+    FHitResult Surface;
+    bool bHit = World->LineTraceSingleByObjectType(Surface, Location + Up * 30.0f, Location - Up * 60.0f, Statics, Query);
+    if (!bHit)
+    {
+        bHit = World->LineTraceSingleByObjectType(Surface, Location + FVector(0.0f, 0.0f, 30.0f), Location - FVector(0.0f, 0.0f, 260.0f),
+            Statics, Query);
+    }
+    if (!bHit) return nullptr;
+
+    if (bFade)
+    {
+        GroundMarks.RemoveAll([](const TWeakObjectPtr<UDecalComponent>& Mark) { return !Mark.IsValid(); });
+        while (GroundMarks.Num() >= MaxGroundMarks)
+        {
+            if (UDecalComponent* Oldest = GroundMarks[0].Get()) Oldest->DestroyComponent();
+            GroundMarks.RemoveAt(0);
+        }
+    }
+
+    FRotator Rotation = (-Surface.ImpactNormal).Rotation();
+    Rotation.Roll = FMath::FRandRange(0.0f, 360.0f);
+    UDecalComponent* Mark = UGameplayStatics::SpawnDecalAtLocation(World, GroundMarkMaterial, FVector(30.0f, Radius, Radius),
+        Surface.ImpactPoint, Rotation, 0.0f);
+    if (!Mark) return nullptr;
+    if (UMaterialInstanceDynamic* Material = Mark->CreateDynamicMaterialInstance())
+    {
+        Material->SetScalarParameterValue(TEXT("Kind"), Kind);
+        Material->SetScalarParameterValue(TEXT("Seed"), FMath::FRandRange(0.0f, 100.0f));
+        Material->SetScalarParameterValue(TEXT("Strength"), Strength);
+        Material->SetVectorParameterValue(TEXT("Color"), Color);
+    }
+    Mark->SetFadeScreenSize(0.0f);
+    Mark->SortOrder = 1;  // Below the aim preview (10).
+    if (bFade)
+    {
+        // The spawned decal belongs to the world settings actor, so never destroy the owner after the fade.
+        Mark->SetFadeOut(GroundMarkHold, GroundMarkFade, false);
+        GroundMarks.Add(Mark);
+    }
+    return Mark;
 }
 
 void UReflectionsSpellVfxSubsystem::OnImpactVisual(EHeroSpell Spell, FVector Location, FVector Normal, AActor* Caster, float Scale)
 {
     SpawnImpact(Spell, Location, Normal, FMath::Clamp(Scale, 0.5f, 3.0f), false);
-    PlayElementCue(this, Spell, Location, true);
+    SpawnGroundMark(Spell, Location, Normal, FMath::Clamp(Scale, 0.5f, 3.0f));
+    // The fireball explodes: the audio session's explosion cue replaces the plain fire impact when it exists.
+    if (Spell == EHeroSpell::Firestorm && ExplosionCue)
+    {
+        UGameplayStatics::PlaySoundAtLocation(this, ExplosionCue, Location);
+    }
+    else
+    {
+        PlayElementCue(this, Spell, Location, true);
+    }
     ShakeNear(Location, FMath::Clamp(Scale, 0.5f, 2.0f) * (IsLocalPlayer(Caster) ? 0.2f : 0.12f));
 }
 
@@ -428,8 +705,88 @@ void UReflectionsSpellVfxSubsystem::HitStop()
     }), 0.06f * Dilation, false);
 }
 
+void UReflectionsSpellVfxSubsystem::ElectrifyBody(AActor* Target, float Duration, float Magnitude)
+{
+    UWorld* World = GetWorld();
+    if (!World || !ShockSystem || !IsValid(Target) || Duration <= 0.0f) return;
+    const double End = World->GetTimeSeconds() + FMath::Clamp(Duration, 0.2f, 4.0f);
+    if (FBodyShock* Live = Shocks.Find(Target))
+    {
+        if (Live->Crackle.IsValid() && Live->Crackle->IsActive())
+        {
+            Live->EndTime = FMath::Max(Live->EndTime, End);
+            return;
+        }
+    }
+    // Ride the visible body's pelvis when it has a posed one (so the crackle follows a ragdoll), else the actor's middle.
+    FVector Origin, Extent;
+    Target->GetActorBounds(true, Origin, Extent);
+    USceneComponent* Parent = Target->GetRootComponent();
+    FName Socket = NAME_None;
+    TArray<USkeletalMeshComponent*> Meshes;
+    Target->GetComponents(Meshes);
+    for (USkeletalMeshComponent* Mesh : Meshes)
+    {
+        const USkinnedMeshComponent* Pose = Mesh && Mesh->LeaderPoseComponent.IsValid() ? Mesh->LeaderPoseComponent.Get() : Mesh;
+        if (Mesh && Mesh->IsRegistered() && Mesh->IsVisible() && !Mesh->bHiddenInGame && Mesh->DoesSocketExist(TEXT("pelvis"))
+            && Pose && Pose->GetNumComponentSpaceTransforms() > 0)
+        {
+            Parent = Mesh;
+            Socket = TEXT("pelvis");
+            break;
+        }
+    }
+    if (!Parent) return;
+    UNiagaraComponent* Crackle = Socket.IsNone()
+        ? UNiagaraFunctionLibrary::SpawnSystemAttached(ShockSystem, Parent, NAME_None, Origin, FRotator::ZeroRotator,
+            EAttachLocation::KeepWorldPosition, false, true, ENCPoolMethod::None, true)
+        : UNiagaraFunctionLibrary::SpawnSystemAttached(ShockSystem, Parent, Socket, FVector(0.0f, 0.0f, 15.0f), FRotator::ZeroRotator,
+            EAttachLocation::SnapToTarget, false, true, ENCPoolMethod::None, true);
+    if (!Crackle) return;
+    // World-up capsule sized to the body (the pelvis socket's own axes are not upright).
+    Crackle->SetUsingAbsoluteRotation(true);
+    Crackle->SetWorldRotation(FRotator::ZeroRotator);
+    const FElementStyle& Style = StyleFor(EReflectionsSpellElement::Lightning);
+    SetColors(Crackle, Style);
+    Crackle->SetVariableFloat(TEXT("User.Height"), FMath::Clamp(Extent.Z * 1.8f, 80.0f, 210.0f));
+    Crackle->SetVariableFloat(TEXT("User.Radius"), FMath::Clamp(FMath::Max(Extent.X, Extent.Y) * 0.5f, 16.0f, 45.0f));
+    Crackle->SetVariableFloat(TEXT("User.Intensity"), FMath::Clamp(0.6f + Magnitude * 0.6f, 0.6f, 1.2f));
+    Crackle->SetVariableFloat(TEXT("User.Scale"), 1.0f);
+    FBodyShock& Shock = Shocks.Add(Target);
+    Shock.Crackle = Crackle;
+    Shock.EndTime = End;
+    if (ShockLoopCue)
+    {
+        Shock.Loop = UGameplayStatics::SpawnSoundAttached(ShockLoopCue, Parent, Socket, FVector::ZeroVector, EAttachLocation::SnapToTarget, true);
+    }
+    if (!World->GetTimerManager().IsTimerActive(ShockTimer))
+    {
+        World->GetTimerManager().SetTimer(ShockTimer, FTimerDelegate::CreateUObject(this, &UReflectionsSpellVfxSubsystem::TickShocks), 0.1f, true);
+    }
+}
+
+void UReflectionsSpellVfxSubsystem::TickShocks()
+{
+    UWorld* World = GetWorld();
+    const double Now = World ? World->GetTimeSeconds() : 0.0;
+    for (auto It = Shocks.CreateIterator(); It; ++It)
+    {
+        FBodyShock& Shock = It.Value();
+        if (It.Key().IsValid() && Shock.Crackle.IsValid() && Now < Shock.EndTime) continue;
+        // Spawning stops; the 0.1-0.45 s particles finish on their own.
+        if (Shock.Crackle.IsValid()) Shock.Crackle->Deactivate();
+        if (Shock.Loop.IsValid()) Shock.Loop->FadeOut(0.2f, 0.0f);
+        It.RemoveCurrent();
+    }
+    if (Shocks.Num() == 0 && World) World->GetTimerManager().ClearTimer(ShockTimer);
+}
+
 void UReflectionsSpellVfxSubsystem::OnSpellHit(const FReflectionsSpellHitData& Hit)
 {
+    if (Hit.Reaction == EReflectionsSpellReaction::Electrify)
+    {
+        ElectrifyBody(Hit.Target, Hit.Duration, Hit.Magnitude);
+    }
     FVector Direction = Hit.ImpactNormal.GetSafeNormal();
     if (Direction.IsNearlyZero()) Direction = -Hit.Impulse.GetSafeNormal();
     if (Direction.IsNearlyZero()) Direction = FVector::UpVector;
@@ -437,7 +794,7 @@ void UReflectionsSpellVfxSubsystem::OnSpellHit(const FReflectionsSpellHitData& H
     // Feedback for the local caster: hit marker, a short freeze on living targets and a little shake.
     const bool bLiving = IsValid(Hit.Target) && (Hit.Target->IsA<APawn>() || Hit.Target->Implements<UCombatDamageable>()
         || Hit.Target->FindComponentByClass<UReflectionsHealthComponent>());
-    if (IsLocalPlayer(Hit.Caster) && bLiving && Hit.Spell != EHeroSpell::ForcePush)
+    if (IsLocalPlayer(Hit.Caster) && bLiving && Hit.Spell != EHeroSpell::ForcePush && !Hit.bRepeat)
     {
         const UReflectionsHealthComponent* Health = Hit.Target->FindComponentByClass<UReflectionsHealthComponent>();
         if (UReflectionsSpellAimComponent* Aim = Hit.Caster->FindComponentByClass<UReflectionsSpellAimComponent>())
@@ -451,7 +808,7 @@ void UReflectionsSpellVfxSubsystem::OnSpellHit(const FReflectionsSpellHitData& H
     }
 
     // Blood is opt-in: a generic damageable object or character is not evidence of exposed flesh.
-    if (!BloodImpact || !IsValid(Hit.Target) || !Hit.Target->ActorHasTag(FName(TEXT("Flesh")))) return;
+    if (Hit.bRepeat || !BloodImpact || !IsValid(Hit.Target) || !Hit.Target->ActorHasTag(FName(TEXT("Flesh")))) return;
     UNiagaraComponent* Spray = UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, BloodImpact, Hit.Location,
         Direction.Rotation(), FVector(0.35f), true, false, ENCPoolMethod::AutoRelease, true);
     if (Spray)

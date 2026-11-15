@@ -33,26 +33,39 @@ public:
     static UReflectionsCraftedSpellSubsystem* Get(const UObject* WorldContext);
 
     // ---- targeting
-    /** Something a crafted spell should hurt: not the caster, not attached to it, not tagged Friendly. */
+    /**
+     * Something a crafted spell can hurt, like the catalog spells: anything alive except the caster, what is attached
+     * to it and the Player. Civilians tagged Friendly are harmable (and healable, see IsAlly).
+     */
     static bool IsEnemy(const AActor* Actor, const AActor* Caster);
+    /** Harmable and not Friendly: what spells seek out on their own (homing, ricochets, chains, swarms, triggers). */
+    static bool IsHostile(const AActor* Actor, const AActor* Caster);
     static bool IsAlly(const AActor* Actor, const AActor* Caster);
-    /** Enemies whose collision overlaps a sphere. Pawns first; physics props included. */
-    void FindEnemies(const FVector& Location, float Radius, const AActor* Caster, TArray<AActor*>& Out) const;
+    /** Harmable actors whose collision overlaps a sphere (only hostile ones with bHostileOnly). Physics props included. */
+    void FindEnemies(const FVector& Location, float Radius, const AActor* Caster, TArray<AActor*>& Out, bool bHostileOnly = false) const;
     void FindAllies(const FVector& Location, float Radius, const AActor* Caster, TArray<AActor*>& Out) const;
-    /** Nearest enemy pawn within Range, optionally inside a cone around Direction, skipping Exclude. */
+    /** Nearest hostile pawn within Range, optionally inside a cone around Direction, skipping Exclude. Never a civilian. */
     AActor* NearestEnemy(const FVector& Location, float Range, const AActor* Caster, const TSet<TWeakObjectPtr<AActor>>* Exclude = nullptr,
         const FVector* Direction = nullptr, float ConeCos = -1.0f) const;
 
     // ---- hits
-    /** Damage (or healing, for Life on allies), knockback, element status and the shared spell-hit event. Returns damage dealt. */
-    /** Quiet hits (rain drops, pools, auras) skip the shared hit event, so they do not trigger hit-stop on every tick. */
+    /**
+     * Damage (or healing, for Life on allies), knockback, element status and the shared spell-hit event with its
+     * reaction (element -> Explosion / Burn / Electrify / Push / Knockdown / Lift / Freeze / Hit). Returns damage dealt.
+     * Quiet hits (rain drops, pools, auras, beams) skip the shared hit event, so they do not trigger hit-stop on every
+     * tick, except that an ongoing reaction (electrify, burn, freeze, lift) is kept alive at most every 0.5 s per target
+     * with bRepeat set. BlastRadius > 0 marks a burst payload around Origin: the reaction falls off with distance, and a
+     * fire burst of 150 cm or more is an Explosion instead of a Burn.
+     */
     float ApplyHit(const FCraftedSpellResolved& Spell, AActor* Target, AActor* Caster, float Scale, const FVector& Origin, const FHitResult* DirectHit = nullptr,
-        bool bQuiet = false);
+        bool bQuiet = false, float BlastRadius = 0.0f);
     float HealActor(AActor* Target, float Amount, AActor* Healer);
     void AddBurn(AActor* Target, AActor* Caster, float Dps, float Seconds);
     void AddSlow(AActor* Target, float Factor, float Seconds);
-    /** Moves Target toward Center (or up, for Updraft). Call every frame while a pull is active. */
-    void Pull(AActor* Target, const FVector& Center, float Strength, float Radius, bool bLift, float DeltaTime);
+    /** Moves Target toward Center (or up, for Updraft). Call every frame while a pull is active. With Spell, it also
+     *  sends the Pull (or Lift) reaction about every 0.5 s per target, so NPCs play being dragged. */
+    void Pull(AActor* Target, const FVector& Center, float Strength, float Radius, bool bLift, float DeltaTime,
+        const FCraftedSpellResolved* Spell = nullptr, AActor* Caster = nullptr);
 
     // ---- visuals
     UNiagaraComponent* SpawnFx(ECraftedFx Kind, const FCraftedSpellLook& Look, const FVector& Location, const FRotator& Rotation,
@@ -81,6 +94,11 @@ private:
     TArray<FBurn> Burns;
     TArray<FSlow> Slows;
     TMap<TWeakObjectPtr<AActor>, double> LastPull;
+    /** When each target last got a reaction from a crafted spell: the 0.5 s upkeep limit and the bRepeat flag. */
+    TMap<TWeakObjectPtr<AActor>, double> ReactionSent;
+    /** May a reaction go to Target now? Loud hits always may (bOutRepeat false); quiet upkeep at most every 0.5 s,
+     *  repeating when the target had one within the last 1.5 s. Records the send. */
+    bool TakeReactionSlot(AActor* Target, bool bQuiet, bool& bOutRepeat);
     struct FArc { TWeakObjectPtr<UNiagaraComponent> Fx; float Remaining = 0; };
     TArray<FArc> Arcs;
 

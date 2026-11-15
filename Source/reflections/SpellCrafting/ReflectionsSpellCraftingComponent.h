@@ -85,7 +85,7 @@ protected:
 private:
     struct FGesture
     {
-        UAnimSequenceBase* Animation = nullptr;
+        TWeakObjectPtr<UAnimSequenceBase> Animation;  // held across frames in PendingGesture; null-checked at use
         float ReleaseTime = 0.5f;
         FName Socket = NAME_None;
     };
@@ -134,6 +134,9 @@ private:
     FCraftedSpellResolved PendingSpell;
     FGesture PendingGesture;
     bool bPendingRelease = false;
+    bool bSaveInFlight = false;
+    bool bSaveQueued = false;
+    class UReflectionsSpellCraftingSave* MakeSave() const;
     double PendingStarted = 0.0;
     double LastCastTime = -10.0;
 

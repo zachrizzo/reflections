@@ -184,6 +184,7 @@ void UReflectionsWorldJumpComponent::Startup()
         Progress->OnPagesChanged.AddUniqueDynamic(this, &UReflectionsWorldJumpComponent::HandlePagesChanged);
         Progress->OnCoinsChanged.AddUniqueDynamic(this, &UReflectionsWorldJumpComponent::HandleCoinsChanged);
         Progress->OnKeyAdded.AddUniqueDynamic(this, &UReflectionsWorldJumpComponent::HandleKeyAdded);
+        Progress->OnProgressRestored.AddUniqueDynamic(this, &UReflectionsWorldJumpComponent::HandleProgressRestored);
     }
 
     BindInput();
@@ -248,6 +249,7 @@ void UReflectionsWorldJumpComponent::Shutdown()
         Progress->OnPagesChanged.RemoveAll(this);
         Progress->OnCoinsChanged.RemoveAll(this);
         Progress->OnKeyAdded.RemoveAll(this);
+        Progress->OnProgressRestored.RemoveAll(this);
     }
 }
 
@@ -518,8 +520,8 @@ bool UReflectionsWorldJumpComponent::CanJump(EReflectionsJumpDirection Direction
     if (!Config->GetNeighbor(Here, Direction, OutDestination))
     {
         OutReason = Direction == EReflectionsJumpDirection::Up
-            ? FText::Format(LOCTEXT("NoneAbove", "There is no London above {0}."), Config->GetWorldName(Here))
-            : FText::Format(LOCTEXT("NoneBelow", "There is no London below {0}."), Config->GetWorldName(Here));
+            ? FText::Format(LOCTEXT("NoneAbove", "There is no reflection above {0}."), Config->GetWorldName(Here))
+            : FText::Format(LOCTEXT("NoneBelow", "There is no reflection below {0}."), Config->GetWorldName(Here));
         return false;
     }
     const FText DestinationName = Config->GetWorldName(OutDestination);
@@ -527,7 +529,7 @@ bool UReflectionsWorldJumpComponent::CanJump(EReflectionsJumpDirection Direction
     EReflectionsWorld Coin;
     if (!PickCoin(OutDestination, Coin))
     {
-        OutReason = FText::Format(LOCTEXT("NeedCoin", "You need a coin from {0} to cross."), Config->GetWorldName(Coin));
+        OutReason = FText::Format(LOCTEXT("NeedCoin", "You need a {0} shard to step through."), Config->GetWorldName(Coin));
         return false;
     }
 
@@ -538,19 +540,19 @@ bool UReflectionsWorldJumpComponent::CanJump(EReflectionsJumpDirection Direction
         const float Cost = Max * Config->MagicCostFraction;
         if (Current + 0.5f < Cost)
         {
-            OutReason = FText::Format(LOCTEXT("NeedMagic", "Not enough magic: the crossing takes {0}, you have {1}."),
+            OutReason = FText::Format(LOCTEXT("NeedMagic", "Not enough magic: stepping through takes {0}, you have {1}."),
                 FText::AsNumber(FMath::RoundToInt(Cost)), FText::AsNumber(FMath::FloorToInt(Current)));
             return false;
         }
         if (!CanDrainMagic() && Config->bRequireMagicSource)
         {
-            OutReason = LOCTEXT("MagicNotSpendable", "Your magic cannot be spent on a crossing yet.");
+            OutReason = LOCTEXT("MagicNotSpendable", "Your magic cannot be spent on stepping through yet.");
             return false;
         }
     }
     else if (Config->bRequireMagicSource)
     {
-        OutReason = LOCTEXT("NoMagic", "You have no magic to cross with.");
+        OutReason = LOCTEXT("NoMagic", "You have no magic to step through with.");
         return false;
     }
 
@@ -613,7 +615,7 @@ bool UReflectionsWorldJumpComponent::RequestJump(EReflectionsJumpDirection Direc
     EReflectionsWorld Coin;
     if (!Progress || !PickCoin(Destination, Coin) || !Progress->SpendCoin(Coin, Config->CoinsPerJump))
     {
-        Refuse(LOCTEXT("CoinGone", "You need a coin to cross."));
+        Refuse(LOCTEXT("CoinGone", "You need a mirror shard to step through."));
         return false;
     }
     float Current = 0.0f;
@@ -752,7 +754,7 @@ void UReflectionsWorldJumpComponent::BeginTransition(EReflectionsWorld Destinati
     }
     if (Hud)
     {
-        Hud->ShowMessage(FText::Format(LOCTEXT("Crossing", "Crossing into {0}..."), Config->GetWorldName(Destination)), Flash);
+        Hud->ShowMessage(FText::Format(LOCTEXT("Crossing", "Stepping through into {0}..."), Config->GetWorldName(Destination)), Flash);
     }
 
     if (Config->FadeOutTime <= KINDA_SMALL_NUMBER)
@@ -1156,8 +1158,8 @@ void UReflectionsWorldJumpComponent::HandleBookComplete()
 {
     if (Hud)
     {
-        Hud->ShowBanner(LOCTEXT("BookComplete", "The book is whole"), FLinearColor(1.0f, 0.85f, 0.4f),
-            LOCTEXT("BookCompleteSub", "Three pages, one spell. Now stop him."));
+        Hud->ShowBanner(LOCTEXT("BookComplete", "The mirror is whole"), FLinearColor(1.0f, 0.85f, 0.4f),
+            LOCTEXT("BookCompleteSub", "Three pages, one spell. Now burn out the Tarnish."));
     }
 }
 
@@ -1178,6 +1180,17 @@ void UReflectionsWorldJumpComponent::HandleCoinsChanged(EReflectionsWorld World,
     if (Config && Count > Before)
     {
         PlayUiSound(Config->PickupSound);
+    }
+    RefreshHud();
+}
+
+void UReflectionsWorldJumpComponent::HandleProgressRestored()
+{
+    // A checkpoint replaced the purse: resync so the next real pickup still plays its sound.
+    SeenCoins.Reset();
+    if (const UReflectionsWorldJumpSubsystem* Progress = UReflectionsWorldJumpSubsystem::Get(this))
+    {
+        SeenCoins = Progress->GetAllCoins();
     }
     RefreshHud();
 }

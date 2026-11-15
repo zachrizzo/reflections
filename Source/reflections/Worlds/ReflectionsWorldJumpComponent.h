@@ -110,6 +110,7 @@ private:
     UFUNCTION() void HandlePagesChanged(int32 Pages, int32 PagesForBook);
     UFUNCTION() void HandleCoinsChanged(EReflectionsWorld World, int32 Count);
     UFUNCTION() void HandleKeyAdded(FName KeyId);
+    UFUNCTION() void HandleProgressRestored();
 
     UPROPERTY(Transient) TObjectPtr<UReflectionsWorldJumpConfig> Config;
     UPROPERTY(Transient) TObjectPtr<UEnhancedInputComponent> JumpInput;

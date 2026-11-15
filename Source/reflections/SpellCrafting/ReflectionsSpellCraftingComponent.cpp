@@ -195,6 +195,9 @@ void UReflectionsSpellCraftingComponent::EndPlay(const EEndPlayReason::Type Reas
         Screen = nullptr;
     }
     if (UWorld* World = GetWorld()) World->GetTimerManager().ClearAllTimersForObject(this);
+    // A change still waiting behind an in-flight write would be lost with this component: write it now (once).
+    if (bSaveQueued)
+        if (UReflectionsSpellCraftingSave* Save = MakeSave()) UGameplayStatics::SaveGameToSlot(Save, UReflectionsSpellCraftingSave::SlotName(), 0);
     Super::EndPlay(Reason);
 }
 
@@ -226,16 +229,37 @@ void UReflectionsSpellCraftingComponent::SetSlotRecipe(int32 Slot, const FCrafte
     OnSlotsChanged.Broadcast();
 }
 
-void UReflectionsSpellCraftingComponent::SaveSlots()
+UReflectionsSpellCraftingSave* UReflectionsSpellCraftingComponent::MakeSave() const
 {
     UReflectionsSpellCraftingSave* Save = Cast<UReflectionsSpellCraftingSave>(UGameplayStatics::CreateSaveGameObject(UReflectionsSpellCraftingSave::StaticClass()));
-    if (!Save) return;
-    Save->Slots = Slots;
-    Save->ActiveSlot = ActiveSlot;
-    if (!UGameplayStatics::SaveGameToSlot(Save, UReflectionsSpellCraftingSave::SlotName(), 0))
+    if (Save)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Spell crafting: could not write the save slot."));
+        Save->Slots = Slots;
+        Save->ActiveSlot = ActiveSlot;
     }
+    return Save;
+}
+
+void UReflectionsSpellCraftingComponent::SaveSlots()
+{
+    // Off the game thread, one write at a time: a change while a write is in flight is folded into one more write
+    // when it finishes, so slot changes never stall a frame and never land out of order.
+    if (bSaveInFlight)
+    {
+        bSaveQueued = true;
+        return;
+    }
+    UReflectionsSpellCraftingSave* Save = MakeSave();
+    if (!Save) return;
+    bSaveInFlight = true;
+    bSaveQueued = false;
+    UGameplayStatics::AsyncSaveGameToSlot(Save, UReflectionsSpellCraftingSave::SlotName(), 0,
+        FAsyncSaveGameToSlotDelegate::CreateWeakLambda(this, [this](const FString&, const int32, bool bSuccess)
+        {
+            bSaveInFlight = false;
+            UE_CLOG(!bSuccess, LogTemp, Warning, TEXT("Spell crafting: could not write the save slot."));
+            if (bSaveQueued) SaveSlots();
+        }));
 }
 
 void UReflectionsSpellCraftingComponent::LoadSlots()
@@ -510,14 +534,23 @@ bool UReflectionsSpellCraftingComponent::SpendMana(float Cost)
 
 bool UReflectionsSpellCraftingComponent::CastActive()
 {
-    if (!Resolved.IsValidIndex(ActiveSlot)) return false;
+    if (!Resolved.IsValidIndex(ActiveSlot))
+    {
+        SetFeedback(TEXT("No crafted spell selected: press 5-8 or D-pad Up (K to craft)"), 1.5f);
+        return false;
+    }
     return CastResolved(Resolved[ActiveSlot], ActiveSlot);
 }
 
 bool UReflectionsSpellCraftingComponent::CastResolved(const FCraftedSpellResolved& Spell, int32 SlotForCooldown)
 {
     UWorld* World = GetWorld();
-    if (!World || (Driver && Driver->IsDefeated())) return false;
+    if (!World) return false;
+    if (Driver && Driver->IsDefeated())
+    {
+        SetFeedback(TEXT("Can't cast while down"), 1.0f);
+        return false;
+    }
     FindBody();
     if (GetCooldownRemaining(SlotForCooldown) > 0.0f)
     {
@@ -529,9 +562,20 @@ bool UReflectionsSpellCraftingComponent::CastResolved(const FCraftedSpellResolve
 
     if (bCoreCastAvailable && Driver)
     {
+        // Say why up front; the spell core reports its own refusals only on its HUD line.
+        if (Driver->GetMana() < Spell.ManaCost)
+        {
+            SetFeedback(FString::Printf(TEXT("Not enough mana (%s needs %.0f)"), *Spell.Name, Spell.ManaCost), 1.0f);
+            return false;
+        }
+        if (Driver->IsCasting())
+        {
+            SetFeedback(TEXT("Still casting"), 0.6f);
+            return false;
+        }
         TWeakObjectPtr<UReflectionsSpellCraftingComponent> WeakThis(this);
         const FCraftedSpellResolved Copy = Spell;
-        const bool bStarted = CraftingBridge::CastExternal(Driver.Get(), Gesture.Animation, Gesture.ReleaseTime, Gesture.Socket, AimProxy,
+        const bool bStarted = CraftingBridge::CastExternal(Driver.Get(), Gesture.Animation.Get(), Gesture.ReleaseTime, Gesture.Socket, AimProxy,
             Spell.ManaCost, 0.0f, [WeakThis, Copy](const FTransform& Origin, const FVector& Target, AActor* AimTarget)
             {
                 if (WeakThis.IsValid()) WeakThis->ReleaseNow(Copy, Origin, Target, AimTarget);
@@ -541,11 +585,19 @@ bool UReflectionsSpellCraftingComponent::CastResolved(const FCraftedSpellResolve
             ++CastCount;
             if (CooldownUntil.IsValidIndex(SlotForCooldown)) CooldownUntil[SlotForCooldown] = World->GetTimeSeconds() + Spell.Cooldown;
         }
+        else
+        {
+            SetFeedback(TEXT("Not ready yet (the last cast is still recovering)"), 0.8f);
+        }
         return bStarted;
     }
 
     // Fallback cast: own gesture playback. Never while one is pending, and a short global recovery between casts.
-    if (bPendingRelease || World->GetTimeSeconds() - LastCastTime < 0.25) return false;
+    if (bPendingRelease || World->GetTimeSeconds() - LastCastTime < 0.25)
+    {
+        SetFeedback(TEXT("Still casting"), 0.6f);
+        return false;
+    }
     if (!SpendMana(Spell.ManaCost))
     {
         SetFeedback(TEXT("Not enough mana"), 0.8f);
@@ -559,7 +611,7 @@ bool UReflectionsSpellCraftingComponent::CastResolved(const FCraftedSpellResolve
     const UReflectionsSpellAimComponent* Aim = Driver ? Driver->GetAim() : nullptr;
     UAnimInstance* Anim = Body ? Body->GetAnimInstance() : nullptr;
     // While aiming the driver owns the arm pose, so the fallback releases straight from the hand.
-    if (Gesture.Animation && Anim && !(Aim && Aim->IsAiming()))
+    if (Gesture.Animation.IsValid() && Anim && !(Aim && Aim->IsAiming()))
     {
         const float Windup = WindupFor(Spell.Recipe.Form);
         float Rate = 1.0f;
@@ -569,7 +621,7 @@ bool UReflectionsSpellCraftingComponent::CastResolved(const FCraftedSpellResolve
             Rate = FMath::Clamp(Gesture.ReleaseTime / Windup, 1.0f, 1.9f);
             StartAt = FMath::Max(0.0f, Gesture.ReleaseTime - Windup * Rate);
         }
-        FallbackMontage = Anim->PlaySlotAnimationAsDynamicMontage(Gesture.Animation, UReflectionsHeroAnimInstance::SpellSlot, 0.08f, 0.22f, Rate, 1, -1.0f, StartAt);
+        FallbackMontage = Anim->PlaySlotAnimationAsDynamicMontage(Gesture.Animation.Get(), UReflectionsHeroAnimInstance::SpellSlot, 0.08f, 0.22f, Rate, 1, -1.0f, StartAt);
         if (FallbackMontage)
         {
             bPendingRelease = true;

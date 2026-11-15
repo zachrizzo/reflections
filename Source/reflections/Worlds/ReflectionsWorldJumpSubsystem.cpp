@@ -40,6 +40,30 @@ void UReflectionsWorldJumpSubsystem::ResetProgress()
     PendingArrival = FReflectionsPendingArrival();
 }
 
+void UReflectionsWorldJumpSubsystem::RestoreProgress(const TMap<EReflectionsWorld, int32>& InCoins, const TArray<FName>& InPages,
+    const TArray<FName>& InKeys)
+{
+    Coins = InCoins;
+    Pages.Reset();
+    for (const FName& Page : InPages)
+    {
+        if (!Page.IsNone())
+        {
+            Pages.Add(Page);
+        }
+    }
+    Keys.Reset();
+    for (const FName& Key : InKeys)
+    {
+        if (!Key.IsNone())
+        {
+            Keys.Add(Key);
+        }
+    }
+    bBookComplete = Pages.Num() >= GetPagesForBook();
+    OnProgressRestored.Broadcast();
+}
+
 void UReflectionsWorldJumpSubsystem::SetCurrentWorld(EReflectionsWorld World, bool bBroadcast)
 {
     const EReflectionsWorld Previous = CurrentWorld;

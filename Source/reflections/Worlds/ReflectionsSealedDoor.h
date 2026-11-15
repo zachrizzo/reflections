@@ -21,7 +21,7 @@ public:
     AReflectionsSealedDoor();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
-    FName RequiredKey = TEXT("RedTowerKey");
+    FName RequiredKey = TEXT("GiltTowerKey");
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
     bool bConsumeKey = false;

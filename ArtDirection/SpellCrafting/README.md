@@ -54,6 +54,41 @@ projectile and on a field, which is where most of the variety comes from:
 | Proximity | projectiles stop at the aim point and arm as a mine; novas wait for an enemy; rain only falls on enemies |
 | Pulse | projectiles pulse along their path; a Ray becomes a held beam that follows the reticle; novas and runes repeat |
 
+Who gets hit: sides come from the NPC subsystem (`CanBeHarmedBy`, `IsAllyOf`), the same answer the catalog spells and
+aim assist use. It reads each NPC's archetype, so a civilian the villain infects turns hostile without tag edits.
+Actors outside that system fall back to the `Friendly` tag.
+- Harm: the player's crafted spells hurt anything alive except the player (and anything tagged `Player`). That
+  includes civilians; hurting bystanders costs reputation on the NPC side.
+- Seeking: homing, ricochets, chain jumps, swarm shards, satellite launches and proximity triggers only pick targets
+  that are not allies. A civilian gets hurt only by a direct hit or by being caught in an area; an infected one is fair
+  game.
+- Healing: Life spells heal you and your allies and never damage them.
+The NPC calls are detected at compile time (C++20 concept in `ReflectionsCraftedSpellSubsystem.cpp`). If that API
+changes, crafting falls back to the tag rule instead of failing to build.
+
+What a hit does to a body (train #12). Every crafted hit fills the shared reaction fields on `FReflectionsSpellHitData`.
+The fields and mapping were agreed with spell-combat so crafted and catalog spells match, and npc-unify plays the
+reactions. `Impulse` is unchanged (cm/s) and `Spell` is still the element's proxy spell.
+
+| Element | Reaction | Notes |
+|---|---|---|
+| Fire | Explosion, or Burn | Explosion for a burst payload 150 cm or wider (orb, nova, rune, fused or delayed blasts): `Origin` is the blast centre. Burn for everything else (bolts, rays, pierce/bounce hits, chains, beams, pools, rain), lasting the burn time (3 s). |
+| Lightning | Electrify | Lasts clamp(0.8 + 0.3 × power, 1, 2) s, then the NPC collapses. |
+| Water | Push | |
+| Earth | Knockdown | |
+| Air | Lift | |
+| Ice | Freeze | Lasts as long as the slow: 2.5 s, scaled 0.5–1.5× by hit strength. |
+| Arcane | Hit | |
+| Life (on enemies) | Push | Magnitude capped at 0.35. |
+| Gravity modifier, whirlpool | Pull | Sent from the pull itself, about every 0.5 s per caught target, `Origin` = the pull centre. Updraft sends Lift. |
+
+- **Magnitude** (0–1) is clamp(0.5 × damage / 28 + 0.5 × push / 800, 0.05, 1). Inside a burst it falls to 40% at the
+  edge. A power-3 fire orb is about 0.64, a water wave about 1.0, a lightning bolt about 0.34.
+- **Quiet hits** (beams, rain, swarms, auras, pools, field pulses) still skip the shared event for plain damage. For
+  lasting reactions (Electrify, Burn, Freeze, Pull, Lift) they send one at most every 0.5 s per target. `bRepeat` is
+  false on the first send after 1.5 s without one, and true after that. Repeats skip hit-stop, so the crafting code
+  shows the aim hit marker for them itself.
+
 ### Combinations that become something new
 
 Eighteen synergies change the rules instead of adding numbers. A named synergy also renames the spell:
@@ -120,8 +155,17 @@ sprite materials, read-only.
   mapping instead (see below).
 
 Console (development builds): `Crafting.Preset <slot> <0-3>`, `Crafting.Set <slot> <sentence or JSON>`,
-`Crafting.Slot <n>`, `Crafting.Cast [slot]`, `Crafting.Open`, `Crafting.Dump`, `Crafting.Dummies [count] [distance]`,
-`Crafting.ClearDummies`.
+`Crafting.Slot <n>`, `Crafting.Cast [slot]`, `Crafting.Open`, `Crafting.Dump`,
+`Crafting.Dummies [count] [distance] [enemy|civilian|mixed]`, `Crafting.ClearDummies`. No crafted slot is active at
+start, so give `Crafting.Cast` a slot (`Crafting.Cast 0`) or select one first. Every refused cast logs and shows its
+reason: no slot selected, down, mana, still casting, recharging, or the spell core is still recovering.
+- The test crowd is made of the team's MetaHuman NPCs, not mannequins: the Red London SimpleRed looks (Bridge Guard,
+  Coin Clerk, Archive Apprentice, Festival Drummer) and White London `BP_WhiteLook_01…06`, in turn.
+- Each one gets the placed crowd's tags (`NPC_Reactive`, `NPC_HitProxy`, `NPC_SampleLocomotion`) and is enrolled with
+  `UReflectionsNpcSubsystem::EnrollActor` as an `Enemy` (the default, hunts on sight) or a `Civilian`.
+- So they take hits through their hit capsule, react, flee or fight back, and walk with the sample locomotion.
+- A crafted gravity pull drags them by launching the hidden locomotion character that moves them.
+- Bare mannequins are only the fallback when none of those Blueprints load.
 
 ## Code map
 
@@ -163,20 +207,91 @@ all five; release frames were Conjure 0.67 s, Lance 0.40 s, SkyCall 0.53 s, Grou
 garbage collector evicts finished takes. Forms without their own gesture yet use the shared combat casts in
 `/Game/Characters/Hero/Animation/CombatCasts`.
 
+Kimodo generation is started by re-applying each section's prompt inside an editor transaction while the sequence is
+open in Sequencer. The AnimGenOffline editor mode only queues a section for (re)generation when it sees a finished
+transaction on it. Setting properties without a transaction, or while PIE is running, leaves the sections empty.
+
+## Aim hold V2: the right hand no longer goes into the body
+
+The spell core's aim layer (`AS_Hero_CombatAimHold`, played by the driver as a looping upper-body montage while Aim is
+held) leads with the left hand, extended forward and up with the palm open. The right hand guards at the chest. On the hero
+body, though, the right hand sat on the spine plane with the elbow about 20 cm behind the back, so the forearm passed
+through the torso. `/Game/SpellCrafting/Gestures/AS_Hero_CombatAimHold_V2` keeps that pose and fixes only the right arm.
+
+How it was chosen (`Tools/SpellCrafting/author_aim_hold.py`, all numbers measured per frame on the retargeted hero):
+- Six Kimodo takes, in two rounds of three prompts (`LS_Hero_AimHoldV2_Kimodo`, `..._R2`), each keeping the lead-hand
+  wording and placing the right hand in front of the chest, by the left elbow, cradling an orb, or in a guard by the
+  cheek. Every take put the right hand or forearm into the torso on some frames (5–13 cm from the spine axis). The
+  one take that cleared the body (A) did so by pulling the hand 45 cm behind the back and crouching, which loses
+  the pose.
+- Take G, which shipped: the original clip with only `upperarm_r`/`lowerarm_r` re-solved by two-bone IK. The hand moves
+  ~29 cm forward to sit 24 cm in front of `spine_03`, the elbow points down and out, and the wrist keeps its
+  angle to the forearm. The left arm, spine and the clip's breathing are untouched. V2 is original frames 21–66 (1.5 s)
+  with the last 12 keys eased into the first, so the montage loops with no seam.
+
+| Per-frame check on the hero | Old (frames 9–81) | V2 (all 46 keys) |
+|---|---|---|
+| Forearm/hand inside the torso collision bodies (`PHYS_MHC_Hero`, 3 cm arm half-thickness) | 73 of 73 frames, up to 16.3 cm deep (`spine_04`) | 0 frames; at least 6.6 cm clear |
+| Right hand distance from the pelvis–neck axis | min 7.1 cm | min 28.2 cm |
+| Right elbow relative to the spine plane | 26 cm behind | at or in front (min +1.4 cm) |
+| Left lead hand, forward / above `spine_03` | 50 / 39 cm | 51 / 42 cm |
+| Loop seam / largest per-frame step | 20 cm / 15 cm | 0 / 0.6 cm |
+
+Re-run: `measure`, `physcheck`, `fixold`, `finalize G 21 66 12` stages of `author_aim_hold.py`.
+`Tools/SpellCrafting/compare_aim_hold.py` renders the old and new poses side by side on the full hero look (front and
+side) from a spawnable-only LevelSequence, so the shared map is never touched:
+`Saved/SpellCraftingShots/AimHoldV2/standing_compare.png`. Its `pie` stage does the A/B in one PIE run while Aim is held,
+standing and strafing. It pauses the driver's tick and plays each clip on `DefaultSlot` exactly as the driver does, then
+resumes the driver and measures the right hand to confirm which clip the spell core is playing. Its `piecheck` stage
+samples the same torso-collision clearance on the live pose, every ~30 ms, while aiming.
+
+The spell core swapped it in as data at ~18:30 UTC: `CombatCasts/AS_Hero_CombatAimHold` now holds V2 (1.5 s). The
+original is kept as `CombatCasts/AS_Hero_CombatAimHold_V1`, and from the next train `Spell.AimHoldV1 1` (set before PIE)
+loads it instead. Verified in PIE afterwards (`Saved/SpellCraftingShots/AimHoldV2/pie_*_compare.png`):
+
+| While aiming (live pose, layered on GASP locomotion) | Original | V2 (the driver's own aim layer) |
+|---|---|---|
+| Standing | inside the torso on 68/68 samples, up to 16.3 cm | 0/55 inside, at least 6.6 cm clear |
+| Strafing right, 350 cm/s | 66/66 inside | 0/67 inside |
+| Strafing left, 350 cm/s | 63/63 inside | 0/58 inside |
+
+The live numbers match the offline per-frame check exactly. The upper body above `spine_01` comes from the clip and
+the nearest torso body is `spine_04`, so strafing hips don't change the clearance.
+
 ## Describe your spell (dev only)
 
-`Tools/SpellCrafting/Start-SpellRelay.ps1` (close the editor first) asks for an OpenAI key without echoing it and starts
-`recipe_relay.py` on `127.0.0.1:8766` with a random per-launch token, then launches a fresh editor. Add `-WithVoice` to
-start the NPC voice relay as well. Only the relay process holds the key; the game sends the token and the sentence,
-and the model answers in a strict JSON schema of the grammar's enum names. The relay clamps the answer to the grammar
-again before replying. The model defaults to `gpt-5-mini`; override it with `REFLECTIONS_SPELL_MODEL`. Nothing is
-logged or saved. Protocol tests, which never contact OpenAI: `python -m unittest -v test_recipe_relay` in that folder.
-Packaged and Shipping builds never use the relay. The client is compiled out of Shipping, and without a token the
-offline parser handles every sentence.
+Type a sentence into the crafting screen's describe box ("a slow storm that follows me and heals friends"). The
+crafting screen then fills in a recipe for it.
+- **With the dev relay running**, an OpenAI model maps the sentence onto the grammar.
+- **Otherwise** the offline keyword parser does it.
 
-The generation is started by re-applying each section's prompt inside an editor transaction while the sequence is open
-in Sequencer; the AnimGenOffline editor mode only queues a section for (re)generation when it sees a finished transaction
-on it. Setting properties without a transaction, or while PIE is running, leaves the sections empty.
+The packaged game never needs the network.
+- **Key:** `Tools/SpellCrafting/recipe_relay.py` reads the OpenAI key from `%USERPROFILE%\.openai\api_key`
+  (or `REFLECTIONS_OPENAI_KEY_FILE`) inside its own process. It never prints, logs or saves the key and sends it
+  only to `api.openai.com`. Error output gives just the HTTP status, because OpenAI error bodies can quote part of a
+  key. The key is never in the project, the launcher or the Unreal process.
+- **Starting it:**
+  - `Start-SpellRelay.ps1 -RelayOnly` (or `python recipe_relay.py`) works with an editor that's already open. The relay
+    writes a random per-launch token to `Saved/SpellCrafting/relay-token` (git-ignored, deleted on exit), and dev
+    builds read it there.
+  - `Start-SpellRelay.ps1` with the editor closed launches a fresh editor and hands it the token through the
+    environment instead.
+  - The game connects to `ws://127.0.0.1:8766` and sends the token plus the sentence; it never sees a key.
+- **Model and output:** Responses API structured output. A strict JSON schema of the grammar's enum names is
+  enforced: form, element, 1–3 behaviours, trigger, power 1–5 and a name. Minimal reasoning keeps it quick.
+  `store: false`, so OpenAI keeps no conversation. The relay clamps the answer to the grammar and balance limits:
+  known names only, no repeated behaviours, at most 3, power 1–5, a name of at most 4 words. The game sanitizes it
+  again, and power drives the mana cost (4–95).
+- **Fallbacks:** Shipping builds compile the client out. Any build where the relay isn't running, refuses the request
+  or errors falls back to the offline parser, and the screen says which one interpreted the sentence.
+- **Tests that never contact OpenAI:** `python -m unittest -v test_recipe_relay` (9 tests: protocol, token, key
+  file, clamping, error redaction).
+- **Live check:** `python recipe_relay.py --describe "sentence" ...` prints only the clamped recipes.
+
+AI declaration: when the relay runs, "describe your spell" in development builds uses OpenAI `gpt-5-mini` by default
+(`REFLECTIONS_SPELL_MODEL` overrides it). It is not part of the packaged game. Not yet verified: the live call. Running
+it with the user's key needs the user's own go-ahead, so the model name above is the configured default, not yet
+confirmed against the account.
 
 ## Niagara gotcha: systems that compile but never activate
 
@@ -207,7 +322,7 @@ while holding Aim, against six test dummies (`Crafting.Dummies`). Screenshots: `
 | Spell | Recipe | Result |
 |---|---|---|
 | **Glacial Shatterstorm** (bouncing ice splitter), 15 mana | Bolt · Ice · Bounce + Split · Impact · Power 2 | Works. Ricochets between dummies and splits on every bounce: one cast became ~20 shards within a second; teal trails, frost bursts, slow on hit. |
-| **Arcane Implosion** (slow orb that pulls enemies in), 40 mana | Orb · Arcane · Gravity + Delayed · Impact · Power 3 | Works: drifts at ~4 m/s (measured) with a violet body and light, sticks to the dummy it hits, fuses for 1.2 s, then detonates at 190%. The pull itself (LaunchCharacter toward the orb, 10 times a second) is implemented, but how far it drags the test dummies was not measured. |
+| **Arcane Implosion** (slow orb that pulls enemies in), 40 mana | Orb · Arcane · Gravity + Delayed · Impact · Power 3 | Works: drifts at ~4 m/s (measured) with a violet body and light, sticks to what it hits, fuses for 1.2 s, then detonates at 190%. Measured pull at 17:4x UTC: walking characters within reach were dragged up to 424 cm and ended up clumped around the orb. |
 | **Circling Dawn Deluge** (healing rain that follows you), 33 mana | Rain · Life · Orbit · Pulse · Power 2 | Works. A ring of green light and falling streaks centred on the player that moves with them; drops heal the player and allies they land near, plus a sanctuary tick for everyone inside. |
 | Volt Eye of the Storm, 66 mana | Orb · Lightning · Gravity + Chain · Pulse · Power 3 | Starter spell in slot 4; casts, not screenshotted. |
 
@@ -216,15 +331,28 @@ crafting screen renders every row, the colour ramp, stats and synergies for each
 goes through `CastExternal` (mana spent from the magic bar, layered upper-body cast gesture, aim preview through the
 proxy spell); hits drive the shared hit marker and NPC reactions.
 
+Verified after the 17:19 UTC build (train #2): no crafted slot is active at start; choosing one takes the cast button;
+picking a catalog spell (here `Driver->SetSelectedSpell`) hands it straight back. The new Kimodo gestures play on the
+hero when casting: Conjure (both palms push forward) for the orb, SkyCall (arm raised to the sky) for the rain.
+Screenshots `07`–`14` in `Saved/SpellCraftingShots/`. The hand flash at release no longer blooms over the screen
+(`NS_Crafted_Burst` now defaults `User.Radius` to 45).
+
+Verified with the MetaHuman test crowd (train #5 build, 20:2x UTC, two locked PIE runs):
+- `Crafting.Dummies 6 750 mixed` spawned six team NPCs (White Look 03–06, Bridge Guard, Coin Clerk), all enrolled in
+  the NPC system. Enemies have 100 health and civilians 35.
+- Arcane Implosion dragged them up to 532 cm through their locomotion drivers, and the blast took each enemy from 100
+  to 40.2. Screenshots `11_orb_pull_metahumans.png` and `12_orb_after_metahumans.png`.
+- Crafted spells hurt `Friendly` civilians now. In a separate run, an ice splitter cast at three civilians straight
+  ahead took the centre one from 35 to 32.3. The two at the sides were untouched, because bounces don't seek civilians.
+- Enemy dummies hunt on sight and melee: three of them took the player from 100 to 4 health in a few seconds. Use
+  `civilian` dummies for passive targets.
+
 Not done or not verified yet:
 - The crafting screen was driven by console commands and screenshots, not by simulated controller or mouse input in
   PIE. Its keyboard, gamepad and mouse handling is implemented but hasn't been exercised end to end.
-- Until the 17:40 UTC build train, picking a catalog spell does not hand the cast button back from a crafted slot (the
-  driver's Enhanced Input swallows the legacy keys crafting listened for). The fix is in Source and compiles; it lands
-  with the next editor rebuild, together with the element audio cues.
-- The five Kimodo gestures are generated, retargeted and saved, but haven't yet been watched in PIE on the hero (the
-  screenshots above used the shared combat casts). They load by path, so Orb, Ray, Rain, Rune and Aura already pick
-  them up; falling back to the shared casts happens only if a clip is missing.
+- Element audio cues are compiled in (train #2) but I haven't listened to them; the cue assets come from the audio
+  session.
+- Lance, GroundPlant and Spiral gestures haven't been watched in PIE (Ray, Rune and Aura weren't cast).
 - The dev relay was tested only against a local stub (`test_recipe_relay.py`); no live OpenAI call was made.
 - Spell actors are not replicated; crafted spells are local-only like the rest of the spell core today.
 - Many forms × behaviours combinations have only been exercised in code review, not in PIE: Ray (beam and held beam),

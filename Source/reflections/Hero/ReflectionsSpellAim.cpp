@@ -13,6 +13,8 @@
 #include "Interfaces/CombatDamageable.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
+#include "NPC/ReflectionsNpcReactionComponent.h"
+#include "NPC/ReflectionsNpcSubsystem.h"
 
 namespace
 {
@@ -37,9 +39,22 @@ namespace
         return Origin;
     }
 
+    /** The NPC an actor belongs to: itself, or the NPC a hidden locomotion pawn drives. */
+    AActor* ResolveNpc(const UReflectionsNpcSubsystem* Npcs, AActor* Actor)
+    {
+        if (Npcs && Actor)
+        {
+            if (const UReflectionsNpcReactionComponent* Npc = Npcs->FindNpc(Actor)) return Npc->GetOwner();
+        }
+        return Actor;
+    }
+
     bool IsAssistCandidate(const AActor* Actor, const AActor* Owner)
     {
-        if (!IsValid(Actor) || Actor == Owner || Actor->IsHidden() || Actor->ActorHasTag(TEXT("Friendly")))
+        // Friendly actors stay candidates, but only inside FriendlyConeDegrees (see Consider). The walkers' hidden
+        // locomotion pawns are filtered in Consider (they resolve to another NPC); the NPC_SampleLocomotion tag
+        // is on the visible walker, so it must not be filtered here.
+        if (!IsValid(Actor) || Actor == Owner || Actor->IsHidden())
         {
             return false;
         }
@@ -200,9 +215,12 @@ void UReflectionsSpellAimComponent::UpdateAimTrace(APlayerController* Controller
     // Light assist: the closest valid enemy inside a small cone around the reticle wins.
     AssistTarget.Reset();
     const float Cone = FMath::DegreesToRadians(AssistConeDegrees * (bAiming ? 1.0f : 0.6f) * (bGamepad ? 1.7f : 1.0f));
-    const float CosCone = FMath::Cos(Cone);
+    const float EnemyCos = FMath::Cos(Cone);
+    const float FriendlyCos = FMath::Cos(FMath::DegreesToRadians(FMath::Min(FriendlyConeDegrees, AssistConeDegrees)));
+    UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(World);
     float BestScore = -1.0f;
     AActor* Best = nullptr;
+    bool bBestFriendly = false;
     FVector BestPoint = FVector::ZeroVector;
     auto Consider = [&](AActor* Actor)
     {
@@ -210,7 +228,16 @@ void UReflectionsSpellAimComponent::UpdateAimTrace(APlayerController* Controller
         {
             return;
         }
-        const FVector Point = TargetPoint(Actor);
+        // A pawn that drives another NPC (the walkers' hidden GASP pawns) is never the target; the NPC is.
+        if (ResolveNpc(Npcs, Actor) != Actor)
+        {
+            return;
+        }
+        const bool bFriendly = Actor->ActorHasTag(TEXT("Friendly"));
+        const float CosCone = bFriendly ? FriendlyCos : EnemyCos;
+        // NPCs of the unified system know their chest (spine bone or hit capsule); others use capsule or bounds.
+        FVector Point = TargetPoint(Actor);
+        if (const UReflectionsNpcReactionComponent* Npc = Npcs ? Npcs->FindNpc(Actor) : nullptr) Point = Npc->GetAimPoint();
         const FVector ToTarget = Point - ViewLocation;
         const float Distance = ToTarget.Size();
         if (Distance > MaxAimDistance || Distance < 50.0f)
@@ -235,6 +262,7 @@ void UReflectionsSpellAimComponent::UpdateAimTrace(APlayerController* Controller
         }
         BestScore = Score;
         Best = Actor;
+        bBestFriendly = bFriendly;
         BestPoint = Point;
     };
     for (TActorIterator<APawn> It(World); It; ++It)
@@ -245,13 +273,34 @@ void UReflectionsSpellAimComponent::UpdateAimTrace(APlayerController* Controller
     {
         Consider(*It);
     }
+    // Actor-only NPCs (crowd MetaHumans, infected, hosts) from the unified NPC system.
+    if (Npcs)
+    {
+        for (AActor* Npc : Npcs->GetNpcActors())
+        {
+            if (!Npc || Npc->IsA<APawn>()) continue;  // Pawns were considered above.
+            Consider(Npc);
+        }
+    }
+    // Reticle directly on a target (or its hit proxy / driver pawn): that is the player's pick, Friendly or not.
+    // It locks for homing; a civilian still never pulls the camera.
+    if (bAimHit && Hit.GetActor())
+    {
+        AActor* Direct = ResolveNpc(Npcs, Hit.GetActor());
+        if (Direct && IsAssistCandidate(Direct, Owner))
+        {
+            Best = Direct;
+            bBestFriendly = Direct->ActorHasTag(TEXT("Friendly"));
+            BestPoint = Hit.ImpactPoint;
+        }
+    }
     if (Best)
     {
         AssistTarget = Best;
         AimPoint = BestPoint;
         AimNormal = (ViewLocation - BestPoint).GetSafeNormal();
         bAimHit = true;
-        if (bAiming && AssistTurnRate > 0.0f)
+        if (bAiming && AssistTurnRate > 0.0f && !bBestFriendly)
         {
             const FRotator Current = Controller->GetControlRotation();
             FRotator Desired = (BestPoint - ViewLocation).Rotation();

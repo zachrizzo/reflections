@@ -326,7 +326,7 @@ void AReflectionsCraftedSpell::Steer(float DeltaSeconds)
     RetargetClock -= DeltaSeconds;
     const FVector Location = GetActorLocation();
     const FVector Direction = Velocity.GetSafeNormal();
-    if ((!HomingTarget.IsValid() || !UReflectionsCraftedSpellSubsystem::IsEnemy(HomingTarget.Get(), Caster.Get())) && RetargetClock <= 0.0f && S)
+    if ((!HomingTarget.IsValid() || !UReflectionsCraftedSpellSubsystem::IsHostile(HomingTarget.Get(), Caster.Get())) && RetargetClock <= 0.0f && S)
     {
         RetargetClock = 0.2f;
         HomingTarget = S->NearestEnemy(Location, 2600.0f, Caster.Get(), &Pierced, &Direction, FMath::Cos(FMath::DegreesToRadians(75.0f)));
@@ -480,7 +480,7 @@ TArray<AActor*> AReflectionsCraftedSpell::Payload(const FVector& Location, const
     float Dealt = 0.0f;
     for (AActor* Enemy : Enemies)
     {
-        Dealt += S->ApplyHit(Spell, Enemy, C, PayloadScale, Location - FVector(0, 0, 40.0f), Enemy == DirectHit ? Hit : nullptr, bQuiet);
+        Dealt += S->ApplyHit(Spell, Enemy, C, PayloadScale, Location - FVector(0, 0, 40.0f), Enemy == DirectHit ? Hit : nullptr, bQuiet, Radius);
     }
     if (Spell.Heal > 0.0f)
     {
@@ -569,7 +569,7 @@ void AReflectionsCraftedSpell::SpawnShards(const FVector& Location, const FVecto
     TArray<AActor*> Targets;
     if (Spell.Has(ESyn::Swarm))
     {
-        S->FindEnemies(Location, 2200.0f, Caster.Get(), Targets);
+        S->FindEnemies(Location, 2200.0f, Caster.Get(), Targets, true);
         Targets.RemoveAll([](AActor* A) { return !A->IsA<APawn>(); });
         Targets.Sort([&Location](const AActor& A, const AActor& B) { return FVector::DistSquared(A.GetActorLocation(), Location) < FVector::DistSquared(B.GetActorLocation(), Location); });
     }
@@ -622,7 +622,7 @@ void AReflectionsCraftedSpell::TickSatellite(float DeltaSeconds)
     if (Age >= Spell.OrbitDuration)
     {
         // Launch at whatever is closest; with nothing around, the satellite fades.
-        AActor* Target = HomingTarget.IsValid() && UReflectionsCraftedSpellSubsystem::IsEnemy(HomingTarget.Get(), C) ? HomingTarget.Get()
+        AActor* Target = HomingTarget.IsValid() && UReflectionsCraftedSpellSubsystem::IsHostile(HomingTarget.Get(), C) ? HomingTarget.Get()
             : S->NearestEnemy(C->GetActorLocation(), Spell.Range, C);
         if (!Target)
         {
@@ -741,7 +741,7 @@ void AReflectionsCraftedSpell::TickMine(float DeltaSeconds)
         return;
     }
     TArray<AActor*> Near;
-    S->FindEnemies(GetActorLocation(), FMath::Max(Spell.ProximityRadius, 200.0f), Caster.Get(), Near);
+    S->FindEnemies(GetActorLocation(), FMath::Max(Spell.ProximityRadius, 200.0f), Caster.Get(), Near, true);
     Near.RemoveAll([](AActor* A) { return !A->IsA<APawn>(); });
     if (Near.Num() > 0)
     {
@@ -787,7 +787,7 @@ void AReflectionsCraftedSpell::TickPull(float DeltaSeconds)
     const float Strength = Spell.PullStrength * (bImploding ? 1.5f : 1.0f);
     TArray<AActor*> Caught;
     S->FindEnemies(Center, Radius, Caster.Get(), Caught);
-    for (AActor* Enemy : Caught) S->Pull(Enemy, Center, Strength, Radius, Spell.Has(ESyn::Updraft), DeltaSeconds);
+    for (AActor* Enemy : Caught) S->Pull(Enemy, Center, Strength, Radius, Spell.Has(ESyn::Updraft), DeltaSeconds, &Spell, Caster.Get());
 
     if (!Spell.Has(ESyn::StormEye)) return;
     // Eye of the storm: lightning leaps between everything caught in the pull.
@@ -1009,7 +1009,7 @@ void AReflectionsCraftedSpell::TickField(float DeltaSeconds)
             if (bWaits)
             {
                 TArray<AActor*> Near;
-                S->FindEnemies(Anchor + FVector(0, 0, 60.0f), FMath::Max(Spell.ProximityRadius, Spell.Radius * 0.6f), C, Near);
+                S->FindEnemies(Anchor + FVector(0, 0, 60.0f), FMath::Max(Spell.ProximityRadius, Spell.Radius * 0.6f), C, Near, true);
                 Near.RemoveAll([](AActor* A) { return !A->IsA<APawn>(); });
                 bGo = Near.Num() > 0;
             }
@@ -1095,7 +1095,7 @@ void AReflectionsCraftedSpell::TickField(float DeltaSeconds)
             if (Trigger == ETrig::Proximity)
             {
                 TArray<AActor*> Near;
-                S->FindEnemies(Anchor, Spell.Radius, C, Near);
+                S->FindEnemies(Anchor, Spell.Radius, C, Near, true);
                 bGo = Near.Num() > 0;
             }
             if (bGo) FieldBurst(Anchor + FVector(0, 0, 60.0f), Scale * DelayBonus);

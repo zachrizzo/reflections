@@ -5,6 +5,8 @@
 #include "Dom/JsonObject.h"
 #include "HAL/PlatformMisc.h"
 #include "IWebSocket.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "Policies/CondensedJsonPrintPolicy.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
@@ -15,6 +17,25 @@ namespace
 {
     const TCHAR* TokenVariable = TEXT("REFLECTIONS_SPELL_LOCAL_TOKEN");
     const TCHAR* RelayUrl = TEXT("ws://127.0.0.1:8766");
+
+#if !UE_BUILD_SHIPPING
+    /**
+     * The relay's per-launch token: from the environment when Start-SpellRelay.ps1 launched this editor, otherwise
+     * from the git-ignored file a relay started on its own publishes (and deletes on exit). Never a key.
+     */
+    FString LocalToken()
+    {
+        const FString FromEnvironment = FPlatformMisc::GetEnvironmentVariable(TokenVariable);
+        if (FromEnvironment.Len() >= 32) return FromEnvironment;
+        FString FromFile;
+        if (FFileHelper::LoadFileToString(FromFile, *FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("SpellCrafting"), TEXT("relay-token"))))
+        {
+            FromFile.TrimStartAndEndInline();
+            if (FromFile.Len() >= 32 && FromFile.Len() <= 128) return FromFile;
+        }
+        return FString();
+    }
+#endif
 }
 
 bool UReflectionsSpellRecipeRelay::IsConfigured()
@@ -22,7 +43,7 @@ bool UReflectionsSpellRecipeRelay::IsConfigured()
 #if UE_BUILD_SHIPPING
     return false;
 #else
-    return FPlatformMisc::GetEnvironmentVariable(TokenVariable).Len() >= 32;
+    return LocalToken().Len() >= 32;
 #endif
 }
 
@@ -52,7 +73,7 @@ void UReflectionsSpellRecipeRelay::Request(const FString& Text, FDone Done)
         Done(false, FCraftedSpellRecipe(), TEXT("A description is already being interpreted."));
         return;
     }
-    const FString Token = FPlatformMisc::GetEnvironmentVariable(TokenVariable);
+    const FString Token = LocalToken();
     if (Token.Len() < 32)
     {
         Done(false, FCraftedSpellRecipe(), TEXT("The spell relay is not running."));

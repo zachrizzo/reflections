@@ -1,0 +1,64 @@
+{
+  "vertices": 1230,
+  "faces": 1160,
+  "z_range_m": [
+    0.135,
+    1.5723
+  ],
+  "x_range_m": [
+    -0.4075,
+    0.4075
+  ],
+  "y_range_m": [
+    -0.0776,
+    0.336
+  ],
+  "radial_second_difference_cm": {
+    "across_p95": 0.127,
+    "across_max": 1.15,
+    "down_p95": 2.783,
+    "down_max": 4.694
+  },
+  "edge_length_cm": {
+    "min": 1.03,
+    "median": 2.65,
+    "max": 8.67
+  },
+  "torso_clearance_cm": {
+    "min": 1.2,
+    "p05": 2.25
+  },
+  "push_history": [
+    154,
+    120,
+    110,
+    94,
+    83,
+    78,
+    76,
+    74,
+    74,
+    75,
+    75,
+    74,
+    71,
+    70,
+    68,
+    68,
+    66,
+    60
+  ],
+  "bones": [
+    "neck_01",
+    "spine_05",
+    "spine_04",
+    "spine_03",
+    "spine_02",
+    "spine_01",
+    "pelvis",
+    "clavicle_l",
+    "clavicle_r",
+    "thigh_l",
+    "thigh_r"
+  ]
+}

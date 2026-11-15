@@ -16,6 +16,15 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FReflectionsHealthChanged, float,
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FReflectionsDeath, AActor*, Source);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FReflectionsSpellImpact, EHeroSpell, Spell, AActor*, Target, FVector, Location);
 
+/** How a projectile looks. Enemy-only looks reuse a catalog spell's gameplay with their own visuals and impact. */
+UENUM()
+enum class EReflectionsSpellLook : uint8
+{
+    Catalog,
+    TarnishBolt,
+    TarnishWisp,
+};
+
 /** A small reusable health pool for actors that do not already implement combat health. */
 UCLASS(ClassGroup=(Combat), BlueprintType, meta=(BlueprintSpawnableComponent))
 class REFLECTIONS_API UReflectionsHealthComponent : public UActorComponent
@@ -73,11 +82,19 @@ public:
     EHeroSpell GetSpell() const { return Spell; }
     void Initialize(EHeroSpell InSpell, float InDamage, float InSpeed, float InRange,
         UStaticMesh* InMesh, UMaterialInterface* InMaterial);
-    void InitializeCatalog(EHeroSpell InSpell, UStaticMesh* InMesh, UMaterialInterface* InMaterial);
-    /** Gently curves toward an aim-assist target; strong enough to forgive, not to guarantee. */
-    void SetHomingTarget(AActor* Target);
+    void InitializeCatalog(EHeroSpell InSpell, UStaticMesh* InMesh, UMaterialInterface* InMaterial, float DamageScale = 1.0f);
+    /** Gently curves toward an aim-assist target; strong enough to forgive, not to guarantee.
+     *  Strength is the homing acceleration as a multiple of the launch speed. */
+    void SetHomingTarget(AActor* Target, float Strength = 2.2f);
+    /** Visual and impact look (tarnish bolts and wisps); set before FinishSpawning. */
+    void SetLook(EReflectionsSpellLook InLook) { Look = InLook; }
+    EReflectionsSpellLook GetLook() const { return Look; }
     /** Hides the static-mesh stand-in once a particle visual is attached. */
     void HideFallbackVisual();
+    /** Call right after FinishSpawning with a point inside the caster (its centre). If anything this projectile would
+     *  hit lies between there and the muzzle, or the muzzle starts inside it (a target in melee range), it is struck at
+     *  once instead of the bolt flying out of the far side unseen. Returns true if the projectile hit (and is gone). */
+    bool ResolvePointBlank(const FVector& From);
 
 protected:
     virtual void BeginPlay() override;
@@ -101,6 +118,10 @@ private:
     float BlastRadius = 0.0f;
     float HitImpulse = 0.0f;
     bool bImpacted = false;
+    EReflectionsSpellLook Look = EReflectionsSpellLook::Catalog;
+    /** Lightning Bolt: how many more bodies the bolt jumps to after a direct hit. */
+    int32 ChainsLeft = 0;
+    void ChainLightning(AActor* From, const FVector& Point);
 };
 
 /** Spell effects that can be called by any player character at the animation release frame. */
@@ -142,6 +163,11 @@ public:
     UPROPERTY(BlueprintAssignable, Category="Spells")
     FReflectionsSpellImpact OnSpellImpact;
 
+    /** Multiplies the damage of spells this component releases (projectiles and areas; heals and shields unchanged).
+     *  Enemy casters set it below 1 so catalog spells hit the player less hard. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spells", meta=(ClampMin="0"))
+    float DamageScale = 1.0f;
+
     /** Called at a spell's release frame. The transform supplies its muzzle and facing. */
     UFUNCTION(BlueprintCallable, Category="Spells")
     void ReleaseSpell(EHeroSpell Spell, FTransform Origin);
@@ -175,3 +201,13 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Target", meta=(AllowPrivateAccess="true"))
     TObjectPtr<UReflectionsHealthComponent> Health;
 };
+
+namespace ReflectionsSpellCombat
+{
+    /** An explosion at Center: damage and push (Push = knock-back speed in cm/s) fall off from 1 to 0.35 across
+     *  Radius, loose physics objects are thrown, and every body gets an Explosion reaction. Goes through the same
+     *  per-target path as every spell (including the NPC harm gate). Actors in Ignore are skipped (a caster's hidden
+     *  driver pawn, say). */
+    REFLECTIONS_API void ApplyArea(UWorld* World, AActor* Caster, EHeroSpell Spell, const FVector& Center, float Radius,
+        float Damage, float Push, const TArray<AActor*>& Ignore);
+}

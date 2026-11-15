@@ -1,0 +1,35 @@
+{
+  "id": "Gilt_MedievalSoldier_M_ArchiveApprentice",
+  "body": "ArchiveApprentice",
+  "ue_body": "/Game/Characters/RedLondon/ArchiveApprentice/Assembled/ArchiveApprentice/Body/SKM_MHC_ArchiveApprentice_BodyMesh",
+  "ue_dest": "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier",
+  "looks": [
+    "(two new Giltside soldier faces from crowd-looks)"
+  ],
+  "front": "-Y",
+  "boot_drop_cm": "auto",
+  "pieces": [
+    {
+      "name": "SK_Gilt_Soldier_M_Lower_ArchiveApprentice",
+      "fbx": "ArtDirection/CodexRequests/Clothing2026_11_14/Giltside/MedievalSoldier_M_Lower.fbx",
+      "kind": "lower"
+    },
+    {
+      "name": "SK_Gilt_Soldier_M_Feet_ArchiveApprentice",
+      "fbx": "ArtDirection/CodexRequests/Clothing2026_11_14/Giltside/MedievalSoldier_M_Feet.fbx",
+      "kind": "feet"
+    },
+    {
+      "name": "SK_Gilt_Soldier_M_Upper_ArchiveApprentice",
+      "fbx": "ArtDirection/CodexRequests/Clothing2026_11_14/Giltside/MedievalSoldier_M_Upper.fbx",
+      "kind": "upper"
+    },
+    {
+      "name": "SK_Gilt_Soldier_M_Helmet_ArchiveApprentice",
+      "fbx": "ArtDirection/CodexRequests/Clothing2026_11_14/Giltside/MedievalSoldier_M_Helmet.fbx",
+      "kind": "helmet"
+    }
+  ],
+  "out_dir": "Intermediate/ClothingFit2026_11_14/Out/Gilt_MedievalSoldier_M_ArchiveApprentice",
+  "note": "Tall boots go over the trousers (trousers tucked in), so lower is fitted before feet."
+}

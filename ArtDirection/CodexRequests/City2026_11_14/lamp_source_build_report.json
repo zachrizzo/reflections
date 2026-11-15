@@ -1,0 +1,38 @@
+[
+  {
+    "asset": "SM_Pewterside_GasLamp",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Pewterside\\City\\SM_Pewterside_GasLamp.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Pewterside\\City\\Textures\\T_Pewterside_GasLamp_BaseColor.png",
+    "triangles": 4000,
+    "dimensions_cm": [
+      67.0,
+      68.1,
+      399.9
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "SM_Giltside_LanternPost",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Giltside\\City\\SM_Giltside_LanternPost.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Giltside\\City\\Textures\\T_Giltside_LanternPost_BaseColor.png",
+    "triangles": 4000,
+    "dimensions_cm": [
+      152.0,
+      81.9,
+      399.8
+    ],
+    "pivot": "bottom-centre"
+  },
+  {
+    "asset": "SM_Frostside_BrazierStand",
+    "fbx": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Frostside\\City\\SM_Frostside_BrazierStand.fbx",
+    "texture": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\City2026_11_14\\Source\\Frostside\\City\\Textures\\T_Frostside_BrazierStand_BaseColor.png",
+    "triangles": 4000,
+    "dimensions_cm": [
+      120.4,
+      116.0,
+      400.2
+    ],
+    "pivot": "bottom-centre"
+  }
+]

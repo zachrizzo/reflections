@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "ArtDirection\\CodexRequests\\Clothing2026_11_14\\Giltside\\References\\CivilianWorker_M_Upper.png",
+  "output": "ArtDirection\\CodexRequests\\Clothing2026_11_14\\Giltside\\RawHunyuan\\CivilianWorker_M_Upper.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 12,
+  "resolution": 256,
+  "seed": 611,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 150881,
+  "faces": 301734,
+  "seconds": 28.2,
+  "bounds": [
+    [
+      -0.9979067444801331,
+      -0.8416789770126343,
+      -0.36175909638404846
+    ],
+    [
+      0.9899186491966248,
+      0.8267346024513245,
+      0.3493647575378418
+    ]
+  ]
+}

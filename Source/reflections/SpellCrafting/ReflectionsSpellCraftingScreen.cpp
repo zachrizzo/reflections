@@ -431,7 +431,7 @@ void UReflectionsSpellCraftingScreen::RefreshIndicator()
     {
         IndicatorName->SetText(FText::GetEmpty());
     }
-    IndicatorHint->SetText(FText::FromString(!Feedback.IsEmpty() && Active >= 0 && Feedback != Crafting->GetSlotSpell(Active).Name ? Feedback
+    IndicatorHint->SetText(FText::FromString(!Feedback.IsEmpty() && (Active < 0 || Feedback != Crafting->GetSlotSpell(Active).Name) ? Feedback
         : TEXT("K / View: craft spells    5-8 / D-pad Up: crafted slots")));
 }
 

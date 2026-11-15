@@ -1,4 +1,4 @@
-# Three Londons — Jam Audio
+# Reflections — Jam Audio
 
 All game audio for the jam build lives under `/Game/Audio/Jam/`. Sounds come from two sources, marked per asset below: AI generation with ElevenLabs (through the ElevenLabs Creative connector), and procedural numpy synthesis used as stand-ins while the ElevenLabs free tier throttles generation. Everything was trimmed, made mono (SFX), level-matched and loop-crossfaded locally, then imported as SoundWaves. Prompts were written for this project and name no artist, franchise or game.
 
@@ -6,11 +6,13 @@ All game audio for the jam build lives under `/Game/Audio/Jam/`. Sounds come fro
 
 ## AI declaration (for the jam submission)
 
-- Sound effects: ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2). One text prompt per sound, listed below.
-- Music: ElevenLabs Music v2.5 (eleven_music_v2_5), instrumental. One text prompt per track, listed below.
+- Character voices: OpenAI's realtime audio model, baked offline into WAVs (no runtime API use). Engine per line: `gpt-realtime-2.1` x115, `gpt-4o-mini-tts` x8; `gpt-4o-mini-tts` is the fallback when a take's transcript doesn't match the script. Prompts (actor rules, per-character brief, pronunciation) and every line are in `ArtDirection/Audio/VoiceScript.md`. The voices are AI-generated, not performed by actors, and the credits must say so.
+- Crowd voices (137 NPC voices): Google Gemini Voice design (`gemini-3.8-flash-tts`) made one voice per character from a written brief (`ArtDirection/Audio/data/voice_roster.json`); the lines are synthesized offline with Gemini 3.8 Flash TTS and accepted only when an OpenAI `gpt-4o-transcribe` transcript matches the script word for word. These baked lines make no API calls at runtime. The optional live-reply helper (NPC dialogue session) uses the same designed voices with a Gemini key the user supplies, and is declared in its own README. Status: 3312 lines generated.
+- Crowd scripts: the conversations, remarks, replies, barks, possessed mutters and fillers were drafted by Google Gemini 3.8 Flash (text) from the project's canon brief, then machine-checked (never-say words, Teen-safe wording, length) and passed through an AI editor pass. Every line is unique to its speaker: `tools/uniq_check.py` fails the build on any line two characters share. The full script is `ArtDirection/Audio/AmbientScript.md`.
+- ElevenLabs (ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2); ElevenLabs Music v2.5 (eleven_music_v2_5), instrumental): only the 6 final cues listed below. The team decided on 2026-11-14 not to generate more.
 - Post-processing (not AI): trim, mono downmix for SFX, peak/RMS normalization, equal-power loop crossfade, slicing of multi-take clips.
 - Currently AI-generated (6): `Water_Impact`, `MUS_Gray_Loop`, `MUS_Red_Loop`, `MUS_White_Loop`, `Fire_Cast`, `Fire_Impact`.
-- Currently procedural stand-ins, not AI (39): `Water_Cast`, `Ice_Cast`, `Ice_Impact`, `Lightning_Cast`, `Lightning_Impact`, `Earth_Cast`, `Earth_Impact`, `Arcane_Cast`, `Arcane_Impact`, `Heal_Shimmer`, `Shield_Up`, `Shield_Block`, `Shield_Loop`, `Projectile_Loop`, `Levitation_Start`, `Levitation_Loop`, `Sword_Swing`, `Sword_Hit`, `Sword_Clash`, `WorldJump_Whoosh`, `WorldJump_Stinger`, `WorldJump_Refused`, `Coin_Pickup`, `Page_Pickup`, `Door_Unseal`, `UI_Click`, `UI_Hover`, `UI_Confirm`, `Infected_Growl`, `MUS_Combat_Layer`, `MUS_Victory_Sting`, `Villain_Manifest`, `Villain_Voice`, `Villain_Hop`, `Villain_Telegraph`, `Villain_Slam`, `Villain_Hurt`, `Villain_Death`, `FinalSpell_Cast`. `Sword_Hit` also layers Epic's Game Animation Sample foley punches that were already in the project.
+- Currently procedural stand-ins, not AI (39): `Water_Cast`, `Ice_Cast`, `Ice_Impact`, `Lightning_Cast`, `Lightning_Impact`, `Earth_Cast`, `Earth_Impact`, `Arcane_Cast`, `Arcane_Impact`, `Heal_Shimmer`, `Shield_Up`, `Shield_Block`, `Shield_Loop`, `Projectile_Loop`, `Levitation_Start`, `Levitation_Loop`, `Sword_Swing`, `Sword_Hit`, `Sword_Clash`, `WorldJump_Whoosh`, `WorldJump_Stinger`, `WorldJump_Refused`, `Coin_Pickup`, `Page_Pickup`, `Door_Unseal`, `UI_Click`, `UI_Hover`, `UI_Confirm`, `Infected_Growl`, `MUS_Combat_Layer`, `MUS_Victory_Sting`, `Villain_Manifest`, `Villain_Voice`, `Villain_Hop`, `Villain_Telegraph`, `Villain_Slam`, `Villain_Hurt`, `Villain_Death`, `FinalSpell_Cast`. These are synthesized from scratch (numpy); no recorded or sampled audio is used.
 - No third-party or licensed audio is included in `/Game/Audio/Jam/`.
 
 ## Mix setup (`/Game/Audio/Jam/Mix/`)
@@ -18,13 +20,14 @@ All game audio for the jam build lives under `/Game/Audio/Jam/`. Sounds come fro
 | Asset | What it does |
 |---|---|
 | `SCL_Jam_Master` | Root sound class. |
-| `SCL_Jam_Music` (vol 0.7) | All music. Children: `SCL_Jam_Music_World` (London loops), `SCL_Jam_Music_Combat` (combat layer, victory sting). |
+| `SCL_Jam_Music` (vol 0.7) | All music. Children: `SCL_Jam_Music_World` (world loops), `SCL_Jam_Music_Combat` (combat layer, victory sting). |
 | `SCL_Jam_SFX` (vol 1.0) | All gameplay sound effects. |
 | `SCL_Jam_UI` (vol 0.6) | Menu / HUD sounds (UI sound flag, no reverb). |
 | `SMX_Jam_Base` | Neutral mix with Music / SFX / UI adjusters at 1.0. Push it as the base mix and drive options sliders with `SetSoundMixClassOverride` on it. |
-| `SMX_Jam_Combat` | Ducks `SCL_Jam_Music_World` to 0.45 (1.5 s in, 2 s out) so the combat layer sits on top. Push when combat starts, pop when it ends. |
+| `SMX_Jam_Combat` | Ducks `SCL_Jam_Music_World` (the world loops) to 0.45 (1.5 s in, 2 s out) so the combat layer sits on top. Push when combat starts, pop when it ends. |
 | `SMX_Jam_StingerDuck` | Ducks all music to 0.3 for 3.5 s, then releases by itself. Push with the world-jump stinger and the victory sting. |
 | `ATT_Jam_Small` / `ATT_Jam_Medium` / `ATT_Jam_Large` | Natural-falloff spherical attenuation, distance low-pass, 2 m / 4 m / 8 m inner radius, 25 m / 50 m / 100 m falloff. |
+| `ATT_Jam_NPCVoice` | Speech from a position: spatialized, full volume within 3 m, natural falloff to silence by ~28 m, distance low-pass (air absorption), light occlusion. On every NPC and Tarnish voice cue; play those attached to the speaker's head bone (`SpawnSoundAttached(..., "head")`). The narrator and the `_Head` Tarnish variants are 2D. |
 | `SUB_Jam_Main` + `SFXP_Jam_Limiter` | Every jam sound class defaults to this submix; its limiter (-1.5 dB threshold, 3 ms look-ahead) keeps stacked spells over music from clipping. It feeds the master submix. |
 
 Levels are baked into the waves by a loudness pass (BS.1770 K-weighted): music loops at -20 LUFS integrated (combat layer -21, victory -17); SFX normalized on their loudest 400 ms window to per-sound targets (impacts -12 to -13 LUFS, casts -16, sword -14 to -17, pickups -18/-19, loops -22 to -25, UI -24/-30), peaks limited to -1 dBFS with at most 3 dB of gain reduction. Every cue plays at volume 1.0 and every SFX cue randomizes pitch (about +/-3 to 8%) and volume (0.92 to 1.0). Sound class volumes (music 0.7, UI 0.6) put music about 7 dB under spell casts, so nothing needs to be pushed for sound to work; the mixes are optional extras.
@@ -106,27 +109,27 @@ Levels are baked into the waves by a loudness pass (BS.1770 K-weighted): music l
 | Sword connects with a character | `/Game/Audio/Jam/Cues/SCue_Sword_Hit` | PlaySoundAtLocation / SpawnSoundAttached | NPC / enemy combat code (Codex, the user) |
 | Sword blocked / parried by another blade | `/Game/Audio/Jam/Cues/SCue_Sword_Clash` | PlaySoundAtLocation / SpawnSoundAttached | NPC / enemy combat code (Codex, the user) |
 | World jump departure (JumpSound): play 2D when the jump starts | `/Game/Audio/Jam/Cues/SCue_WorldJump_Whoosh` | PlaySound2D | world-jump |
-| World jump arrival in the new London: play 2D on arrival | `/Game/Audio/Jam/Cues/SCue_WorldJump_Stinger` | PlaySound2D | world-jump |
-| World jump refused (RefusedSound): no coin / blocked | `/Game/Audio/Jam/Cues/SCue_WorldJump_Refused` | PlaySound2D | world-jump |
-| Coin collected (PickupSound) | `/Game/Audio/Jam/Cues/SCue_Coin_Pickup` | PlaySoundAtLocation / SpawnSoundAttached | world-jump |
+| World jump arrival in the new world: play 2D on arrival | `/Game/Audio/Jam/Cues/SCue_WorldJump_Stinger` | PlaySound2D | world-jump |
+| World jump refused (RefusedSound): no mirror shard / blocked | `/Game/Audio/Jam/Cues/SCue_WorldJump_Refused` | PlaySound2D | world-jump |
+| Mirror shard (coin) collected (PickupSound) | `/Game/Audio/Jam/Cues/SCue_Coin_Pickup` | PlaySoundAtLocation / SpawnSoundAttached | world-jump |
 | Book page collected from a tower | `/Game/Audio/Jam/Cues/SCue_Page_Pickup` | PlaySoundAtLocation / SpawnSoundAttached | world-jump |
 | Tower door unsealed / opened | `/Game/Audio/Jam/Cues/SCue_Door_Unseal` | PlaySoundAtLocation / SpawnSoundAttached | world-jump |
 | Button pressed | `/Game/Audio/Jam/Cues/SCue_UI_Click` | PlaySound2D | whoever owns menus/HUD |
 | Button hovered / focus moved | `/Game/Audio/Jam/Cues/SCue_UI_Hover` | PlaySound2D | whoever owns menus/HUD |
 | Confirm / start game / spell crafted | `/Game/Audio/Jam/Cues/SCue_UI_Confirm` | PlaySound2D | whoever owns menus/HUD |
-| Infected / addict NPC idle growl, aggro or attack bark | `/Game/Audio/Jam/Cues/SCue_Infected_Growl` | PlaySoundAtLocation / SpawnSoundAttached | NPC / enemy combat code (Codex, the user) |
-| Villain's true form appears (dark stinger) | `/Game/Audio/Jam/Cues/SCue_Villain_Manifest` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
-| Villain whispered taunt / laugh; also when he hops hosts | `/Game/Audio/Jam/Cues/SCue_Villain_Voice` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
-| Villain leaves one host for another | `/Game/Audio/Jam/Cues/SCue_Villain_Hop` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
-| 1 s charge-up before each villain attack | `/Game/Audio/Jam/Cues/SCue_Villain_Telegraph` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
-| Villain heavy attack impact (ground shockwave / tendril strike) | `/Game/Audio/Jam/Cues/SCue_Villain_Slam` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
-| Villain hit by the Final Spell | `/Game/Audio/Jam/Cues/SCue_Villain_Hurt` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
-| Villain death: dissolve and scream | `/Game/Audio/Jam/Cues/SCue_Villain_Death` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
+| Infected / Tarnish-touched NPC idle growl, aggro or attack bark | `/Game/Audio/Jam/Cues/SCue_Infected_Growl` | PlaySoundAtLocation / SpawnSoundAttached | NPC / enemy combat code (Codex, the user) |
+| The Tarnish's true form appears (dark stinger) | `/Game/Audio/Jam/Cues/SCue_Villain_Manifest` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
+| The Tarnish's whispered taunt / laugh; also when he hops hosts | `/Game/Audio/Jam/Cues/SCue_Villain_Voice` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
+| The Tarnish leaves one host for another | `/Game/Audio/Jam/Cues/SCue_Villain_Hop` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
+| 1 s charge-up before each of the Tarnish's attacks | `/Game/Audio/Jam/Cues/SCue_Villain_Telegraph` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
+| The Tarnish's heavy attack impact (ground shockwave / tendril strike) | `/Game/Audio/Jam/Cues/SCue_Villain_Slam` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
+| The Tarnish hit by the Final Spell | `/Game/Audio/Jam/Cues/SCue_Villain_Hurt` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
+| The Tarnish's death: dissolve and scream | `/Game/Audio/Jam/Cues/SCue_Villain_Death` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
 | Hero casts the Final Spell (bright, holy, big) | `/Game/Audio/Jam/Cues/SCue_FinalSpell_Cast` | PlaySoundAtLocation / SpawnSoundAttached | villain session (possession + finale) |
-| Gray London ambient music loop | `/Game/Audio/Jam/Cues/SCue_MUS_Gray_Loop` | 2D, looping | world-jump |
-| Red London music loop | `/Game/Audio/Jam/Cues/SCue_MUS_Red_Loop` | 2D, looping | world-jump |
-| White London music loop | `/Game/Audio/Jam/Cues/SCue_MUS_White_Loop` | 2D, looping | world-jump |
-| Combat layer: fade in over the London loop when enemies engage (push SMX_Jam_Combat) | `/Game/Audio/Jam/Cues/SCue_MUS_Combat_Layer` | 2D, looping | NPC / enemy combat code (Codex, the user) |
+| Pewterside (gray, present-day) ambient music loop | `/Game/Audio/Jam/Cues/SCue_MUS_Gray_Loop` | 2D, looping | world-jump |
+| Giltside (red, medieval war) music loop | `/Game/Audio/Jam/Cues/SCue_MUS_Red_Loop` | 2D, looping | world-jump |
+| Frostside (white, wasteland) music loop | `/Game/Audio/Jam/Cues/SCue_MUS_White_Loop` | 2D, looping | world-jump |
+| Combat layer: fade in over the world loop when enemies engage (push SMX_Jam_Combat) | `/Game/Audio/Jam/Cues/SCue_MUS_Combat_Layer` | 2D, looping | NPC / enemy combat code (Codex, the user) |
 | Victory sting: last enemy of an encounter defeated (push SMX_Jam_StingerDuck) | `/Game/Audio/Jam/Cues/SCue_MUS_Victory_Sting` | 2D one-shot | NPC / enemy combat code (Codex, the user) |
 
 ## Sound effects
@@ -299,9 +302,9 @@ Generator: ElevenLabs Sound Effects v2 (eleven_text_to_sound_v2). Waves are mono
 ### Sword_Hit
 
 - Cue: `/Game/Audio/Jam/Cues/SCue_Sword_Hit` — class `SCL_Jam_SFX`, attenuation ATT_Jam_Small (2 m inner, 25 m falloff), volume 1.0, pitch 0.93–1.07
-- Waves (3): `SW_Sword_Hit_01` (0.40 s), `SW_Sword_Hit_02` (0.40 s), `SW_Sword_Hit_03` (0.50 s)
-- Loudness: target -14 LUFS momentary max; result -15.6, -16.4, -15.2 (peaks <= -1 dBFS)
-- Source: **procedural stand-in** (not AI): numpy synthesis, `synth.py` function `S_Sword_Hit`, layered over the project's GASP foley punches `/Game/Audio/Foley/SoundWaves/Combat/foley_punch_01..03` (Epic Game Animation Sample). Will be replaced in place by the ElevenLabs take below when the free tier allows.
+- Waves (3): `SW_Sword_Hit_01` (0.40 s), `SW_Sword_Hit_02` (0.40 s), `SW_Sword_Hit_03` (0.40 s)
+- Loudness: target -16 LUFS momentary max; result -17.4, -17.6, -18.4 (peaks <= -1 dBFS)
+- Source: **procedural stand-in** (not AI): numpy synthesis, `synth.py` function `S_Sword_Hit`. Will be replaced in place by the ElevenLabs take below when the free tier allows.
 - Queued ElevenLabs prompt: "Four separate sword blade hits slicing into a body, one at a time with a short silent gap between each, meaty cut with a heavy thud"
 
 ### Sword_Clash
@@ -506,12 +509,88 @@ Generator: ElevenLabs Music v2.5 (eleven_music_v2_5), instrumental. Stereo 48 kH
 - Source: **procedural stand-in** (not AI): numpy synthesis, `synth_music.py`. Will be replaced in place by the ElevenLabs take below.
 - Queued ElevenLabs prompt: "Short triumphant orchestral victory sting: bold brass fanfare over a timpani roll, resolving on a bright major chord and ending cleanly with a short reverb tail. Starts immediately at full energy."
 
+## Voices (OpenAI realtime audio model)
+
+Model: OpenAI realtime audio (see the AI declaration above). Waves: `/Game/Audio/Jam/Voice/<Group>/SW_VO_<LineId>` (mono 24 kHz, trimmed, character FX, leveled, subtitles set). Cues: `/Game/Audio/Jam/Voice/Cues/`. NPC and Tarnish voices are 3D (`ATT_Jam_NPCVoice`, attach to the speaker's head); the narrator and `SCue_VO_Tarnish_Taunt_Head` / `_Hop_Head` are 2D. Sound class `SCL_Jam_Voice` routes through the jam limiter. Concurrency: `SCON_Jam_Barks` (3 at a time, 0.5 s retrigger), `SCON_Jam_Tarnish` and `SCON_Jam_Narrator` (one at a time). Status: generated and imported.
+
+| Cue | Lines | When | Owner |
+|---|---|---|---|
+| `SCue_VO_Tarnish_Taunt` | 6 (random) | Taunt while possessing a host or during the boss fight | villain session |
+| `SCue_VO_Tarnish_Hop` | 3 (random) | The Tarnish takes a new host (play with SCue_Villain_Hop) | villain session |
+| `SCue_VO_Tarnish_Manifest` | 2 (random) | True form appears (play after SCue_Villain_Manifest) | villain session |
+| `SCue_VO_Tarnish_PhaseTwo` | 1 (random) | Boss phase two: it tears loose from its shroud | villain session |
+| `SCue_VO_Tarnish_Cured` | 2 (random) | The player burns the Tarnish out of someone (at most once per 10 s) | villain session |
+| `SCue_VO_Tarnish_Hurt` | 3 (random) | Hit by the Final Spell (with SCue_Villain_Hurt) | villain session |
+| `SCue_VO_Tarnish_Death` | 2 (random) | Death (with SCue_Villain_Death) | villain session |
+| `SCue_VO_Narrator_Intro` | 1 | "Lanthorne was cut into three reflections, and only one is the version its maker meant. The Tarnish wants the final cut." | game-flow-ui |
+| `SCue_VO_Narrator_Tip_Aim` | 1 | "Hold to aim. The glow shows where your spell will land." | game-flow-ui |
+| `SCue_VO_Narrator_Tip_Cast` | 1 | "Then cast. Each element answers differently: fire burns, ice slows, lightning leaps." | game-flow-ui |
+| `SCue_VO_Narrator_Tip_Shard` | 1 | "Mirror shards let you step through. Stepping through also takes most of your magic." | game-flow-ui |
+| `SCue_VO_Narrator_Tip_StepThrough` | 1 | "Step up into the next side, or down into the one below. Pewterside, Giltside, Frostside: the same streets, in three different lights." | game-flow-ui |
+| `SCue_VO_Narrator_Tip_Crafting` | 1 | "Build your own spells. Choose a form, an element, and how it behaves, then cast what you made." | game-flow-ui |
+| `SCue_VO_Narrator_FirstHost` | 1 | "The Tarnish has taken a face. Watch for the burning eyes." | game-flow-ui |
+| `SCue_VO_Narrator_MirrorWhole` | 1 | "The mirror is whole. The Final Spell is yours. Now burn out the Tarnish." | game-flow-ui |
+| `SCue_VO_Narrator_FinalSpellHint` | 1 | "Ordinary spells barely touch it. Only the Final Spell can burn it out." | game-flow-ui |
+| `SCue_VO_Narrator_Victory` | 1 | "The Tarnish is burned out. Lanthorne is itself again." | game-flow-ui |
+| `SCue_VO_Civilian_Fear_<F1..F3,M1..M3>` (+ fallback `SCue_VO_Civilian_Fear`) | 2 per voice slot | Civilian/Timid starts Fleeing or is hit | npc-unify (NPC reactions) |
+| `SCue_VO_Guard_Alert_<F1..F3,M1..M3>` (+ fallback `SCue_VO_Guard_Alert`) | 2 per voice slot | Guard enters Alert / Investigating | npc-unify (NPC reactions) |
+| `SCue_VO_Guard_Attack_<F1..F3,M1..M3>` (+ fallback `SCue_VO_Guard_Attack`) | 1 per voice slot | Guard switches to Attacking | npc-unify (NPC reactions) |
+| `SCue_VO_Soldier_Command_<F1..F3,M1..M3>` (+ fallback `SCue_VO_Soldier_Command`) | 3 per voice slot | Soldier / SoldierCaster squad command (on engage, every few seconds in combat) | soldier-squads |
+| `SCue_VO_Tarnished_Mutter_<F1..F3,M1..M3>` (+ fallback `SCue_VO_Tarnished_Mutter`) | 2 per voice slot | Tarnished (Infected / VillainHost) idle or aggro mutter (layer with SCue_Infected_Growl) | npc-unify (NPC reactions) |
+| `SCue_VO_Civilian_Talk_<F1..F3,M1..M3>` (+ fallback `SCue_VO_Civilian_Talk`) | 1 per voice slot | Calm civilian answer when the player talks to them | NPC dialogue session (talk-back fallback) |
+| `SCue_VO_Guard_Talk_<F1..F3,M1..M3>` (+ fallback `SCue_VO_Guard_Talk`) | 1 per voice slot | Calm guard answer when the player talks to them | NPC dialogue session (talk-back fallback) |
+| `SCue_VO_Soldier_Talk_<F1..F3,M1..M3>` (+ fallback `SCue_VO_Soldier_Talk`) | 1 per voice slot | Calm soldier answer when the player talks to them | NPC dialogue session (talk-back fallback) |
+| `SCue_VO_CS01_06` | 1 | "Silverer. We've been watching you in every window." | villain session |
+| `SCue_VO_CS02_04` | 1 | "Shh. Let him hum for us." | villain session |
+| `SCue_VO_CS03_03` | 1 | "You moved a page, Silverer. We felt it in every face." | villain session |
+| `SCue_VO_CS04_05` | 1 | "Up you go, Silverer. We'll be waiting at the top." | villain session |
+| `SCue_VO_CS05_01` | 1 | "Three leaves, one mirror. And one Silverer left to look into it." | villain session |
+| `SCue_VO_CS05_03` | 1 | "Climb, then. She climbed too." | villain session |
+| `SCue_VO_MQ02_02` | 1 | "Your friend hums when he's frightened. We like the tune." | villain session |
+| `SCue_VO_MQ07_02` | 1 | "Two leaves. You're building us a door, Silverer." | villain session |
+| `SCue_VO_MQ08_05` | 1 | "She stood just there, your mother. Right where you are." | villain session |
+| `SCue_VO_MQ09_01` | 1 | "Look, Silverer. Three of you in the glass, and none of them sure." | villain session |
+| `SCue_VO_MQ09_03` | 1 | "She called your name at the end. Shall we tell you how it sounded?" | villain session |
+| `SCue_VO_MQ09_05` | 1 | "Every face you save... still has a dark side..." | villain session |
+| `SCue_VO_MQ_BAND_01` | 1 | "Five faces now. They're all a little like you." | villain session |
+| `SCue_VO_MQ_BAND_02` | 1 | "Half a street of us. Can you hear us humming?" | villain session |
+| `SCue_VO_MQ_BAND_03` | 1 | "Nearly enough of us to wear the whole city." | villain session |
+| `SCue_VO_MQ_LOSE_01` | 1 | "Every face in Lanthorne, and every one of them fits." | villain session |
+
+Full line list, voices and delivery instructions: `ArtDirection/Audio/VoiceScript.md`.
+
+## Crowd voices (Gemini roster, one voice per NPC)
+
+137 designed voices (`DT_NpcVoiceRoster`, row name = VoiceId `V001`–`V137`; NPC unify picks one per NPC by sex, side and character). Every cue is 3D (`ATT_Jam_NPCVoice`, attach to the head), class `SCL_Jam_Voice`. Cue path: `/Game/Audio/Jam/Voice/Cues/<Group>/SCue_VO_<Group>_<VoiceId>`, found by `FindVoiceCue(Actor, Group)` before the 6-slot cues above. No line is shared between two voices.
+
+| Group | Voices | Lines per voice | When | Owner |
+|---|---|---|---|---|
+| `Remark` | all | 2 | calm NPC, player within ~4.5 m, 60–90 s cooldown | npc-unify |
+| `Reply` | all | 3 | the player talks to the NPC (Talk resolves here) | NPC dialogue session |
+| `Filler` | all | 2 | short beat before a reply | NPC dialogue session |
+| `Civilian_Fear` | civilians | 3 | flee / hit / sees the tarnished | npc-unify |
+| `Guard_Alert` | guards | 3 | guard enters Alert | npc-unify |
+| `Guard_Attack` | guards | 2 | guard starts attacking | npc-unify |
+| `Soldier_Command` | soldiers | 4 | squad commands in combat | soldier-squads |
+| `Tarnished_Mutter` | all | 2 | after the NPC is taken (tarnished FX baked in) | npc-unify |
+
+## Story voices (ArtDirection/Story)
+
+- **Scripted lines:** 169 main-quest, side-quest and cutscene lines as `/Game/Audio/Jam/Voice/Cues/SCue_VO_<LineId>` (waves in `/Game/Audio/Jam/Voice/Story/`). Cutscene cues and 2D lines (MQ07_02, MQ_BAND_01-03, MQ_LOSE_01, Wren's quest lines) have no attenuation; MQ09_01-05 and townspeople's quest lines use `ATT_Jam_NPCVoice`. MQ05_01/CS03_03 and MQ05_02/CS03_04 share one take.
+- **Wren Hale (hero):** Gemini designed voice `voice_wnw870hwv7ds` (candidate B). The user asked for a unique, captivating designed voice (never the original); four candidates read the same lines and Gemini's audio understanding picked B (`voice/hero_judgement.json`).
+- **The Tarnish:** its story lines use its existing OpenAI voice and FX, matching the lines already in the game.
+- **Named people (42):** each has a reserved roster voice (`bEnabled = false` in `DT_NpcVoiceRoster`) and story barks as groups Greet, Idle, SeeTarnished, Flee, SpellNear, Thanks, Dread, Farewell, Cured, TarnishedLine (`/Cues/<Group>/SCue_VO_<Group>_<VoiceId>`), also fed into Civilian_Fear, Remark, Reply and Tarnished_Mutter. Story-clique conversations are in `/Game/Audio/Jam/Voice/Ambient/DT_StoryConversations` (played by lives via PlayConversationById, with Band and RequiredFlag).
+- **Fill voices:** reserving the named people's voices left gaps, so extra unnamed voices were added: V121-V132 (Pewterside civilians, `tools/add_pewterside.py`) and V133-V137 (women guards: 2 Giltside, 2 Pewterside, 1 Frostside, `tools/add_guards.py`). Before V133-V137, every Giltside and Pewterside women's guard voice was reserved, so a third unnamed woman guard fell back to a civilian voice.
+- **Acceptance:** a take is kept when a transcript matches the script word for word, or letter for letter once spacing, apostrophes and interjections are ignored; any spelling of "Silverer" passes (user decision). A few takes whose only difference is a misheard name or accent word are kept with a note in `voice/gemini/manifest.json`.
+
+Street conversations: `/Game/Audio/Jam/Voice/Ambient/<CliqueId>/SW_AMB_<ConvId>_<n>`, listed in `/Game/Audio/Jam/Voice/Ambient/DT_AmbientConversations` for the crowd director (48 cliques × 6 conversations).
+
 ## Not generated / known gaps
 
 - The ElevenLabs connector is on the free tier; it stopped accepting generations after 6 takes (16:17 UTC) and is retried hourly. Sounds marked stand-in are layered procedural designs (numpy synthesis, rendered offline into the same SoundCues so wiring never changes). When an ElevenLabs take arrives it replaces the waves inside the cue. The queued prompt is listed with each stand-in.
 - Stand-ins were designed as shippable, not as silent placeholders: per-element layered spells (fire crackle+whoosh+roar, water slosh+bubbles, ice crystals+metallic pings, lightning crack+arc buzz+thunder, earth thud+grit+debris, arcane bell shimmer+FM hum), 2-4 variations each plus cue randomization.
 - Most clearly synthetic: `Infected_Growl` and `Villain_Voice` (modelled voices: pulse train with period doubling, rattle and formants, plus articulated whisper syllables; they carry no real words) and `MUS_Victory_Sting` (synth brass). Replace these first if an ElevenLabs slot opens or the plan is upgraded.
-- No ambience beds (rain for Gray London, battle din for Red, wind for White) were requested or made. The Gray London music carries the rainy mood.
+- No ambience beds (rain for Pewterside, battle din for Giltside, wind for Frostside) were requested or made. The Pewterside music carries the rainy mood.
 - Nobody has listened to these yet. They were checked by playing every cue through the editor preview, by spectrogram review of every stand-in, and by signal checks (loudness, peaks, duration, loop-seam continuity). Do a listening pass before submission.
 
 ## Size
@@ -520,4 +599,4 @@ Editor source in `Content/Audio/Jam` is about 55 MB (uncompressed 16-bit PCM kep
 
 ## Regenerating
 
-The ElevenLabs flow is "Three Londons - Jam Audio" (one node per sound, labelled with the sound name). The scripts are in `ArtDirection/Audio/tools/` (Python 3 + numpy; MP3 decoding uses the engine's bundled libsndfile). Set `ROOT` to a work folder, then: `fetch.py` downloads a take, `process_sfx.py` / `process_music.py` trim, mono-mix, normalize, slice and loop it, `synth.py` / `synth_music.py` render the procedural stand-ins, `ue_build.py` (exec'd in the editor's Python) imports the waves and rebuilds the cues in place, and `gen_readme.py` rewrites this file from `catalog.py`.
+The ElevenLabs flow is id `NoxuIlopg9X9ZlS5daRm` (one node per sound, labelled with the sound name). The scripts are in `ArtDirection/Audio/tools/` (Python 3 + numpy; MP3 decoding uses the engine's bundled libsndfile). Set `ROOT` to a work folder, then: `fetch.py` downloads a take, `process_sfx.py` / `process_music.py` trim, mono-mix, normalize, slice and loop it, `synth.py` / `synth_music.py` render the procedural stand-ins, `ue_build.py` (exec'd in the editor's Python) imports the waves and rebuilds the cues in place, and `gen_readme.py` rewrites this file from `catalog.py`.

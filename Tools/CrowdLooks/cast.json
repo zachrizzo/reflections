@@ -1,0 +1,254 @@
+{
+ "note": "Final look list. outfit_bp = fitted wardrobe Blueprint the look is copied from (palette variants from ArtDirection/Three-Londons-Wardrobe/CrowdLooks). New people get face/skin/grooms from their MetaHuman build; existing people get the grooms listed (MetaHuman Creator wardrobe).",
+ "looks": [
+  {
+   "id": "GiltArchivist",
+   "kind": "existing",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_03",
+   "sex": "M",
+   "age": "Young",
+   "side": "Giltside",
+   "role": "Civilian",
+   "face": "ArchiveApprentice",
+   "grooms": {
+    "Eyebrows": "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/BP_MHC_GiltPriya",
+    "Eyelashes": null
+   }
+  },
+  {
+   "id": "GiltBarnaby",
+   "kind": "new",
+   "built": "TestWalter",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_06",
+   "sex": "M",
+   "age": "Old",
+   "side": "Giltside",
+   "role": "Civilian",
+   "face": "Walter"
+  },
+  {
+   "id": "GiltBridgeGuard",
+   "kind": "existing",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_07",
+   "sex": "F",
+   "age": "Adult",
+   "side": "Giltside",
+   "role": "Guard",
+   "face": "BridgeGuard",
+   "grooms": {
+    "Eyelashes": null
+   }
+  },
+  {
+   "id": "GiltRowena",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_11",
+   "sex": "F",
+   "age": "Adult",
+   "side": "Giltside",
+   "role": "Guard",
+   "face": "Vivian"
+  },
+  {
+   "id": "GiltCoinClerk",
+   "kind": "existing",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_16",
+   "sex": "F",
+   "age": "Adult",
+   "side": "Giltside",
+   "role": "Civilian",
+   "face": "CoinClerk",
+   "grooms": {
+    "Eyelashes": null
+   }
+  },
+  {
+   "id": "GiltMaren",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_18",
+   "sex": "F",
+   "age": "Old",
+   "side": "Giltside",
+   "role": "Civilian",
+   "face": "Grace"
+  },
+  {
+   "id": "GiltFerryman",
+   "kind": "existing",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_22",
+   "sex": "M",
+   "age": "Adult",
+   "side": "Giltside",
+   "role": "Civilian",
+   "face": "FerryPilot",
+   "grooms": {
+    "Eyebrows": "/Game/Characters/Lanthorne/People/GiltRamon/Built/MHC_GiltRamon/BP_MHC_GiltRamon",
+    "Eyelashes": null
+   }
+  },
+  {
+   "id": "GiltRamon",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_21",
+   "sex": "M",
+   "age": "Adult",
+   "side": "Giltside",
+   "role": "Civilian",
+   "face": "Jorge"
+  },
+  {
+   "id": "GiltDrummer",
+   "kind": "existing",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_28",
+   "sex": "F",
+   "age": "Young",
+   "side": "Giltside",
+   "role": "Civilian",
+   "face": "FestivalDrummer",
+   "grooms": {
+    "Hair": "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/BP_MHC_FrostAmara",
+    "Eyebrows": "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/BP_MHC_FrostAmara",
+    "Eyelashes": null
+   }
+  },
+  {
+   "id": "GiltPriya",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_30",
+   "sex": "F",
+   "age": "Young",
+   "side": "Giltside",
+   "role": "Civilian",
+   "face": "Sunita"
+  },
+  {
+   "id": "GiltGlassman",
+   "kind": "existing",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_34",
+   "sex": "M",
+   "age": "Adult",
+   "side": "Giltside",
+   "role": "Civilian",
+   "face": "GlassArtisan",
+   "grooms": {
+    "Eyebrows": "/Game/Characters/Lanthorne/People/GiltHaruto/Built/MHC_GiltHaruto/BP_MHC_GiltHaruto",
+    "Eyelashes": null
+   }
+  },
+  {
+   "id": "GiltHaruto",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_33",
+   "sex": "M",
+   "age": "Young",
+   "side": "Giltside",
+   "role": "Civilian",
+   "face": "Kelvin"
+  },
+  {
+   "id": "FrostIven",
+   "kind": "existing",
+   "outfit_bp": "/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_01_Plain",
+   "sex": "M",
+   "age": "Young",
+   "side": "Frostside",
+   "role": "Soldier",
+   "face": "IvenRook",
+   "grooms": {
+    "Eyelashes": null
+   }
+  },
+  {
+   "id": "FrostSilas",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_02_Cap",
+   "sex": "M",
+   "age": "Old",
+   "side": "Frostside",
+   "role": "Civilian",
+   "face": "Lorenzo"
+  },
+  {
+   "id": "FrostTobias",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_03_Mantle",
+   "sex": "M",
+   "age": "Adult",
+   "side": "Frostside",
+   "role": "Caster",
+   "face": "Isaiah"
+  },
+  {
+   "id": "FrostWen",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_04_CapMantle",
+   "sex": "M",
+   "age": "Adult",
+   "side": "Frostside",
+   "role": "Caster",
+   "face": "Bo"
+  },
+  {
+   "id": "FrostHyeon",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_05_GuardRags",
+   "sex": "F",
+   "age": "Old",
+   "side": "Frostside",
+   "role": "Civilian",
+   "face": "Sook-ja"
+  },
+  {
+   "id": "FrostSaran",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_06_GuardBoldRunes",
+   "sex": "F",
+   "age": "Adult",
+   "side": "Frostside",
+   "role": "Soldier",
+   "face": "Tuya"
+  },
+  {
+   "id": "FrostNia",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_05_GuardRags",
+   "sex": "F",
+   "age": "Young",
+   "side": "Frostside",
+   "role": "Soldier",
+   "face": "Zuri"
+  },
+  {
+   "id": "FrostAmara",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_06_GuardBoldRunes",
+   "sex": "F",
+   "age": "Adult",
+   "side": "Frostside",
+   "role": "Soldier",
+   "face": "Asha"
+  },
+  {
+   "id": "GiltCorwin",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_01",
+   "sex": "M",
+   "age": "Adult",
+   "side": "Giltside",
+   "role": "Soldier",
+   "face": "Dominic",
+   "note": "outfit placeholder until the Codex/Blender Giltside soldier outfit (M, ArchiveApprentice body) lands"
+  },
+  {
+   "id": "GiltOsric",
+   "kind": "new",
+   "outfit_bp": "/Game/Characters/RedLondon/Crowd/Variants/BP_Crowd_05",
+   "sex": "M",
+   "age": "Adult",
+   "side": "Giltside",
+   "role": "Soldier",
+   "face": "Victor",
+   "note": "outfit placeholder until the Codex/Blender Giltside soldier outfit lands"
+  }
+ ]
+}

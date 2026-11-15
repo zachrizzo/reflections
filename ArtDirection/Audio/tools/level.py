@@ -16,13 +16,15 @@ TARGET = {
     "Fire_Impact": -12, "Water_Impact": -13, "Ice_Impact": -13, "Lightning_Impact": -12, "Earth_Impact": -12, "Arcane_Impact": -13,
     "Heal_Shimmer": -18, "Shield_Up": -17, "Shield_Block": -16, "Shield_Loop": -25, "Projectile_Loop": -22,
     "Levitation_Start": -18, "Levitation_Loop": -24,
-    "Sword_Swing": -17, "Sword_Hit": -14, "Sword_Clash": -15,
+    "Sword_Swing": -17, "Sword_Hit": -16, "Sword_Clash": -15,
     "WorldJump_Whoosh": -15, "WorldJump_Stinger": -14, "WorldJump_Refused": -19,
     "Coin_Pickup": -18, "Page_Pickup": -19, "Door_Unseal": -16,
     "UI_Click": -24, "UI_Hover": -30, "UI_Confirm": -22,
     "Infected_Growl": -16,
     "Villain_Manifest": -13, "Villain_Voice": -18, "Villain_Hop": -16, "Villain_Telegraph": -16, "Villain_Slam": -11,
     "Villain_Hurt": -14, "Villain_Death": -14, "FinalSpell_Cast": -12,
+    "Fireball_Explode": -11, "Water_Shove": -13, "Shock_Loop": -20, "Shock_Collapse": -14, "Body_Knockback": -15,
+    "Burning_Loop": -21, "March_Loop": -21, "March_Step": -22, "Sword_ShieldHit": -15, "Shield_BlockHeavy": -15,
     "MUS_Gray_Loop": -20, "MUS_Red_Loop": -20, "MUS_White_Loop": -20, "MUS_Combat_Layer": -21, "MUS_Victory_Sting": -17,
 }
 CEILING_DB = -1.0

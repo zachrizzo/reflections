@@ -15,6 +15,7 @@ class UReflectionsWorldJumpConfig;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FReflectionsCoinsChanged, EReflectionsWorld, World, int32, Count);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FReflectionsPagesChanged, int32, Pages, int32, PagesForBook);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FReflectionsBookComplete);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FReflectionsProgressRestored);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FReflectionsKeyAdded, FName, KeyId);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FReflectionsWorldChanged, EReflectionsWorld, From, EReflectionsWorld, To);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FReflectionsWorldMessage, const FText&, Message);
@@ -85,6 +86,10 @@ public:
     UFUNCTION(BlueprintPure, Category = "World Jump|Book")
     bool HasPage(FName PageId) const { return Pages.Contains(PageId); }
 
+    /** Every page found so far (for checkpoints). */
+    UFUNCTION(BlueprintPure, Category = "World Jump|Book")
+    TArray<FName> GetPages() const { return Pages.Array(); }
+
     UFUNCTION(BlueprintPure, Category = "World Jump|Book")
     int32 GetPageCount() const { return Pages.Num(); }
 
@@ -125,6 +130,21 @@ public:
     /** Clears coins, pages, keys and the current world (a new run). */
     UFUNCTION(BlueprintCallable, Category = "World Jump")
     void ResetProgress();
+
+    /**
+     * Checkpoint load: replaces coins, pages and keys in one go without firing OnCoinsChanged, OnPagesChanged,
+     * OnBookComplete or OnKeyAdded (so no pickup sounds or "book is whole" banner). Book-complete state is
+     * recomputed silently. Fires OnProgressRestored once so HUDs can refresh.
+     */
+    UFUNCTION(BlueprintCallable, Category = "World Jump")
+    void RestoreProgress(const TMap<EReflectionsWorld, int32>& InCoins, const TArray<FName>& InPages, const TArray<FName>& InKeys);
+
+    UPROPERTY(BlueprintAssignable, Category = "World Jump")
+    FReflectionsProgressRestored OnProgressRestored;
+
+    /** Coins held per London (for checkpoints). */
+    UFUNCTION(BlueprintPure, Category = "World Jump|Coins")
+    TMap<EReflectionsWorld, int32> GetAllCoins() const { return Coins; }
 
     FReflectionsPendingArrival PendingArrival;
 

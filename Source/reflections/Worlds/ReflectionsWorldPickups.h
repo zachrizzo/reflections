@@ -31,13 +31,29 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup", meta = (Units = "cm"))
     float BobHeight = 12.0f;
 
+    /** How much brighter the glow flares at each glint (2 = three times as bright). 0: no glint. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup", meta = (ClampMin = "0"))
+    float GlintStrength = 2.0f;
+
+    /** Seconds between glints. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup", meta = (ClampMin = "0.5", Units = "s"))
+    float GlintPeriod = 2.6f;
+
     /** Colour of the mesh and the glow. */
     UFUNCTION(BlueprintCallable, Category = "Pickup")
     void SetGlowColor(const FLinearColor& Color);
 
+    virtual void OnConstruction(const FTransform& Transform) override;
+
 protected:
     virtual void BeginPlay() override;
     virtual void Tick(float DeltaSeconds) override;
+
+    /** The real mesh for this pickup from DA_WorldJumpConfig; null keeps the gray-box shape. */
+    virtual const FReflectionsPickupLook* GetLook() const { return nullptr; }
+
+    /** Swap in GetLook()'s mesh: own materials, fitted to DisplaySize, centred on the spin axis. */
+    void ApplyLook();
 
     /** Give the item. Return false to leave the pickup in place. */
     virtual bool GiveTo(APawn* Collector) PURE_VIRTUAL(AReflectionsWorldPickup::GiveTo, return false;);
@@ -62,6 +78,8 @@ private:
 
     UPROPERTY(Transient) TObjectPtr<UMaterialInstanceDynamic> Material;
     float Clock = 0.0f;
+    float BaseGlowIntensity = 0.0f;
+    bool bHasLook = false;
     FVector SpinnerBase = FVector::ZeroVector;
     bool bCollected = false;
 };
@@ -86,6 +104,7 @@ public:
 protected:
     virtual bool GiveTo(APawn* Collector) override;
     virtual FLinearColor GetDefaultColor() const override;
+    virtual const FReflectionsPickupLook* GetLook() const override;
 };
 
 /** One page of the book. Three different pages make the spell. */
@@ -101,12 +120,18 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Page")
     FName PageId;
 
+    /** Optional. Empty: "A page from <the side's Page Source>" from DA_WorldJumpConfig, by where the page stands. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Page")
     FText PageTitle;
+
+    /** The title the player sees: PageTitle, else built from the side the page is in. */
+    UFUNCTION(BlueprintPure, Category = "Page")
+    FText GetDisplayTitle() const;
 
 protected:
     virtual bool GiveTo(APawn* Collector) override;
     virtual FLinearColor GetDefaultColor() const override { return FLinearColor(1.0f, 0.86f, 0.55f); }
+    virtual const FReflectionsPickupLook* GetLook() const override;
 };
 
 /** A key that opens a ReflectionsSealedDoor with the same KeyId. */
@@ -119,7 +144,7 @@ public:
     AReflectionsKeyPickup();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key")
-    FName KeyId = TEXT("RedTowerKey");
+    FName KeyId = TEXT("GiltTowerKey");
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Key")
     FText KeyName;
@@ -127,4 +152,5 @@ public:
 protected:
     virtual bool GiveTo(APawn* Collector) override;
     virtual FLinearColor GetDefaultColor() const override { return FLinearColor(1.0f, 0.62f, 0.12f); }
+    virtual const FReflectionsPickupLook* GetLook() const override;
 };

@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\References\\PewtersideCoin.png",
+  "output": "C:\\Users\\zachc\\Documents\\Unreal Projects\\reflections\\ArtDirection\\CodexRequests\\Props2026_11_14\\RawHunyuan\\PewtersideCoin.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 20,
+  "resolution": 256,
+  "seed": 14112026,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 130462,
+  "faces": 260920,
+  "seconds": 35.6,
+  "bounds": [
+    [
+      -0.9650676846504211,
+      -0.9973559975624084,
+      -0.08094918727874756
+    ],
+    [
+      0.9575426578521729,
+      0.9894643425941467,
+      0.08818965405225754
+    ]
+  ]
+}

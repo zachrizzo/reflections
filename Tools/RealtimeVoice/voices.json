@@ -1,0 +1,15 @@
+{
+  "_comment": "Per-NPC voices for live replies. Slot ids come from the NPC system's voice profile (VoiceSlot). Live replies speak in the NPC's DESIGNED Gemini voice from the audio roster (the same voice as its baked lines) whenever it has one; 'gemini' below is the stock Gemini voice used only for an NPC without one. 'voice' is the OpenAI voice of the development-only realtime mode. Keep in step with ArtDirection/Audio/VoiceScript.md.",
+  "provider": "gemini-tts",
+  "slots": {
+    "F1": {"voice": "coral", "gemini": "Leda", "persona": "a young woman in her twenties with a quick, bright voice"},
+    "F2": {"voice": "sage", "gemini": "Kore", "persona": "a woman in her forties with a firm, slightly husky, practical voice"},
+    "F3": {"voice": "shimmer", "gemini": "Gacrux", "persona": "an older woman in her sixties with a thinner, warm but shaky voice"},
+    "M1": {"voice": "ash", "gemini": "Fenrir", "persona": "a young man in his twenties with a quick, tense voice"},
+    "M2": {"voice": "echo", "gemini": "Orus", "persona": "a man in his forties with a steady, gruff voice"},
+    "M3": {"voice": "verse", "gemini": "Algenib", "persona": "an older man in his sixties with a deep, weathered, slower voice"}
+  },
+  "tarnish_voice": "cedar",
+  "tarnish_gemini_voice": "Enceladus",
+  "reserved_for_others": ["marin", "cedar"]
+}

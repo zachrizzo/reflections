@@ -216,6 +216,89 @@ async def scenario_override():
     return out
 
 
+def leftovers(world):
+    """Everything spell-related still alive in the world: active Niagara components, visible lights and decals."""
+    out = {'niagara': {}, 'lights': [], 'decals': []}
+    for c in unreal.ObjectIterator(unreal.NiagaraComponent):
+        try:
+            if c.get_world() == world and c.is_active() and c.get_asset():
+                name = c.get_asset().get_name()
+                out['niagara'][name] = out['niagara'].get(name, 0) + 1
+        except Exception:
+            pass
+    for c in unreal.ObjectIterator(unreal.LocalLightComponent):
+        try:
+            if c.get_world() == world and c.is_visible() and c.get_editor_property('intensity') > 0.0:
+                owner = c.get_owner()
+                out['lights'].append('%s/%s' % (owner.get_name() if owner else None, c.get_name()))
+        except Exception:
+            pass
+    for c in unreal.ObjectIterator(unreal.DecalComponent):
+        try:
+            if c.get_world() == world and c.is_visible():
+                owner = c.get_owner()
+                mat = c.get_decal_material()
+                out['decals'].append('%s/%s:%s' % (owner.get_name() if owner else None, c.get_name(), mat.get_name() if mat else None))
+        except Exception:
+            pass
+    return out
+
+
+LINGER_SPELLS = ['FIRESTORM', 'LIGHTNING_BOLT', 'ARCANE_BOLT', 'ICE_SHARD', 'WATER', 'FIRE', 'STONE_SHARD', 'WATER_ORB',
+                 'CHAIN_LIGHTNING', 'EARTH_SHOCK', 'GREATER_HEAL']
+
+
+async def scenario_linger(tag):
+    """Cast ten attacks and a heal at the ground, wait 5 s, then report and capture what is still lit."""
+    world = game_world()
+    pc, pawn, driver = pawn_and_driver(world)
+    rot = pc.get_control_rotation()
+    pc.set_control_rotation(unreal.Rotator(roll=0.0, pitch=-16.0, yaw=rot.yaw))
+    casts = []
+    for name in LINGER_SPELLS:
+        driver.spend_magic(-100.0)
+        casts.append((name, driver.cast_spell(getattr(unreal.HeroSpell, name))))
+        await asyncio.sleep(0.8)
+    during = leftovers(world)
+    await asyncio.sleep(5.0)
+    after = leftovers(world)
+    shot = await capture('linger_%s' % tag)
+    return {'casts': casts, 'during_last_cast': during, 'after_5s': after, 'screenshot': shot}
+
+
+STRESS_SPELLS = ['FIRESTORM', 'LIGHTNING_BOLT', 'ARCANE_BOLT', 'ICE_SHARD', 'WATER', 'FIRE', 'STONE_SHARD', 'WATER_ORB',
+                 'CHAIN_LIGHTNING', 'EARTH_SHOCK']
+
+
+async def scenario_stress(count=20):
+    """Release `count` attack spells straight through the combat component (no mana, cooldown or montage), aimed at
+    the ground ahead, then report what is still alive 5 s after the last one."""
+    world = game_world()
+    pc, pawn, driver = pawn_and_driver(world)
+    combat = pawn.get_component_by_class(unreal.ReflectionsSpellCombatComponent)
+    loc = pawn.get_actor_location()
+    fwd = pawn.get_actor_forward_vector()
+    right = pawn.get_actor_right_vector()
+    rot = pc.get_control_rotation()
+    pc.set_control_rotation(unreal.Rotator(roll=0.0, pitch=-16.0, yaw=rot.yaw))
+    origin = unreal.Transform(location=loc + fwd * 60.0 + unreal.Vector(0, 0, 50.0))
+    peak = {}
+    for i in range(count):
+        name = STRESS_SPELLS[i % len(STRESS_SPELLS)]
+        target = loc + fwd * (900.0 + 150.0 * (i % 4)) + right * (-300.0 + 150.0 * (i % 5)) - unreal.Vector(0, 0, 90.0)
+        combat.release_spell_at(getattr(unreal.HeroSpell, name), origin, target, None)
+        await asyncio.sleep(0.25)
+        now = leftovers(world)
+        for k, v in now['niagara'].items():
+            peak[k] = max(peak.get(k, 0), v)
+        peak['decals'] = max(peak.get('decals', 0), len(now['decals']))
+    mid = await capture('stress_mid')
+    await asyncio.sleep(5.0)
+    after = leftovers(world)
+    shot = await capture('stress_after_5s')
+    return {'count': count, 'peak_during': peak, 'after_5s': after, 'screenshots': [mid, shot]}
+
+
 which = ARGS or ['all']
 started_here = False
 if not await call_tool(APP + 'IsPIERunning'):
@@ -240,6 +323,11 @@ try:
     if 'all' in which or 'heal' in which or 'quick' in which:
         await asyncio.sleep(1.0)
         report['scenarios']['heal'] = await scenario_heal()
+    for arg in which:
+        if arg.startswith('linger'):
+            report['scenarios'][arg] = await scenario_linger(arg.split(':')[-1] if ':' in arg else 'run')
+    if 'stress' in which:
+        report['scenarios']['stress'] = await scenario_stress(20)
     if 'override' in which:
         await asyncio.sleep(0.5)
         report['scenarios']['override'] = await scenario_override()

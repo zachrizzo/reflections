@@ -196,7 +196,12 @@ def norm(x, peak=0.89):
     return (x * (peak / (np.abs(x).max() + 1e-9))).astype(np.float32)
 
 
+USE_FOLEY = False  # third-party (Game Animation Sample) layer disabled: keep /Game/Audio/Jam fully original
+
+
 def load_foley(name):
+    if not USE_FOLEY:
+        return None
     p = os.path.join(FOLEY, name + ".wav")
     if not os.path.exists(p):
         return None
@@ -252,12 +257,14 @@ def S_Sword_Hit(rng):
     ring = partials(0.4, [f0, f0 * 1.37, f0 * 2.1], [0.4, 0.25, 0.15], [0.08, 0.06, 0.04], rng)
     punch = load_foley(f"foley_punch_0{rng.integers(1, 4)}")
     if punch is None:
-        thud = sweep_sine(0.18, 140, 55) * env_ad(n_(0.18), 0.002, 0.08)
-        body = fft_filter(white(rng, n_(0.12)), 80, 900) * env_ad(n_(0.12), 0.001, 0.05)
-        punch = mix(thud, 0.6 * body)
+        thud = sweep_sine(0.3, rng.uniform(120, 150), 48) * env_ad(n_(0.3), 0.004, 0.12, 1.5)
+        body = fft_filter(colored(rng, n_(0.25), -3), 60, 700) * env_ad(n_(0.25), 0.003, 0.09, 1.5)
+        meat = fft_filter(white(rng, n_(0.2)), 250, 1600) * env_ad(n_(0.2), 0.003, 0.06, 2.0) * (0.6 + 0.4 * np.sign(rng.standard_normal(n_(0.2))))
+        cloth = fft_filter(white(rng, n_(0.12)), 1500, 6000) * env_ad(n_(0.12), 0.004, 0.04)
+        punch = mix(norm(thud), 0.8 * norm(body), 0.55 * norm(meat), 0.2 * norm(cloth))
     punch = A.trim_oneshot(punch, SR, head_db=-24.0, tail_db=-60.0, pre_ms=2.0, post_ms=40.0, fade_out_ms=60.0)
     punch = norm(punch[: n_(d)])
-    y = mix(0.9 * punch, at(0.7 * norm(slice_), 0.004), at(0.35 * ring, 0.004))
+    y = mix(0.95 * punch, at(0.4 * norm(slice_), 0.004), at(0.25 * ring, 0.004))
     return fade_out(y[: n_(d)], 60)
 
 
@@ -601,10 +608,12 @@ VARIANTS = {"Sword_Swing": 4, "Sword_Hit": 3, "Sword_Clash": 3, "Coin_Pickup": 3
 
 
 def main(names):
-    import spells, villain
+    import spells, villain, physics_sfx
     SOUNDS.update(spells.SOUNDS)
     SOUNDS.update(villain.SOUNDS)
     VARIANTS.update(villain.VARIANTS)
+    SOUNDS.update(physics_sfx.SOUNDS)
+    VARIANTS.update(physics_sfx.VARIANTS)
     for k in spells.SOUNDS:
         VARIANTS[k] = 3
     os.makedirs(OUT, exist_ok=True)

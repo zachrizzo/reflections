@@ -48,7 +48,7 @@ AReflectionsSealedDoor::AReflectionsSealedDoor()
     SealLight->SetLightColor(FLinearColor(1.0f, 0.12f, 0.06f));
     SealLight->SetCastShadows(false);
 
-    LockedMessage = LOCTEXT("DoorLocked", "Sealed. Its key is hidden somewhere in Red London.");
+    LockedMessage = LOCTEXT("DoorLocked", "Sealed. Its key is hidden somewhere in Giltside.");
     OpenedMessage = LOCTEXT("DoorOpened", "The seal breaks.");
 }
 

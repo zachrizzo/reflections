@@ -205,6 +205,14 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "HUD")
     bool bShowHud = true;
 
+    // ---- Pickup looks (coins are per London, in Worlds) --------------------------------------------------
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickups")
+    FReflectionsPickupLook PageLook;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickups")
+    FReflectionsPickupLook KeyLook;
+
     const FReflectionsWorldInfo* FindWorld(EReflectionsWorld World) const;
     int32 IndexOfWorld(EReflectionsWorld World) const;
     /** The neighbouring London one step up or down; false at the top or bottom of the stack. */
