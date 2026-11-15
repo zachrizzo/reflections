@@ -18,7 +18,8 @@ MODEL = 'SM_GLMedieval_NorthMarketDetail_east_0a73564b'
 BUILDING = 'Tile_p03_p01_roof_0a73564b5b0ed26a'
 PINNED = {
     'obj': '5ca906f6b995d50cd956d89c9382856ba464366c23db6b93f0a886dfaec1a57f',
-    'plan': 'acafb36160175ef164756753481a66273e7c6e9865e79508f94fd59ea4d6b4f7',
+    # Git stores this text as LF; Windows checkouts may contain CRLF.
+    'plan': '88ea66f0292864f8f6b9924d654a323edb37da9ce307754f7f9f57fc77fbc32f',
     'manifest': 'a9aeb89aab3a35914d505475b697ddfa01fb48ad43b1a98c6562bf89bdf49095',
     'mtl': '8b4485d8b96298d2586f0c0821697cc993cbf739c3ae645cb89576540ccdfec6',
 }
@@ -29,6 +30,18 @@ TILES = {'Oak': .8, 'WeatheredOak': .8, 'ShopRed': .8, 'ShopGreen': .8,
 def digest(path):
     with path.open('rb') as stream:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def canonical_plan_digest(data):
+    """Hash only CRLF-to-LF-normalized plan bytes; reject lone CRs."""
+    canonical = data.replace(b'\r\n', b'\n')
+    if b'\r' in canonical:
+        raise ValueError('Plan contains an unexpected carriage return')
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def source_digest(key, path):
+    return canonical_plan_digest(path.read_bytes()) if key == 'plan' else digest(path)
 
 
 def cross(a, b):
@@ -260,7 +273,7 @@ def generate(output):
     original = SOURCE / (MODEL + '.obj')
     inputs = {'obj': original, 'plan': PLAN, 'manifest': SOURCE/'detailed_obj_manifest.json',
               'mtl': SOURCE/'NorthMarketDetail.mtl'}
-    if any(digest(path) != PINNED[key] for key, path in inputs.items()):
+    if any(source_digest(key, path) != PINNED[key] for key, path in inputs.items()):
         raise ValueError('Pinned building input changed')
     plan = json.loads(PLAN.read_text(encoding='utf-8'))
     matches = [b for b in plan['buildings'] if b['id'] == BUILDING]
@@ -298,10 +311,10 @@ def generate(output):
         for chunk in iter(lambda: source.read(65536), b''):
             if result.read(len(chunk)) != chunk:
                 raise ValueError('Combined variant changed the source OBJ prefix')
-    if any(digest(path) != PINNED[key] for key, path in inputs.items()):
+    if any(source_digest(key, path) != PINNED[key] for key, path in inputs.items()):
         raise ValueError('Source changed during generation')
     report = {'status': 'review_only_not_unreal_validated', 'building': BUILDING,
-              'source_obj_sha256': PINNED['obj'], 'source_plan_sha256': PINNED['plan'],
+              'source_obj_sha256': PINNED['obj'], 'source_plan_lf_sha256': PINNED['plan'],
               'units': units, 'added_vertices': len(mesh.vertices), 'added_faces': len(mesh.faces),
               'overlay_sha256': digest(overlay), 'combined_sha256': digest(combined),
               'limits': ['Closed visual motifs; no physical door or hatch openings.',

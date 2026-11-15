@@ -72,7 +72,7 @@ class TenancyTests(unittest.TestCase):
                     self.assertTrue(11 <= v <= 18 and uv > 20 and 31 <= normal <= 36)
 
     def test_real_pinned_building_generates_seven_varied_inset_units(self):
-        self.assertEqual(t.digest(t.PLAN), t.PINNED['plan'])
+        self.assertEqual(t.source_digest('plan', t.PLAN), t.PINNED['plan'])
         plan = json.loads(t.PLAN.read_text(encoding='utf-8'))
         building = next(item for item in plan['buildings'] if item['id'] == t.BUILDING)
         mesh, units = t.make_details(building)
@@ -80,6 +80,14 @@ class TenancyTests(unittest.TestCase):
         self.assertEqual({unit['edge'] for unit in units}, {17, 21, 25})
         self.assertEqual({unit['style'] for unit in units}, {0, 1, 2})
         self.assertTrue(all(t.contains((x, y), mesh.plot) for x, y, _ in mesh.vertices))
+
+    def test_plan_hash_accepts_only_equivalent_line_endings(self):
+        lf = b'{\n  "key": 1\n}\n'
+        self.assertEqual(t.canonical_plan_digest(lf), t.canonical_plan_digest(lf.replace(b'\n', b'\r\n')))
+        self.assertNotEqual(t.canonical_plan_digest(lf), t.canonical_plan_digest(lf.replace(b'1', b'2')))
+        self.assertNotEqual(t.canonical_plan_digest(lf), t.canonical_plan_digest(lf + b' '))
+        with self.assertRaisesRegex(ValueError, 'carriage return'):
+            t.canonical_plan_digest(b'a\rb')
 
     def test_overlay_slot_normalization_preserves_face_assignments(self):
         red = SimpleNamespace(name='M_GLMedieval_ShopRed.001')
