@@ -21,7 +21,8 @@
     }
   ],
   "review": {
-    "status": "offline_candidate",
+    "status": "live_verified",
+    "verified_plan": "Verified/st_katharines_way_plan.json",
     "road_guide_m": [
       [3924, -76.5],
       [3930, -83.25],
@@ -42,6 +43,6 @@
       "sample_count": 231
     },
     "purpose": "Dress ordinary facades beside the dry south basin route. Tower Wharf itself has no eligible wall runs outside the landmark mask.",
-    "required_live_check": "Verify floor and wall traces against the loaded world, including the route joins to Drifter Camp, before placement."
+    "scope": "The live review covers the road and adjacent frontages inside this corridor. The connection to Drifter Camp and Tower Wharf requires a separate route review."
   }
 }

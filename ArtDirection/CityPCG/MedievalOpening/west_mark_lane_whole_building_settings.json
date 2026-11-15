@@ -1,0 +1,40 @@
+{
+  "building_styles": {
+    "Tile_p03_p00_shell_d87bb24c9cdb": {
+      "role": "merchant house",
+      "eave_m": 8.1,
+      "ridge_m": 12.75,
+      "roof_ranges": 2,
+      "entry_opening_m": [1.35, 2.45],
+      "treatment": "Timber upper storeys and close-set street gables over a recessed stone shop ground floor; keep the rear party edge sealed."
+    },
+    "Tile_p03_p00_shell_3b4ea8e64fcb": {
+      "role": "corner workshop",
+      "eave_m": 5.4,
+      "ridge_m": 9.25,
+      "roof_ranges": 1,
+      "entry_opening_m": [1.25, 2.3],
+      "treatment": "One steep tiled principal roof over the L plan; use an inboard recessed plank door, masonry plinth and timber upper floor; keep the merchant party edge sealed."
+    },
+    "Tile_p03_p00_shell_c3d845a67ca8": {
+      "role": "merchant and workshop compound",
+      "eave_m": 8.65,
+      "ridge_m": 13.1,
+      "roof_ranges": 4,
+      "entry_opening_m": [1.4, 2.55],
+      "treatment": "Four pitched ranges along the street face, stone or render ground storeys and narrow timber bays; maintain the complete irregular envelope and accessible street width."
+    }
+  },
+  "road_primitive": 2,
+  "road_sampling": {
+    "step_max_m": 1.0,
+    "offsets_m": [-0.75, 0, 0.75],
+    "minimum_footprint_clearance_m": 0.65,
+    "exported_road_z_m": 0.28
+  },
+  "local_road_corridors": {
+    "north road past both merchant entrances": [[3111.0, 405.0], [3115.0, 407.5], [3135.5, 405.5], [3137.0, 405.0], [3141.5, 404.5], [3145.0, 403.5], [3150.5, 402.5], [3188.0, 397.5]],
+    "south road past the workshop": [[3106.5, 374.0], [3114.5, 369.0], [3171.0, 342.0], [3171.5, 342.0]],
+    "west connector between the two streets": [[3111.0, 405.0], [3110.0, 381.5], [3106.5, 374.0]]
+  }
+}
