@@ -34,10 +34,10 @@ imported and their geometry and collision settings audited. The pilot still
 needs placement, in-editor visual review, streaming/gameplay checks and a
 current standalone build; it is not yet the finished city.
 
-The west connector and northwest Leadenhall have seven more complete source
-models, checked against their surveyed footprints and Blender round trips.
-They have not yet been imported or placed in Unreal. Four additional plots
-east of Royal Mint Court are offline candidates for later review.
+The west connector, northwest Leadenhall and east Royal Mint blocks have eleven
+more complete source models, checked against their surveyed footprints and
+Blender round trips. They have not yet been imported or placed in Unreal.
+The east Royal Mint block also needs several neighboring exports before review.
 
 Coordinate any editor or PIE session through `Saved/PIE_LOCK.json` and the
 shared editor queue. Save only explicitly identified London-owned packages;
