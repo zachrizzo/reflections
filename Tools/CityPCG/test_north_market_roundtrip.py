@@ -78,6 +78,18 @@ class PolygonComparisonTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'non-finite'):
                 qa.compare(mesh(TRI), mesh(face))
 
+    def test_missing_polygon_reports_channel_deltas_without_accepting(self):
+        changed = list(TRI[1][1])
+        changed[3] += 0.01
+        face = ('M_wall', (TRI[1][0], tuple(changed), TRI[1][2]))
+        with self.assertRaisesRegex(ValueError, r'source_polygon=0.*max_uv_delta=0\.01'):
+            qa.compare(mesh(TRI), mesh(face))
+
+    def test_reversed_winding_is_reported_not_accepted(self):
+        face = ('M_wall', tuple(reversed(TRI[1])))
+        with self.assertRaisesRegex(ValueError, r'reversed_winding=True.*max_position_delta_m=0'):
+            qa.compare(mesh(TRI), mesh(face))
+
 
 class SourceParserTests(unittest.TestCase):
     def parse(self, source):
