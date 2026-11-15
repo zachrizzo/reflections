@@ -14,6 +14,23 @@ COLLISION_LABEL = 'Medieval London | Well masonry collision'
 CENTER = (-3100, 780, 4)
 
 
+def tune_material(unreal, material):
+    """Keep the source colors but account for their bright baked illumination."""
+    edit = unreal.MaterialEditingLibrary
+    base_color = unreal.MaterialProperty.MP_BASE_COLOR
+    original = edit.get_material_property_input_node(material, base_color)
+    if isinstance(original, unreal.MaterialExpressionPower):
+        return
+    if not isinstance(original, unreal.MaterialExpressionVertexColor):
+        raise RuntimeError('Expected vertex colors on the reviewed well material.')
+    power = edit.create_material_expression(material, unreal.MaterialExpressionPower, -180, -100)
+    power.set_editor_property('const_exponent', 1.8)
+    if (not edit.connect_material_expressions(original, '', power, 'Base') or
+            not edit.connect_material_property(power, '', base_color)):
+        raise RuntimeError('Could not connect the well color correction.')
+    edit.recompile_material(material)
+
+
 async def run():
     import unreal
 
@@ -25,6 +42,7 @@ async def run():
     material = unreal.EditorAssetLibrary.load_asset(f'{ROOT}/Materials/M_GLMarket_VertexColor_MarketWell')
     if not isinstance(mesh, unreal.StaticMesh) or not material or mesh.get_material(0) != material:
         raise RuntimeError('The reviewed well mesh and vertex-color material are required.')
+    tune_material(unreal, material)
 
     x, y, z = CENTER
     hit = unreal.SystemLibrary.line_trace_single(
@@ -95,9 +113,10 @@ async def run():
         raise RuntimeError('The placed well did not block the confirmation trace.')
     unreal.SystemLibrary.execute_console_command(world, 'RebuildNavigation')
     require_town_editor(unreal)
-    owned = [world.get_package(), graph.get_package()]
-    expected = ['/Game/GrayLondon/Maps/MedievalLondon', f'{ROOT}/Graphs/{NAME}']
+    owned = [world.get_package(), graph.get_package(), material.get_package()]
+    expected = ['/Game/GrayLondon/Maps/MedievalLondon', f'{ROOT}/Graphs/{NAME}',
+                f'{ROOT}/Materials/M_GLMarket_VertexColor_MarketWell']
     if ([package.get_name() for package in owned] != expected or
             not unreal.EditorLoadingAndSavingUtils.save_packages(owned, only_dirty=False)):
-        raise RuntimeError('Could not save the exact two owned well packages.')
+        raise RuntimeError('Could not save the exact owned well packages.')
     return {'packages': expected, 'center_cm': CENTER, 'height_cm': 253, 'blocking_trace': True}
