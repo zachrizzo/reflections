@@ -99,6 +99,13 @@ is to prove the source section mapping and safely review the pilot in the real
 playable map. Subsequent neighborhoods, reclaim gameplay, streaming and a
 refreshed standalone remain completion work.
 
+The current staged standalone predates the four West Mark Lane pilot assets,
+and the game executable predates the replacement runtime source. After the
+pilot is placed and verified, rebuild the game target as well as cooking the
+map; then check the staged files and test the same build on the LAN host and
+guest. `Tools/CityPCG/audit_london_package.py` reports known stale indicators
+without treating timestamps as proof of a fresh or playable build.
+
 Coordinate any editor or PIE session through `Saved/PIE_LOCK.json` and the
 shared editor queue. Save only explicitly identified London-owned packages;
 never save all packages or a `metahuman_base_skel` asset.
