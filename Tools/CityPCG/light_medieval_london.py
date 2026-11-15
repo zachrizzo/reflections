@@ -21,7 +21,7 @@ def run():
 
     sun, = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.DirectionalLight)
     sun.get_component_by_class(unreal.DirectionalLightComponent).set_editor_properties({
-        'intensity': 2.8, 'light_source_angle': 7.0, 'use_temperature': True, 'temperature': 5600.0,
+        'intensity': 2.8, 'light_source_angle': 1.8, 'use_temperature': True, 'temperature': 5600.0,
     })
     atmosphere, = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.SkyAtmosphere)
     atmosphere.get_component_by_class(unreal.SkyAtmosphereComponent).set_editor_property('mie_scattering_scale', .018)
