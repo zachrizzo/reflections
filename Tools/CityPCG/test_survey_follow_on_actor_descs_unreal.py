@@ -19,8 +19,10 @@ OWNER = "descriptor-survey-fixture"
 ACTOR_PATH = f"{MAP}:PersistentLevel.SM_Merchant"
 ACTOR_PACKAGE = "/Game/__ExternalActors__/GrayLondon/Maps/GrayLondon_Geodata/1/23/FIXTURE"
 LAYER_ASSET_PATH = "/Game/Example/DL_Review.DL_Review"
-UNRESOLVED_LAYER_PATH = "/Game/Example/DL_Unknown.DL_Unknown"
+UNRESOLVED_LAYER_PATH = "/Game/Example/DL_Unknown.DL_Unknown:Nested"
 LAYER_INSTANCE_PATH = f"{MAP}:PersistentLevel.WorldDataLayers.DL_Review"
+ORIGINAL_GUID = "D7A52C431F724FD3904E61D6241DE613"
+INSTANCE_GUID = "610DD66BA5934B11AB80EE5E08F2EF9A"
 
 
 def vector(x, y, z):
@@ -30,6 +32,22 @@ def vector(x, y, z):
 class Box:
     def set_editor_properties(self, properties):
         self.__dict__.update(properties)
+
+
+class SoftObjectPath:
+    def __init__(self, path):
+        self.path = path
+
+    def to_tuple(self):
+        return (self.path,)
+
+
+class ActorDescArray:
+    def __init__(self, *descriptors):
+        self.descriptors = descriptors
+
+    def __iter__(self):
+        return iter(self.descriptors)
 
 
 def object_ref(path, package=None):
@@ -49,22 +67,24 @@ def fixture_layer():
     return layer
 
 
-def fixture_descriptor():
+def fixture_descriptor(**overrides):
     properties = {
         "bounds": SimpleNamespace(min=vector(250000, -50000, 0), max=vector(450000, 150000, 1540)),
         "native_class": object_ref("/Script/Engine.StaticMeshActor"),
         "actor_path": ACTOR_PATH,
         "actor_package": ACTOR_PACKAGE,
-        "guid": SimpleNamespace(to_string=lambda: "fixture-original-guid"),
-        "instance_guid": SimpleNamespace(to_string=lambda: "fixture-instance-guid"),
+        "guid": SimpleNamespace(to_string=lambda: ORIGINAL_GUID),
+        "instance_guid": SimpleNamespace(to_string=lambda: INSTANCE_GUID),
         "label": "Fixture façade",
         "name": "SM_Merchant",
         "folder_path": "Fixture",
         "runtime_grid": "None",
         "is_spatially_loaded": True,
         "actor_is_editor_only": False,
-        "data_layer_assets": [LAYER_ASSET_PATH, UNRESOLVED_LAYER_PATH],
+        "data_layer_assets": [SoftObjectPath(LAYER_ASSET_PATH), SoftObjectPath(UNRESOLVED_LAYER_PATH),
+                              SoftObjectPath("")],
     }
+    properties.update(overrides)
     return SimpleNamespace(get_editor_property=properties.__getitem__)
 
 
@@ -82,7 +102,6 @@ class FollowOnActorSurveyTests(unittest.TestCase):
             Box=Box,
             Vector=vector,
             WorldPartitionBlueprintLibrary=self.library,
-            SystemLibrary=SimpleNamespace(break_soft_object_path=lambda path: path),
             Paths=SimpleNamespace(project_dir=lambda: str(PROJECT), project_saved_dir=lambda: str(self.saved)),
             EditorLevelLibrary=SimpleNamespace(get_pie_worlds=lambda include_dedicated: []),
             UnrealEditorSubsystem=object(),
@@ -102,7 +121,7 @@ class FollowOnActorSurveyTests(unittest.TestCase):
         self.assertLess(box.min.y, box.max.y)
         self.assertLess(box.min.z, box.max.z)
         self.queries.append(box)
-        return [fixture_descriptor()]
+        return ActorDescArray(fixture_descriptor())
 
     def test_queries_each_footprint_and_road_link(self):
         report = helper.survey(OWNER)
@@ -116,7 +135,8 @@ class FollowOnActorSurveyTests(unittest.TestCase):
         self.assertEqual(actor["label"], "Fixture façade")
         self.assertEqual(actor["actor_package"], ACTOR_PACKAGE)
         self.assertEqual(actor["actor_path"], ACTOR_PATH)
-        self.assertEqual(actor["instance_guid"], "fixture-instance-guid")
+        self.assertEqual(actor["guid"], ORIGINAL_GUID)
+        self.assertEqual(actor["instance_guid"], INSTANCE_GUID)
         self.assertEqual(actor["streaming_bounds_cm"], [[250000, -50000, 0], [450000, 150000, 1540]])
         self.assertTrue(all(row["hits"][0]["actor_key"] == key for row in regions))
         self.assertTrue(all(row["hits"][0]["footprint_touches_actor_bounds_xy"] for row in footprints))
@@ -124,11 +144,34 @@ class FollowOnActorSurveyTests(unittest.TestCase):
             LAYER_ASSET_PATH: [LAYER_INSTANCE_PATH],
             UNRESOLVED_LAYER_PATH: [],
         })
+        self.assertEqual(actor["null_data_layer_asset_count"], 1)
         layer = report["data_layer_instances"][0]
         self.assertEqual(layer["instance_path"], LAYER_INSTANCE_PATH)
         self.assertEqual(layer["asset_package"], "/Game/Example/DL_Review")
         self.assertEqual(layer["parent_instance_path"], f"{MAP}:PersistentLevel.WorldDataLayers.DL_Parent")
         self.assertEqual(list(self.saved.iterdir()), [self.saved / "PIE_LOCK.json"])
+
+    def test_unknown_soft_path_shape_is_reported(self):
+        for data in ((), ("Unexpected.RelativePath",), ("", ""), (object(),)):
+            with self.subTest(data=data):
+                with self.assertRaisesRegex(RuntimeError, "Unexpected SoftObjectPath"):
+                    helper.soft_object_path(SimpleNamespace(to_tuple=lambda: data))
+
+    def test_descriptor_accepts_a_generated_native_actor_type(self):
+        class NativeActor:
+            @classmethod
+            def static_class(cls):
+                return object_ref("/Script/Engine.StaticMeshActor")
+
+        actor = helper.descriptor_snapshot(fixture_descriptor(native_class=NativeActor))
+        self.assertEqual(actor["native_class"], "/Script/Engine.StaticMeshActor")
+
+    def test_empty_descriptor_array_and_failed_query_are_distinct(self):
+        self.library.get_intersecting_actor_descs = lambda box: ActorDescArray()
+        self.assertEqual(helper.survey(OWNER)["actors"], {})
+        self.library.get_intersecting_actor_descs = lambda box: None
+        with self.assertRaisesRegex(RuntimeError, "descriptor query did not return"):
+            helper.survey(OWNER)
 
     def test_expired_or_other_owner_lease_refuses_queries(self):
         with self.assertRaisesRegex(RuntimeError, "Editor reserved"):

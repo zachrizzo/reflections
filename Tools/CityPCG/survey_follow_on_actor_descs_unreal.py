@@ -67,16 +67,27 @@ def xyz(vector):
     return [float(getattr(vector, axis)) for axis in "xyz"]
 
 
-def descriptor_snapshot(unreal, descriptor):
+def soft_object_path(value):
+    # UE's struct wrapper calls the hidden native BreakSoftObjectPath here.
+    fields = value.to_tuple()
+    if len(fields) != 1 or not isinstance(fields[0], str) or (fields[0] and not fields[0].startswith("/")):
+        raise RuntimeError("Unexpected SoftObjectPath representation in actor descriptor.")
+    return fields[0]
+
+
+def descriptor_snapshot(descriptor):
     prop = descriptor.get_editor_property
     box = prop("bounds")
     native = prop("native_class")
+    if isinstance(native, type):
+        native = native.static_class()
     path = str(prop("actor_path"))
     package = str(prop("actor_package"))
     if not package.startswith("/") or not path.startswith("/"):
         raise RuntimeError(f"Cannot resolve the saved package and object path for {prop('label')}.")
     guid = prop("guid").to_string()
     instance_guid = prop("instance_guid").to_string()
+    layer_paths = [soft_object_path(asset) for asset in prop("data_layer_assets")]
     return {
         "label": str(prop("label")),
         "internal_name": str(prop("name")),
@@ -90,10 +101,8 @@ def descriptor_snapshot(unreal, descriptor):
         "runtime_grid": str(prop("runtime_grid")),
         "is_spatially_loaded": bool(prop("is_spatially_loaded")),
         "actor_is_editor_only": bool(prop("actor_is_editor_only")),
-        "descriptor_data_layer_assets": sorted(
-            unreal.SystemLibrary.break_soft_object_path(asset)
-            for asset in prop("data_layer_assets")
-        ),
+        "descriptor_data_layer_assets": sorted(path for path in layer_paths if path),
+        "null_data_layer_asset_count": layer_paths.count(""),
     }
 
 
@@ -119,13 +128,10 @@ def layer_catalog(library, world):
 
 
 def intersecting_descriptors(library, box):
+    # UE wraps a bool return plus one out parameter as the array or None.
     result = library.get_intersecting_actor_descs(box)
     if result is None:
         raise RuntimeError("The World Partition descriptor query did not return a result.")
-    if isinstance(result, tuple) and len(result) == 2 and isinstance(result[0], bool):
-        if not result[0]:
-            raise RuntimeError("The World Partition descriptor query failed.")
-        return result[1]
     return result
 
 
@@ -159,7 +165,7 @@ def survey(lease_owner, *, footprint_margin_m=4., report_name=None):
             hits = {}
             box = box_for(unreal, region["query_bounds_cm"])
             for descriptor in intersecting_descriptors(library, box):
-                row = descriptor_snapshot(unreal, descriptor)
+                row = descriptor_snapshot(descriptor)
                 key = f'{row["instance_guid"]}|{row["actor_package"]}|{row["actor_path"]}'
                 row["data_layer_instance_matches"] = {
                     asset: layer_instances.get(asset, []) for asset in row["descriptor_data_layer_assets"]

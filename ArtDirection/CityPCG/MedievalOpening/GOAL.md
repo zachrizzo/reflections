@@ -39,6 +39,17 @@ more complete source models, checked against their surveyed footprints and
 Blender round trips. They have not yet been imported or placed in Unreal.
 The east Royal Mint block also needs several neighboring exports before review.
 
+The cumulative rollout preflight covers those 14 proposed buildings across
+three of the 117 source tile assets on disk. They remain review-only: the other tiles
+need exports and the candidate blocks need live actor and route checks. The
+three large modern shells immediately visible from the real spawn overlap
+story markers, so replacing them needs a coordinated gameplay and visual review.
+
+At city scale, keep each surveyed outer footprint and use spatially grouped
+building geometry and repeated details where feasible. The current individual
+models have too many separate material sections to assume they will scale;
+measure the result in the playable map before approving it.
+
 Coordinate any editor or PIE session through `Saved/PIE_LOCK.json` and the
 shared editor queue. Save only explicitly identified London-owned packages;
 never save all packages or a `metahuman_base_skel` asset.

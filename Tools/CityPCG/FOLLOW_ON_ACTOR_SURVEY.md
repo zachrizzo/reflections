@@ -29,7 +29,26 @@ records. Those records include the exact actor label, package, object path,
 instance GUID, streaming bounds, and descriptor data-layer asset paths.
 The World Partition data-layer catalog adds available instance and parent
 paths. An empty set of instance matches leaves the original asset path
-visible for follow-up.
+visible for follow-up. Empty serialized layer references are counted in
+`null_data_layer_asset_count`.
+
+## Offline binding verification
+
+The installed UE 5.9 Python wrapper exposes the native soft-object path
+break as a one-element tuple from `SoftObjectPath.to_tuple()`. This returns
+the exact path string, including any subobject suffix. The implementation
+is in the Python plug-in's `PyWrapperStruct.cpp` and
+`PyWrapperTypeRegistry.cpp`, with the underlying break registered in
+`SoftObjectPath.h` and implemented in `KismetSystemLibrary.cpp`.
+`PyGenUtil.cpp` also explains the descriptor query return shape. A
+successful call returns the descriptor array, including an empty array when
+the query finds no actors. A failed call returns `None`.
+
+Run the offline mock checks from the project root.
+
+```powershell
+python -B -m unittest discover -s Tools/CityPCG -p 'test_survey_follow_on_actor_descs_unreal.py' -v
+```
 
 World Partition descriptors are saved snapshots and include unloaded
 actors in the registered containers. Streaming bounds can cover both a
