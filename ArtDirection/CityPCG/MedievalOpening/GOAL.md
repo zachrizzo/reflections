@@ -21,7 +21,8 @@ systems without taking over that work.
 - Enemy-held areas are visually legible as distinct strongholds, and the
   player can reclaim them as part of winning back the city.
 - Work is visually inspected from the real player spawn and representative
-  streets, then checked in gameplay and a refreshed standalone build.
+  streets, then checked for movement, streaming and playable performance in
+  gameplay and a refreshed standalone build.
 - Verified London changes are committed and pushed to `main` incrementally.
 
 ## Current checkpoint
