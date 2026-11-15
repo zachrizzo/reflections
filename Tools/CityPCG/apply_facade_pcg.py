@@ -134,6 +134,11 @@ def create_graph(unreal, pcg, identifier, groups, meshes, destination):
     graph = pcg.create_graph(graph_name(identifier), f'{destination}/Graphs')
     if not graph or graph.get_name() != graph_name(identifier):
         raise RuntimeError(f'Could not create the exact graph name for {identifier}.')
+    populate_point_mesh_graph(unreal, pcg, graph, groups, meshes)
+    return graph
+
+
+def populate_point_mesh_graph(unreal, pcg, graph, groups, meshes):
     output = graph.get_output_node()
     for index, (mesh_id, rows) in enumerate(sorted(groups.items())):
         source, settings = graph.add_node_of_type(unreal.PCGCreatePointsSettings)
@@ -151,7 +156,6 @@ def create_graph(unreal, pcg, identifier, groups, meshes, destination):
         if not pcg.try_add_edge(source, 'Out', spawner, 'In') or not pcg.try_add_edge(spawner, 'Out', output, 'Out'):
             raise RuntimeError(f'Could not connect the PCG branch for {mesh_id}.')
     output.set_node_position(720, 0)
-    return graph
 
 
 def cell_transform(unreal, groups):
