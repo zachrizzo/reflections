@@ -15,6 +15,20 @@ MODELS = {
 TILES = dict(tenancy.TILES, ClayTile=1.0, LeadedGlass=1.0)
 
 
+def fit_caption(frame, bounds, margin=.035, padding=.012):
+    """Fit actual text bounds into a perspective camera's z=-1 frame."""
+    left,right,bottom,top=frame; bx0,bx1,by0,by1=bounds
+    if (not all(math.isfinite(x) for x in (*frame,*bounds,margin,padding))
+            or left>=right or bottom>=top or bx0>=bx1 or by0>=by1
+            or margin<=padding or padding<=0):
+        raise ValueError('Invalid caption bounds')
+    x=left+margin-bx0; y=top-margin-by1
+    rect=(x+bx0-padding,x+bx1+padding,y+by0-padding,y+by1+padding)
+    if not (left<rect[0]<rect[1]<right and bottom<rect[2]<rect[3]<top):
+        raise ValueError('Caption will not fit inside the camera frame')
+    return (x,y),rect
+
+
 def roof_height(y, profile):
     if (len(profile) < 3 or any(not math.isfinite(v) for p in profile for v in p)
             or any(a[0] >= b[0] for a, b in zip(profile, profile[1:]))
@@ -107,27 +121,74 @@ def box(mesh, x0, x1, y0, y1, z0, z1, role):
         face(mesh,[v[i] for i in indices],role)
 
 
+def timber(mesh, axis, lo, hi, a, b, width, role='WeatheredOak'):
+    """A slender prism following a line in a front or side elevation."""
+    du,dz=b[0]-a[0],b[1]-a[1]; length=math.hypot(du,dz)
+    if axis not in ('front','cheek') or length<.01 or not (0<width<.25 and lo<hi):
+        raise ValueError('Invalid dormer timber')
+    p=(-dz*width/(2*length),du*width/(2*length))
+    outline=[(a[0]-p[0],a[1]-p[1]),(b[0]-p[0],b[1]-p[1]),
+             (b[0]+p[0],b[1]+p[1]),(a[0]+p[0],a[1]+p[1])]
+    def xyz(depth,point):
+        return (depth,point[0],point[1]) if axis=='front' else (point[0],depth,point[1])
+    points=[xyz(depth,pt) for depth in (lo,hi) for pt in outline]
+    for ids in ((3,2,1,0),(4,5,6,7),(0,1,5,4),(1,2,6,5),(2,3,7,6),(3,0,4,7)):
+        # Mapping an elevation into X/Z instead of Y/Z reverses handedness.
+        if axis=='cheek': ids=tuple(reversed(ids))
+        face(mesh,[points[i] for i in ids],role)
+
+
 def dormer(mesh, rect, profile, variant):
     x0,y0=rect[0]; x1,y1=rect[2]; mid=(y0+y1)/2
     low0,low1=roof_height(y0,profile)-.035,roof_height(y1,profile)-.035
-    high=max(low0,low1)+(.88 if variant==0 else 1.04)
-    peak=high+(.60 if variant==0 else .42)
-    if peak > mesh.ceiling-.10:
+    if variant not in (0,1,2): raise ValueError('Unknown dormer design')
+    high=max(low0,low1)+(1.03,1.12,1.22)[variant]
+    peak=high+(.68,.42,.75)[variant]
+    if peak > mesh.ceiling-.16:
         raise ValueError('Dormer exceeds surveyed maximum height')
-    wall='LimePlaster' if variant==0 else 'WarmPlaster'
+    wall=('LimePlaster','WarmPlaster','LimePlaster')[variant]
+    ridge=mid+(y1-y0)*(.12 if variant==2 else 0)
     # Lower edges deliberately intersect the tiled roof by 3.5 cm. A roof
     # opening is NOT cut; these are solid decorative additions for review.
-    left=[(x0,y0,low0),(x1,y0,low0),(x1,y0,high),(x0,y0,high)]
-    right=[(x1,y1,low1),(x0,y1,low1),(x0,y1,high),(x1,y1,high)]
-    front=[(x1,y0,low0),(x1,y1,low1),(x1,y1,high),(x1,mid,peak),(x1,y0,high)]
-    back=[(x0,y0,low0),(x0,y0,high),(x0,mid,peak),(x0,y1,high),(x0,y1,low1)]
+    rear=peak if variant==1 else high
+    left=[(x0,y0,low0),(x1,y0,low0),(x1,y0,high),(x0,y0,rear)]
+    right=[(x1,y1,low1),(x0,y1,low1),(x0,y1,rear),(x1,y1,high)]
+    if variant==1:
+        front=[(x1,y0,low0),(x1,y1,low1),(x1,y1,high),(x1,y0,high)]
+        back=[(x0,y0,low0),(x0,y0,rear),(x0,y1,rear),(x0,y1,low1)]
+    else:
+        front=[(x1,y0,low0),(x1,y1,low1),(x1,y1,high),(x1,ridge,peak),(x1,y0,high)]
+        back=[(x0,y0,low0),(x0,y0,high),(x0,ridge,peak),(x0,y1,high),(x0,y1,low1)]
     for polygon in (left,right,front,back): face(mesh,polygon,wall)
-    face(mesh,[(x0,y0,high),(x1,y0,high),(x1,mid,peak),(x0,mid,peak)],'ClayTile')
-    face(mesh,[(x0,mid,peak),(x1,mid,peak),(x1,y1,high),(x0,y1,high)],'ClayTile')
+    # Clay tile eaves overhang the timber cheeks. The checked envelope is
+    # expanded in all four directions before this function is called.
+    xa,xb=x0-.12,x1+.12; ya,yb=y0-.10,y1+.10
+    if variant==1:
+        slope=(peak-high)/(x1-x0)
+        ra=peak+.12*slope; rb=high-.12*slope
+        face(mesh,[(xa,ya,ra),(xb,ya,rb),(xb,yb,rb),(xa,yb,ra)],'ClayTile')
+        timber(mesh,'front',x1+.125,x1+.18,(ya,rb),(yb,rb),.085)
+        for y in (ya,yb): timber(mesh,'cheek',y-.035,y+.035,(xa,ra),(xb,rb),.085)
+    else:
+        edge=high-.06
+        face(mesh,[(xa,ya,edge),(xb,ya,edge),(xb,ridge,peak),(xa,ridge,peak)],'ClayTile')
+        face(mesh,[(xa,ridge,peak),(xb,ridge,peak),(xb,yb,edge),(xa,yb,edge)],'ClayTile')
+        for a,b in (((ya,edge),(ridge,peak)),((ridge,peak),(yb,edge))):
+            timber(mesh,'front',x1+.125,x1+.18,a,b,.095)
+        for y in (ya,yb):
+            box(mesh,xa,xb,y-.035,y+.035,edge-.065,edge+.005,'WeatheredOak')
+    # The cheek braces sit against the two side walls and create visible
+    # half-timber articulation without enlarging the building footprint.
+    for y,zlow in ((y0,low0),(y1,low1)):
+        timber(mesh,'cheek',y-.04,y+.04,(x0+.15,zlow+.10),(x1-.13,high-.13),.085,'Oak')
+        for x in (x0+.13,x1-.13):
+            timber(mesh,'cheek',y-.04,y+.04,(x,zlow+.10),(x,high-.10),.075,'Oak')
+    if variant!=1:
+        timber(mesh,'front',x1+.035,x1+.085,(ridge,high+.06),(ridge,peak-.10),.08,'Oak')
     # Individual framed, leaded-look lights and a sill; all above the roof.
     bottom=max(low0,low1)+.13; top=high-.12
     if top-bottom < .35: raise ValueError('Dormer light too short')
-    width=(y1-y0)*(.31 if variant==0 else .37)
+    width=(y1-y0)*(.31,.37,.28)[variant]
     box(mesh,x1+.008,x1+.023,mid-width,mid+width,bottom,top,'LeadedGlass')
     for y in (mid-width,mid,mid+width):
         box(mesh,x1+.022,x1+.052,y-.025,y+.025,bottom,top,'Oak')
@@ -135,7 +196,7 @@ def dormer(mesh, rect, profile, variant):
         box(mesh,x1+.022,x1+.055,mid-width-.035,mid+width+.035,z-.03,z+.03,'Oak')
     box(mesh,x1+.020,x1+.075,mid-width-.09,mid+width+.09,bottom-.08,bottom-.025,'WeatheredOak')
     return {'roof_bottom_m':[low0,low1],'eave_m':high,'ridge_m':peak,'rect_xy_m':rect,
-            'variant':'tall_gable' if variant==0 else 'low_gable'}
+            'variant':('tall_gable','shed','offset_gable')[variant]}
 
 
 def upper_shutters(mesh, building, style, party_edges):
@@ -206,15 +267,30 @@ def make_variation(building, source_row, style, party_edges=()):
         half=min(.62,(high-low)*.23)
         spans=x_spans(plot,y)
         if not spans: continue
-        x=max(b for _,b in spans)-.75
-        rect=[(x-1.08,y-half),(x+.08,y-half),(x+.08,y+half),(x-1.08,y+half)]
-        # Window frames and sill project up to 0.075m beyond the gable face.
-        envelope=[rect[0],(rect[1][0]+.075,rect[1][1]),
-                  (rect[2][0]+.075,rect[2][1]),rect[3]]
-        if not safe_rectangle(envelope,plot,party): continue
-        if any(rect[0][0]-.60 <= cx <= rect[2][0]+.60 and
-               rect[0][1]-.65 <= cy <= rect[2][1]+.65 for cx,cy,_ in stacks): continue
-        dormers.append(dormer(mesh,rect,profile,(i//4+(style=='DeepWorkshop'))%2))
+        for setback in (.75,1.,1.25,1.5,1.75):
+            x=max(b for _,b in spans)-setback
+            rect=[(x-1.08,y-half),(x+.08,y-half),(x+.08,y+half),(x-1.08,y+half)]
+            # The roof overhang, bargeboards and cheek timber all fit inside
+            # this expanded envelope, including the width of angled beams.
+            envelope=[(rect[0][0]-.17,rect[0][1]-.17),
+                      (rect[1][0]+.20,rect[1][1]-.17),
+                      (rect[2][0]+.20,rect[2][1]+.17),
+                      (rect[3][0]-.17,rect[3][1]+.17)]
+            if not safe_rectangle(envelope,plot,party): continue
+            if any(envelope[0][0]-.60 <= cx <= envelope[2][0]+.60 and
+                   envelope[0][1]-.65 <= cy <= envelope[2][1]+.65 for cx,cy,_ in stacks): continue
+            start=len(mesh.vertices)
+            details=dormer(mesh,rect,profile,(i//2+(style=='DeepWorkshop'))%3)
+            component=mesh.vertices[start:]
+            if not component or any(not (envelope[0][0]<=p[0]<=envelope[2][0] and
+                                         envelope[0][1]<=p[1]<=envelope[2][1] and
+                                         0<=p[2]<=mesh.ceiling) for p in component):
+                raise ValueError('Dormer detail leaves its checked envelope')
+            details['checked_envelope_xy_m']=envelope
+            details['vertex_start']=start
+            details['vertex_count']=len(component)
+            dormers.append(details)
+            break
     if not dormers: raise ValueError('No safe dormer location')
     return mesh, {'shutters':shutters,'dormers':dormers,'source_chimneys_m':stacks,
                   'limitation':'Decorative roof additions intersect the existing roof; no roof openings are cut.'}

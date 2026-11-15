@@ -40,7 +40,7 @@ PINS={
     Path('Tools/CityPCG/north_market_hosted_blender.py'):'4d6782256cf9618aa95a40ea452c29bffeb11d3d2bd82925365dd87edaa82f75',
     Path('Tools/CityPCG/north_market_street_review_common.py'):'5e45b7d0ad2f3ff4f1afd2b7c757dc8331698134b90fe2e8f40143c9506f865e',
 }
-OUT=ROOT/'ci-north-market-roof-variation'
+OUT=ROOT/'ci-north-market-roof-variation-v2'
 
 
 def context():
@@ -176,6 +176,42 @@ def add_overlay(bpy,key,mesh,materials,original,assets):
     return obj,{'obj_sha256':source.digest(path),'obj_readback':facts}
 
 
+def fit_review_label(bpy,scene,camera):
+    """Fit a visible label and dark backing to the actual camera frame."""
+    caption=bpy.data.objects.get('ReviewCaption')
+    if caption is None or caption.type!='FONT': raise ValueError('Missing baseline caption')
+    caption.parent=camera; caption.location=(0,0,-1); caption.rotation_euler=(0,0,0); caption.scale=(1,1,1)
+    caption.data.body='ILLUSTRATIVE / ISOLATED / NOT IN GAME'
+    caption.data.size=.028; caption.data.align_x='LEFT'; caption.data.align_y='BASELINE'
+    caption.hide_render=False
+    bpy.context.view_layer.update()
+    bounds=(min(v[0] for v in caption.bound_box),max(v[0] for v in caption.bound_box),
+            min(v[1] for v in caption.bound_box),max(v[1] for v in caption.bound_box))
+    corners=camera.data.view_frame(scene=scene)
+    if len(corners)!=4 or any(v.z>=0 for v in corners): raise ValueError('Unexpected camera frame')
+    points=[(v.x/-v.z,v.y/-v.z) for v in corners]
+    frame=(min(v[0] for v in points),max(v[0] for v in points),
+           min(v[1] for v in points),max(v[1] for v in points))
+    position,rect=variation.fit_caption(frame,bounds)
+    caption.location=(position[0],position[1],-1.)
+    # The backdrop is a camera-facing 2D curve, not an exported mesh. Its
+    # coordinates are adjusted for the slightly more distant z plane.
+    curve=bpy.data.curves.new('ReviewLabelBackdrop','CURVE'); curve.dimensions='2D'; curve.fill_mode='BOTH'
+    spline=curve.splines.new('POLY'); spline.points.add(3)
+    for point,(x,y) in zip(spline.points,((rect[0],rect[2]),(rect[1],rect[2]),
+                                          (rect[1],rect[3]),(rect[0],rect[3]))):
+        point.co=(x*1.01,y*1.01,0,1)
+    spline.use_cyclic_u=True
+    backdrop=bpy.data.objects.new('ReviewLabelBackdrop',curve); scene.collection.objects.link(backdrop)
+    backdrop.parent=camera; backdrop.location=(0,0,-1.01)
+    material=bpy.data.materials.new('ReviewLabelBackground'); material.use_nodes=True
+    nodes=material.node_tree.nodes; nodes.clear()
+    output=nodes.new('ShaderNodeOutputMaterial'); emission=nodes.new('ShaderNodeEmission')
+    emission.inputs['Color'].default_value=(.012,.012,.012,1); emission.inputs['Strength'].default_value=1
+    material.node_tree.links.new(emission.outputs[0],output.inputs['Surface']); curve.materials.append(material)
+    return {'text':caption.data.body,'frame_xy':frame,'text_and_backdrop_bounds_xy':rect}
+
+
 def build():
     import bpy
     from mathutils import Vector
@@ -229,6 +265,10 @@ def build():
     camera=scene.camera
     if camera is None or camera.type!='CAMERA': raise ValueError('Missing baseline camera')
     camera.data.type='PERSP'; camera.data.lens=34
+    label_spec=fit_review_label(bpy,scene,camera)
+    originals={key:bpy.data.objects['Building_'+key] for key in rows}
+    shopfront=bpy.data.objects['Shopfront_Overlay_east_0a']
+    saved_visibility={obj:obj.hide_render for obj in (*originals.values(),shopfront,*overlays.values())}
     images={}
     for key,(row,objpath,style,bid) in rows.items():
         obj=bpy.data.objects['Building_'+key]
@@ -240,13 +280,17 @@ def build():
         target=obj.matrix_world @ Vector((front-2,entry_y,height*.83))
         camera.location=location; camera.rotation_euler=(target-location).to_track_quat('-Z','Y').to_euler()
         for label,hide in (('before',True),('after',False)):
-            for overlay in overlays.values(): overlay.hide_render=hide
+            # The other large building blocks the 31c facade. Hide it only in
+            # these isolated diagnostic images; restore it before scene export.
+            for other,obj in originals.items(): obj.hide_render=other!=key or saved_visibility[obj]
+            shopfront.hide_render=key!='east_0a73564b' or saved_visibility[shopfront]
+            for other,overlay in overlays.items(): overlay.hide_render=other!=key or hide
             path=OUT/f'{key}_{label}.png'; scene.render.filepath=str(path)
             bpy.ops.render.render(write_still=True)
             if not path.is_file() or path.read_bytes()[:8]!=b'\x89PNG\r\n\x1a\n':
                 raise ValueError('Missing review image')
             images[path.name]=source.digest(path)
-    for overlay in overlays.values(): overlay.hide_render=False
+    for obj,old in saved_visibility.items(): obj.hide_render=old
     bpy.ops.file.pack_all()
     blend=OUT/'north_market_roof_variation_review.blend'
     bpy.ops.wm.save_as_mainfile(filepath=str(blend),compress=True)
@@ -259,13 +303,15 @@ def build():
         raise ValueError('Review GLB export failed')
     files=[p for p in OUT.rglob('*') if p.is_file()]
     if sum(p.stat().st_size for p in files)>200*2**20: raise ValueError('Review output too large')
-    write_json(OUT/'build.report.json',{'status':'review_only_not_in_game',
+    write_json(OUT/'build.report.json',{'status':'review_only_not_in_game','trial_version':2,
         'commit':os.environ['GITHUB_SHA'],'baseline_zip_sha256':ZIP_SHA,'baseline_blend_sha256':BLEND_SHA,
         'source_plan_lf_sha256':PLAN_SHA,'source_manifest_sha256':source.MANIFEST_SHA,
-        'images':images,'buildings':evidence,'mesh_names':sorted(o.name for o in scene.objects if o.type=='MESH'),
+        'images':images,'label':label_spec,
+        'buildings':evidence,'mesh_names':sorted(o.name for o in scene.objects if o.type=='MESH'),
         'files':{p.relative_to(OUT).as_posix():source.digest(p) for p in files},
         'limits':['New details are separate geometry; original sources and tenancy are unchanged.',
                   'Shutters cover selected existing upper lights; dormers intersect uncut source roofs.',
+                  'Comparison images isolate the selected building; neighboring building hidden.',
                   'Surveyed poses are review only. Props/ground are illustrative.',
                   'No Unreal import, collision, navigation, route, streaming or visual approval.']})
     print('Variation source, before/after renders and review scene created.')
