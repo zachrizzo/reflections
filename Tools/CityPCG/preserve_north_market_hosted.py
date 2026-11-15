@@ -351,26 +351,77 @@ def limit_child_files(size):
     resource.setrlimit(resource.RLIMIT_FSIZE,(size,size))
 
 
+def classify_smudge_error(data,returncode):
+    # Never return any text from stderr. A status is emitted only when it is a
+    # three-digit HTTP response in the 300-599 range.
+    if not isinstance(data,bytes): raise TypeError('diagnostic-input')
+    text=data.lower()
+    status=re.search(rb'\b(?:http(?:/\d(?:\.\d)?)?\s*[:=]?\s*|status(?:\s+code)?\s*[:=]?\s*)([345][0-9]{2})\b',text)
+    code=int(status.group(1)) if status else None
+    file_signal=getattr(signal,'SIGXFSZ',None)
+    if ((file_signal is not None and returncode==-file_signal)
+            or any(s in text for s in (b'file too large',b'file size limit exceeded',b'efbig'))):
+        return 'file-limit',code
+    if code in (401,403,407): return 'auth',code
+    if code in (404,410): return 'not-found',code
+    if code is not None and 300<=code<400: return 'redirect',code
+    if code is not None: return 'http',code
+    patterns=(
+        ('auth',(b'authorization error',b'authentication required',b'permission denied',b'access denied')),
+        ('not-found',(b'repository or object not found',b'object not found',b'no such object')),
+        ('redirect',(b'too many redirects',b'redirect not allowed',b'redirects disabled',b'redirect rejected')),
+        ('network',(b'connection refused',b'connection reset',b'network is unreachable',b'no such host',
+                    b'temporary failure in name resolution',b'timed out',b'i/o timeout',b'tls handshake')),
+    )
+    for category,needles in patterns:
+        if any(needle in text for needle in needles): return category,None
+    return 'unknown',None
+
+
+def report_smudge_error(stream,returncode,max_size):
+    # The child has RLIMIT_FSIZE=max_size for both its download and this file.
+    # Inspect at most 64 KiB, and print only fixed categories / numeric status.
+    stream.flush()
+    stream.seek(0,os.SEEK_END)
+    size=stream.tell()
+    if size>max_size:
+        category,status='file-limit',None
+    else:
+        stream.seek(0)
+        category,status=classify_smudge_error(stream.read(min(size,64*1024)),returncode)
+    print('LFS smudge diagnostic: '+category,flush=True)
+    if status is not None:
+        print('LFS smudge HTTP status: '+str(status),flush=True)
+
+
 def smudge_to_file(env,store,item,pointer,dest):
     check_pointer(pointer,item)
     rel=(TARGET_REL/(item['key']+'.zip')).as_posix()
     command=git_command(*readback_options(store),'lfs','smudge',rel)
+    error_path=dest.parent/('lfs-smudge-stderr-'+item['key'])
+    flags=os.O_RDWR|os.O_CREAT|os.O_EXCL|getattr(os,'O_NOFOLLOW',0)
     with dest.open('xb') as output:
-        process=subprocess.Popen(command,env=env,stdin=subprocess.PIPE,stdout=output,
-                                 stderr=subprocess.DEVNULL,start_new_session=True,
-                                 preexec_fn=lambda:limit_child_files(item['size']))
-        try:
-            process.communicate(input=pointer,timeout=60)
-            if process.returncode!=0:
-                raise RuntimeError('lfs-smudge-exit')
-        except BaseException:
-            # Kill the whole hosted process group, not merely its Git parent.
+        descriptor=os.open(str(error_path),flags,0o600)
+        with os.fdopen(descriptor,'w+b') as errors:
+            process=subprocess.Popen(command,env=env,stdin=subprocess.PIPE,stdout=output,
+                                     stderr=errors,start_new_session=True,
+                                     preexec_fn=lambda:limit_child_files(item['size']))
             try:
-                os.killpg(process.pid,signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            process.wait(timeout=5)
-            raise
+                process.communicate(input=pointer,timeout=60)
+                if process.returncode!=0:
+                    raise RuntimeError('lfs-smudge-exit')
+            except BaseException:
+                # Kill the whole hosted process group, not merely its Git parent.
+                try:
+                    os.killpg(process.pid,signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait(timeout=5)
+                try:
+                    report_smudge_error(errors,process.returncode,item['size'])
+                except Exception:
+                    print('LFS smudge diagnostic: unknown',flush=True)
+                raise
 
 
 READBACK_STAGES={
@@ -445,7 +496,7 @@ def run(ctx):
     if shutil.disk_usage(ctx['temp']).free<256*2**20:
         raise RuntimeError('disk-space')
     stage=ctx['temp']/f"preserve-north-market-{ctx['run']}-{ctx['attempt']}"
-    stage.mkdir()
+    stage.mkdir(mode=0o700)
     env=safe_git_env(stage)
     print('Checking checkout and main branch.',flush=True)
     verify_revision(ctx,env)

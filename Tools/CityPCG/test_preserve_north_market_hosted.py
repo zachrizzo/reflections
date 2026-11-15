@@ -85,13 +85,18 @@ class PreservationTests(unittest.TestCase):
     def test_smudge_receives_only_checked_pointer_and_capped_sink(self):
         item=p.ARTIFACTS[0]; pointer=p.pointer_bytes(item)
         process=SimpleNamespace(pid=321,returncode=0,communicate=mock.Mock(),wait=mock.Mock())
+        errors=io.BytesIO()
         with mock.patch.object(p.Path,'open',return_value=io.BytesIO()) as opened, \
+             mock.patch.object(p.os,'open',return_value=42) as create, \
+             mock.patch.object(p.os,'fdopen',return_value=errors), \
              mock.patch.object(p.subprocess,'Popen',return_value=process) as spawn:
             p.smudge_to_file({'GH_TOKEN':'mock-token'},Path('/store'),item,pointer,Path('/output'))
         opened.assert_called_once_with('xb')
+        self.assertEqual(create.call_args.args[2],0o600)
+        self.assertTrue(create.call_args.args[1]&p.os.O_EXCL)
         args,kwargs=spawn.call_args
         self.assertEqual(args[0][-2:],['smudge',(p.TARGET_REL/(item['key']+'.zip')).as_posix()])
-        self.assertEqual(kwargs['stderr'],subprocess.DEVNULL)
+        self.assertIs(kwargs['stderr'],errors)
         self.assertTrue(kwargs['start_new_session'])
         self.assertTrue(callable(kwargs['preexec_fn']))
         process.communicate.assert_called_once_with(input=pointer,timeout=60)
@@ -104,13 +109,49 @@ class PreservationTests(unittest.TestCase):
         for exception,code in cases:
             process=SimpleNamespace(pid=321,returncode=code,communicate=mock.Mock(side_effect=exception),wait=mock.Mock())
             with self.subTest(code=code),mock.patch.object(p.Path,'open',return_value=io.BytesIO()), \
+                 mock.patch.object(p.os,'open',return_value=42), \
+                 mock.patch.object(p.os,'fdopen',return_value=io.BytesIO()), \
                  mock.patch.object(p.subprocess,'Popen',return_value=process), \
                  mock.patch.object(p.os,'killpg',create=True) as kill, \
-                 mock.patch.object(p.signal,'SIGKILL',9,create=True):
+                 mock.patch.object(p.signal,'SIGKILL',9,create=True),mock.patch('builtins.print'):
                 with self.assertRaises((RuntimeError,subprocess.TimeoutExpired,TimeoutError)):
                     p.smudge_to_file({},Path('/store'),item,pointer,Path('/output'))
                 kill.assert_called_once_with(321,9)
                 process.wait.assert_called_once_with(timeout=5)
+
+    def test_smudge_error_classification_never_returns_sensitive_text(self):
+        secret=b'https://example.invalid/x?token=top-secret'
+        cases=((b'Authorization error: '+secret,('auth',None)),
+               (b'Repository or object not found: '+secret,('not-found',None)),
+               (b'HTTP/1.1 403 '+secret,('auth',403)),
+               (b'status code: 404 '+secret,('not-found',404)),
+               (b'HTTP 302 '+secret,('redirect',302)),
+               (b'HTTP 503 '+secret,('http',503)),
+               (b'too many redirects '+secret,('redirect',None)),
+               (b'connection refused '+secret,('network',None)),
+               (b'file size limit exceeded '+secret,('file-limit',None)),
+               (secret,('unknown',None)))
+        for data,expected in cases:
+            with self.subTest(expected=expected): self.assertEqual(p.classify_smudge_error(data,2),expected)
+
+    def test_private_smudge_diagnostic_is_capped_and_redacted(self):
+        secret=b'https://example.invalid/?token=do-not-log'
+        class BoundedReader(io.BytesIO):
+            def read(self,n=-1):
+                self.requested=n
+                return super().read(n)
+        cases=((b'Authorization error: '+secret,'LFS smudge diagnostic: auth',None),
+               (b'HTTP/1.1 403 '+secret,'LFS smudge diagnostic: auth','LFS smudge HTTP status: 403'),
+               (b'x'*(70*1024)+secret,'LFS smudge diagnostic: unknown',None))
+        for data,label,status in cases:
+            stream=BoundedReader(data)
+            with self.subTest(label=label),mock.patch('builtins.print') as output:
+                p.report_smudge_error(stream,2,100*1024)
+                lines=[c.args[0] for c in output.call_args_list]
+                self.assertIn(label,lines)
+                if status: self.assertIn(status,lines)
+                self.assertNotIn(secret.decode(),' '.join(lines))
+                self.assertLessEqual(stream.requested,64*1024)
 
     def test_overall_deadline_raises_for_child_cleanup(self):
         with self.assertRaisesRegex(TimeoutError,'overall-timeout'):
