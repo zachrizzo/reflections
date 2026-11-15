@@ -198,17 +198,13 @@ def _alignment_difference(expected, actual):
     return best
 
 
-def _diagnose_missing(face_index, face, actual_faces, nearby_indices, used):
+def _diagnose_missing(face_index, face, actual_faces, used):
     """Explain one unmatched polygon; never allow diagnostics to accept it."""
     material, corners = face
     center = _centroid(face)
-    options = [i for i in nearby_indices if actual_faces[i][0] == material and
-               len(actual_faces[i][1]) == len(corners)]
-    if not options:
-        # If nothing landed in the neighboring centroid buckets, inspect a
-        # bounded number of nearest same-material/same-arity faces instead.
-        options = [i for i, candidate in enumerate(actual_faces)
-                   if candidate[0] == material and len(candidate[1]) == len(corners)]
+    # Include other materials: a changed assignment must not hide an otherwise
+    # exact geometry/UV/normal diagnostic. This scan occurs only on failure.
+    options = [i for i, candidate in enumerate(actual_faces) if len(candidate[1]) == len(corners)]
     options = sorted(options, key=lambda i: sum((_centroid(actual_faces[i])[j] - center[j]) ** 2
                                                 for j in range(3)))[:32]
     details = []
@@ -217,10 +213,11 @@ def _diagnose_missing(face_index, face, actual_faces, nearby_indices, used):
         details.append((score, i, reversed_order, shift, pos, uv, normal))
     if not details:
         return (f'source_polygon={face_index} material={material} corners={len(corners)} '
-                f'centroid={center}; no candidate with the same material and corner count')
+                f'centroid={center}; no candidate with the same corner count')
     score, i, reversed_order, shift, pos, uv, normal = min(details)
     return (f'source_polygon={face_index} material={material} corners={len(corners)} centroid={center}; '
-            f'diagnostic_candidate={i} already_used={i in used} reversed_winding={reversed_order} '
+            f'diagnostic_candidate={i} candidate_material={actual_faces[i][0]} already_used={i in used} '
+            f'reversed_winding={reversed_order} '
             f'cyclic_shift={shift} max_position_delta_m={pos:.9g} max_uv_delta={uv:.9g} '
             f'max_normal_component_delta={normal:.9g} tolerance_ratio={score:.9g}')
 
@@ -247,14 +244,12 @@ def compare(expected, actual):
     for face_index, face in enumerate(expected['faces']):
         material, count, x, y, z = _bucket(face)
         candidates = []
-        nearby = []
         for dx, dy, dz in itertools.product((-1, 0, 1), repeat=3):
             for idx in buckets.get((material, count, x + dx, y + dy, z + dz), ()):
-                nearby.append(idx)
                 if idx not in used and same_face(face, actual['faces'][idx]):
                     candidates.append(idx)
         if not candidates:
-            detail = _diagnose_missing(face_index, face, actual['faces'], nearby, used)
+            detail = _diagnose_missing(face_index, face, actual['faces'], used)
             raise ValueError('A source polygon, winding, UV, normal or assignment changed: ' + detail)
         if len(candidates) > 1 and len({actual['faces'][i] for i in candidates}) != 1:
             raise ValueError('Ambiguous polygon match')
