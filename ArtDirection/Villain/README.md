@@ -95,6 +95,8 @@ Soldiers (story canon: Giltside's soldiers fight the tarnished on sight):
 
 Pacing (train #13, after crowd-react's ring run took the meter 0 -> 3 in 40 s): ring walkers carry `NoVillain`, so only named or placed people are taken. Tackle conversions are spaced by `Villain.ConvertInterval` (85 s; the first two quicker so the player sees it happen, a little faster with each page), which puts a full meter at about 25 minutes for a player who ignores the Tarnish. If nobody takeable is near the player when he first arrives, he takes any named or placed person on the map, so possession always starts. `Villain.Convert` (tests) ignores the gap.
 
+Scripted beats (cutscenes' BurningEyes): `BeginConversionScripted(Attacker, Victim)` is `BeginConversion` without the pacing gap; it first brings the attacker's walker to arm's length of the victim's and holds both NPCs for the sequence, and it may take a victim tagged `NoVillain` (a story beat turning a named person; the hunt and his own picks still respect the tag). Every refusal names its reason; scripted refusals log at Log level (compiled 03:15). While a cutscene plays, the hunt's `BeginConversion` refuses, so only the scene's scripted conversion runs (compiled 03:33).
+
 Saves (game flow's slots, key `Villain`): every checkpoint, manual and quick save stores the tarnished (by Lives person
 id, else level actor name; runtime-spawned crowd bodies are not stored), the host and its seconds left, and the
 tallies. A load re-tarnishes them through the usual path (so the meter comes back through `ReportInfected`), retrying

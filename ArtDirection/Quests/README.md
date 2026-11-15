@@ -295,8 +295,15 @@ step's progress has already happened (`PageFound`, `KeyFound`, `BookComplete`, `
     test can't act out (world jumps from script, the key, the boss outside the finale) were forced with
     `Quest.CompleteStep`.
   - **Markers:** nothing was auto-placed (`GetAutoPlacedNames` was empty).
-- Still to run: SQ9 *Unsigned* through the talk card, and the deaths and heat code (in the build, not yet driven in
-  PIE).
+- **Story pack on Gray London** (train #13, 2026-11-15 01:59): 13 quests imported.
+  - **SQ9 *Unsigned*:** played end to end through talk cards. Barnaby's offer (`31_sq9_offer`), accept, Odette, the
+    wool to Barnaby, the shears to Odette, then Completed with `Seam_Held` (`33_…`, `34_sq9_complete`).
+  - **No pause:** the game was not paused while a talk card was open.
+  - **Deaths:** with SQ7 accepted, Dov Merriman died, and SQ7 FAILED with the note "Dov Merriman died by my hand.
+    There's no finishing this now." (`36_quest_failed_banner`, `35_journal_story`).
+  - **Markers:** nothing was auto-placed.
+- **Still to run:** heat refusals (npc-unify's `Npc.Heat` is off), SQ11's kill branch, and one-London mode plus the
+  spawn-through-Lives change (next train).
 
 ## Saving
 

@@ -217,8 +217,8 @@ CUTSCENES = {
                 K(17.0, (-130.0, 220.0, 180.0), (400.0, 0.0, 150.0)),
                 K(22.0, (-320.0, 70.0, 190.0), (600.0, 0.0, 140.0))], aperture=5.6),
         ],
-        'lights': [{'label': 'Page glow', 'pos': (35.0, 0.0, 115.0), 'color': (0.85, 0.9, 1.0), 'intensity': 25.0,
-                    'radius': 250.0, 'start': 0.0, 'end': 17.0}],
+        'lights': [{'label': 'Page glow', 'pos': (45.0, 0.0, 110.0), 'color': (0.85, 0.9, 1.0), 'intensity': 3.0,
+                    'radius': 220.0, 'source_radius': 15.0, 'start': 0.0, 'end': 17.0}],
         'takes': [
             T('FirstPage', 'Hero', 0.0, 150, 'A person stands holding both hands together in front of the chest, palms up '
               'as if cradling something flat and fragile, head bowed to look at it.', 83001),
@@ -296,10 +296,10 @@ CUTSCENES = {
         'length': 24.0,
         'cast': [HERO],
         'shots': [
-            S('The leaves join', 0.0, 6.0, 70.0, [
-                K(0.0, (140.0, 80.0, 140.0), (0.0, 0.0, 130.0)),
-                K(3.0, (130.0, -40.0, 145.0), (0.0, 0.0, 132.0)),
-                K(6.0, (80.0, -150.0, 150.0), (0.0, 0.0, 135.0))], aperture=2.8, focus=165.0),
+            S('The leaves join', 0.0, 6.0, 40.0, [
+                K(0.0, (260.0, 120.0, 155.0), (0.0, 0.0, 140.0)),
+                K(3.0, (250.0, -40.0, 158.0), (0.0, 0.0, 142.0)),
+                K(6.0, (200.0, -190.0, 160.0), (0.0, 0.0, 145.0))], aperture=2.8, focus=280.0),  # medium, not a chest crop
             # cutscenes.md asks for 24 m straight down; this scene plays inside the Frost Tower, so it stays under 9 m.
             S('Ring of light, from above', 6.0, 11.0, 18.0, [
                 K(6.0, (0.0, 0.0, 900.0), rot=(0.0, -89.9, 0.0)),
@@ -308,15 +308,15 @@ CUTSCENES = {
                 K(11.0, (90.0, 0.0, 168.0), (0.0, 0.0, 165.0)),
                 K(16.0, (80.0, 4.0, 168.0), (0.0, 0.0, 165.0))], aperture=1.8, focus=88.0),
             S('The way up', 16.0, 21.0, 24.0, [
-                K(16.0, (-250.0, 0.0, 60.0), (600.0, 0.0, 900.0)),
-                K(21.0, (-230.0, 20.0, 50.0), (600.0, 0.0, 1000.0))]),
+                K(16.0, (-250.0, 0.0, 60.0), (900.0, 0.0, 520.0)),
+                K(21.0, (-230.0, 20.0, 50.0), (900.0, 0.0, 640.0))]),  # rooftops, not empty sky
             S('Behind Wren, looking up', 21.0, 24.0, 32.0, [
                 K(21.0, (-130.0, 220.0, 185.0), (500.0, 0.0, 300.0)),
                 K(24.0, (-330.0, 60.0, 190.0), (700.0, 0.0, 400.0))], aperture=5.6),
         ],
         'lights': [
-            {'label': 'Mirror light', 'pos': (35.0, 0.0, 125.0), 'color': (0.9, 0.95, 1.0), 'intensity': 120.0,
-             'radius': 700.0, 'start': 0.0, 'end': 16.0},
+            {'label': 'Mirror light', 'pos': (60.0, 0.0, 120.0), 'color': (0.9, 0.95, 1.0), 'intensity': 6.0,
+             'radius': 450.0, 'source_radius': 25.0, 'start': 0.0, 'end': 16.0},
             {'label': 'Violet at the top', 'pos': (600.0, 0.0, 1100.0), 'color': (0.55, 0.2, 0.9), 'intensity': 400.0,
              'radius': 1500.0, 'start': 16.0, 'end': 24.0},
         ],
@@ -477,7 +477,17 @@ FALLBACK_LOOPS = {'AS_BurningEyes_Hero_26': 3}
 
 # ---- Camera fixes from the geometry check (test_cutscenes_pie.py geometry on GrayLondon_Geodata) -----------------
 # {(cutscene, shot index, key index): (x, y, z)} anchor-space camera positions that replace clipping keys.
-CAMERA_FIX = {}
+CAMERA_FIX = {
+    ('Ending', 2, 0): (-1200, -1440, 2080),
+    ('Ending', 2, 1): (-1145, -1275, 1955),
+    ('FirstPage', 2, 0): (-640, -720, 1460),
+    ('FirstPage', 2, 1): (-560, -640, 1340),
+    ('FirstPage', 3, 0): (-104, 209, 178),
+    ('Intro', 1, 0): (630, 540, 645),
+    ('Intro', 1, 1): (780, 780, 604),
+    ('Intro', 1, 2): (720, 780, 480),
+    ('Intro', 7, 0): (-99, 229, 183),
+}
 
 
 def _apply_camera_fixes():

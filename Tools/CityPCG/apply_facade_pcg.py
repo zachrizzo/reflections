@@ -110,17 +110,18 @@ def make_point(unreal, row):
     return point
 
 
-def configure_spawner(unreal, settings, mesh):
+def configure_spawner(unreal, settings, mesh, *, solid=False):
     settings.set_mesh_selector_type(unreal.PCGMeshSelectorWeighted)
     selector = settings.get_editor_property('mesh_selector_parameters')
     descriptor = unreal.PCGSoftISMComponentDescriptor()
     body = descriptor.get_editor_property('body_instance')
-    body.set_editor_property('collision_profile_name', 'NoCollision')
-    body.set_editor_property('collision_enabled', unreal.CollisionEnabled.NO_COLLISION)
+    body.set_editor_property('collision_profile_name', 'BlockAll' if solid else 'NoCollision')
+    body.set_editor_property('collision_enabled', unreal.CollisionEnabled.QUERY_AND_PHYSICS if solid
+                             else unreal.CollisionEnabled.NO_COLLISION)
     descriptor.set_editor_properties({
         'body_instance': body,
         'use_default_collision': False,
-        'can_ever_affect_navigation': False,
+        'can_ever_affect_navigation': solid,
         'generate_overlap_events': False,
         'component_class': unreal.InstancedStaticMeshComponent,
         'static_mesh': mesh,
@@ -134,6 +135,11 @@ def create_graph(unreal, pcg, identifier, groups, meshes, destination):
     graph = pcg.create_graph(graph_name(identifier), f'{destination}/Graphs')
     if not graph or graph.get_name() != graph_name(identifier):
         raise RuntimeError(f'Could not create the exact graph name for {identifier}.')
+    populate_point_mesh_graph(unreal, pcg, graph, groups, meshes)
+    return graph
+
+
+def populate_point_mesh_graph(unreal, pcg, graph, groups, meshes, *, solid_meshes=()):
     output = graph.get_output_node()
     for index, (mesh_id, rows) in enumerate(sorted(groups.items())):
         source, settings = graph.add_node_of_type(unreal.PCGCreatePointsSettings)
@@ -145,13 +151,12 @@ def create_graph(unreal, pcg, identifier, groups, meshes, destination):
         source.set_editor_property('node_title', f'Points {mesh_id}')
         source.set_node_position(0, index * 180)
         spawner, settings = graph.add_node_of_type(unreal.PCGStaticMeshSpawnerSettings)
-        configure_spawner(unreal, settings, meshes[mesh_id])
+        configure_spawner(unreal, settings, meshes[mesh_id], solid=mesh_id in solid_meshes)
         spawner.set_editor_property('node_title', mesh_id)
         spawner.set_node_position(360, index * 180)
         if not pcg.try_add_edge(source, 'Out', spawner, 'In') or not pcg.try_add_edge(spawner, 'Out', output, 'Out'):
             raise RuntimeError(f'Could not connect the PCG branch for {mesh_id}.')
     output.set_node_position(720, 0)
-    return graph
 
 
 def cell_transform(unreal, groups):

@@ -6,8 +6,12 @@ os.makedirs(OUT, exist_ok=True)
 rep = {'npcs': []}
 T0 = time.time()
 await acquire_pie_lock('crowd-looks: PIE screenshot of the crowd on Play (~30 s)', 120)
+STARTED_PIE = False  # 23:02: a lock-free PIE was the USER's own Play; never stop a PIE this script didn't start
 try:
+    if unwrap(await call_tool('EditorToolset.EditorAppToolset.IsPIERunning')):
+        raise RuntimeError('PIE already running (not ours: leave it)')
     await call_tool('EditorToolset.EditorAppToolset.StartPIE', options={'warmupSeconds': 3.0})
+    STARTED_PIE = True
     world = None
     for _ in range(60):
         world = game_world()
@@ -48,7 +52,8 @@ try:
     rep['all_classes'] = sorted(a.get_class().get_name() for a in npcs)
 finally:
     try:
-        await call_tool('EditorToolset.EditorAppToolset.StopPIE')
+        if STARTED_PIE:
+            await call_tool('EditorToolset.EditorAppToolset.StopPIE')
     except Exception as e:
         rep['stop_err'] = str(e)
     release_pie_lock()

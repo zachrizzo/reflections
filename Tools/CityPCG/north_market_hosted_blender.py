@@ -138,6 +138,49 @@ def mesh_data(obj):
             'slots': slots, 'faces': faces}
 
 
+def normal_boundaries(mesh, face_normals):
+    """Plan necessary sharp edges and loop normals without changing the mesh."""
+    if len(face_normals) != len(mesh.polygons):
+        raise ValueError('Normal plan does not cover every imported face')
+    loop_normals = [None] * len(mesh.loops)
+    edge_normals = {}
+    for face_index, polygon in enumerate(mesh.polygons):
+        normal = face_normals[face_index]
+        for li in polygon.loop_indices:
+            if not 0 <= li < len(loop_normals) or loop_normals[li] is not None:
+                raise ValueError('Invalid or duplicated mesh corner')
+            edge_index = mesh.loops[li].edge_index
+            if not 0 <= edge_index < len(mesh.edges):
+                raise ValueError('Invalid mesh corner edge')
+            loop_normals[li] = normal
+            edge_normals.setdefault(edge_index, []).append(normal)
+    if any(normal is None for normal in loop_normals):
+        raise ValueError('Normal plan does not cover every mesh corner')
+    required = set()
+    for edge_index, values in edge_normals.items():
+        if any(any(abs(normal[i] - values[0][i]) > 1e-7 for i in range(3)) for normal in values[1:]):
+            required.add(edge_index)
+    return required, loop_normals
+
+
+def restore_flat_source_normals(obj, expected, actual, *, apply):
+    """Restore authored OBJ normals only on export; verify split edges on reimport."""
+    face_normals = common.flat_source_normal_plan(expected, actual)
+    mesh = obj.data
+    required, loop_normals = normal_boundaries(mesh, face_normals)
+    if apply:
+        # Preserve all existing sharp edges; add only authored normal boundaries.
+        # We do not change face smooth flags or topology.
+        for edge_index in required:
+            mesh.edges[edge_index].use_edge_sharp = True
+        mesh.normals_split_custom_set(loop_normals)
+        mesh.update()
+    if any(not mesh.edges[i].use_edge_sharp for i in required):
+        raise ValueError('Required authored-normal boundary is not a sharp edge')
+    return {'method': 'validated flat OBJ normals; sharp edges at differing face normals',
+            'required_sharp_edges': len(required), 'face_smooth_flags_edited': False}
+
+
 def write_report(path, report):
     with path.open('x', encoding='utf-8') as stream:
         json.dump(report, stream, indent=2, sort_keys=True)
@@ -186,6 +229,12 @@ def run():
         set_slot_order(obj, expected['slots'])
     elif obj.name != name:
         raise ValueError(f'FBX object name changed: {obj.name}')
+    # The west source has neighboring flat normals Blender averages on OBJ
+    # import. Repair only this known case; the normal matcher still runs below
+    # and again in a fresh FBX process, where no restoration is performed.
+    normal_repair = None
+    if name == 'SM_GLMedieval_NorthMarketDetail_west_736fd5c6':
+        normal_repair = restore_flat_source_normals(obj, expected, mesh_data(obj), apply=phase == 'export')
     facts = common.compare(expected, mesh_data(obj))
     textures = material_textures(bpy, obj, materials, source if phase == 'export' else out)
     if phase == 'export':
@@ -196,7 +245,7 @@ def run():
             filepath=str(fbx), use_selection=True, object_types={'MESH'}, global_scale=1.0,
             apply_unit_scale=True, apply_scale_options='FBX_SCALE_NONE', use_space_transform=True,
             bake_space_transform=False, axis_forward='-Z', axis_up='Y', use_mesh_modifiers=True,
-            mesh_smooth_type='FACE', use_triangles=False, bake_anim=False,
+            mesh_smooth_type='EDGE' if normal_repair else 'FACE', use_triangles=False, bake_anim=False,
             path_mode='COPY', embed_textures=False)
         if result != {'FINISHED'}:
             raise ValueError('Blender FBX exporter did not finish')
@@ -210,7 +259,7 @@ def run():
         'world_pivot_m': row['world_pivot_m'], 'yaw_deg': row['yaw_deg'],
         'source_axes': '+X entrance, +Z up', 'scene_unit': 'metres',
         'blender_version': bpy.app.version_string, 'uv_layer': obj.data.uv_layers.active.name,
-        'facts': facts, 'textures': textures,
+        'facts': facts, 'textures': textures, 'normal_repair': normal_repair,
         'limitations': ['No visual approval', 'No Unreal import, collision, navigation or placement validation',
                         'OBJ has no native slot order; used-material MTL order is the FBX contract',
                         'Blender shader and FBX round trip cannot prove Unreal material appearance',
@@ -220,7 +269,7 @@ def run():
         previous = json.loads(common.within(out / 'export.report.json', out).read_text(encoding='utf-8'))
         for key in ('model', 'source_manifest_sha256', 'source_obj_sha256', 'source_mtl_sha256',
                     'fbx_sha256', 'world_pivot_m', 'yaw_deg', 'source_axes', 'scene_unit',
-                    'blender_version', 'uv_layer', 'facts', 'textures'):
+                    'blender_version', 'uv_layer', 'facts', 'textures', 'normal_repair'):
             if previous.get(key) != report.get(key):
                 raise ValueError(f'Fresh-process FBX check differs from export: {key}')
     write_report(out / (phase + '.report.json'), report)

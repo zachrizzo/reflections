@@ -1,0 +1,145 @@
+{
+ "looks": {
+  "BP_Look_GiltDrummer": {
+   "moved_cm": 112.1,
+   "pose": {
+    "hand_above_pelvis_cm": -3.4,
+    "hand_below_shoulder_cm": 50.6,
+    "mesh": "SKM_MHC_FestivalDrummerGiltWorker_BodyMesh"
+   },
+   "parts": [
+    {
+     "name": "Body",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Bodies/SKM_MHC_FestivalDrummerGiltWorker_BodyMesh.SKM_MHC_FestivalDrummerGiltWorker_BodyMesh",
+     "mats": [
+      "/Game/Characters/RedLondon/FestivalDrummer/Assembled/FestivalDrummer/Body/Materials/MI_Body_Baked_VT.MI_Body_Baked_VT"
+     ]
+    },
+    {
+     "name": "Face",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/RedLondon/FestivalDrummer/Assembled/FestivalDrummer/Face/SKM_MHC_FestivalDrummer_FaceMesh.SKM_MHC_FestivalDrummer_FaceMesh",
+     "mats": [
+      "/Game/Characters/RedLondon/FestivalDrummer/Assembled/FestivalDrummer/Face/Materials/MI_Teeth_Baked.MI_Teeth_Baked",
+      "/Game/Characters/RedLondon/FestivalDrummer/Assembled/FestivalDrummer/Face/Materials/MI_EyeL_Baked.MI_EyeL_Baked",
+      "/Game/Characters/RedLondon/FestivalDrummer/Assembled/FestivalDrummer/Face/Materials/MI_EyeR_Baked.MI_EyeR_Baked",
+      "/Game/Characters/RedLondon/FestivalDrummer/Assembled/FestivalDrummer/Face/Materials/MI_Face_Skin_Baked_LOD5to7_VT.MI_Face_Skin_Baked_LOD5to7_VT"
+     ]
+    },
+    {
+     "name": "Hair",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Grooms/Hair_S_Cornrows.Hair_S_Cornrows",
+     "binding": "/Game/Characters/Lanthorne/Grooms/GiltDrummer/Hair_S_Cornrows_Binding.Hair_S_Cornrows_Binding"
+    },
+    {
+     "name": "Eyebrows",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Grooms/Eyebrows_M_Thick.Eyebrows_M_Thick",
+     "binding": "/Game/Characters/Lanthorne/Grooms/GiltDrummer/Eyebrows_M_Thick_Binding.Eyebrows_M_Thick_Binding"
+    },
+    {
+     "name": "FestivalDrummer_Blouse",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/SK_Gilt_Worker_F_Upper_FestivalDrummer.SK_Gilt_Worker_F_Upper_FestivalDrummer",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/Materials/MI_Gilt_Worker_F_Upper_FestivalDrummer.MI_Gilt_Worker_F_Upper_FestivalDrummer"
+     ]
+    },
+    {
+     "name": "FestivalDrummer_Capelet",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FestivalDrummer_Trousers",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FestivalDrummer_Boots",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/SK_Gilt_Worker_F_Feet_FestivalDrummer.SK_Gilt_Worker_F_Feet_FestivalDrummer",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/Materials/MI_Gilt_Worker_F_Feet_FestivalDrummer.MI_Gilt_Worker_F_Feet_FestivalDrummer"
+     ]
+    },
+    {
+     "name": "FestivalDrummer_Skirt",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/SK_Gilt_Worker_F_Lower_FestivalDrummer.SK_Gilt_Worker_F_Lower_FestivalDrummer",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/Materials/MI_Gilt_Worker_F_Lower_FestivalDrummer.MI_Gilt_Worker_F_Lower_FestivalDrummer"
+     ]
+    },
+    {
+     "name": "FestivalDrummer_Sash",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FestivalDrummer_Belt",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FestivalDrummer_RopeDrum",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FestivalDrummer_DrumHarness",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FestivalDrummer_Beaters",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    }
+   ],
+   "shots": {
+    "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/feet_check/r5\\one_00_BP_Look_GiltDrummer_body.png"
+   },
+   "feet_shot": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/feet_check/r5\\one_00_BP_Look_GiltDrummer_feet.png",
+   "feet_z_cm": [
+    17.7,
+    30.3
+   ],
+   "pelvis_before_ragdoll": 103.0,
+   "ragdoll_drop_cm": 54.8,
+   "simulating": true,
+   "ragdoll_shot": {
+    "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/feet_check/r5\\one_00_BP_Look_GiltDrummer_ragdoll_body.png"
+   },
+   "done": true
+  }
+ },
+ "errors": [],
+ "order": [
+  "BP_Look_GiltDrummer"
+ ],
+ "seconds": 10.7
+}

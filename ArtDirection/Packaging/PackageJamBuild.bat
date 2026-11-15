@@ -2,7 +2,10 @@
 rem Reflections jam build: cook + stage Win64 Development into Saved\JamBuild\Windows.
 rem Run AFTER building the editor and game targets together from the same source (see README.md, "How to package").
 rem Announce a SAVE FREEZE first: content saved mid-cook gets dropped or breaks the cook.
-rem Usage: PackageJamBuild.bat [--dry-run] [--with-npc-relay]
+rem Usage: PackageJamBuild.bat [--dry-run] [--with-npc-relay] [--allow-stale-people] [--no-build]
+rem   By default UAT first builds the game target (reflections Win64 Development, -build) from the current source, so the
+rem   staged exe matches the editor DLL the cook uses (B2). --no-build skips that, and is refused if reflections.exe is
+rem   older than UnrealEditor-reflections.dll. If UBT reports another instance running, wait; never kill it.
 rem   --with-npc-relay  after staging, copy the NPC dialogue helper (Tools\RealtimeVoice\dist\NpcDialogueRelay, built by
 rem                     Tools\RealtimeVoice\Build-NpcDialogueHelper.ps1) as loose files to
 rem                     <stage>\reflections\Content\NpcDialogue\Relay. Off by default: shipping it is the user's decision.
@@ -11,10 +14,15 @@ rem Capture the script folder before the argument loop: SHIFT also shifts %0.
 set "HERE=%~dp0"
 set "DRYRUN="
 set "WITHRELAY="
+set "ALLOWSTALE="
+set "BUILDGAME=-build"
 :args
 if "%~1"=="" goto argsdone
 if /i "%~1"=="--dry-run" set "DRYRUN=1"
 if /i "%~1"=="--with-npc-relay" set "WITHRELAY=1"
+rem --allow-stale-people: measurement cooks only. Never use it for the build that gets uploaded.
+if /i "%~1"=="--allow-stale-people" set "ALLOWSTALE=1"
+if /i "%~1"=="--no-build" set "BUILDGAME="
 shift
 goto args
 :argsdone
@@ -29,7 +37,7 @@ rem The cooker splits its command line on spaces, so the never-cook list goes to
 set "NEVERCOOK=%TEMP%\ReflectionsJamNeverCook.txt"
 copy /y "%HERE%NeverCookList.txt" "%NEVERCOOK%" >nul || (echo Could not copy NeverCookList.txt & exit /b 1)
 if not exist "%PROJ%\Saved\JamBuild\Logs" mkdir "%PROJ%\Saved\JamBuild\Logs"
-set ARGS=BuildCookRun -project="%PROJ%\reflections.uproject" -noP4 -platform=Win64 -clientconfig=Development -target=reflections -nocompileeditor -cook -map=/Game/GrayLondon/Maps/GrayLondon_Geodata -stage -pak -iostore -compressed -nodebuginfo -stagingdirectory="%PROJ%\Saved\JamBuild" -unattended -utf8output -AdditionalCookerOptions=-NeverCookListFile=%NEVERCOOK%
+set ARGS=BuildCookRun -project="%PROJ%\reflections.uproject" -noP4 -platform=Win64 -clientconfig=Development -target=reflections -nocompileeditor %BUILDGAME% -cook -map=/Game/GrayLondon/Maps/MedievalLondon -stage -pak -iostore -compressed -nodebuginfo -stagingdirectory="%PROJ%\Saved\JamBuild" -unattended -utf8output -AdditionalCookerOptions=-NeverCookListFile=%NEVERCOOK%
 if defined WITHRELAY (
   if not exist "%RELAYSRC%\NpcDialogueRelay.exe" (echo --with-npc-relay: NpcDialogueRelay.exe not found in Content\NpcDialogue\Relay or Tools\RealtimeVoice\dist. Build it first. & exit /b 1)
   rem Never ship API keys. A keys.json for local testing may sit next to the exe; it is excluded from the copy below
@@ -44,7 +52,16 @@ if exist "%PROJ%\Content\Lives\DA_PeopleBook.uasset" if exist "%PROJ%\ArtDirecti
 )
 if defined PEOPLESTALE (
   echo ERROR: Content\Lives\DA_PeopleBook is older than ArtDirection\Story\people.json. Ask npc-lives to re-import it, then package.
-  if not defined DRYRUN exit /b 1
+  if defined ALLOWSTALE echo --allow-stale-people: continuing anyway. This package is for measuring only; don't upload it.
+  if not defined DRYRUN if not defined ALLOWSTALE exit /b 1
+)
+rem With --no-build the staged exe is whatever is in Binaries; refuse one older than the editor DLL (a mismatched pair crashed before).
+if not defined BUILDGAME (
+  powershell -NoProfile -Command "$e = Get-Item -LiteralPath '%PROJ%\Binaries\Win64\reflections.exe' -ErrorAction SilentlyContinue; $d = Get-Item -LiteralPath '%PROJ%\Binaries\Win64\UnrealEditor-reflections.dll' -ErrorAction SilentlyContinue; if (-not $e -or ($d -and $e.LastWriteTime -lt $d.LastWriteTime.AddMinutes(-30))) { exit 1 } else { exit 0 }"
+  if errorlevel 1 (
+    echo ERROR: --no-build, but Binaries\Win64\reflections.exe is missing or older than UnrealEditor-reflections.dll. Drop --no-build so UAT builds the game target.
+    if not defined DRYRUN exit /b 1
+  )
 )
 rem Third-party notices (submission prep): CC BY 4.0, ODbL, MIT and OFL texts for the map's assets. They go next to
 rem reflections.exe, so they sit in the zip's top folder. Open [CONFIRM] items only warn; they're the map owner's.

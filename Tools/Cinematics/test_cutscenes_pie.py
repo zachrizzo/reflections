@@ -249,6 +249,7 @@ async def runall(names):
         await asyncio.sleep(4.0)
         report['map'] = world.get_path_name()
         sub = cutscenes(world)
+        unreal.SystemLibrary.execute_console_command(world, 'log LogReflectionsVillain Verbose')
         for name in names:
             out = ROOT / name
             out.mkdir(parents=True, exist_ok=True)
@@ -269,6 +270,27 @@ async def runall(names):
                 frames.append(await capture(out / ('frame_%d.png' % i)))
                 if i == 3:
                     entry['during'] = control_state(world)
+                # Where each cast member actually stands, in anchor space (framing checks).
+                anchor = sub.get_anchor_transform()
+                for role in ('Hero', 'Jory', 'Goldie', 'Pim', 'Tarnished'):
+                    actor = sub.get_cast_actor(role)
+                    if actor:
+                        def loc(v):
+                            l = anchor.inverse_transform_location(v)
+                            return [round(l.x), round(l.y), round(l.z)]
+                        row = {'look': loc(actor.get_actor_location())}
+                        npc = actor.get_component_by_class(unreal.ReflectionsNpcReactionComponent)
+                        if npc:
+                            walker = npc.get_locomotion_driver()
+                            if walker:
+                                row['walker'] = loc(walker.get_actor_location())
+                            body = None
+                            for comp in actor.get_components_by_class(unreal.SkeletalMeshComponent):
+                                if comp.is_visible() and comp.get_name() in ('Body', 'body'):
+                                    body = comp
+                            if body:
+                                row['body'] = loc(body.get_world_location())
+                        entry.setdefault('cast', {}).setdefault(role, []).append(row)
             for _ in range(600):
                 if not sub.is_cutscene_playing():
                     break

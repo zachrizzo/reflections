@@ -1099,7 +1099,34 @@ def skin(g, kind, rep):
     names = [vg.name for vg in g.vertex_groups]
     W = [{names[x.group]: x.weight for x in v.groups if x.weight > 0} for v in me.vertices]
     pelvis_z = J['pelvis'].z
-    if kind in ('skirt', 'upper', 'coat'):
+    if kind == 'skirt' and CFG.get('skirt_slit_closed'):
+        # Codex skirts have a centre-back slit (an open seam). Weights taken from the nearest leg differ across it, so
+        # its two edges follow opposite legs and the slit gapes in stride (calves showed through). Below the hips the
+        # weights become a smooth field of position: pelvis + each side's thigh (+ a little calf below the knee), with a
+        # side factor that is exactly 0.5 within 3 cm of the centre line. Both slit edges get identical weights and
+        # move as one; the rest of the skirt still follows each leg part of the way. Skinning only, shape unchanged.
+        top = pelvis_z - 0.06
+        knee = (J['calf_l'].z + J['calf_r'].z) / 2
+
+        def side_of_x(x):
+            ax = abs(x)
+            if ax <= 0.03:
+                return 0.5
+            r = smoothstep(0.03, 0.15, ax) * 0.5
+            return 0.5 + r if x > 0 else 0.5 - r      # thigh_l is on +X
+
+        for i, v in enumerate(me.vertices):
+            if v.co.z >= top:
+                continue
+            k = smoothstep(top, knee + 0.10, v.co.z)          # 0 at the hips -> 1 above the knee and below
+            q = smoothstep(knee + 0.05, knee - 0.15, v.co.z)  # 0 above the knee -> 1 down the shin
+            s = side_of_x(v.co.x)
+            leg_t, leg_c = 0.6 - 0.15 * q, 0.15 * q
+            tgt = {'pelvis': 0.4, 'thigh_l': leg_t * s, 'thigh_r': leg_t * (1 - s),
+                   'calf_l': leg_c * s, 'calf_r': leg_c * (1 - s)}
+            W[i] = {n: (1 - k) * W[i].get(n, 0.0) + k * tgt.get(n, 0.0) for n in set(W[i]) | set(tgt)}
+        rep['skirt_weights'] = 'slit_closed: synthetic field below the hips (pelvis 0.4, thighs 0.6, calves 0.15 below knee)'
+    elif kind in ('skirt', 'upper', 'coat'):
         # Hanging hems: blend toward pelvis + both thighs so the hem moves as one piece instead of splitting.
         top = pelvis_z - (0.02 if kind == 'upper' else 0.10)
         for i, v in enumerate(me.vertices):
@@ -1198,6 +1225,7 @@ def hide_body(garments, rep):
     """A copy of the body without the skin the outfit covers, for this outfit's looks to wear in place of the body.
     Covered skin is eroded by HIDE_MARGIN_RINGS so skin stays under every cuff, collar and hem."""
     cov = covered_skin(garments, BODY)
+    cov_rest = cov[:]
     # Skin is hidden only if the garments still cover it in motion (walk and run as well as the rest pose): legs
     # leave a pencil skirt mid-stride, and a hidden leg there would show as a hole.
     moving = {}
@@ -1219,11 +1247,32 @@ def hide_body(garments, rep):
     bpy.context.view_layer.update()
     bpy.ops.object.mode_set(mode='OBJECT')
     me = BODY.data
+    legs_in_skirt = 0
+    if CFG.get('hide_legs_under_skirt') and any(p.get('kind') == 'skirt' for p in CFG.get('pieces', [])):
+        # A pencil skirt has ~2 cm of room: in stride the legs push through its panels (GiltDrummer showed her calves
+        # through the back). Below the crotch, leg skin the skirt covers at rest is hidden even though it leaves the
+        # skirt in motion; a floor-length hem and tall boots cover everything under it.
+        crotch = J['thigh_l'].z - 0.10
+        mw = BODY.matrix_world
+        for i, v in enumerate(me.vertices):
+            if cov_rest[i] and not cov[i] and (mw @ v.co).z < crotch and \
+                    any(t in BODY_DOM[i] for t in ('thigh', 'calf')):
+                cov[i] = True
+                legs_in_skirt += 1
     nb = mesh_neighbours(me)
     ok = cov[:]
     for _ in range(HIDE_MARGIN_RINGS):
         ok = [ok[i] and all(ok[j] for j in nb[i]) for i in range(len(ok))]
     hidden = {p.index for p in me.polygons if all(ok[i] for i in p.vertices)}
+    whole_feet = 0
+    if CFG.get('hide_whole_feet', True) and any(p.get('kind') == 'feet' for p in CFG.get('pieces', [])):
+        # Boots: Codex's toe boxes turn up 3-5 cm off the floor (rocker toe), so bare toes showed under them. The boot
+        # is never reshaped to hold the foot; the whole foot is hidden instead (it is inside or under the boot).
+        footv = [any(t in BODY_DOM[i] for t in ('foot', 'ball', 'toe')) for i in range(len(me.vertices))]
+        extra = {p.index for p in me.polygons
+                 if any(footv[i] for i in p.vertices) and all(footv[i] or ok[i] for i in p.vertices)} - hidden
+        whole_feet = len(extra)
+        hidden |= extra
     hb = BODY.copy()
     hb.data = BODY.data.copy()
     BODY.users_collection[0].objects.link(hb)
@@ -1244,7 +1293,8 @@ def hide_body(garments, rep):
         regions[key] = regions.get(key, 0) + 1
     rep['body_hide'] = {'name': hb.name, 'faces_hidden': len(hidden), 'faces_total': len(me.polygons),
                         'pct_hidden': round(100.0 * len(hidden) / len(me.polygons), 1),
-                        'covered_verts': sum(cov), 'uncovered_in_motion': moving,
+                        'covered_verts': sum(cov), 'uncovered_in_motion': moving, 'whole_feet_extra_faces': whole_feet,
+                        'legs_in_skirt_verts': legs_in_skirt,
                         'by_region': dict(sorted(regions.items(), key=lambda x: -x[1]))}
     return hb, hidden
 
@@ -1253,6 +1303,30 @@ def pose_checks(garments, rep, hidden=frozenset()):
     """Per pose: garment vertices inside VISIBLE skin (skin hidden for the outfit can't show through), and hidden
     skin that the posed garments no longer cover (a hole someone could see)."""
     out = {}
+    # Open seams below the hips (a skirt's slit): pairs of boundary vertices on either side of the centre line that
+    # touch at rest. Their posed distance is the slit gap.
+    kinds = {p['name']: p['kind'] for p in CFG.get('pieces', [])}
+    seams = {}
+    crotch = J['thigh_l'].z - 0.10
+    for g in garments:
+        if kinds.get(g.name) not in ('skirt', 'coat'):
+            continue
+        me0 = g.data
+        cnt = {}
+        for poly in me0.polygons:
+            for ek in poly.edge_keys:
+                cnt[ek] = cnt.get(ek, 0) + 1
+        bverts = {i for ek, c in cnt.items() if c == 1 for i in ek}
+        L = [i for i in bverts if 0 < me0.vertices[i].co.x < 0.04 and me0.vertices[i].co.z < crotch]
+        R = [i for i in bverts if -0.04 < me0.vertices[i].co.x <= 0 and me0.vertices[i].co.z < crotch]
+        pairs = []
+        for i in L:
+            pi = me0.vertices[i].co
+            j = min(R, key=lambda r: (me0.vertices[r].co - pi).length, default=None)
+            if j is not None and (me0.vertices[j].co - pi).length < 0.015:
+                pairs.append((i, j))
+        if pairs:
+            seams[g.name] = pairs
     select_only(RIG)
     bpy.ops.object.mode_set(mode='POSE')
     for name, steps in POSES.items():
@@ -1268,6 +1342,14 @@ def pose_checks(garments, rep, hidden=frozenset()):
         bvh, _ = world_bvh([BODY])
         dg = bpy.context.evaluated_depsgraph_get()
         res = {}
+        for gname, pairs in seams.items():
+            g = bpy.data.objects[gname]
+            ev = g.evaluated_get(dg)
+            me = ev.to_mesh()
+            ds = sorted((me.vertices[i].co - me.vertices[j].co).length * 100 for i, j in pairs)
+            ev.to_mesh_clear()
+            res.setdefault('seam_gap_cm', {})[gname] = {'pairs': len(pairs), 'max': round(ds[-1], 2),
+                                                       'p90': round(ds[int(len(ds) * 0.9)], 2)}
         for g in garments:
             ev = g.evaluated_get(dg)
             me = ev.to_mesh()
@@ -1314,16 +1396,18 @@ def pose_checks(garments, rep, hidden=frozenset()):
 
 # ------------------------------------------------------------------ 6. export + preview
 def export(g):
-    # The armature OBJECT must be named "Armature": UE's FBX importer drops a root node of that name. Any other name
-    # becomes an extra root bone, and importing onto an existing skeleton then REPLACES that skeleton's "root" bone
-    # (this broke two shared MetaHuman skeletons on 2026-11-14). The bone tree itself starts at "root".
+    # The armature OBJECT must be named "root". Blender's FBX import of a UE mesh turns the skeleton's "root" bone into
+    # the armature object, so the bone tree starts at "pelvis"; on export UE turns the armature node back into a bone
+    # named after the object. Named "root", that rebuilds the exact UE tree (root > pelvis ...). Any other name
+    # ("Rig_<Body>") becomes a foreign root bone and, imported onto a shared skeleton, REPLACED its "root" (2026-11-14);
+    # "Armature" is dropped by UE, leaving "pelvis" as bone 0. Proven on a throwaway skeleton before every batch.
     select_only(g, RIG)
     path = OUT / (g.name + '.fbx')
     keep = RIG.name
-    other = bpy.data.objects.get('Armature')
+    other = bpy.data.objects.get('root')
     if other is not None and other is not RIG:
-        other.name = 'Armature_face'
-    RIG.name = 'Armature'
+        other.name = 'root_face_rig'
+    RIG.name = 'root'
     try:
         bpy.ops.export_scene.fbx(filepath=str(path), use_selection=True, object_types={'MESH', 'ARMATURE'},
                                  axis_forward='-Z', axis_up='Y', apply_unit_scale=True, add_leaf_bones=False,

@@ -99,12 +99,10 @@ If the zip ships without the Gemini helper (for example, if Defender flagged it)
 > - Fire and water spell sounds: ElevenLabs (elevenlabs.io); all other sounds procedurally synthesized
 > - Built on Epic's Game Animation Sample and Third Person template
 > - Map data © OpenStreetMap contributors, ODbL ([openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)). The derived map data and the scripts that made it: **[link, Jah]**
-> - Landmark models adapted from [Codriver 3D](https://3d-assets.codriver.io/), CC BY 4.0
-> - Albert Memorial scan by artfletch ([Zenodo](https://zenodo.org/records/10307114)), CC BY 4.0 · Street props by Minimaliano (Fab), CC BY 4.0
-> - Textures and props: [Poly Haven](https://polyhaven.com/) (CC0) · Trees: [Cosmo Tree Gen](https://github.com/FrogCosmonaut/cosmo_tree_gen) by FrogCosmonaut (MIT) · Signs set in Noto Serif (SIL OFL 1.1)
+> - Cobble and grass textures: [Poly Haven](https://polyhaven.com/) (CC0) · Market well: [TripoSR](https://github.com/VAST-AI-Research/TripoSR) image-to-3D (Stability AI and Tripo AI, MIT)
 > - Full licence notices: `THIRD_PARTY_NOTICES.txt` in the download
 >
-> **Sourced and pre-jam content:** Epic's Game Animation Sample (locomotion, mannequins, prototype blocks), the Unreal Engine Third Person template, Epic MetaHuman presets and grooms, and the team's own blood-impact effect from an earlier project. The city map is generated from OpenStreetMap data, with landmark models from Codriver 3D, an Albert Memorial scan by artfletch, and Poly Haven and Fab street assets (all credited above). Everything else was made during the jam. **[Drop the blood-impact clause if the effect is replaced before the final build.]**
+> **Sourced and pre-jam content:** Epic's Game Animation Sample (locomotion, mannequins, prototype blocks), the Unreal Engine Third Person template, Epic MetaHuman presets and grooms, and the team's own blood-impact effect from an earlier project. The town's layout comes from OpenStreetMap data, and its cobble and grass textures from Poly Haven (both credited above). Everything else was made during the jam. **[Drop the blood-impact clause if the effect is replaced before the final build.]**
 
 ---
 

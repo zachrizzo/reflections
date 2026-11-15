@@ -252,6 +252,12 @@ for a jam slice; quests may want to tighten some steps.
   match everywhere, the PageFound sides map to the 1st/2nd/3rd page, shards from any side count, and goTo radius is at
   least 25 m. All 54 quest marker names resolve in `graylondon_markers.json`. **Keep that file's name/tags format:
   quests' checker reads it directly.**
+- **Cutscenes polish (Nov 15, 02:21).** `CutsceneAnchor_BurningEyes` faced a wall about 6–7 m away (yaw 45°). It is
+  now turned to yaw 345°, with 40 m clear and aimed at the Bell Square churchyard (the scan used real geometry, with
+  the district loaded in the editor). Saved only its package,
+  `/Game/__ExternalActors__/GrayLondon/Maps/GrayLondon_Geodata/3/7P/FUVGEKC37SDHJKW2MEF1WK`.
+  Tool: `rotate_anchor.py <marker name>`. **Traces need the district loaded first** (`london_row_b.py load`); with
+  nothing loaded every direction reads clear.
 - **Crowd-react:** the map short name is `GrayLondon_Geodata`. See the lane requirements in section 3.
 - **Orchestrator (21:15):** don't touch mock maps (none were touched) and keep memory low. 2.7 GB of virtual memory
   was free at the time, so load only the district and build neither HLOD nor full-map nav.

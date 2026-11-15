@@ -92,7 +92,19 @@ If the total runs over: drop SM5 (DX11) shaders, about −65 MB (`DefaultEngine.
   - `/Game/Characters/Hero/Animation/CombatCasts`, `/Game/Characters/Hero/SpellVFX`, `/Game/Input`
   - `/Game/Blueprints/Combat/Blood`
   - `/Game/Characters/WhiteLondon/IvenRook/MetaHuman/Animation/ElementalSpells/FX`
-  - `/Game/Audio/Jam`, `/Game/SpellCrafting` (including `Gestures`), `/Game/Worlds`, `/Game/Villain`, `/Game/UI` (game flow's String Table), `/Game/NPC/Archetypes` (NPC unify; created after train #3), `/Game/Squads` (march cycles, 4.3 MB on disk), `/Game/Crowd/City` (the crowd's runtime city level), `/Game/Quests` (quest packs), `/Game/Cinematics` (cutscene data; size pending), `/Game/Lives` (NPC lives, `DA_PeopleBook`) and `/Game/Combat/Melee` (30 Kimodo melee clips, 30 MB on disk; `Source/` is never-cooked), at their owners' request
+  - `+DirectoriesToAlwaysStageAsUFS=(Path="Crowd/Spots")` (crowd-react, Sat 22:3x): the crowd's street spots are plain JSON, read from `ProjectContentDir()/Crowd/Spots/<MapName>.json`, so the file is staged into the pak. `FFileHelper::LoadFileToString` reads it from there.
+  - `+DirectoriesToNeverCook=(Path="/Game/Cinematics/Takes/Source")` (cutscene session, Sun 01:2x): the six editor-only Kimodo source takes. `/Game/Cinematics` itself stays always-cooked, because cutscenes are loaded by path.
+    - Checked: nothing outside the folder and no code references them.
+    - Their only outside reference is `SKM_Quinn_Simple`, which stays cooked anyway through `[AlwaysCookMaps]` (villain).
+    - The saving is small: 13.5 KB in the measurement build. In total, cinematics was ~110 KB compressed in that build.
+  - `[AlwaysCookMaps]` `SM_Pewterside_CanalCrate` (crowd-react, Sat 23:0x): the ring walkers' carry prop, string-loaded by `ReflectionsCrowdRingSubsystem` (`Crowd.Ring.CarryProp`). Nothing else references it now that the mock city is gone.
+    - Listed as one package rather than the 12.3 MB `Pewterside/Props` folder. Its two materials and its 1.7 MB World-group texture follow as hard refs.
+    - About 1 MB cooked at the 1024 cap.
+  - `/Game/Characters/UEFN_Mannequin/Animations/Interactions/Bench` and `.../Animations/Idle` (orchestrator for crowd-react, Sat 22:5x): bench and idle clips the crowd spots load by path.
+    - On disk they're 47 + 52 MB (24 + 37 clips), but cooked animations are about 44 KB each.
+    - All 24 bench clips and 20 of the 37 idle clips were already in the train #5 pak through GASP.
+    - Expected cost: about **+1–2 MB**. The eight idle-break clips the code names weren't cooked before.
+  - `/Game/Audio/Jam`, `/Game/SpellCrafting` (including `Gestures`), `/Game/Worlds`, `/Game/Villain`, `/Game/UI` (game flow's String Table), `/Game/NPC/Archetypes` (NPC unify; created after train #3), `/Game/Squads` (march cycles, 4.3 MB on disk), `/Game/Quests` (quest packs), `/Game/Cinematics` (cutscene data; size pending), `/Game/Lives` (NPC lives, `DA_PeopleBook`) and `/Game/Combat/Melee` (30 Kimodo melee clips, 30 MB on disk; `Source/` is never-cooked), at their owners' request
   - `/Game/Characters/CrowdMotion` was already listed.
   
   Every folder was checked: none references the broken `action_fighting` chain.
@@ -173,6 +185,40 @@ Cause: `%APPDATA%\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml` (dated 2
 
 ## Sunday plan
 
+**Jam package, planned for ~15:45 Sun** (orchestrator, 15:0x). The orchestrator writes "packaging your turn" in `Saved/PIE_QUEUE.md` and closes the editor.
+- **Map is now `/Game/GrayLondon/Maps/MedievalLondon`** (Codex). It's set in `GameDefaultMap`, `EditorStartupMap`, `NewGameMap` and `MapsToCook`.
+  - It's an ordinary level, not World Partition: one `.umap` (2.2 MB at 12:20), no external actors.
+  - Its references reach 89 packages, about 10 MB: `MedievalOpening/MarketDressing`, `Kit`, `Ground`, `WholeBuildings`, `Graphs`, plus a few `LanthorneAssets/Giltside` pieces.
+  - Its name table still contains the string `GrayLondon_Geodata` and one Geodata actor path. The asset registry lists no hard or soft dependency on them (20 hard deps, 1 soft), so the old World Partition map and its 1,004 cells won't cook.
+  - fable-streets' PCG rebuild may add more before 15:45.
+- **`PackageJamBuild.bat` (done 15:2x):**
+  - `-map=/Game/GrayLondon/Maps/MedievalLondon`.
+  - `-build` is now the default. UAT builds the game target from the frozen code, because `reflections.exe` is from Sat 18:41 while train #24's editor DLL is from 15:05 (B2).
+  - `--no-build` skips the build, and is refused while the exe is older than the DLL.
+  - Both modes were tested with a dry run.
+- **Checks:**
+  - `DefaultEngine.ini:124` `SecurityToken=` is still blank.
+  - `Crowd/Spots` (UFS) covers the new `MedievalLondon.json` (209 KB).
+  - **`DA_PeopleBook` is still stale** (19:45 vs `people.json` 19:57), so the final run stops at the gate until lives re-imports it. `--allow-stale-people` is only for measuring.
+  - `THIRD_PARTY_NOTICES.txt` still describes Gray London's assets (Codriver landmarks, the Albert scan, Minimaliano props), most of which no longer ship. The ODbL credit still applies, because MedievalOpening's ground and buildings are built from the OSM tiles. Submission prep should trim the notices to what ships.
+- **Size estimate: about 1.25 GB zipped.** Method: today's cook roots (always-cook folders, `[AlwaysCookMaps]`, the map), walked through source name tables and priced at the 01:10 build's compressed sizes. 165 new packages are priced by their folder's ratio.
+
+  | Part | MB |
+  |---|---|
+  | /Game content, down from 1,183 (−332 MB of Gray London and Geodata, +47 MB of new character work: Lanthorne 13.6, RedLondon 13.4, WhiteLondon 9.8) | ~898 |
+  | Engine and plugin content | ~34 |
+  | Shaders (London's +9.7 MB goes) | ~130 |
+  | Exe and binaries | ~190 |
+  | **Zip** | **≈ 1,250** |
+
+  Still about 250 MB over 1 GB. Getting under needs the user's calls: Character cap 1024 (~−100), drop SM5 (~−68), voice at 12 kHz (~−51) or 16 kHz (~−34), and the Common dedupe (~−56, in `redlondon-untangle-plan.md`). Or upload with butler, if the jam allows over 1 GB.
+- **Timing:**
+  - Game-target build: ~5–20 min, unless it's built ahead now that the code is frozen.
+  - Cook: ~8 min with a warm DDC.
+  - Stage and pak: ~3 min.
+  - Zip: ~2 min.
+  - `MeasureJamBuild.ps1`: ~1 min.
+
 0. **Start map switch. Superseded Sat 21:05:** London is the main map, and the mock city and `Lvl_HeroSampleCrowd` are deleted. See "Gray London cook plan" below. History: the real playthrough map is `/Game/MockCity/Lvl_MockCity`, which has the three sides, anchors, towers and pages. `Lvl_HeroSampleCrowd` has no world anchors, so world jump can't run there by design. Once the orchestrator and game flow confirm (game flow's `GameFlow.NewGameMap` lands in train #8), change the three places that name the start map:
    - `DefaultEngine.ini` `GameDefaultMap`: the orchestrator switches it, along with game flow's `NewGameMap`, once world jump confirms the mock city plays. `EditorStartupMap` stays the sample so editor restarts stay light.
    - `DefaultGame.ini` `+MapsToCook`: add `Lvl_MockCity` and the side maps `Lvl_MockCity_Giltside` / `_Pewterside` / `_Frostside` if they're streamed by name.
@@ -199,7 +245,10 @@ Cause: `%APPDATA%\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml` (dated 2
    - `/Game/Characters/Lanthorne/` replaces the old spawn pools: 20 look Blueprints reached through soft refs in the always-cooked `/Game/NPC/Archetypes/DA_Npc_*`, 13 new MetaHumans plus 7 re-groomed faces. Uncooked it's ~1.4 GB plus 435 MB of `People/Common`; the grooms are 461 MB uncooked, strands included.
    - Report the cooked MB for `/Game/Characters/Lanthorne` against the **320 MB NPC budget** to crowd-looks. If it's over, crowd-looks cuts grooms first (cards-only strands), then the number of new faces.
    - Check these drop out of the pak: `/Game/Characters/CrowdMotion/SimpleRed` (once crowd swaps the 6 placed walkers), `/Game/Characters/WhiteLondon/CrowdPreview` (once squads read the archetype lists), and `RedLondon/Crowd/Variants`.
-   - `COL_CrowdPrototype_CoinClerk` (108 MB uncooked) still comes in because `/Game/Crowd/City` is always-cooked, though Mass is a no-go for the jam. Ask crowd (`local_3627acc6`) to drop that always-cook entry before the rehearsal.
+   - `COL_CrowdPrototype_CoinClerk` (108 MB uncooked): **done Sat 22:3x.** `/Game/Crowd/City` is out of `DirectoriesToAlwaysCook` (orchestrator, crowd plan rank 6; crowd-react agreed).
+     - Checked first: `Crowd.Mass.Enable` defaults to 0, `Crowd.Mass.HostMap` and `Crowd.Mass.Level` are empty, and no config sets them. No other asset references the folder.
+     - The chain it pulled in was `MEC_CityPedestrian` → `RedLondon/Crowd/Test/MI_CrowdPrototype_CoinClerk` → the collection, and nothing else that's always cooked reaches `Crowd/Test`.
+     - Expect about 20–80 MB less in the measurement cook. Turning Mass on again needs the entry back.
 
    **Gray London cook plan** (orchestrator, Sat 20:5x). Jah's `/Game/GrayLondon/Maps/GrayLondon_Geodata` landed in the working copy at the 21:00 train. It becomes the main map once world-jump's integration passes. This was planned without the editor: from the LFS sizes on `origin/main` (`4aac7d0d`) and from the name tables of the landed files. Licences, trademarks and ODbL are covered in [gray-london-review.md](../Submission/gray-london-review.md).
 
@@ -258,6 +307,48 @@ Cause: `%APPDATA%\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml` (dated 2
      4. **Instanced-only HLODs and the navmesh:** world-jump owns them (`local_830b60d0`). Numbers sent Sat 21:2x.
      5. **`DA_PeopleBook`:** re-imported in lives' row A.
      6. **Area trimming** waits for the measured size.
+   - **Measurement cook runbook** (window ~01:00 Sun, after train #14 and its test rows; the orchestrator closes the editor and messages "cook window open"):
+     1. Check: no `UnrealEditor.exe` or UBT is running. `reflections.exe` and `UnrealEditor-reflections.dll` both come from train #14 (B2). Post the freeze in `SAVE-FREEZE-STATUS.md`.
+     2. `ArtDirection\Packaging\PackageJamBuild.bat --allow-stale-people`, in the background. The log is `Saved\JamBuild\Logs\uat_package.log`. The flag is only needed while `DA_PeopleBook` is stale, and a build made with it is for measuring only. Without the flag, the gate still stops the run (tested).
+     3. `powershell -ExecutionPolicy Bypass -File ArtDirection\Packaging\ZipJamBuild.ps1 -Source Saved\JamBuild\Windows -Dest Saved\JamBuild\Zips\measure_london.zip`. `train5_Windows.zip` stays as the fallback.
+     4. `powershell -ExecutionPolicy Bypass -File ArtDirection\Packaging\MeasureJamBuild.ps1 -Zip Saved\JamBuild\Zips\measure_london.zip`. **New, Sat 22:4x.** It reports:
+        - the IoStore container by chunk type, with shader code separate;
+        - Gray London by part (city tiles, other meshes, textures, materials, PCG graphs, World Partition cells);
+        - the top 12 folders and the top 10 packages;
+        - whether `Crowd/Spots/*.json` reached the `.pak`;
+        - the zip and staged sizes.
+
+        Tested on the train #5 stage: 539 MB container, 128 MB of it shader code, against a 734 MB zip.
+     5. Read the cook log for errors and for "missing from cook" or "marked NeverCook" lines. Shader growth over train #5 (128 MB) is mostly London's 293 materials. Report London by part, the zip total and the top 5 contributors to the orchestrator, then end the freeze.
+   - **Measurement cook result (Sun 00:59–01:10, editor closed, `--allow-stale-people`).**
+     - **Zip: 1,544.9 MB (`Saved/JamBuild/Zips/measure_london.zip`), about 545 MB over 1 GB.** Container 1,355 MB compressed: 1,217 MB of assets plus 137.7 MB of shader code. Staged 1,898 MB.
+     - Cook 495 s, stage and pak 185 s, 12,380 packages, **0 errors**. Six warnings, all `SetControlRigClass` deprecations in old `ABP_Clothing_PostProcess`.
+     - Not for upload: the people book was stale, and `reflections.exe` (Sat 18:41) doesn't match the 00:32 editor DLL.
+     - Everything requested is in: crowd spots JSON (1 file), canal crate plus texture, `M_Relaxed_Stand_Idle_Break_v01–v08`, `Idle_Loop`, the bench clips, and the 1,004 generated World Partition cells. `/Game/Crowd/City` and `COL_CrowdPrototype_CoinClerk` are out. Nothing from the mock city or `Lvl_HeroSampleCrowd`.
+     - **Gray London: 335 MB** (estimate was 250–470, ~350 likely), plus only **+9.7 MB** of shader code over train #5. By part:
+
+       | Part | MB | Packages |
+       |---|---|---|
+       | City tiles | 212.9 | 117 |
+       | Other meshes (landmarks, props, markings) | 83.1 | 838 |
+       | Textures, at the 1024 cap | 35.2 | 128 |
+       | World Partition cells + map | 2.6 | 1,005 |
+       | Material assets | 1.2 | 397 |
+       | PCG graphs | 0.3 | 128 |
+
+       The single biggest package is `albert_memorial_sequential_35`, 20.7 MB.
+     - **Top 5 contributors, compressed MB:**
+       1. `/Game/Characters/Lanthorne`, the new NPC cast: **328.6** (`People/Common` 65.4, then ~20–22 per person).
+       2. `/Game/GrayLondon`: **335** (`Geodata` 297, `External` 28).
+       3. `/Game/Characters/RedLondon`, the **old NPC pools, still cooked**: **206.2** (`BridgeGuard` 72.4, `CoinClerk` 69.5, then `FerryPilot`, `FestivalDrummer`, `GlassArtisan` and `ArchiveApprentice` at ~15–18 each). What pulls them in:
+          - 51 always-cooked `/Game/Characters/CrowdMotion/ABP_Crowd_*`;
+          - 20 `/Game/Combat/Melee/AS_Melee_*_BridgeGuard`/`_CoinClerk` clips;
+          - `/Game/Squads/Animation/AS_Soldier_March_BridgeGuard`;
+          - 63 Lanthorne assets, such as `SKM_MHC_FerryPilotGiltWorker_BodyMesh` and the Gilt worker clothing.
+       4. `/Game/Audio/Jam`: **113.7**, of which `Voice` is **103.5** in 8,313 packages. It was 12 MB at train #5, against a 20 MB budget.
+       5. `/Game/Characters/WhiteLondon`: **63.5** (`IvenRook` 61.8).
+
+       Also: grooms are 121.6 MB across all characters, and `UE5_Mannequins` is new at 24.1 MB, 20 MB of it textures.
    - **Cook time.**
      - The first cook with London is cold: SM5 shaders for 293 materials (the editor only compiled SM6) and 4.3 M triangles of collision. Expect **+15–40 min** on that first cook.
      - So the "~25 min" final estimate doesn't hold for it. Run a measurement cook early, first thing Sunday or tonight if the orchestrator allows it, under a save freeze.

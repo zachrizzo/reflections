@@ -1,4 +1,4 @@
-"""Lives check on the main map (GrayLondon_Geodata): identities, a compressed day, friends meeting, a witness
+"""Lives check on the main map (MedievalLondon): identities, a compressed day, friends meeting, a witness
 reacting to a friend being taken, and the debug overlay.
 
 Run through the editor MCP `execute_python` tool, one phase per call (each call must stay under the tool's ~60 s
@@ -19,7 +19,7 @@ import json
 import math
 from pathlib import Path
 
-MAP = globals().get('MAP', '/Game/GrayLondon/Maps/GrayLondon_Geodata')   # PIE travels there in phase A unless already on it
+MAP = globals().get('MAP', '/Game/GrayLondon/Maps/MedievalLondon')   # PIE travels there in phase A unless already on it
 PREFIX = globals().get('PREFIX', '')      # picture name prefix, e.g. 'Mock_'
 OUT = Path(unreal.Paths.project_saved_dir()) / 'Lives'
 OUT.mkdir(parents=True, exist_ok=True)

@@ -275,34 +275,56 @@ int32 UReflectionsVillainSubsystem::GetInfectedCount() const
 
 bool UReflectionsVillainSubsystem::IsCandidate(const AActor* Pawn, bool bAllowInfected)
 {
+    return CandidateProblem(Pawn, bAllowInfected, false) == nullptr;
+}
+
+const TCHAR* UReflectionsVillainSubsystem::CandidateProblem(const AActor* Pawn, bool bAllowInfected, bool bIgnoreOptOut)
+{
     const APawn* AsPawn = Cast<APawn>(Pawn);
-    if (!IsValid(Pawn) || Pawn->IsActorBeingDestroyed() || Pawn->IsHidden() || (AsPawn && AsPawn->IsPlayerControlled())
-        || Pawn->IsA<AReflectionsVillainBoss>())
+    if (!IsValid(Pawn) || Pawn->IsActorBeingDestroyed())
     {
-        return false;
+        return TEXT("not a valid actor");
     }
-    // "Friendly" townspeople can be taken (the NPC system lifts the tag while tarnished); NoVillain is the opt-out.
-    static const FName Excluded[] = {TEXT("NoVillain"), TEXT("Player"), TEXT("Villain_BurnedOut")};
-    for (const FName& Tag : Excluded)
+    if (Pawn->IsHidden())
     {
-        if (Pawn->ActorHasTag(Tag))
-        {
-            return false;
-        }
+        return TEXT("the actor is hidden");
     }
-    if (!ReflectionsVillainFx::HeadMesh(const_cast<AActor*>(Pawn)) || !ReflectionsVillainFx::IsAlive(Pawn))
+    if ((AsPawn && AsPawn->IsPlayerControlled()) || Pawn->ActorHasTag(TEXT("Player")))
     {
-        return false;
+        return TEXT("the player");
+    }
+    if (Pawn->IsA<AReflectionsVillainBoss>())
+    {
+        return TEXT("the true form");
+    }
+    if (Pawn->ActorHasTag(TEXT("Villain_BurnedOut")))
+    {
+        return TEXT("burned out (a spent host)");
+    }
+    // "Friendly" townspeople can be taken (the NPC system lifts the tag while tarnished); NoVillain is the opt-out for
+    // his own picks and the hunt, but a scripted story beat may still turn that person.
+    if (!bIgnoreOptOut && Pawn->ActorHasTag(TEXT("NoVillain")))
+    {
+        return TEXT("tagged NoVillain (opt-out; BeginConversionScripted ignores it)");
+    }
+    if (!ReflectionsVillainFx::HeadMesh(const_cast<AActor*>(Pawn)))
+    {
+        return TEXT("no visible body with a head bone");
+    }
+    if (!ReflectionsVillainFx::IsAlive(Pawn))
+    {
+        return TEXT("dead");
     }
     switch (UReflectionsVillainPossessionComponent::StateOf(Pawn))
     {
     case EReflectionsVillainInfection::Host:
+        return TEXT("he is in that body (host)");
     case EReflectionsVillainInfection::BurnedOut:
-        return false;
+        return TEXT("burned out (a spent host)");
     case EReflectionsVillainInfection::Infected:
-        return bAllowInfected;
+        return bAllowInfected ? nullptr : TEXT("already tarnished (here or in the NPC system)");
     default:
-        return true;
+        return nullptr;
     }
 }
 
@@ -949,14 +971,29 @@ bool UReflectionsVillainSubsystem::IsConverting(const AActor* Actor) const
 float UReflectionsVillainSubsystem::BeginConversion(AActor* Attacker, AActor* Victim)
 {
     UWorld* World = GetWorld();
-    auto Refuse = [Attacker, Victim](const TCHAR* Why)
+    const bool bScripted = bScriptedConversion;
+    auto Refuse = [Attacker, Victim, bScripted](const TCHAR* Why)
     {
-        UE_LOG(LogReflectionsVillain, Verbose, TEXT("BeginConversion %s -> %s refused: %s"), *GetNameSafe(Attacker), *GetNameSafe(Victim), Why);
+        // The hunt asks constantly (Verbose); a scripted story beat is rare and should say why it failed (Log).
+        if (bScripted)
+        {
+            UE_LOG(LogReflectionsVillain, Log, TEXT("BeginConversionScripted %s -> %s refused: %s"), *GetNameSafe(Attacker), *GetNameSafe(Victim), Why);
+        }
+        else
+        {
+            UE_LOG(LogReflectionsVillain, Verbose, TEXT("BeginConversion %s -> %s refused: %s"), *GetNameSafe(Attacker), *GetNameSafe(Victim), Why);
+        }
         return 0.0f;
     };
     if (!World || !IsValid(Attacker) || !IsValid(Victim) || Attacker == Victim || bVictory)
     {
         return Refuse(TEXT("invalid actors or the game is won"));
+    }
+    // During a cutscene only the scene itself converts (BeginConversionScripted); the hunt waits, so a scripted beat is
+    // never pre-empted off camera. Villain.Convert (tests) is not held back either.
+    if (!bScriptedConversion && !bIgnoreConvertGap && IsCutscenePlaying())
+    {
+        return Refuse(TEXT("a cutscene is playing (only scripted conversions run during scenes)"));
     }
     if (IsConverting(Attacker) || IsConverting(Victim))
     {
@@ -973,9 +1010,9 @@ float UReflectionsVillainSubsystem::BeginConversion(AActor* Attacker, AActor* Vi
     {
         return Refuse(TEXT("attacker is not tarnished"));
     }
-    if (!IsCandidate(Victim, false))
+    if (const TCHAR* Problem = CandidateProblem(Victim, false, bScriptedConversion))
     {
-        return Refuse(TEXT("victim cannot be taken (player, tarnished, friendly, dead or no visible body)"));
+        return Refuse(*FString::Printf(TEXT("victim cannot be taken: %s"), Problem));
     }
     if (FVector::Dist(A->GetActorLocation(), V->GetActorLocation()) > 700.0f)
     {
@@ -1010,6 +1047,74 @@ float UReflectionsVillainSubsystem::BeginConversion(AActor* Attacker, AActor* Vi
         NextConversionTime = Now(World) + ReflectionsVillainTuning::ConvertInterval() * Early * Pages * FMath::FRandRange(0.85f, 1.15f);
     }
     return Length;
+}
+
+float UReflectionsVillainSubsystem::BeginConversionScripted(AActor* Attacker, AActor* Victim)
+{
+    if (!IsValid(Attacker) || !IsValid(Victim) || Attacker == Victim)
+    {
+        return 0.0f;
+    }
+    // A beat places the bodies; bring the attacker's walker to arm's length of the victim's (the tackle aligns the rest).
+    ACharacter* AttackerDriver = DriverOf(Attacker);
+    ACharacter* VictimDriver = DriverOf(Victim);
+    AActor* Mover = AttackerDriver ? static_cast<AActor*>(AttackerDriver) : Attacker;
+    const FVector VictimAt = VictimDriver ? VictimDriver->GetActorLocation() : Victim->GetActorLocation();
+    if (FVector::Dist2D(Mover->GetActorLocation(), VictimAt) > 350.0f)
+    {
+        FVector Away = (Mover->GetActorLocation() - VictimAt).GetSafeNormal2D();
+        if (Away.IsNearlyZero())
+        {
+            Away = FVector::ForwardVector;
+        }
+        Mover->SetActorLocation(VictimAt + Away * 300.0f, false, nullptr, ETeleportType::TeleportPhysics);
+    }
+    TGuardValue<bool> AnyTime(bIgnoreConvertGap, true);
+    TGuardValue<bool> Scripted(bScriptedConversion, true);
+    const float Length = BeginConversion(Attacker, Victim);
+    if (Length > 0.0f)
+    {
+        HoldNpcFor(Attacker, Length + 1.0f);
+        HoldNpcFor(Victim, Length + 1.0f);
+    }
+    return Length;
+}
+
+void UReflectionsVillainSubsystem::HoldNpcFor(AActor* Actor, float Seconds) const
+{
+    UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(GetWorld());
+    UFunction* Hold = Npcs ? Npcs->FindFunction(TEXT("HoldNpc")) : nullptr;
+    if (!Hold || !Actor)
+    {
+        return;
+    }
+    uint8* Params = static_cast<uint8*>(FMemory_Alloca_Aligned(FMath::Max<int32>(1, Hold->ParmsSize), Hold->GetMinAlignment()));
+    FMemory::Memzero(Params, FMath::Max<int32>(1, Hold->ParmsSize));
+    for (TFieldIterator<FProperty> It(Hold); It && It->HasAnyPropertyFlags(CPF_Parm); ++It)
+    {
+        It->InitializeValue_InContainer(Params);
+        if (It->HasAnyPropertyFlags(CPF_ReturnParm | CPF_OutParm))
+        {
+            continue;
+        }
+        if (FObjectPropertyBase* Object = CastField<FObjectPropertyBase>(*It))
+        {
+            Object->SetObjectPropertyValue_InContainer(Params, Actor);
+        }
+        else if (FFloatProperty* Float = CastField<FFloatProperty>(*It))
+        {
+            Float->SetPropertyValue_InContainer(Params, Seconds);
+        }
+        else if (FDoubleProperty* Double = CastField<FDoubleProperty>(*It))
+        {
+            Double->SetPropertyValue_InContainer(Params, Seconds);
+        }
+    }
+    Npcs->ProcessEvent(Hold, Params);
+    for (TFieldIterator<FProperty> It(Hold); It && It->HasAnyPropertyFlags(CPF_Parm); ++It)
+    {
+        It->DestroyValue_InContainer(Params);
+    }
 }
 
 void UReflectionsVillainSubsystem::ConversionFinished(AReflectionsVillainConversion* Conversion, bool bConverted)

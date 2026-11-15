@@ -59,14 +59,18 @@ else:
     finally:
         unreal.SystemLibrary.execute_console_command(None, cv + (' 1' if prev else ' 0'))
     tm = unreal.load_asset(TEST + '/SK_RootTest')
-    proof = None
+    proof, count = None, None
     if tm:
         tsk = tm.get_editor_property('skeleton')
-        proof = str(unreal.AnimPoseExtensions.get_bone_names(tsk.get_reference_pose())[0])
+        tnames = [str(n) for n in unreal.AnimPoseExtensions.get_bone_names(tsk.get_reference_pose())]
+        proof, count = tnames[0], len(tnames)
     A.delete_directory(TEST)
+    target = unreal.load_asset(OUTFITS[0][1]).get_editor_property('skeleton')
+    tcount = len(unreal.AnimPoseExtensions.get_bone_names(target.get_reference_pose()))
     RESULT['proof_bone0'] = proof
-    if proof != 'root':
-        RESULT['stopped'] = 'throwaway skeleton bone 0 is %r, not "root": nothing imported' % proof
+    RESULT['proof_bones'] = [count, tcount]
+    if proof != 'root' or count != tcount:
+        RESULT['stopped'] = 'throwaway skeleton bone 0 %r with %s bones (target "root", %s): nothing imported' % (proof, count, tcount)
     else:
         src = open(os.path.join(PROJ, 'Tools/ClothingFit/import_fitted_garments.py'), encoding='utf-8').read()
         RESULT['outfits'] = {}

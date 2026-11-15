@@ -83,6 +83,22 @@ It stays woken for 9 s. Console:
 - `Crowd.Lod.Enable 0|1` turns it off or on.
 - `Crowd.Lod.NearDistance`, `FarDistance`, `MidHz`, `FarHz`, `HiddenHz`, `WakeRadius` and `WakeSeconds` tune it.
 - `Crowd.LodDump` logs each walker's tier.
+- **Regrounding (train #18).** Walkers sank 10–18 cm into Gray London roads.
+  - Cause: each OSM tile's road section (GL_Road) is a one-sided triangle sheet at 28 cm over the city ground at 10 cm, with no kerb face. The collision is fine: tiles are complex-as-simple, BlockAll (WorldStatic), and the driver capsule (ECC_Vehicle) blocks WorldStatic. But a capsule stepping off the pavement meets the sheet's edge from below and slides under it.
+  - Fix, without touching the map: the LOD subsystem traces down (complex, WorldStatic) from each walking driver's capsule centre. When a walkable surface (normal Z > 0.7) is 3–45 cm above the capsule bottom, it lifts the driver onto it.
+  - Timing: near walkers (Full and Mid tiers) are checked every frame; the rest every 0.25 s.
+  - Skipped: the player, falling or pinned drivers, and seated drivers (collision off).
+  - `Crowd.Lod.Reground 0|1` (default 1). `Crowd.LodDump` shows the lift count.
+  - **Measured on train #18** (`Saved/CrowdReactions/verify_road_edge.py`, R1 03:57): a walker driven across a kerb, both up and down, stayed 2.1–2.2 cm above the floor, with the reground on or off (0 lifts). The CMC steps up the 18 cm sheet edge normally. In a survey of 25 walkers, 0 capsules were buried.
+  - **So the train #17 "10–18 cm sink" came from spawning, not walking.** `SpawnNpc` places the NPC exactly where it is asked (no floor snap). The test scripts (`plain_pie.py`, `verify_npc_armed.py`) spawn at hero z − 90, about 8 cm. At the Lanthorne start, 3–7 m ahead of the hero is road, so those NPCs started under the 28 cm sheet. The ring's lane spawns could do the same where a lane cuts a road corner (0.6% of lane length; 23 of 2,530 points).
+  - **Ring lane spawns (train #20)** now stand on the top floor found from 25 cm above the lane point: high enough to reach a road, too low to reach a bench seat.
+  - **Corpses (train #20, `Crowd.Lod.RegroundCorpses`, default 1).** Ragdoll bodies have no step-up. A body that slides under a road sheet at a kerb, or starts under one, rests on the ground below it.
+    - For 8 s after a walker dies into a ragdoll (whole body simulating, driver capsule off), every 0.1 s, each torso physics body (pelvis, spine_*) is traced down from 50 cm above its centre.
+    - If a broad walkable surface lies 1–45 cm above a torso body's centre, all simulating bodies are lifted (teleported) by that amount plus 14 cm, with any downward speed removed. At most 4 lifts per corpse.
+    - Why torso only (train #24): the first version tested every body. In the train #23 test (`corpse_kerb_result_c0/c1.json`) it made 9 lifts on 4 corpses but did not reduce the parts under (c0: 5, c1: 6). Those were nearly all feet sinking 3–10 cm into every floor, road middle and pavement alike. The lifts also threw corpses that were already at rest 10–15 cm up at 3–4 s. No torso ended under a sheet in either run, including the body spawned under the road.
+    - A collapsed ragdoll (all bodies within 1 cm of one height) is left alone; lifting it would only bounce it. The first corpse test (train #20, 04:30) showed one corpse with all 13 bones at exactly z 0.0, the same as three of npc-unify's. That is npc-unify's ragdoll start, not a sheet problem.
+    - "Broad" means what was hit spans more than 5 m both ways (a whole OSM tile), so benches and tables never count. For instanced components, the hit instance's own bounds are used. Gray London's benches, bins and bollards are ISM instances, and their component bounds cover every instance. The walker reground uses the same test.
+    - `Crowd.LodDump` shows "corpses 1 (N lifts)". Check: `Saved/CrowdReactions/verify_corpse_kerb.py`.
 - **Driver cameras (train #8).** Each walker's hidden locomotion pawn is the sample hero pawn, and it carries the hero's `GameplayCameraComponent`. A PIE hitch dump showed that camera rig being evaluated every frame on all 12 drivers, about 1.1 ms in total, for a camera nobody views through. The LOD subsystem now switches it off on drivers no player controls (`Crowd.Lod.QuietDriverCameras`, default 1). The saving has not been measured yet.
 - Other costs on those drivers, from the same dump and owned by the NPC system: character movement plus moving the attached visible body (about 3 ms for 12 drivers in the worst frame), and foley anim notifies firing on the driver meshes (about 1 ms; this may also double NPC footsteps).
 
@@ -96,6 +112,49 @@ It stays woken for 9 s. Console:
 - Lvl_HeroSampleCrowd has no navmesh, so neither crowd nor squads share navigation there.
 - `Crowd.Yield.Enable 0|1` turns it off or on, `Crowd.Yield.Debug 1` draws the lanes, and the other `Crowd.Yield.*` variables tune it.
 
+## MedievalLondon: routes and street scenes from the town layout (2026-11-15)
+
+The game map is `/Game/GrayLondon/Maps/MedievalLondon`, a 500 m PCG town. Nothing in its crowd is hand-placed: `Tools/Crowd/build_medieval_crowd.py` reads the town's layout and writes `Content/Crowd/Spots/MedievalLondon.json`. It runs offline in about 3 s and also draws `Saved/CrowdReactions/MedievalLondon_crowd_plan*.png`.
+
+- **Layout source.** It prefers fable-streets' narrowed town, `Saved/MedievalLondon_Narrow_streets.json`: street and alley centre lines with a clear 2.5 m strip, stalls, crates, casks, house boxes, and the lantern posts on the alley mouths.
+  - Walls, gates, story markers and the well come from `Saved/FableStreets_measure_before.json`.
+  - Without the narrow file it uses the measured instances (`--measure PATH`), or with `--layout` the town script's own `layout()`.
+  - Re-run it whenever the town is repacked.
+  - On the narrowed town the routes follow those centre lines, resampled every 3 m. Where something stands on a line (a lantern post), the route steps sideways round it in a straight run.
+- **Editor check (no PIE, read-only).** `Saved/CrowdReactions/verify_medieval_routes_editor.py` sweeps a walker capsule along every route edge and tests every spot against the town's real collision. Output: `medieval_routes_editor_check.json`.
+- **Routes** (`"routes": {"nodes", "edges", "offset_cm"}`): a walking graph along the clear middle of every street, built from the town's street lines (the curved main street, the east-west streets, the cross streets).
+  - At every 3 m it finds the free span between houses, stalls, crates, casks, walls and the well, with 45 cm walker clearance. On a narrow street it takes the middle; on open ground it keeps to the street's own line.
+  - Two rows cross the market square in front of the stall rows, and a ring goes round the well. Crossing lines are joined once, at their mutually nearest nodes.
+  - It keeps the largest connected part, and checks every edge against every obstacle. The first build had 2,101 nodes, 6.3 km, and 0 edges touching an obstacle.
+- **Walkers on routes** (`ReflectionsCrowdStrollSubsystem`, train after 12:45):
+  - Ring walkers (`Crowd_LaneWalker`) on a map with routes walk legs of 25–65 m along the graph (`Crowd.Stroll.LaneLegMin/Max`). At a junction they mostly go straight on, turn now and then, and are drawn towards their trip's street activity; at a dead end they turn round.
+  - They keep `offset_cm` (±30%) to the left of the line, so head-on passes never cross; the local avoidance also passes on the left.
+  - The ring spawns them on a route 15–45 m from the hero, unseen and not crowded (`UReflectionsCrowdStrollSubsystem::FindRouteSpawn`). Lanes, then open floor, remain the fallback.
+  - Maps without routes (Gray London) are unchanged. The stroll subsystem's `Describe()` and `GetRouteNodeCount()` (Python: `unreal.get_world_subsystem(world, unreal.ReflectionsCrowdStrollSubsystem)`) show the route nodes and who is on a route.
+- **Spots** (189 on the first build, all scripted):
+  - Each market stall gets a vendor (pinned) behind the counter, or beside it when a house is behind, and two customers in front, facing it.
+  - A chat by the well; chats, smokers and a leaner on open ground in the market square.
+  - People leaning, smoking or chatting at house fronts, one try about every 20 m of street, at least 18 m apart. A chat at every other cross-street corner, a smoker at the rest.
+  - Standing people keep at least 1.1 m (customers 0.8 m) from a route line, and 2.6 m from any story marker.
+- **Density pass (15:20; config and data only, the code is frozen after train #24).** The aim is busy near the camera, without many more full MetaHumans.
+  - **Pinned spots:** one spot in three of each kind spawns its own people (`PIN_EVERY = 3` in the generator). Pinned chats are pairs and pinned shoppers come alone. On the saved town that's 55 of 159 spots.
+  - **Kept clear of npc-lives:** the 159 spots keep 2.5 m from npc-lives' 1,092 points (doors, stalls, gathering places with their radius).
+  - **Config (`Config/DefaultEngine.ini` `[ConsoleVariables]`):**
+    - `Crowd.Ring.Count=20`; walkers spawn 9–30 m from the player (`MinDistance 900`, `MaxDistance 3000`) and are recycled 40 m behind (`RecycleDistance 4000`);
+    - spot scenes switch on within 30 m (`Crowd.Spots.ActivateDistance 3000`, `DeactivateDistance 4000`), with `MaxPinned=8`;
+    - walking speeds 115–205 cm/s, so a few hurry; `PairShare=0.4`;
+    - LOD: full rate within 12 m, 20 Hz to 28 m, 10 Hz beyond, 4 Hz when not seen.
+  - **Budget:** about 28 people near the player instead of 18. Most are past 12 m or out of sight in the narrow streets, at reduced animation rates.
+  - **PIE check:** `Saved/CrowdReactions/verify_medieval_crowd.py` applies these lines at runtime, so it shows the tuning without an editor restart. It also takes a "busy lane" picture.
+- **Only when the hero is near:**
+  - Spots activate within 60 m (`Crowd.Spots.ActivateDistance`). Pinned occupants are capped at 6 (`Crowd.Spots.MaxPinned`).
+  - The chat director starts a conversation only near the hero, and fades it out when the hero walks away. npc-dialogue's 12:40 hooks in `ReflectionsCrowdChatSubsystem.cpp` (CanStart, Tick, PlayLine) start it within 13 m, end it past 18 m, and play at most 3 ambient lines at once. Keep those hooks when editing that file.
+  - Out of earshot, a chat group still shows its ring and gestures, without voices.
+- **Shared with npc-lives:**
+  - npc-lives owns the stall vendors (named NPCs at work), homes' door points and its gathering place, and publishes them in `Content/Crowd/Spots/MedievalLondon_Lives.json`.
+  - The generator keeps every street scene 2.5 m clear of those points. The exception is stall customers, who face a Lives vendor across the counter.
+  - It places no vendor spots unless run with `--stall-vendors`.
+
 ## Gray London (from train #14)
 
 The old maps (`Lvl_HeroSampleCrowd`, `Lvl_MockCity`, the Mass crowd level) were deleted. `/Game/GrayLondon/Maps/GrayLondon_Geodata` is the only map: one London, one side, no world jump.
@@ -103,6 +162,35 @@ The old maps (`Lvl_HeroSampleCrowd`, `Lvl_MockCity`, the Mass crowd level) were 
 - With one side, every walker wears the red (Giltside) looks.
 - The Mass city crowd has no host map by default, so it is dormant everywhere.
 - Test: `Saved/CrowdReactions/verify_ring.py`. It travels to Gray London; the walk-away step replaces the world-jump step.
+
+## Bustling Gray London (train #14)
+
+The plan, by the orchestrator: `reports/Bustling London street crowds.md`. Crowd-react leads it.
+
+- **Walkers without lanes.** Gray London has no ZoneGraph lanes yet and no navmesh. Without lanes, the ring places walkers on open street floor 15–45 m from the hero. A spot must pass three checks: the floor is within ±4 m of the hero's level; it is outdoors (the first hit from 30 m up is that same floor); and a standing person fits. The walkers stroll 4–14 m around their spawn point. Lanes are used whenever they exist; `Crowd.Ring.LaneFree 0` turns this off.
+- **Pre-warm.** The initial fill spawns 4 walkers per 0.5 s (`Crowd.Ring.PrewarmPerCheck`), so the street is full about 3 s after map start, behind the intro. Count stays 12.
+- **Street scenes ("scenario spots"), v1.** `Source/reflections/Crowd/ReflectionsCrowdSpotSubsystem`. The list per map is `Content/Crowd/Spots/<map>.json`. Gray London has 22 spots on the hero route: chat rings, shop windows, and two pinned vendors.
+  - **Claimable spots** (chat, window). A calm ring walker within 12 m may stop. It leaves stroll through `NPC_NoStroll`, walks to the slot, faces in, and stands 20–45 s with relaxed idle-break clips on the hidden walker (DefaultSlot), then walks on.
+  - **Pinned spots** (vendors). They spawn their own occupant out of sight while the hero is within 60 m. The occupant is tagged `NoVillain` and removed beyond 80 m once unseen; at most `Crowd.Spots.MaxPinned` (6) are alive.
+  - **Chat rings.** With two or more people, the chat director plays a conversation for the spot's place.
+  - **Slot safety.** Slots are weak references re-checked every 0.25 s. Any reaction, death, conversion or recycle frees the slot and gives the body back to the NPC system.
+  - **Placement.** Spots snap to open outdoor street floor within 4 m at runtime, or are skipped (logged). JSON fields: `name`, `kind` (chat / window / vendor), `slots`, `x`, `y`, `z` (UE cm; x = east_m × 100, y = north_m × 100), `yaw`, `place`, `pinned`.
+  - **Packaging** must stage `Content/Crowd/Spots` (`+DirectoriesToAlwaysStageAsUFS`).
+  - **v2 (train #15): sitting and street activities**, built on npc-unify's scene API (`BeginNpcScene`, `PlayNpcSceneClip`, `EndNpcScene`, `OnNpcSceneEnded`). There are 39 spots on Gray London: 13 chat, 7 window, 2 vendor, 7 bench, 6 lean and 4 smoke.
+    - **bench:** seats 1–2 people on the map's own bench (`GrayLondonBench` or a shelter bench), found within 15 m of the spot. They face away from the backrest (the higher side), and their capsule collision is off while seated. They sit with the Game Animation Sample bench idle and leave through its stand-up clip. `Crowd.Spots.SeatForward` tunes how far forward they sit.
+    - **lean:** finds a wall within 2.5 m at shoulder height and stands 40 cm off it, wall on the left, with `AS_Street_Wall_Lean_Walker`.
+    - **smoke:** `AS_Street_Pipe_Smoke_Walker`, with the right hand closed round a bowl. There is no pipe prop yet (Codex).
+    - Chat-ring people gesture (`AS_Street_Chat_Gesture_Walker`), vendors wave and call (`AS_Street_Vendor_Call_Walker`), and the rest play relaxed idle breaks.
+    - Six pinned spots (two vendors, two benches, a leaner and a smoker by the inn) keep someone there; at most 6 such people are alive at once. The target is at least 30% of visible people doing something other than walking.
+  - **Carriers (ring, train #15).** `Crowd.Ring.CarryChance` (30%) of new walkers carry goods: `AS_Street_Carry_Hold_Walker`, additive over the walk, plus a prop held at waist height. Carrying starts only when `Crowd.Ring.CarryProp` names a mesh; no Codex basket or crate exists yet. The pose and prop are dropped while frightened.
+  - **Not built yet:** sitting on steps and low walls; the pipe and basket props.
+- **Not verified yet** on Gray London. `Saved/CrowdReactions/verify_ring.py` now also reports the spots.
+- **Lanes for Gray London, computed offline (01:20).** A trace survey in the editor found no pavement, because Gray London's OSM tiles were not loaded there (World Partition), so every trace hit the always-loaded `City ground` cylinder at 10 cm. The map's layers:
+  - roads are each tile's `GL_Road` triangles (flat, 28 cm);
+  - pavement is the city ground (10 cm) between a road and the building footprints (`GL_Roof`);
+  - facades and roofs collide.
+  `Tools/Crowd/lanes_from_tile.py` reads an exported tile GLB (Codex's reader, verified axes). It takes the band 1–3 m outside every road edge, at least 1 m clear of buildings, thins it to centrelines, joins the pieces, and puts points every 6 m at 13 cm. For `Tile_p03_p00` round the intro the result is 87 lanes (about 3.2 km): `Tools/Crowd/graylondon_lanes.json`, previewed in `graylondon_lanes_preview.png`. **Placed (01:37):** `Tools/Crowd/build_route_lanes.py` merges the route boxes over tiles `p03_p00`, `p04_p00` and `p03_p01` into 270 shapes (2,530 points). The ZoneGraph build gives 540 lanes and 22.3 km; within 50 m there are 33 lanes at the intro, 36 at Tower Hill and 15 at Leadenhall. Not yet checked in PIE on the full set. `Tools/Crowd/crowd_lanes.py` stage `json` spawns them, `build` builds the ZoneGraph, and `save` saves only our packages. Tower Hill east of 3500 m and Leadenhall need tiles `p04_p00` and `p03_p01` exported first.
+- **Partial lanes.** The ring uses a lane point near the hero where it can, and open street floor anywhere else.
 
 ## The ring crowd: actor civilians on the sidewalks (train #10; first tested on the mock city)
 

@@ -1,0 +1,134 @@
+{
+ "looks": {
+  "BP_Look_GiltFerryman": {
+   "moved_cm": 330.5,
+   "pose": {
+    "hand_above_pelvis_cm": 4.3,
+    "hand_below_shoulder_cm": 51.7,
+    "mesh": "SKM_MHC_FerryPilotGiltWorker_BodyMesh"
+   },
+   "parts": [
+    {
+     "name": "Body",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Bodies/SKM_MHC_FerryPilotGiltWorker_BodyMesh.SKM_MHC_FerryPilotGiltWorker_BodyMesh",
+     "mats": [
+      "/Game/Characters/RedLondon/FerryPilot/Assembled/FerryPilot/Body/Materials/MI_Body_Baked_VT.MI_Body_Baked_VT"
+     ]
+    },
+    {
+     "name": "Face",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/RedLondon/FerryPilot/Assembled/FerryPilot/Face/SKM_MHC_FerryPilot_FaceMesh.SKM_MHC_FerryPilot_FaceMesh",
+     "mats": [
+      "/Game/Characters/RedLondon/FerryPilot/Assembled/FerryPilot/Face/Materials/MI_Teeth_Baked.MI_Teeth_Baked",
+      "/Game/Characters/RedLondon/FerryPilot/Assembled/FerryPilot/Face/Materials/MI_EyeL_Baked.MI_EyeL_Baked",
+      "/Game/Characters/RedLondon/FerryPilot/Assembled/FerryPilot/Face/Materials/MI_EyeR_Baked.MI_EyeR_Baked",
+      "/Game/Characters/RedLondon/FerryPilot/Assembled/FerryPilot/Face/Materials/MI_Face_Skin_Baked_LOD5to7_VT.MI_Face_Skin_Baked_LOD5to7_VT"
+     ]
+    },
+    {
+     "name": "Eyebrows",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/Lanthorne/People/GiltRamon/Built/MHC_GiltRamon/Grooms/Eyebrows_M_FlatThick.Eyebrows_M_FlatThick",
+     "binding": "/Game/Characters/Lanthorne/Grooms/GiltFerryman/Eyebrows_M_FlatThick_Binding.Eyebrows_M_FlatThick_Binding"
+    },
+    {
+     "name": "Mustache",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/RedLondon/FerryPilot/Assembled/FerryPilot/Grooms/Mustache_S_Uneven.Mustache_S_Uneven",
+     "binding": "/Game/Characters/RedLondon/FerryPilot/Assembled/FerryPilot/Grooms/Mustache_S_Uneven_Binding.Mustache_S_Uneven_Binding"
+    },
+    {
+     "name": "Beard",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/RedLondon/FerryPilot/Assembled/FerryPilot/Grooms/Beard_S_Full.Beard_S_Full",
+     "binding": "/Game/Characters/RedLondon/FerryPilot/Assembled/FerryPilot/Grooms/Beard_S_Full_Binding.Beard_S_Full_Binding"
+    },
+    {
+     "name": "FerryPilotStripedTunic",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/SK_Gilt_Worker_M_Upper_FerryPilot.SK_Gilt_Worker_M_Upper_FerryPilot",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/Materials/MI_Gilt_Worker_M_Upper_FerryPilot.MI_Gilt_Worker_M_Upper_FerryPilot"
+     ]
+    },
+    {
+     "name": "FerryPilotLeatherCapelet",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FerryPilotTrousers",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/SK_Gilt_Worker_M_Lower_FerryPilot.SK_Gilt_Worker_M_Lower_FerryPilot",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/Materials/MI_Gilt_Worker_M_Lower_FerryPilot.MI_Gilt_Worker_M_Lower_FerryPilot"
+     ]
+    },
+    {
+     "name": "FerryPilotRidingBoots",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/SK_Gilt_Worker_M_Feet_FerryPilot.SK_Gilt_Worker_M_Feet_FerryPilot",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/Materials/MI_Gilt_Worker_M_Feet_FerryPilot.MI_Gilt_Worker_M_Feet_FerryPilot"
+     ]
+    },
+    {
+     "name": "FerryPilotWideBrimHat",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FerryPilotNeckerchief",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FerryPilotRopeBelt",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FerryPilotHandCoil",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    }
+   ],
+   "shots": {
+    "face": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/plain_check/run4\\one_00_BP_Look_GiltFerryman_face.png",
+    "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/plain_check/run4\\one_00_BP_Look_GiltFerryman_body.png"
+   },
+   "pelvis_before_ragdoll": 97.7,
+   "ragdoll_drop_cm": 42.6,
+   "simulating": true,
+   "ragdoll_shot": {
+    "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/plain_check/run4\\one_00_BP_Look_GiltFerryman_ragdoll_body.png"
+   },
+   "done": true
+  }
+ },
+ "errors": [],
+ "order": [
+  "BP_Look_GiltFerryman"
+ ],
+ "seconds": 12.7
+}

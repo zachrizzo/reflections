@@ -26,5 +26,8 @@
       "kind": "upper"
     }
   ],
-  "out_dir": "Intermediate/ClothingFit2026_11_14/Out/Gilt_CivilianWorker_F_FestivalDrummer"
+  "out_dir": "Intermediate/ClothingFit2026_11_14/Out/Gilt_CivilianWorker_F_FestivalDrummer",
+  "skirt_slit_closed": true,
+  "note": "2026-11-15 03:20: skirt_slit_closed (skirt weights below the hips = symmetric field so the back slit stays shut; skinning only). hide_legs_under_skirt: legs below the crotch that the skirt covers at rest are hidden, because they pushed through the pencil skirt mid-stride.",
+  "hide_legs_under_skirt": true
 }

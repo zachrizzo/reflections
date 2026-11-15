@@ -70,6 +70,18 @@ The user: "Remove the armor from the soldiers." `Tools/CrowdLooks/make_soldiers.
 
 All are tagged `Look_Role_Soldier`; the source looks are unchanged. They replace the soldier pool entries. That swap is npc-unify's and squads', handed over in the shared notes.
 
+## Plain fitted clothes (14 Nov, 23:02)
+
+- hero-cloak's plain, tight, one-colour sets are on five looks:
+  - Giltside worker M (deep red) on GiltFerryman and GiltRamon.
+  - Giltside worker F (ankle skirt) on GiltDrummer and GiltPriya.
+  - Frostside soldier M (pale grey-white) on `Soldiers/FrostSoldier_Iven`.
+- Each look keeps only Body, Face, grooms and the new upper, lower and feet. Every other old part is hidden, because the hidden-skin bodies have no skin under the clothes.
+- The NPC walker finds its animation from the Body name, so each hidden-skin body is copied as `Lanthorne/Bodies/SKM_MHC_<Id>_BodyMesh` with `CrowdMotion/ABP_Crowd_<Id>` (a copy of the donor's).
+- Bone 0 is `root` on every source and copy, and no shared skeleton was saved. Script: `Tools/CrowdLooks/wire_outfits.py`.
+- Not yet checked in PIE (walk, pose, ragdoll): `plain_pie.py`.
+- Still waiting: the Frost caster (Codex set), women soldiers, and the CoinClerk, GlassArtisan and BridgeGuard bodies.
+
 ## Licence check (commercial-readiness.md)
 
 - **No Hunyuan3D-2 garments in any look.** The Hunyuan pieces are the SimpleRed tunic, trousers and boots (`CrowdMotion/SimpleRed`) and the hero's generated boots and shirt folds. No `BP_Look_*` uses them, and the six SimpleRed actors placed in `Lvl_HeroSampleCrowd` were replaced.
@@ -96,6 +108,8 @@ All are tagged `Look_Role_Soldier`; the source looks are unchanged. They replace
 
 - Uncooked: about 1.4 GB for the 13 new people plus 435 MB of shared Common. The cooked size is being measured by packaging (NPC budget 320 MB). The old pools (`CrowdMotion/SimpleRed`, `WhiteLondon/CrowdPreview`, `RedLondon/Crowd/Variants`) drop out of the cook once the last references are switched.
 - Frame time: same component count per look as before, minus 2–5 empty grooms each; garments no longer tick their pose off screen.
+- LODSync (14 Nov 22:20, crowd plan rank 7, `Tools/CrowdLooks/lod_pass.py`): 32 of the 38 looks had LODSync `ForcedLOD = 0`, which pins Body, Face and clothes to LOD 0 at every distance (in `LODSyncComponent.cpp` a forced LOD wins over the screen-size choice, and `MinLOD` only clamps the automatic choice). All 38 (20 `BP_Look_*`, 12 `PewLook_*`, 6 soldiers) are now `ForcedLOD -1, MinLOD 1`, so distant NPCs drop LODs and none ever draws LOD 0. Close range: 2.11 M → 1.86 M vertices summed over the 38 looks (−12%). The bigger saving is at distance, which is not yet measured in a packaged build. Body bone 0 was `root` before and after on every look, each saved only its own package, and no Common asset or skeleton was dirtied. Not yet checked in PIE: close-ups at LOD 1.
+- Already in place on all 38 (survey 22:15, `perf_survey.py`): every garment and prop part is on `OnlyTickPoseWhenRendered`, and no empty groom components are left.
 
 ## Known gaps
 
@@ -116,5 +130,5 @@ All are tagged `Look_Role_Soldier`; the source looks are unchanged. They replace
 - **squads:** read Soldier/SoldierCaster looks from the archetypes (`ReflectionsSquad.cpp:97-102` still hard-codes WhiteLook_03..06).
 - **npc-unify:** add the Frostside looks to the pools (Silas and Hyeon as civilians; Nia and Saran as soldiers; Tobias and Wen as casters); put the look lists in code, so "Reset To Built In" can't bring back SimpleRed.
 - **packaging:** measure the cooked size of `/Game/Characters/Lanthorne` against the 320 MB NPC budget. `/Game/Crowd/City` is always-cooked and still pulls in the Mass prototype collection.
-- **crowd-looks (next queue row):** swap in the Codex/Blender-fitted garments from hero-cloak as they land; add 2 male Giltside soldier faces on the ArchiveApprentice body; Pewterside grey-palette looks (12 named Pewterside people have none); perf's LODSync minimum LOD 1, once close-ups at LOD1 are checked.
+- **crowd-looks (next queue row):** swap in the Codex/Blender-fitted garments from hero-cloak as they land; add 2 male Giltside soldier faces on the ArchiveApprentice body; Pewterside grey-palette looks (12 named Pewterside people have none); LODSync min LOD 1 is DONE (22:20): check close-ups at LOD 1 in the next PIE.
 - Not mine, seen in passing: in the train #11 editor the hero shows white mannequin limbs through the coat (`after_play_view.png`).

@@ -90,6 +90,19 @@ Kimodo keeps the pelvis in place, so neither clip walks by itself. Both get the 
 - **Hand clearance:** guard ≥10 cm; march ≥1.3 cm (right hand), with 0 frames inside. Seams are 0 cm.
 - **Pose sheet:** `shield_poses.png`.
 
+**Street life** (crowd plan rank 8, for crowd-react): `AS_Street_<Name>_Walker` loops on the walker, so every look
+gets them. All are seamless (seam 0 cm), with root motion off and no frame with a hand inside the torso. Built with
+`add_shield`, then `arm_shield <names>`, then `build_shield <names>`, plus `fix_street`. Pose sheet:
+`street_poses.png`.
+- `Vendor_Call`, 4 s. Kimodo kept the arm low, so `fix_street` uses IK to raise the right arm overhead (26 cm above
+  the head) and wave it three times, palm forward, from 0.6 to 2.9 s.
+- `Pipe_Smoke`, 4 s. The right hand comes up to the mouth and back to the chest; the pipe goes in the right hand.
+- `Carry_Hold`, 2 s, an upper-body hold. IK puts both hands on a basket at waist height: 30 cm in front of `spine_01`,
+  32 cm apart, forearms level, palms in. The hands are closed on a 3 cm handle, and the lower body is the idle's
+  frame 0, so it works as an additive.
+- `Wall_Lean`, 4 s. Leans 16° to its left, so it needs a wall on the left. The arms hang; Kimodo didn't fold them.
+- `Chat_Gesture`, 4 s. Both hands gesture at chest and waist height.
+
 **Get-ups** (`getups` stage), for the walker after a physics knockdown (npc-unify, train #15):
 - `AS_GetUp_Back_Walker` (2.0 s) and `AS_GetUp_Front_Walker` (2.03 s) are cut from the Game Animation Sample's
   `M_ragdoll_getup_stand_B/_F`: the active part only, at 1.25× and 1.15×.

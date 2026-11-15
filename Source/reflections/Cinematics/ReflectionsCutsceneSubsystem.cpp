@@ -667,7 +667,13 @@ void UReflectionsCutsceneSubsystem::StartConversion(const FReflectionsCutsceneCu
     UClass* VillainClass = FindObject<UClass>(nullptr, TEXT("/Script/reflections.ReflectionsVillainSubsystem"));
     UObject* Villain = VillainClass && VillainClass->IsChildOf(UWorldSubsystem::StaticClass())
         ? GetWorld()->GetSubsystemBase(TSubclassOf<UWorldSubsystem>(VillainClass)) : nullptr;
-    UFunction* Function = Villain ? Villain->FindFunction(TEXT("BeginConversion")) : nullptr;
+    // The scripted variant ignores the hunt's pacing gap and brings the attacker's walker to the victim (villain
+    // session, from train #16); the plain one is the fallback on older builds.
+    UFunction* Function = Villain ? Villain->FindFunction(TEXT("BeginConversionScripted")) : nullptr;
+    if (!Function && Villain)
+    {
+        Function = Villain->FindFunction(TEXT("BeginConversion"));
+    }
     if (Function && Attacker && Victim)
     {
         // float BeginConversion(AActor* Attacker, AActor* Victim): fill the two actor params, read the float back.
@@ -728,6 +734,34 @@ void UReflectionsCutsceneSubsystem::StartConversion(const FReflectionsCutsceneCu
             }
             Villain->ProcessEvent(Function, Params.GetData());
             Length = Return->GetPropertyValue_InContainer(Params.GetData());
+        }
+    }
+    // Refused because the victim is already being converted (the hunt got there first, often by our own attacker):
+    // that conversion is the beat, so hold the wide shot for it instead of playing the fallback over it.
+    if (Length <= 0.0f && Villain && Victim)
+    {
+        if (UFunction* IsConverting = Villain->FindFunction(TEXT("IsConverting")))
+        {
+            TArray<uint8, TInlineAllocator<32>> Params;
+            Params.SetNumZeroed(IsConverting->ParmsSize);
+            FObjectPropertyBase* Arg = nullptr;
+            FBoolProperty* Return = nullptr;
+            for (TFieldIterator<FProperty> It(IsConverting); It && (It->PropertyFlags & CPF_Parm); ++It)
+            {
+                if (It->PropertyFlags & CPF_ReturnParm) { Return = CastField<FBoolProperty>(*It); }
+                else if (!Arg) { Arg = CastField<FObjectPropertyBase>(*It); }
+            }
+            if (Arg && Return)
+            {
+                Arg->SetObjectPropertyValue_InContainer(Params.GetData(), Victim);
+                Villain->ProcessEvent(IsConverting, Params.GetData());
+                if (Return->GetPropertyValue_InContainer(Params.GetData()))
+                {
+                    Length = 8.0f;  // a conversion is tackle + possessed + rise, about 8 s
+                    UE_LOG(LogReflectionsCutscene, Log, TEXT("Cutscene %s: %s is already being converted; holding for it."),
+                        *CurrentName.ToString(), *Victim->GetName());
+                }
+            }
         }
     }
     UE_LOG(LogReflectionsCutscene, Log, TEXT("Cutscene %s: conversion %s -> %s: %.2f s."), *CurrentName.ToString(),
@@ -959,6 +993,52 @@ bool UReflectionsCutsceneSubsystem::ResolveAnchor(const UReflectionsCutsceneAsse
         }
     }
     Found.SetScale3D(FVector::OneVector);
+
+    // Stage forward must look into open ground: the cast stand up to ~9 m ahead and the cameras sit around them.
+    // If the anchor faces a wall, turn it (yaw only) to the nearest heading with enough room.
+    if (Asset->MinStageDepth > 0.0f)
+    {
+        FCollisionQueryParams Params(SCENE_QUERY_STAT(CutsceneStageDepth), false);
+        if (AActor* MarkerActor = AnchorMarker.Get()) { Params.AddIgnoredActor(MarkerActor); }
+        if (APawn* Hero = GetHero()) { Params.AddIgnoredActor(Hero); }
+        const FVector Eye = Found.GetLocation() + FVector(0.0f, 0.0f, 120.0f);
+        const float Probe = Asset->MinStageDepth * 1.5f;
+        auto Depth = [&](float Yaw)
+        {
+            FHitResult Hit;
+            const FVector Dir = FRotator(0.0f, Yaw, 0.0f).Vector();
+            const bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Eye, Eye + Dir * Probe, ECC_Visibility, Params);
+            return bHit ? Hit.Distance : Probe;
+        };
+        const float BaseYaw = Found.Rotator().Yaw;
+        if (Depth(BaseYaw) < Asset->MinStageDepth)
+        {
+            float BestYaw = BaseYaw;
+            float BestDepth = Depth(BaseYaw);
+            // Nearest turn first (±22.5°, ±45°, ...), so a nearly-right marker only turns a little.
+            for (int32 Step = 1; Step <= 8; ++Step)
+            {
+                for (const float Sign : { 1.0f, -1.0f })
+                {
+                    const float Yaw = BaseYaw + Sign * Step * 22.5f;
+                    const float D = Depth(Yaw);
+                    if (D >= Asset->MinStageDepth && BestDepth < Asset->MinStageDepth)
+                    {
+                        BestYaw = Yaw;
+                        BestDepth = D;
+                    }
+                    else if (BestDepth < Asset->MinStageDepth && D > BestDepth)
+                    {
+                        BestYaw = Yaw;
+                        BestDepth = D;
+                    }
+                }
+            }
+            UE_LOG(LogReflectionsCutscene, Log, TEXT("Cutscene %s: stage faced a wall (%.1f m clear); turned %.0f deg to %.1f m of open ground."),
+                *Name.ToString(), Depth(BaseYaw) / 100.0f, FRotator::NormalizeAxis(BestYaw - BaseYaw), BestDepth / 100.0f);
+            Found.SetRotation(FRotator(0.0f, BestYaw, 0.0f).Quaternion());
+        }
+    }
     Anchor = Found;
     return bMarker;
 }

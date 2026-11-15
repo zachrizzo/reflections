@@ -1,0 +1,252 @@
+{
+ "looks": {
+  "BP_Look_GiltPriya": {
+   "moved_cm": 332.9,
+   "pose": {
+    "hand_above_pelvis_cm": 2.9,
+    "hand_below_shoulder_cm": 46.7,
+    "mesh": "SKM_MHC_FestivalDrummerGiltWorker_BodyMesh"
+   },
+   "parts": [
+    {
+     "name": "Body",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Bodies/SKM_MHC_FestivalDrummerGiltWorker_BodyMesh.SKM_MHC_FestivalDrummerGiltWorker_BodyMesh",
+     "mats": [
+      "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Body/Materials/MI_Body_Baked_VT.MI_Body_Baked_VT"
+     ]
+    },
+    {
+     "name": "Face",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Face/SKM_MHC_GiltPriya_FaceMesh.SKM_MHC_GiltPriya_FaceMesh",
+     "mats": [
+      "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Face/Materials/MI_Teeth_Baked.MI_Teeth_Baked",
+      "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Face/Materials/MI_EyeL_Baked.MI_EyeL_Baked",
+      "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Face/Materials/MI_EyeR_Baked.MI_EyeR_Baked",
+      "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Face/Materials/MI_Face_EyeShell.MI_Face_EyeShell",
+      "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Face/Materials/MI_Face_LacrimalFluid.MI_Face_LacrimalFluid",
+      "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Face/Materials/MI_Face_EyelashesHiLODs.MI_Face_EyelashesHiLODs",
+      "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Face/Materials/MI_Face_Skin_Baked_LOD3_VT.MI_Face_Skin_Baked_LOD3_VT",
+      "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Face/Materials/MI_Face_Skin_Baked_LOD5to7_VT.MI_Face_Skin_Baked_LOD5to7_VT"
+     ]
+    },
+    {
+     "name": "Hair",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Grooms/Hair_S_LowPonytail.Hair_S_LowPonytail",
+     "binding": "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Grooms/Hair_S_LowPonytail_Binding.Hair_S_LowPonytail_Binding"
+    },
+    {
+     "name": "Eyebrows",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Grooms/Eyebrows_M_Thick.Eyebrows_M_Thick",
+     "binding": "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Grooms/Eyebrows_M_Thick_Binding.Eyebrows_M_Thick_Binding"
+    },
+    {
+     "name": "FestivalDrummer_Blouse",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/SK_Gilt_Worker_F_Upper_FestivalDrummer.SK_Gilt_Worker_F_Upper_FestivalDrummer",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/Materials/MI_Gilt_Worker_F_Upper_FestivalDrummer.MI_Gilt_Worker_F_Upper_FestivalDrummer"
+     ]
+    },
+    {
+     "name": "FestivalDrummer_Capelet",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FestivalDrummer_Trousers",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FestivalDrummer_Boots",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/SK_Gilt_Worker_F_Feet_FestivalDrummer.SK_Gilt_Worker_F_Feet_FestivalDrummer",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/Materials/MI_Gilt_Worker_F_Feet_FestivalDrummer.MI_Gilt_Worker_F_Feet_FestivalDrummer"
+     ]
+    },
+    {
+     "name": "FestivalDrummer_Skirt",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/SK_Gilt_Worker_F_Lower_FestivalDrummer.SK_Gilt_Worker_F_Lower_FestivalDrummer",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/CivilianWorker/Materials/MI_Gilt_Worker_F_Lower_FestivalDrummer.MI_Gilt_Worker_F_Lower_FestivalDrummer"
+     ]
+    },
+    {
+     "name": "FestivalDrummer_Sash",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FestivalDrummer_Belt",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FestivalDrummer_RopeDrum",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FestivalDrummer_DrumHarness",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "FestivalDrummer_Beaters",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    }
+   ],
+   "shots": {
+    "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/plain_check/run2\\one_00_BP_Look_GiltPriya_body.png"
+   },
+   "pelvis_before_ragdoll": 96.5,
+   "ragdoll_drop_cm": 44.4,
+   "simulating": true,
+   "ragdoll_shot": {
+    "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/plain_check/run2\\one_00_BP_Look_GiltPriya_ragdoll_body.png"
+   },
+   "done": true
+  },
+  "GiltSoldier_BridgeGuard": {
+   "moved_cm": 323.5,
+   "pose": {
+    "hand_above_pelvis_cm": 3.3,
+    "hand_below_shoulder_cm": 43.1,
+    "mesh": "SKM_MHC_BridgeGuardGiltSoldier_BodyMesh"
+   },
+   "parts": [
+    {
+     "name": "Body",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Bodies/SKM_MHC_BridgeGuardGiltSoldier_BodyMesh.SKM_MHC_BridgeGuardGiltSoldier_BodyMesh",
+     "mats": [
+      "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Body/Materials/MI_Body_Baked_VT.MI_Body_Baked_VT"
+     ]
+    },
+    {
+     "name": "Face",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Face/SKM_MHC_BridgeGuard_FaceMesh.SKM_MHC_BridgeGuard_FaceMesh",
+     "mats": [
+      "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Face/Materials/MI_Teeth_Baked.MI_Teeth_Baked",
+      "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Face/Materials/MI_EyeL_Baked.MI_EyeL_Baked",
+      "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Face/Materials/MI_EyeR_Baked.MI_EyeR_Baked",
+      "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Face/Materials/MI_Face_EyeShell.MI_Face_EyeShell",
+      "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Face/Materials/MI_Face_LacrimalFluid.MI_Face_LacrimalFluid",
+      "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Face/Materials/MI_Face_EyelashesHiLODs.MI_Face_EyelashesHiLODs",
+      "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Face/Materials/MI_Face_Skin_Baked_LOD3_VT.MI_Face_Skin_Baked_LOD3_VT",
+      "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Face/Materials/MI_Face_Skin_Baked_LOD5to7_VT.MI_Face_Skin_Baked_LOD5to7_VT"
+     ]
+    },
+    {
+     "name": "Hair",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Grooms/Hair_S_UpdoBraids.Hair_S_UpdoBraids",
+     "binding": "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Grooms/Hair_S_UpdoBraids_Binding.Hair_S_UpdoBraids_Binding"
+    },
+    {
+     "name": "Eyebrows",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Grooms/Eyebrows_M_SlightArch.Eyebrows_M_SlightArch",
+     "binding": "/Game/Characters/RedLondon/BridgeGuard/Assembled/BridgeGuard/Grooms/Eyebrows_M_SlightArch_Binding.Eyebrows_M_SlightArch_Binding"
+    },
+    {
+     "name": "BridgeGuard_Gambeson",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/SK_Gilt_Soldier_F_Upper_BridgeGuard.SK_Gilt_Soldier_F_Upper_BridgeGuard",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/Materials/MI_Gilt_Soldier_F_Upper_BridgeGuard.MI_Gilt_Soldier_F_Upper_BridgeGuard"
+     ]
+    },
+    {
+     "name": "BridgeGuard_Trousers",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/SK_Gilt_Soldier_F_Lower_BridgeGuard.SK_Gilt_Soldier_F_Lower_BridgeGuard",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/Materials/MI_Gilt_Soldier_F_Lower_BridgeGuard.MI_Gilt_Soldier_F_Lower_BridgeGuard"
+     ]
+    },
+    {
+     "name": "BridgeGuard_Boots",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/SK_Gilt_Soldier_F_Feet_BridgeGuard.SK_Gilt_Soldier_F_Feet_BridgeGuard",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/Materials/MI_Gilt_Soldier_F_Feet_BridgeGuard.MI_Gilt_Soldier_F_Feet_BridgeGuard"
+     ]
+    },
+    {
+     "name": "BridgeGuard_Armor",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "BridgeGuard_Sash",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "BridgeGuard_RoundShield",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    }
+   ],
+   "shots": {
+    "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/plain_check/run2\\one_01_GiltSoldier_BridgeGuard_body.png"
+   },
+   "pelvis_before_ragdoll": 100.9,
+   "ragdoll_drop_cm": 61.8,
+   "simulating": true,
+   "ragdoll_shot": {
+    "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/plain_check/run2\\one_01_GiltSoldier_BridgeGuard_ragdoll_body.png"
+   },
+   "done": true
+  }
+ },
+ "errors": [],
+ "order": [
+  "BP_Look_GiltPriya",
+  "GiltSoldier_BridgeGuard"
+ ],
+ "seconds": 20.0
+}

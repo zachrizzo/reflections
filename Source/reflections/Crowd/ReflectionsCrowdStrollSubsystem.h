@@ -19,9 +19,9 @@ class UReflectionsNpcReactionComponent;
  * fight, down) it hands the body straight back, so reactions (and running away) stay in the NPC system;
  * when the NPC is calm again, strolling resumes from where it stands.
  *
- * Walkers tagged Crowd_LaneWalker (the ring crowd) walk the ZoneGraph sidewalk lanes instead: a leg of 10-30 m
- * along the nearest lane, following it round corners onto the next lane, then an idle. Without lanes nearby they
- * stroll around home like the others.
+ * Ring walkers take longer sidewalk trips, or collision-checked trips towards the map's street activities when
+ * no lanes exist. Predictive local steering keeps pedestrians apart. Some calm walkers travel in pairs, separating
+ * immediately for a scene or reaction. All of this uses the existing locomotion driver and NPC ownership rules.
  *
  * Tuning: Crowd.Stroll.* console variables. Crowd.Stroll.Enable 0 gives every body back.
  */
@@ -44,6 +44,17 @@ public:
     UFUNCTION(BlueprintCallable, Category="Crowd|Stroll")
     FString Describe() const;
 
+    /** Street routes loaded for this map (the "routes" graph of Content/Crowd/Spots/<map>.json). */
+    UFUNCTION(BlueprintPure, Category="Crowd|Stroll")
+    int32 GetRouteNodeCount();
+
+    /**
+     * Ring spawns on maps with street routes: a point on a route MinDistance..MaxDistance from Near (2D) that Accept
+     * approves, and the yaw along the route there. False when the map has no routes or nothing fits.
+     */
+    bool FindRouteSpawn(const FVector& Near, float MinDistance, float MaxDistance, TFunctionRef<bool(const FVector&)> Accept,
+        FVector& OutLocation, float& OutYaw);
+
 private:
     enum class EPhase : uint8 { Released, Idle, Walking };
 
@@ -65,8 +76,43 @@ private:
         bool bLaneWalker = false;
         bool bOnLane = false;
         FZoneGraphLaneLocation Lane;
+        /** Route walkers (maps with a route graph): walking the edge RouteFrom -> RouteTo, RouteAlong cm along it,
+            RouteOffset cm to the left of its centre line (keep left, so head-on passes never cross). */
+        bool bOnRoute = false;
+        int32 RouteFrom = INDEX_NONE;
+        int32 RouteTo = INDEX_NONE;
+        float RouteAlong = 0.0f;
+        float RouteOffset = 35.0f;
         /** Lane distance still to walk in this leg (cm). */
         float LegLeft = 0.0f;
+        float LegLength = 0.0f;
+        FVector Heading = FVector::ZeroVector;
+        FVector Avoidance = FVector::ZeroVector;
+        FVector SafeHeading = FVector::ZeroVector;
+        float CurrentSpeed = 0.0f;
+        float OriginalMinAnalogSpeed = 0.0f;
+        bool bSavedMovement = false;
+        float ProbeIn = 0.0f;
+        int32 DestinationIndex = INDEX_NONE;
+        int32 PreviousDestinationIndex = INDEX_NONE;
+        TWeakObjectPtr<AActor> Companion;
+        bool bPairLeader = false;
+        float PairCooldown = 0.0f;
+        float PairSeconds = 0.0f;
+        float PairSide = 1.0f;
+    };
+
+    struct FStreetDestination
+    {
+        FName Name;
+        FVector Location = FVector::ZeroVector;
+    };
+
+    struct FPedestrianObstacle
+    {
+        TWeakObjectPtr<AActor> Actor;
+        TWeakObjectPtr<ACharacter> Driver;
+        float Radius = 40.0f;
     };
 
     void Refresh();
@@ -78,9 +124,29 @@ private:
     bool StartLaneLeg(FStroller& Stroller, const ACharacter& Driver);
     /** Move the lane point Step cm further, onto the next lane at a lane's end. False when the lane ends nowhere. */
     bool AdvanceLane(FStroller& Stroller, float Step);
+    /** Route walkers: join the nearest route edge (within 20 m) and start a leg along it. */
+    bool StartRouteLeg(FStroller& Stroller, const ACharacter& Driver);
+    /** Move Step cm further along the route, choosing the next edge at a junction (mostly straight on). */
+    bool AdvanceRoute(FStroller& Stroller, float Step);
+    /** Where on the route the walker heads now: the edge point, offset to the left of travel. */
+    FVector RoutePoint(const FStroller& Stroller) const;
     float NextRandom(FStroller& Stroller, float Min, float Max) const;
+    void LoadDestinations();
+    bool CheckStreetGoal(const FStroller& Stroller, const ACharacter& Driver, const FVector& Candidate, FVector& OutGoal) const;
+    void RefreshPairs();
+    void BreakPair(FStroller& Stroller);
+    FStroller* FindCompanion(const FStroller& Stroller);
+    bool TickCompanion(FStroller& Stroller, ACharacter& Driver, float DeltaTime);
+    void Steer(FStroller& Stroller, ACharacter& Driver, const FVector& Goal, float WantedSpeed, float DeltaTime);
 
     TArray<FStroller> Strollers;
+    TArray<FStreetDestination> Destinations;
+    TArray<FPedestrianObstacle> Obstacles;
+    /** Street route graph (undirected): node positions and each node's neighbours. */
+    TArray<FVector> RouteNodes;
+    TArray<TArray<int32>> RouteLinks;
+    float RouteBaseOffset = 35.0f;
+    bool bDestinationsLoaded = false;
     double NextRefresh = 0.0;
     bool bWasEnabled = true;
 };

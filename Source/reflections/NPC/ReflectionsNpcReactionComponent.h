@@ -170,6 +170,24 @@ public:
      */
     bool PlayOnWalker(class UAnimSequenceBase* Clip, float PlayRate = 1.0f, int32 Loops = 1);
 
+    // ---- Street scenes (UReflectionsNpcSubsystem::BeginNpcScene and its companions call these) ----------
+
+    /**
+     * A street scene takes this calm NPC: Loop (made for the walker's skeleton; may be null) plays on its hidden
+     * walker for as long as the scene lasts, and bPinned stops the walker's movement so that it stays where it was
+     * put (seated, leaning). False, and nothing changed, when it is not calm and free or the clip does not fit.
+     * The NPC ends the scene itself the moment anything disturbs it (see EndScene).
+     */
+    bool BeginScene(class UAnimSequenceBase* Loop, bool bPinned, float BlendIn);
+    /** One clip once over the scene's loop; the loop comes back after it, or with bThenEnd the scene ends. */
+    bool PlaySceneClip(class UAnimSequenceBase* Clip, float BlendIn, float BlendOut, bool bThenEnd);
+    /** Ends the scene: the clip blends out, movement returns, UReflectionsNpcSubsystem::OnNpcSceneEnded fires. */
+    void EndScene(bool bDisturbed, float BlendOut = 0.15f);
+    bool IsInScene() const { return bInScene; }
+
+    /** A stimulus that reaches this NPC a moment from now (the panic ripple: further away, later). */
+    void QueueStimulus(const FReflectionsNpcStimulus& Stimulus, float InstigatorReputation, float Delay);
+
     // ---- Driven by UReflectionsNpcSubsystem ------------------------------------------------------------
 
     void SetArchetype(UReflectionsNpcArchetype* NewArchetype);
@@ -288,6 +306,15 @@ private:
     void TickWalkerKnockdown(float DeltaTime);
     void BeginWalkerGetUp();
     void EndWalkerKnockdown(bool bLeaveWhereItLies = false);
+    /**
+     * Death while down or rising: the walker stays (or goes back to being) a ragdoll and is the body on the ground
+     * from then on; the visible body keeps copying it and is never simulated itself. False when there is no walker.
+     */
+    bool KeepWalkerDownAsCorpse();
+    /** The dead NPC lies there as its hidden walker's ragdoll (KeepWalkerDownAsCorpse). */
+    bool bWalkerCorpse = false;
+    /** World time at which a jolt or a get-up last gave the visible body back to its normal ticking. */
+    float WalkerPhysicsEndedAt = -100.0f;
     /** Puts the walker's mesh back on its capsule. Only once its bodies no longer simulate: the engine refuses otherwise. */
     void ReattachWalkerMesh();
     EWalkerDown WalkerDown = EWalkerDown::None;
@@ -355,6 +382,28 @@ private:
     bool bTriedLocomotion = false;
     FVector ThreatLocation = FVector::ZeroVector;
     FVector SafeDestination = FVector::ZeroVector;
+    /** Fleeing: when to look again for a clear run (it has arrived, or something is in the way). */
+    float FleeRepickIn = 0.0f;
+    /** Where a frightened NPC runs: the clearest run away from the threat, best one that ends out of the player's sight. */
+    FVector PickFleeDestination(const FVector& Threat) const;
+
+    // A street scene (BeginScene).
+    bool bInScene = false;
+    bool bScenePinned = false;
+    bool bSceneEndsAfterClip = false;
+    UPROPERTY(Transient) TObjectPtr<class UAnimSequenceBase> SceneLoop;
+    UPROPERTY(Transient) TObjectPtr<class UAnimMontage> SceneMontage;
+    UPROPERTY(Transient) TObjectPtr<class UAnimMontage> SceneOneShot;
+    void TickScene();
+
+    // Stimuli on their way (QueueStimulus).
+    struct FPendingStimulus
+    {
+        FReflectionsNpcStimulus Stimulus;
+        float Reputation = 0.0f;
+        float In = 0.0f;
+    };
+    TArray<FPendingStimulus> PendingStimuli;
     FVector KnockbackVelocity = FVector::ZeroVector;
     float ReactionTimeRemaining = 0.0f;
     /** While above zero the NPC keeps after whoever provoked it, even out of sight. */

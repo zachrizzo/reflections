@@ -266,11 +266,29 @@ bool UReflectionsNpcArchetype::ApplyBuiltIn(FName Id)
         else if (Id == TEXT("Enemy") || Id == TEXT("Hostile"))
             Cast = { TEXT("FrostIven"), TEXT("FrostSaran"), TEXT("FrostNia"), TEXT("FrostAmara"), TEXT("FrostTobias"), TEXT("FrostWen") };
         TArray<TSoftClassPtr<AActor>> Finished;
-        for (const TCHAR* LookId : Cast)
+        // Those who carry sword and shield wear the dressed soldier looks (no armour, plain fitted clothes:
+        // /Game/Characters/Lanthorne/Looks/Soldiers/<Name>). The casters keep their own two. With fewer than two
+        // dressed looks in the project, the older ones named above are used instead.
+        TArray<const TCHAR*> Dressed;
+        if (Id == TEXT("Guard") || Id == TEXT("AlliedSoldier") || Id == TEXT("AlliedSoldierCaster"))
+            Dressed = { TEXT("GiltSoldier_BridgeGuard"), TEXT("GiltSoldier_Rowena"), TEXT("GiltSoldier_Archivist") };
+        else if (Id == TEXT("Soldier") || Id == TEXT("Enemy") || Id == TEXT("Hostile"))
+            Dressed = { TEXT("FrostSoldier_Amara"), TEXT("FrostSoldier_Nia"), TEXT("FrostSoldier_Saran"), TEXT("FrostSoldier_Iven") };
+        for (const TCHAR* LookId : Dressed)
         {
-            const FString Package = FString::Printf(TEXT("/Game/Characters/Lanthorne/Looks/BP_Look_%s"), LookId);
+            const FString Package = FString::Printf(TEXT("/Game/Characters/Lanthorne/Looks/Soldiers/%s"), LookId);
             if (FPackageName::DoesPackageExist(Package))
-                Finished.Add(Look(*FString::Printf(TEXT("%s.BP_Look_%s_C"), *Package, LookId)));
+                Finished.Add(Look(*FString::Printf(TEXT("%s.%s_C"), *Package, LookId)));
+        }
+        if (Finished.Num() < 2)
+        {
+            Finished.Reset();
+            for (const TCHAR* LookId : Cast)
+            {
+                const FString Package = FString::Printf(TEXT("/Game/Characters/Lanthorne/Looks/BP_Look_%s"), LookId);
+                if (FPackageName::DoesPackageExist(Package))
+                    Finished.Add(Look(*FString::Printf(TEXT("%s.BP_Look_%s_C"), *Package, LookId)));
+            }
         }
         // Pewterside's own people (the crowd-looks session's /Game/Characters/Lanthorne/Looks/Pewterside/PewLook_<X>):
         // townspeople and guards. The side-aware pick keeps them in Pewterside.

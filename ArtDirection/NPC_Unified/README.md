@@ -1,6 +1,6 @@
 # One NPC system: how every NPC reacts to spells and world events
 
-Status (2026-11-14, 20:00): **loaded and verified in PIE on the 19:32 build (trains #11 and #12 merged)**. On top
+Status (2026-11-15, 15:24): train #24 is loaded with the tight-street fixes, still **not run in the game** (no PIE turn: memory under the 8 GB gate). Earlier (12:50): the game map is now MedievalLondon (narrow lanes). Two small fixes for tight streets are in Source, compile-clean, **not yet run** (see "MedievalLondon" at the end of section 4); the check for them is `Tools/NpcUnified/verify_npc_medieval.py`. Earlier (05:26): train #23 is loaded. Dead soldiers no longer freeze standing (fixed and confirmed), soldiers wear the dressed looks and hold sword and shield in a guard stance, and physical knockdowns are proven and recommended but still switched off (`Npc.WalkerPhysics` 0) until the user says yes. Earlier (04:20): train #19 is loaded and its guard stance verified; street scenes, panic ripple and fleeing verified; the knockdown crash is understood and its fix, the dressed soldier looks and floor-snapped spawning are in Source for train #20 (compile-clean, not run). Walker physics is still off. Earlier (2026-11-14, 23:47): train #14 is loaded. Soldiers hold sword and shield; the Fireball knockdown works but walker physics stays off after a crash in the lightning path (see "Train #14" below). Before that: train #13 was loaded and verified on Gray London (21:27); **train #14 was in Source and compile-clean but had not run** (weapon grip and stance, physical hits on the walker, street scenes, the panic ripple; see "Train #14" below). Earlier: **loaded and verified in PIE on the 19:32 build (trains #11 and #12 merged)**. On top
 of what the 17:43 build already did (spell reactions, lethal hits ragdolling, the tarnished hunting and converting
 townspeople, roster voices, passing remarks, the finished looks, lean walkers), these have now run and passed: the
 tarnished casting dark magic at the player, sword strikes as montages on the hidden walker with a sword in the hand,
@@ -496,6 +496,215 @@ reaction above, and dying mid-convulsion, mid-throw and at the end of a shock), 
 murder, guard turning, record cleared, an allied soldier against one of the tarnished, six different looks),
 `diag_tarnish_cast.py` (one tarnished watched from 7 m and 13 m with every other NPC held).
 
+### Train #14 (built 23:31, snapshot `Saved/NpcUnifyWIP/good-2222`): first results, and one crash
+
+Run on Gray London between 23:36 and 23:43 on 2026-11-14.
+
+| What | Result |
+|---|---|
+| Soldiers' weapons (`verify_npc_armed.py` A) | 4 of 4. Sword on `hand_r`, shield on `lowerarm_l`, the look's own armour and shield hidden, hands raised 18 to 24 cm by the hold and kept up in a charge. Standing, the blade points 45 degrees forward-right and the shield face 45 degrees up: to be tuned in the data assets. |
+| Fireball knockdown with `Npc.WalkerPhysics 2` (B) | Works: thrown, flat on the ground from 1.6 s, on its feet again at 4.9 s. The visible body was never simulated while alive. |
+| Jolt on a hit (B1) | Not proven: the measure read the same with physics on and off. |
+| Killed mid-knockdown and mid-get-up (C, kills 1 and 2) | No crash, ordinary deaths. |
+| Killed mid-shock with `Npc.WalkerPhysics 2` (C, kill 3) | **Crashed the editor** (23:42:55): the lost-pose assert, `SkinnedAsset.cpp:471`, on the IvenRook body. First suspected: the walker jolt during a shock; ruled out at 03:46 (see the split below). |
+| Street scenes (`verify_npc_street.py` A, 03:43 on train #18) | 7 of 8: begin, one-off clip, pinned (movement None), released, ended by a noise and by death, refused when frightened. The miss is the check's own (its civilian spawned already frightened). |
+| Panic ripple (B, 03:44) | Works: the NPC 3 m away reacts at once, those 10 and 13 m away about 0.7 s later; all at once with `Npc.PanicRipple 0`. |
+| Fleeing (B) | Works: 12.8 m in 6 s at a steady 2.1 m/s, never stuck (was 7 m and standing). |
+| Sword and shield angles by data (`tune_weapon_angles.py`, 03:44) | Not possible with one offset: the turn that puts a standing soldier's shield dead ahead (64 degrees about the forearm) turns a charging one's to the side. Offsets taken off again, nothing saved. Fixed in code for train #19 instead (below). |
+| The crash, split (03:46 to 03:50, physics on) | 8 isolated soldiers killed mid-shock: fine. 12 living people shocked to the end: fine. The 24-kill series: 12 kills fine, then the same assert in the third batch (BridgeGuard body), and a non-fatal ensure for the same thing in the first (IvenRook body). So it is not lightning. |
+
+**What is known about the crash.** A visible body ends up with an empty pose buffer; the next pose evaluation asserts on a
+worker thread (`USkinnedAsset::FillComponentSpaceTransforms`), and `USkeletalMeshComponent::ExcludeHiddenBones` reports the
+same thing as an ensure. In the engine this state comes from a pose task being forced to complete
+(`HandleExistingParallelEvaluationTask`) while a physics-blend task of the same component is in flight, followed by a
+second buffer swap. Who triggers that here is not known. All three events (23:42, 03:49, 03:50) happened in a PIE that
+had killed someone during a knockdown or a get-up seconds earlier, and all three fall within about 2 s of the Tarnish
+taking its first host (20 s after play goes live), which is also when the test reaches its third kill. The logs cannot
+separate those two. The split still open: the same series with `Villain.StartDelay 9999`.
+
+**The cause, found at 04:10.** The split with the villain switched off settled it: all 24 kills passed, but the engine's
+"0 transforms" ensure fired one frame after the first soldier was killed while getting up, on that soldier's own body.
+An NPC that dies while knocked down or getting up is left with an empty pose buffer on its visible body; nothing
+happens until a later spell wakes that corpse, and then the engine asserts. Deaths during a plain jolt are safe (20 of
+them, no ensure), and so are knockdowns and get-ups that death does not interrupt. The villain is not involved.
+
+**The fix (train #20, in Source and compile-clean, not yet run).** For a death while down or rising, nothing is done to
+the visible body at all: it is not made a ragdoll and its ticking is not changed. The hidden walker, which already is
+a ragdoll on the ground, stays down as the corpse, and the visible body keeps copying it exactly as it does for a
+living knocked-down NPC. One killed on the way up drops again from where it is. Hits and lightning twitches on such a
+corpse go to the walker's ragdoll. Proof still owed: the 24-kill series twice in a freshly started editor (the ensure
+reports only once per session), with no ensure and no assert. `Npc.WalkerPhysics` stays 0 until then.
+
+![Guard stance, before and after](images/soldiers_guard_stance_train19_0406.png)
+
+**Train #19, verified 04:06** (snapshot `good-0401`): standing soldiers measured over a full loop of the stance: blade
+0.83 to 0.85 ahead (was 0.76, with 0.62 to the right), shield face 0.73 to 0.76 ahead (was 0.19). Charging: shield
+0.92 ahead. What it is: a soldier standing still for 0.35 s takes the
+whole-body guard stance; a moving one keeps the additive hold over its legs. Measured before the change: standing,
+blade 40 degrees to the right and shield face 75 degrees off ahead; charging, both ahead.
+
+**Train #20 loaded 04:24; first results 04:26.** The 12 archetype assets were re-synced and saved (soldier pools as
+below, townspeople back to 28 looks). `lineup_soldiers.py`, 3 of 3: all seven dressed soldier looks spawn, get their
+walker, stand in the guard stance, and hold the sword on `hand_r` and the shield on `lowerarm_l`; no armour or second
+shield shows (the BridgeGuard-bodied looks still carry those parts, hidden); every one stands 18.0 cm above the height
+asked for, on the road sheet, so the floor snap works. The crash fix has not run yet: it needs the 48-kill proof in a
+fresh editor.
+
+![The dressed soldiers](images/dressed_soldiers_train20_0426.png)
+
+**Proof of the crash fix, so far 30 of 48 kills (04:38 on train #20, 04:46 on train #21, each in a freshly started
+editor, `Npc.WalkerPhysics 2`, villain active).** Ten kills in the middle of a knockdown, ten while getting up, ten
+mid-shock: every one lies dead as expected (the twenty knockdown and get-up deaths as the walker's ragdoll), no corpse
+lost its pose, and both editor logs hold no ensure and no assert. Before the fix the ensure came at the first get-up
+kill of every fresh session. A batch of six costs the editor 4 to 8 GB of free memory, so each fresh start takes two
+batches; the last 18 need two more restarts. `Npc.WalkerPhysics` stays 0 until all 48 are in.
+
+**Proof round 2/3 (04:54, train #21): no ensure and no assert, but the proof did not pass.** 41 kills are in across
+four fresh sessions with clean logs. One corpse had lost its pose: a soldier killed while lightning was jolting it, an
+ordinary ragdoll death. That is a death during a jolt, not during a knockdown, so the train #20 fix does not reach it,
+and the 23:42 crash fits it exactly (the failing body was the soldier killed mid-shock 0.7 s before). What the bad
+deaths have in common: the visible body was ticking after physics (knockdown, get-up or jolt) and the death ended
+that and started the body's own ragdoll in the same moment. The 27 deaths during a knockdown or a get-up since train
+#20, which no longer do that, are all clean.
+
+**Train #22 (in Source, compiling 05:00):**
+
+- `Npc.WalkerJolts`, default 0: the jolt has its own switch and is off. `Npc.WalkerPhysics 2` then means knockdowns
+  and get-ups only. The jolt was never shown to be visible, and with one on every hit a kill inside it would be common.
+- The visible body's own ragdoll is never started during a jolt or in the quarter second after a jolt or a get-up has
+  ended. In that window a dying NPC tips over instead (the old fallback for a body that cannot be a ragdoll).
+
+**Train #23, confirmed 05:23 to 05:25 (fresh editor, no ensure, no assert).**
+
+- The frozen-corpse fix, at defaults with nothing set from the test: 8 of 8 Frost soldier deaths kept their pose and
+  fell (pelvis from about 120 cm to 43 cm in 2 s, pose within 5 cm of the ragdoll). It was 3 of 8 lost before.
+- Sword and shield stay on their bones: 2 s after death the sword is 7 to 8 cm from the right hand and the shield 24 to
+  26 cm from the left forearm, as when alive. (With the old behaviour restored from the script, both props lost their
+  bone and dropped to the body's origin: that was the "weapons at the feet" of the 05:18 picture.)
+- One batch with `Npc.WalkerPhysics 2` on this build: 6 kills (2 mid-knockdown, 2 while getting up, 2 mid-shock), all
+  clean, no corpse without a pose.
+- Recommendation given to the orchestrator: ship `Npc.WalkerPhysics=2` (one line under `[ConsoleVariables]` in
+  `Config/DefaultEngine.ini`), with `Npc.WalkerJolts` left at 0. 39 of 39 deaths during a knockdown or a get-up have
+  been clean since train #20. Known limits: about an hour of test time, never run in a packaged build, each
+  knocked-down character is simulated until it gets up, and one killed in the quarter second after getting up tips
+  over instead of going limp. The decision is the user's; the line is not in the ini yet.
+
+**The frozen-corpse bug in the game as it ships (found 05:06, pinned down 05:11 to 05:19 on train #22, everything at
+its defaults, walker physics off).**
+
+- 3 of 8 Frost soldier deaths (FrostSoldier_Iven by a plain kill and as a Guard, FrostSoldier_Amara) had lost their
+  pose 0.4 to 2 s after death; 0 of 2 Gilt. It is not about lightning, the archetype or the moment of death.
+- What the player sees: the dead soldier stays standing, frozen in its last pose with sword and shield, while its
+  ragdoll falls unseen.
+- Cause, as far as it is known: a ragdoll body had two writers of its pose every frame, its own animation (the
+  retarget from the walker) and the physics blend; the pose buffers get out of step. Why the Frost looks and not the
+  Gilt ones is not known.
+- Fix (train #23, one line in `StartRagdoll`): once the body simulates, `bNoSkeletonUpdate = true`, so only the
+  physics blend writes the corpse's pose. Tried live from the test script before it went into C++: 0 of 8 Frost
+  deaths lost their pose, the pose followed the ragdoll to within 5 cm, the bodies fell.
+- Can it crash? Three Fireballs and two Lightning Bolts into six such corpses (three without a pose), physics off: no
+  ensure, no assert. Both editor crashes were asserts on a body in this state, but with walker physics on. One trial.
+- Corpses are clothed (base-colour pictures: the pale Frost clothes read as skin under the red death light), every
+  garment follows the ragdoll, the walker is hidden. With the fix the sword and shield lie at the corpse's feet, not
+  in its hands; whether that is new is to be checked on train #23.
+
+![Frozen corpses, before](images/frozen_corpses_before_0511.png)
+![Corpses with the fix, lit and in base colour](images/soldier_corpses_fix_0518.png)
+
+**A reading I got wrong, corrected 04:44.** Corpses whose pelvis read "8.2 cm under the ground" in the runs before
+train #20 were not sunk into the road. A body that has lost its pose buffer answers every bone lookup with the world
+origin (`USkinnedMeshComponent::GetBoneTransform` returns the identity), and that zero minus the ground reference was
+the number. About a quarter of the corpses in those runs were in that state, ordinary ragdoll deaths among them, and
+crowd-react saw it at 04:30 on an ordinary death with walker physics off. So there is a second, older way into the
+empty-pose state besides the knockdown deaths fixed in train #20. It has not crashed anything by itself. The stress
+check now counts such corpses (`pose_empty`); none in the 30 kills on trains #20 and #21.
+
+**Also in train #20:**
+
+- **Dressed soldiers.** Guards and soldiers wear the seven dressed soldier looks (`/Game/Characters/Lanthorne/Looks/Soldiers/`:
+  no armour, plain fitted clothes). Guard, AlliedSoldier and AlliedSoldierCaster: GiltSoldier_BridgeGuard, _Rowena,
+  _Archivist (Pewterside's guards stay PewLook_*). Soldier, Enemy and Hostile: FrostSoldier_Amara, _Nia, _Saran, _Iven.
+  SoldierCaster keeps FrostTobias and FrostWen. The side of a look is read from its path, so GiltSoldier_ counts as
+  Giltside and FrostSoldier_ as Frostside. The archetype assets hold their own copy of the pools: re-sync them after
+  the train, then run `apply_extra_looks.py` for the townspeople.
+- **Spawned on the real floor.** `SpawnNpc` stands the NPC on the topmost walkable, broad surface within 50 cm above and
+  150 cm below the place asked for (`Npc.SpawnOnFloor`, default 1). Gray London's roads are thin sheets 18 cm over the
+  city ground; a caller passing the lower height got an NPC with its feet in the road (crowd-react, 04:10).
+
+Look lists outside the pools, for whoever changes the cast: `UReflectionsNpcSubsystem::TeamLooks()` (the 20 older looks;
+last fallback of the pools, and used directly by Lives and Quests for named people); `ReflectionsSquad.cpp` 129 to 134
+and 576 to 577 (squads' own fallbacks, used only when the pools return nothing).
+
+**`Npc.WalkerPhysics` stays 0** (the C++ default) for the jam unless the cause is found and the 24-kill run passes; the orchestrator agreed (04:00).
+
+![Soldiers with sword and shield](images/soldiers_sword_shield_train14_2339.png)
+![Fireball knockdown](images/fireball_knockdown_train14_2340.png)
+
+What the train contains:
+
+
+
+**Soldiers hold their weapons.** The sword is placed from the hand's reference pose: gripped in the closed right
+fist, blade along the forearm line. The shield sits on the left forearm, face outward (`Combat.ShieldProp`, tag
+`NpcShield`; this is the only system that attaches shields). An additive hold clip
+(`/Game/NPC/Anim/AS_Npc_ArmedHold_Add_Walker`, made by `Tools/NpcUnified/make_armed_hold.py` from spell crafting's
+march-hold clip) lies over whatever the legs do; without it the guard idle plays when the NPC stands still.
+
+**Hits land with physics, on the hidden walker only** (`Npc.WalkerPhysics`, default 0 until proven: 1 = jolts,
+2 = knockdowns too). The visible MetaHuman body is never simulated while alive and its animation is never touched;
+it only ticks after physics for the length of the effect, so the pose it copies has the physics in it.
+
+| Hit | What the body does |
+|---|---|
+| Any spell hit | The upper body is jolted along the hit and settles in 0.35 to 0.6 s |
+| Strong blast, knockdown or shove (strength 0.6 and up; 0.8 for a shove) | Off its feet as a ragdoll, lies until still for 1.5 s (4 s at most), then gets up from its back or its front |
+| Lightning | Jolted again at every flash while the current runs, then drops as before |
+| Ice | Held frozen; the ice cracks with a jolt when it ends, and at once when a frozen NPC is struck |
+| Killed while down, rising or shocked | The ordinary death: the walker stops where it lies and the visible body goes limp there |
+
+**Street scenes** (for the crowd's scenario spots), on `UReflectionsNpcSubsystem`:
+
+```cpp
+bool BeginNpcScene(AActor* Npc, UAnimSequenceBase* Loop, bool bPinned = false, float BlendIn = 0.25f);
+bool PlayNpcSceneClip(AActor* Npc, UAnimSequenceBase* Clip, float BlendIn = 0.2f, float BlendOut = 0.2f, bool bThenEnd = false);
+void EndNpcScene(AActor* Npc, float BlendOut = 0.25f);
+bool IsNpcInScene(const AActor* Npc) const;
+FReflectionsNpcSceneEvent OnNpcSceneEnded;   // (AActor* Npc, bool bDisturbed)
+```
+
+- `Loop` is a clip for the walker's skeleton (`SK_UEFN_Mannequin`). It plays on the walker's `DefaultSlot`, whole
+  body, for as long as the scene lasts. It may be null (pin only).
+- `bPinned` stops the walker's movement, so a seated or leaning occupant stays exactly where the caller put it. Move
+  the walker there first (`GetLocomotionDriver()`), then begin the scene.
+- `PlayNpcSceneClip` plays one clip once over the loop (an idle break, a sit-down). The loop returns by itself.
+  With `bThenEnd` the scene ends with the clip (a stand-up).
+- Only a calm, free NPC is accepted. One that is reacting, dead, taken, knocked down, shocked, frozen or alight is
+  refused, and nothing changes.
+- The NPC ends its own scene within a fraction of a second on any reaction but Calm (Alert included), any spell
+  hit, death, being taken by the villain, and removal. The clip stops with a 0.15 s blend, movement comes back and
+  `OnNpcSceneEnded` fires with `bDisturbed` true. `HoldNpc` does not end a scene.
+- In a scene the NPC does not roam by itself. Stroll is not touched: the caller keeps it off.
+
+**Panic spreads and the street empties.**
+
+- Noise, violence, death and a taking reach each NPC later the further away it is: `Npc.PanicRipple` seconds
+  (default 0.2) per 5 m ring, 0.9 s at most. Alarm calls and direct hits are not delayed. `Npc.PanicRipple 0` is
+  the old behaviour (everyone on the same frame).
+- A frightened NPC used to run 7 m in a straight line and stand there. It now takes the clearest run of up to 25 m
+  among seven directions away from the threat, prefers one that ends out of the player's sight, and picks again
+  when it arrives or is blocked (`Npc.FleeExits`, default 1).
+- `GetSecondsSinceViolence(Near, Radius)` says how long a place has been quiet, for the crowd's refill cooldown.
+- Fled ring walkers are recycled today: fleeing lasts 7 s, then they are calm and the ring's usual rule applies,
+  and a still-frightened one already goes beyond 110 m. Retiring unseen fleeing walkers sooner and holding refills
+  while a street is not quiet are changes to the ring, which is crowd-react's.
+
+**Checks, to run in the row after the train** (`run_slot4.py` in the session scratchpad runs them in order under the
+PIE lock): `verify_npc_armed.py` PART A (close-ups of both hands, standing and walking, a Gilt and a Frost soldier),
+PART B (jolt, knockdown, get-up, killed while down and rising), PART C (24 kills in the middle of a knockdown, a
+get-up and a shock, with the log scanned for asserts and pose warnings), and `verify_npc_street.py` PART A (scenes:
+begin, one-off clip, pinned, released, ended by a noise, a hit and a death, refused when frightened) and PART B (the
+ripple's timing at 3, 8 and 13 m, how far a frightened NPC runs, the quiet timer).
+
 ### What still doesn't work
 
 - **The partial-physics flinch stays refused.** `bPhysicalHitReaction` on the archetype does nothing until someone
@@ -536,6 +745,33 @@ murder, guard turning, record cleared, an allied soldier against one of the tarn
 - **The data assets hold their own copy of the numbers.** A later change to a built-in in code does not reach an
   asset with the same id; press **Reset To Built In** on the asset (or edit it) to bring it in line.
 - **Packaging:** `/Game/NPC/Archetypes` must be in `DirectoriesToAlwaysCook` (asked of the packaging session).
+
+### MedievalLondon (2026-11-15, afternoon)
+
+The game moved from Gray London's broad roads to the MedievalLondon town: lanes of 4 to 7 m, cross alleys of 3.5 to 4 m,
+paving pieces laid on one big ground slab. Everything above was proven on Gray London.
+
+In Source for the 14:15 train (each file compile-checked alone on the editor target at 12:48 and 12:50; no header touched;
+**not yet run in the game**):
+
+| What | Where | Why |
+|---|---|---|
+| Fleeing also tries 90 degrees either side | `PickFleeDestination` | With the threat across a lane, "straight away" is the wall behind the NPC; the lane itself was not one of the seven directions tried. |
+| A stroll leg ends 70 cm short of a wall | `TickAmbientMovement` | The 2 m stroll triangle has its corners inside the house walls of a 4 m lane; the walker pressed against the wall for the whole leg. |
+| Paving on the ground counts as floor | `SpawnNpc` | The floor rule wanted 5 m across both ways. Narrow-lane paving is smaller, so the NPC was stood on the slab under it. A smaller walkable piece now counts when broad floor lies within 30 cm under it (a bench seat, 45 cm up, still does not). `Npc.SpawnOnFloor 2` gives the old rule. |
+
+The check: `Tools/NpcUnified/verify_npc_medieval.py` (one PIE of about 45 s, nothing saved). A census of everyone the
+game put on the map (walker present, feet on the floor, posed, shown, not boxed in, not stuck, not standing in
+another), then two townspeople, a Frost soldier and a Gilt guard stood in the nearest tight lane: a Fireball, who
+flees where, two deaths and where the corpses lie. Result in `Saved/NpcUnified/verify_medieval.json`.
+
+15:24: train #24 carries these. fable-streets' 15:12 repack took the paving strips away again (one ground block), so
+the paving rule has nothing to act on there; it stays for maps that have such pieces. Read from the town's scripts and
+mesh assets, not measured in play: houses are "complex as simple" with BlockAll and should stop walkers; stalls, crates
+and casks have no collision, so everyone walks through them.
+
+Read, not changed: the crowd's strollers steer round each other (`Crowd.Stroll.Avoidance`); walker capsules ignore
+each other, so people who are not on the stroll system (fleeing, fighting, on a routine) can pass through one another.
 
 ## 5. Files
 

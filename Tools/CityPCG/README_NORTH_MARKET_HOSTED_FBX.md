@@ -1,33 +1,58 @@
 # North Market hosted FBX review
 
-This is a **prepared, unrun, review-only** workflow for the four tracked
+This is a **review-only** workflow for the four tracked
 `NorthMarketDetailedObj` source models. It does not open the shared editor,
 place anything in Gray London, or certify the buildings' visual quality. A
 clean round trip does not establish Unreal scale or orientation: a conversion
 can cancel itself when Blender exports and reimports the same FBX.
 
-The workflow uses an isolated GitHub-hosted `ubuntu-24.04` VM, `contents:
-read`, no secrets or self-hosted runners, a 20-minute job timeout and one-day
-artifact retention. Checkout and artifact actions are pinned to full commit
+The first hosted attempt passed both east models but stopped on the first
+west model before the combined artifact upload, so it retained no FBX bundle.
+The parallel [matrix run 43723954546](https://github.com/zachrizzo/reflections/actions/runs/43723954546)
+then passed both east models and `west_d08bbb3b`, retaining a separate bundle
+for each. `west_736fd5c6` failed before FBX export: one imported face normal
+differed from the source by 0.0041 in one component, exceeding the 0.001
+tolerance. Its position, UV, material and winding matched. The cause and a
+safe correction were unproven at that point. The targeted authored-normal
+preservation trial subsequently passed export and fresh-process reimport in
+[hosted run 43724753596](https://github.com/zachrizzo/reflections/actions/runs/43724753596).
+All four matrix jobs in that run succeeded and uploaded separate review-only
+bundles. These results do not establish visual or Unreal approval.
+
+Each job uses an isolated GitHub-hosted `ubuntu-24.04` VM, `contents: read`,
+no secrets or self-hosted runners, a 20-minute timeout and one-day artifact
+retention. Checkout and artifact actions are pinned to full commit
 SHAs. Only the four OBJs, their MTL, manifest and nine PNGs, plus the four
 review scripts and the workflow, are checked out; no Unreal project or LFS
 files are required. Blender 4.5.3 is downloaded on the hosted VM from the
 [official release](https://download.blender.org/release/Blender4.5/) and
 checked against the pinned SHA-256 in the
 [official checksum list](https://download.blender.org/release/Blender4.5/blender-4.5.3.sha256).
-It downloads about 377 MB; Blender and any render run there, not on the shared
-machine. Blender is distributed under the
+Each VM downloads about 377 MB: up to roughly 1.5 GB across the four jobs,
+subject to GitHub scheduling. The extra downloads permit independent parallel
+results and do not use the shared machine's Blender or GPU. Blender is distributed under the
 [GNU GPL](https://www.blender.org/about/license/).
 
 ## What is checked
 
-- The pinned source manifest, four OBJ hashes, MTL hash and referenced PNG
-  hashes are checked before and after processing. The original source files
-  are only read. Source pivots and yaw are copied into the reports.
+- Each job checks the pinned source manifest, its own OBJ hash, the MTL hash
+  and referenced PNG hashes before and after processing. The original source
+  files are only read. Source pivots and yaw are copied into the reports.
 - Each source OBJ is imported with local metres and its existing +X entrance
   and +Z up coordinates. OBJ has no slot order, so the contract is the MTL's
   declaration order filtered to materials actually used by that building.
   Slot reordering retains each face's named assignment.
+- For `west_736fd5c6` only, the trial first matches each imported
+  face to the source by position, UV, winding and material, rejecting missing
+  or ambiguous matches. It requires finite, unit source normals that are
+  constant per face. On export it restores those authored loop normals and
+  adds sharp edges only at differing authored-normal boundaries, preserving
+  existing sharp edges, face-smooth flags and topology; FBX export uses edge
+  smoothing. In the hosted run, fresh FBX reimport applied no restoration and
+  passed the strict geometry, normal, material and sharp-edge checks without
+  relaxing tolerances. Both reports identify 16,126 required sharp edges out
+  of 16,220 mesh edges; this is not a count of newly added edges. Unreal vertex
+  splitting and performance still need measurement.
 - Before FBX export and after reimport in a **separate clean Blender
   process**, a fail-closed comparison checks object identity transform and
   pivot; vertex, edge, polygon and UV-corner counts; ordered slot names; and
@@ -43,16 +68,16 @@ machine. Blender is distributed under the
   Non-finite transforms and material values are rejected. The verification requires reimported
   textures to resolve inside the exported model's artifact directory; it
   does not fall back to source textures elsewhere.
-- A bounded, optional CPU render attempts eye-level and three-quarter views
-  of one verified building. A render or copy failure is nonfatal; preview files
+- Only the matching `east_0a73564b` job attempts the bounded, optional CPU
+  render of eye-level and three-quarter views. A render or copy failure is nonfatal; preview files
   are staged in a hidden directory excluded from the upload, checked for PNG
   signatures and a matching FBX hash, then published together by atomic rename.
   These are diagnostic views with artificial lighting, not visual approval or a
   view from the actual game.
 
 Blender's exporter, importer and shader conversion may differ from these
-expectations. A failed or ambiguous check stops the job before uploading
-the FBX bundle. No FBX or preview has been created by this workflow yet.
+expectations. A failed or ambiguous check stops that model's job before
+upload; other model jobs can still upload their verified bundles.
 
 ## Workflow execution after review
 
@@ -63,8 +88,13 @@ validates the event and its exact Git diff before downloading Blender.
 Because the available connector cannot dispatch Actions, put the scripts,
 tests and documentation on `main` first; add the workflow in a later
 workflow-only commit to trigger that path. Do not include other files in the
-trigger commit. Inspect the Actions run and download the
-`north-market-fbx-review` artifact before its one-day expiry.
+trigger commit. Inspect the Actions run and download the successful individual
+artifacts before their one-day expiry:
+
+- `north-market-fbx-review-east-0a73564b`
+- `north-market-fbx-review-east-31c9ff1a`
+- `north-market-fbx-review-west-736fd5c6`
+- `north-market-fbx-review-west-d08bbb3b`
 
 Local tests do not require Blender or modify assets:
 

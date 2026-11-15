@@ -14,6 +14,7 @@
 #include "NPC/ReflectionsNpcReactionComponent.h"
 #include "NPC/ReflectionsNpcSubsystem.h"
 #include "Voice/ReflectionsNpcDialogueOverlay.h"
+#include "Voice/ReflectionsAmbientTalk.h"
 #include "Worlds/ReflectionsSealedDoor.h"
 #include "Worlds/ReflectionsWorldPickups.h"
 #include "Voice/ReflectionsNpcDialogueSettings.h"
@@ -159,6 +160,8 @@ AActor* UReflectionsVoiceInteractionSubsystem::FindTalkTarget(const APawn* Pawn)
 
 void UReflectionsVoiceInteractionSubsystem::Tick(float DeltaTime)
 {
+    // Ambient NPC lines whose speaker the player has left behind fade out (ReflectionsAmbientTalk).
+    ReflectionsAmbientTalk::Tick(GetWorld());
     EnsureSetup();
     APlayerController* PC = Controller.Get();
     APawn* Pawn = PC ? PC->GetPawn() : nullptr;
@@ -279,6 +282,8 @@ bool UReflectionsVoiceInteractionSubsystem::SayToNpc(AActor* Npc, const FString&
 {
     EnsureSetup();
     if (!Voice || !IsValid(Npc)) return false;
+    // No live reply (a model call and speech) for an NPC the player could not hear anyway.
+    if (!ReflectionsAmbientTalk::IsWithinHearing(Npc, false)) return false;
     Voice->ConnectToNpc(Npc);
     Partner = Npc;
     Target = Npc;

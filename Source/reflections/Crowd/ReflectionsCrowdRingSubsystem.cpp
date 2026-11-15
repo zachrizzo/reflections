@@ -1,9 +1,18 @@
 #include "Crowd/ReflectionsCrowdRingSubsystem.h"
+#include "Crowd/ReflectionsCrowdStrollSubsystem.h"
 #include "NPC/ReflectionsNpcArchetype.h"
 #include "NPC/ReflectionsNpcReactionComponent.h"
 #include "NPC/ReflectionsNpcSubsystem.h"
 
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Animation/AnimSequence.h"
 #include "Camera/PlayerCameraManager.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "GameFramework/Character.h"
 #include "Engine/AssetManager.h"
 #include "Engine/StreamableManager.h"
 #include "Engine/World.h"
@@ -34,6 +43,21 @@ namespace
         TEXT("How long a far walker must stay unseen before it is replaced."));
     TAutoConsoleVariable<FString> CVarRingArchetype(TEXT("Crowd.Ring.Archetype"), TEXT("Civilian"),
         TEXT("NPC archetype the ring walkers are spawned as."));
+    TAutoConsoleVariable<int32> CVarRingLaneFree(TEXT("Crowd.Ring.LaneFree"), 1,
+        TEXT("Without ZoneGraph lanes, place walkers on open street floor near the hero (they stroll round their spawn point). 0: no lanes, no walkers."));
+    TAutoConsoleVariable<float> CVarRingRefillDelay(TEXT("Crowd.Ring.RefillDelay"), 12.0f,
+        TEXT("After violence within 60 m of the hero, no new walkers for this long (s): the street stays empty, then refills."));
+    TAutoConsoleVariable<float> CVarRingFledRetire(TEXT("Crowd.Ring.FledRetireDistance"), 2000.0f,
+        TEXT("A fleeing walker farther than this (cm) and unseen for 1 s is retired at once (it ran off the street)."));
+    TAutoConsoleVariable<float> CVarRingCarryChance(TEXT("Crowd.Ring.CarryChance"), 0.3f,
+        TEXT("Share of new walkers that carry a basket or crate (needs Crowd.Ring.CarryProp and an additive carry clip)."));
+    TAutoConsoleVariable<FString> CVarRingCarryProp(TEXT("Crowd.Ring.CarryProp"),
+        TEXT("/Game/LanthorneAssets/Pewterside/Props/SM_Pewterside_CanalCrate.SM_Pewterside_CanalCrate"),
+        TEXT("Static mesh carried by carriers (object path; scaled to about 45 cm across). Empty: nobody carries."));
+    TAutoConsoleVariable<FString> CVarRingCarryClip(TEXT("Crowd.Ring.CarryClip"), TEXT("/Game/Combat/Melee/AS_Street_Carry_Hold_Walker.AS_Street_Carry_Hold_Walker"),
+        TEXT("Additive upper-body hold for the walker skeleton, looped over the walk while carrying."));
+    TAutoConsoleVariable<int32> CVarRingPrewarm(TEXT("Crowd.Ring.PrewarmPerCheck"), 4,
+        TEXT("Walkers spawned per 0.5 s check during the initial fill (at map start, behind the intro), instead of one."));
 
     const FName RingTag(TEXT("Crowd_Ring"));
     const FName LaneWalkerTag(TEXT("Crowd_LaneWalker"));
@@ -69,6 +93,10 @@ void UReflectionsCrowdRingSubsystem::OnWorldBeginPlay(UWorld& InWorld)
     StartAt = InWorld.GetTimeSeconds() + 1.5;
     if (!bActiveMap) return;
     UE_LOG(LogReflectionsCrowdRing, Log, TEXT("Ring crowd: active on %s."), *InWorld.GetMapName());
+    if (UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(this))
+    {
+        StimulusHandle = Npcs->OnStimulus().AddUObject(this, &UReflectionsCrowdRingSubsystem::HandleStimulus);
+    }
     // SpawnNpc loads a look synchronously the first time it is worn; load them all in the background now instead.
     if (UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(this))
     {
@@ -85,6 +113,12 @@ void UReflectionsCrowdRingSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 void UReflectionsCrowdRingSubsystem::Deinitialize()
 {
     // The world is ending and takes the walkers with it.
+    if (UWorld* World = GetWorld())
+    {
+        UReflectionsNpcSubsystem* Npcs = World->GetSubsystem<UReflectionsNpcSubsystem>();
+        if (IsValid(Npcs) && StimulusHandle.IsValid()) Npcs->OnStimulus().Remove(StimulusHandle);
+    }
+    StimulusHandle.Reset();
     Walkers.Reset();
     if (LookPreload.IsValid()) LookPreload->CancelHandle();
     LookPreload.Reset();
@@ -97,6 +131,17 @@ TArray<AActor*> UReflectionsCrowdRingSubsystem::GetWalkers() const
     for (const FRingWalker& Walker : Walkers)
         if (AActor* Actor = Walker.Actor.Get()) Actors.Add(Actor);
     return Actors;
+}
+
+void UReflectionsCrowdRingSubsystem::HandleStimulus(const FReflectionsNpcStimulus& Stimulus)
+{
+    // Everything that frightens a street except a call for help (the villain taking someone counts too).
+    if (Stimulus.Kind == EReflectionsNpcStimulusKind::Alarm) return;
+    if (const UWorld* World = GetWorld())
+    {
+        LastViolenceTime = World->GetTimeSeconds();
+        LastViolenceLocation = Stimulus.Location;
+    }
 }
 
 void UReflectionsCrowdRingSubsystem::RemoveAll()
@@ -122,6 +167,45 @@ bool UReflectionsCrowdRingSubsystem::IsSeen(const FVector& Location) const
     FHitResult Hit;
     FCollisionQueryParams Params(SCENE_QUERY_STAT(CrowdRingSight), false, Controller->GetPawn());
     return !GetWorld()->LineTraceSingleByChannel(Hit, Eye, Head, ECC_Visibility, Params);
+}
+
+bool UReflectionsCrowdRingSubsystem::FindFloorPoint(const FVector& Hero, float HeroFeetZ, float AheadYaw, bool bAllowSeen, FVector& OutLocation, float& OutYaw) const
+{
+    UWorld* World = GetWorld();
+    const float MinDistance = CVarRingMinDistance.GetValueOnGameThread();
+    const float Farthest = FMath::Max(MinDistance + 100.0f, CVarRingRecycleDistance.GetValueOnGameThread() * 0.9f);
+    const float MaxDistance = FMath::Clamp(CVarRingMaxDistance.GetValueOnGameThread(), MinDistance + 100.0f, Farthest);
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(CrowdRingFloor), false);
+    if (const APawn* HeroPawn = UGameplayStatics::GetPlayerPawn(this, 0)) Params.AddIgnoredActor(HeroPawn);
+    FCollisionObjectQueryParams Solid(ECC_WorldStatic);
+    Solid.AddObjectTypesToQuery(ECC_WorldDynamic);
+    const FCollisionShape Body = FCollisionShape::MakeCapsule(40.0f, 88.0f);
+    for (int32 Try = 0; Try < 16; ++Try)
+    {
+        const float Yaw = AheadYaw + FMath::FRandRange(-100.0f, 100.0f);
+        const FVector Probe = Hero + FRotator(0.0f, Yaw, 0.0f).Vector() * FMath::FRandRange(MinDistance, MaxDistance);
+        // Street floor at about the hero's level (not a roof, not a cellar).
+        FHitResult Floor;
+        if (!World->LineTraceSingleByObjectType(Floor, FVector(Probe.X, Probe.Y, HeroFeetZ + 250.0f), FVector(Probe.X, Probe.Y, HeroFeetZ - 400.0f), Solid, Params)) continue;
+        if (Floor.ImpactNormal.Z < 0.8f || FMath::Abs(Floor.ImpactPoint.Z - HeroFeetZ) > 400.0f) continue;
+        // Outdoors: from high above, the first thing hit is this same floor (no roof or upper storey over it).
+        FHitResult Sky;
+        if (World->LineTraceSingleByObjectType(Sky, FVector(Probe.X, Probe.Y, Floor.ImpactPoint.Z + 3000.0f), Floor.ImpactPoint + FVector(0.0, 0.0, 5.0), Solid, Params)) continue;
+        // Room for a person standing there.
+        if (World->OverlapAnyTestByObjectType(Floor.ImpactPoint + FVector(0.0, 0.0, 92.0), FQuat::Identity, Solid, Body, Params)) continue;
+        const FVector Spot = Floor.ImpactPoint;
+        const bool bCrowded = Walkers.ContainsByPredicate([&Spot](const FRingWalker& Walker)
+        {
+            const AActor* Actor = Walker.Actor.Get();
+            return Actor && FVector::Dist2D(Actor->GetActorLocation(), Spot) < 300.0;
+        });
+        if (bCrowded) continue;
+        if (!bAllowSeen && IsSeen(Spot)) continue;
+        OutLocation = Spot + FVector(0.0, 0.0, 2.0);
+        OutYaw = FMath::FRandRange(-180.0f, 180.0f);
+        return true;
+    }
+    return false;
 }
 
 bool UReflectionsCrowdRingSubsystem::FindSpawnPoint(const FVector& Hero, float AheadYaw, bool bAllowSeen, FVector& OutLocation, float& OutYaw) const
@@ -150,19 +234,51 @@ bool UReflectionsCrowdRingSubsystem::FindSpawnPoint(const FVector& Hero, float A
         });
         if (bCrowded) continue;
         if (!bAllowSeen && IsSeen(Lane.Position)) continue;
-        OutLocation = Lane.Position + FVector(0.0, 0.0, 2.0);
+        // Lane points are at pavement height (city ground + 3 cm). Where a lane cuts a road corner, the road sheet
+        // is 18 cm higher and one-sided: spawning at the lane's height would put the walker under it. Stand on the
+        // top floor found from 25 cm above the lane (high enough for a road, below a bench seat).
+        FVector Feet = Lane.Position;
+        FHitResult Floor;
+        FCollisionQueryParams FloorParams(SCENE_QUERY_STAT(CrowdRingLaneFloor), true);
+        if (GetWorld()->LineTraceSingleByObjectType(Floor, Lane.Position + FVector(0.0, 0.0, 25.0), Lane.Position - FVector(0.0, 0.0, 60.0),
+            FCollisionObjectQueryParams(ECC_WorldStatic), FloorParams) && Floor.ImpactNormal.Z > 0.7f)
+        {
+            Feet.Z = Floor.ImpactPoint.Z;
+        }
+        OutLocation = Feet + FVector(0.0, 0.0, 2.0);
         OutYaw = Lane.Direction.Rotation().Yaw;
         return true;
     }
     return false;
 }
 
-void UReflectionsCrowdRingSubsystem::SpawnWalker(const FVector& Hero, float AheadYaw, bool bAllowSeen)
+void UReflectionsCrowdRingSubsystem::SpawnWalker(const FVector& Hero, float HeroFeetZ, float AheadYaw, bool bAllowSeen, bool bLanes)
 {
     UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(this);
-    FVector Location;
+    FVector Location = FVector::ZeroVector;
     float Yaw = 0.0f;
-    if (!Npcs || !FindSpawnPoint(Hero, AheadYaw, bAllowSeen, Location, Yaw))
+    // A map with street routes (MedievalLondon): spawn on a route, where walkers keep clear of houses and stalls.
+    bool bOnRoute = false;
+    if (UReflectionsCrowdStrollSubsystem* Stroll = GetWorld()->GetSubsystem<UReflectionsCrowdStrollSubsystem>())
+    {
+        const float MinDistance = CVarRingMinDistance.GetValueOnGameThread();
+        const float Farthest = FMath::Max(MinDistance + 100.0f, CVarRingRecycleDistance.GetValueOnGameThread() * 0.9f);
+        const float MaxDistance = FMath::Clamp(CVarRingMaxDistance.GetValueOnGameThread(), MinDistance + 100.0f, Farthest);
+        bOnRoute = Stroll->FindRouteSpawn(Hero, MinDistance, MaxDistance, [this, bAllowSeen](const FVector& Point)
+        {
+            const bool bCrowded = Walkers.ContainsByPredicate([&Point](const FRingWalker& Walker)
+            {
+                const AActor* Actor = Walker.Actor.Get();
+                return Actor && FVector::Dist2D(Actor->GetActorLocation(), Point) < 300.0;
+            });
+            return !bCrowded && (bAllowSeen || !IsSeen(Point));
+        }, Location, Yaw);
+        if (bOnRoute) Location.Z += 2.0f;
+    }
+    // Lanes may cover only part of the city: where no lane point fits, open street floor will do.
+    const bool bFound = bOnRoute || (bLanes && FindSpawnPoint(Hero, AheadYaw, bAllowSeen, Location, Yaw))
+        || (CVarRingLaneFree.GetValueOnGameThread() != 0 && FindFloorPoint(Hero, HeroFeetZ, AheadYaw, bAllowSeen, Location, Yaw));
+    if (!Npcs || !bFound)
     {
         ++FailedSpawns;
         return;
@@ -179,8 +295,60 @@ void UReflectionsCrowdRingSubsystem::SpawnWalker(const FVector& Hero, float Ahea
     Npc->Tags.AddUnique(TEXT("Friendly"));
     // Passers-by are an endless supply next to the hero: the Tarnish takes only named or placed people (orchestrator, train #13).
     Npc->Tags.AddUnique(TEXT("NoVillain"));
-    Walkers.Add({ Npc, -1.0 });
+    FRingWalker& Walker = Walkers.Add_GetRef({ Npc, -1.0 });
     ++SpawnedTotal;
+    // Some carry goods; only when there is a prop and the hold clip is additive (a full-body clip would stop the legs).
+    if (!CVarRingCarryProp.GetValueOnGameThread().IsEmpty() && FMath::FRand() < CVarRingCarryChance.GetValueOnGameThread())
+    {
+        const UAnimSequence* Hold = LoadObject<UAnimSequence>(nullptr, *CVarRingCarryClip.GetValueOnGameThread());
+        if (Hold && Hold->IsValidAdditive())
+        {
+            Walker.bCarrier = true;
+            Npc->Tags.AddUnique(TEXT("Crowd_Carry"));
+        }
+    }
+}
+
+void UReflectionsCrowdRingSubsystem::TickCarrier(FRingWalker& Walker)
+{
+    AActor* Actor = Walker.Actor.Get();
+    UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(this);
+    UReflectionsNpcReactionComponent* Brain = Actor && Npcs ? Npcs->FindNpc(Actor) : nullptr;
+    ACharacter* Driver = Brain ? Brain->GetLocomotionDriver() : nullptr;
+    UAnimInstance* Anim = Driver && Driver->GetMesh() ? Driver->GetMesh()->GetAnimInstance() : nullptr;
+    if (!Anim) return;
+    // Calm and walking: hold the goods. Frightened (or in a scene): let go of the pose and hide the goods.
+    const bool bCalm = Brain->Reaction == EReflectionsNpcReaction::Calm && !Brain->IsIncapacitated() && !Npcs->IsNpcInScene(Actor);
+    UAnimMontage* Playing = Walker.CarryMontage.Get();
+    const bool bHolding = Playing && Anim->Montage_IsPlaying(Playing);
+    if (bCalm && !bHolding)
+    {
+        if (UAnimSequenceBase* Hold = LoadObject<UAnimSequenceBase>(nullptr, *CVarRingCarryClip.GetValueOnGameThread()))
+            Walker.CarryMontage = Anim->PlaySlotAnimationAsDynamicMontage(Hold, TEXT("DefaultSlot"), 0.3f, 0.3f, 1.0f, 100000);
+    }
+    else if (!bCalm && bHolding)
+    {
+        Anim->Montage_Stop(0.2f, Playing);
+    }
+    UStaticMeshComponent* Prop = Walker.CarryProp.Get();
+    if (!Prop && bCalm)
+    {
+        if (UStaticMesh* Mesh = LoadObject<UStaticMesh>(nullptr, *CVarRingCarryProp.GetValueOnGameThread()))
+        {
+            Prop = NewObject<UStaticMeshComponent>(Actor, TEXT("CrowdCarryProp"));
+            Prop->SetStaticMesh(Mesh);
+            Prop->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            Prop->SetCastShadow(true);
+            // Held in front at waist height (the looks face their own +Y), scaled to about 45 cm across.
+            const float Size = FMath::Max(1.0f, Mesh->GetBounds().BoxExtent.GetMax() * 2.0f);
+            Prop->SetRelativeScale3D(FVector(45.0f / Size));
+            Prop->SetupAttachment(Actor->GetRootComponent());
+            Prop->SetRelativeLocation(FVector(0.0, 32.0, 98.0));
+            Prop->RegisterComponent();
+            Walker.CarryProp = Prop;
+        }
+    }
+    if (Prop) Prop->SetVisibility(bCalm);
 }
 
 void UReflectionsCrowdRingSubsystem::Tick(float DeltaTime)
@@ -201,16 +369,22 @@ void UReflectionsCrowdRingSubsystem::Tick(float DeltaTime)
     const APawn* HeroPawn = UGameplayStatics::GetPlayerPawn(this, 0);
     const UZoneGraphSubsystem* ZoneGraph = UWorld::GetSubsystem<UZoneGraphSubsystem>(World);
     if (!HeroPawn) return;
-    if (!ZoneGraph || ZoneGraph->GetRegisteredZoneGraphData().IsEmpty())
+    const bool bLanes = ZoneGraph && !ZoneGraph->GetRegisteredZoneGraphData().IsEmpty();
+    if (!bLanes)
     {
+        const bool bLaneFree = CVarRingLaneFree.GetValueOnGameThread() != 0;
         if (!bWarnedNoLanes)
         {
-            UE_LOG(LogReflectionsCrowdRing, Warning, TEXT("Ring crowd: %s has no ZoneGraph lanes; no walkers."), *World->GetMapName());
+            UE_LOG(LogReflectionsCrowdRing, Warning, TEXT("Ring crowd: %s has no ZoneGraph lanes; %s."), *World->GetMapName(),
+                bLaneFree ? TEXT("walkers are placed on open street floor near the hero") : TEXT("no walkers (Crowd.Ring.LaneFree 0)"));
             bWarnedNoLanes = true;
         }
-        return;
+        if (!bLaneFree) return;
     }
     const FVector Hero = HeroPawn->GetActorLocation();
+    float HeroFeetZ = Hero.Z;
+    if (const ACharacter* HeroCharacter = Cast<ACharacter>(HeroPawn))
+        if (const UCapsuleComponent* Capsule = HeroCharacter->GetCapsuleComponent()) HeroFeetZ -= Capsule->GetScaledCapsuleHalfHeight();
     const FVector Velocity = HeroPawn->GetVelocity();
     float AheadYaw = HeroPawn->GetControlRotation().Yaw;
     if (Velocity.Size2D() > 100.0) AheadYaw = Velocity.Rotation().Yaw;
@@ -239,15 +413,25 @@ void UReflectionsCrowdRingSubsystem::Tick(float DeltaTime)
             continue;
         }
         // Stroll's lane mode owns ring walkers; anyone else claiming one leaves it standing (said once).
-        if (!bWarnedClaimed && Actor->ActorHasTag(TEXT("NPC_NoStroll")))
+        if (!bWarnedClaimed && Actor->ActorHasTag(TEXT("NPC_NoStroll")) && !Actor->ActorHasTag(TEXT("Crowd_Spot")))
         {
             bWarnedClaimed = true;
             UE_LOG(LogReflectionsCrowdRing, Warning, TEXT("Ring crowd: %s was tagged NPC_NoStroll by another system; stroll will not walk it."), *Actor->GetName());
         }
         // Calm (or dead) walkers go once far and unseen; a still-frightened one only when twice as far.
         const double Distance = FVector::Dist2D(Actor->GetActorLocation(), Hero);
+        // Someone who fled out of sight has left the street: retire them now, so the street visibly empties.
+        if (Brain && Brain->Reaction == EReflectionsNpcReaction::Fleeing && Distance > CVarRingFledRetire.GetValueOnGameThread()
+            && !Actor->WasRecentlyRendered(1.0f))
+        {
+            Actor->Destroy();
+            Walkers.RemoveAtSwap(Index);
+            ++RetiredFled;
+            continue;
+        }
         const bool bBusy = Brain && !Brain->IsIncapacitated() && Brain->Reaction != EReflectionsNpcReaction::Calm;
         const bool bGone = !Actor->WasRecentlyRendered(1.0f) && Distance > RecycleDistance && (!bBusy || Distance > RecycleDistance * 2.0f);
+        if (Walker.bCarrier && Brain) TickCarrier(Walker);
         if (!bGone)
         {
             Walker.FarSince = -1.0;
@@ -267,17 +451,29 @@ void UReflectionsCrowdRingSubsystem::Tick(float DeltaTime)
         if (AActor* Extra = Walkers.Last().Actor.Get()) Extra->Destroy();
         Walkers.Pop();
     }
+    else if (Walkers.Num() < Want && Now - LastViolenceTime < CVarRingRefillDelay.GetValueOnGameThread()
+        && FVector::Dist2D(LastViolenceLocation, Hero) < 6000.0)
+    {
+        // A lull after violence near the hero: the street stays empty for now.
+    }
     else if (Walkers.Num() < Want)
     {
-        SpawnWalker(Hero, AheadYaw, SpawnedTotal < Want);
+        // The initial fill happens at map start, behind the intro fade: several at once so the street is full when the
+        // player gets control. Later replacements come one at a time, out of sight.
+        const bool bInitialFill = SpawnedTotal < Want;
+        const int32 Batch = bInitialFill ? FMath::Clamp(CVarRingPrewarm.GetValueOnGameThread(), 1, 12) : 1;
+        for (int32 Spawn = 0; Spawn < Batch && Walkers.Num() < Want; ++Spawn)
+        {
+            SpawnWalker(Hero, HeroFeetZ, AheadYaw, bInitialFill, bLanes);
+        }
     }
 }
 
 FString UReflectionsCrowdRingSubsystem::Describe() const
 {
     const APawn* HeroPawn = UGameplayStatics::GetPlayerPawn(this, 0);
-    FString Text = FString::Printf(TEXT("Ring crowd: map %d, %d walkers (want %d), spawned %d, recycled %d, released to the villain %d, failed spawns %d"),
-        bActiveMap, Walkers.Num(), CVarRingCount.GetValueOnGameThread(), SpawnedTotal, RecycledTotal, ReleasedTotal, FailedSpawns);
+    FString Text = FString::Printf(TEXT("Ring crowd: map %d, %d walkers (want %d), spawned %d, recycled %d, fled and retired %d, released to the villain %d, failed spawns %d"),
+        bActiveMap, Walkers.Num(), CVarRingCount.GetValueOnGameThread(), SpawnedTotal, RecycledTotal, RetiredFled, ReleasedTotal, FailedSpawns);
     const UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(this);
     for (const FRingWalker& Walker : Walkers)
     {

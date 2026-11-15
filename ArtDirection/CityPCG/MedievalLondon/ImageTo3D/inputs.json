@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "status": "imagegen_reference_only",
+  "assets": {
+    "AppleBasket": "1764286d75c75fc24850f0818c1b483c43c75d2329a9413a42b6adae6d9eb66b",
+    "MerchantCrate": "234b8e14ac98e517b450afa49fd854f883418d48e0e6a848b6cc68e11c0eff8d",
+    "PottersStock": "529e3cf097b4397c96d3ef0edb9857f19b387204fc15768fad985dc06dd53b96",
+    "BakersTray": "9211afc9468367d48e60262307de4e2c862eb8faf8d39b225f4c83909d9f3d4b",
+    "MarketHandcart": "8887d40acf1c49fec19e0a8a8031fad665f45e6f523d224b362c00fdf6cee855",
+    "MarketWell": "bc562d50e8b9e6cd08f445aa44ec12b266ed98e841da9829f1ca6c04b8abac3e"
+  }
+}

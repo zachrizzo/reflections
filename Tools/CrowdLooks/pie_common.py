@@ -163,3 +163,19 @@ async def shoot_look(world, actor, stem, forward=None, face=True, body=True):
         cam = unreal.Vector(head.x + fwd.x * 300 + side.x * 90, head.y + fwd.y * 300 + side.y * 90, head.z - 55)
         out['body'] = await capture(world, stem + '_body.png', cam, mid, fov=40.0, w=480, h=720)
     return out
+
+
+def floor_z(world, x, y, guess_z, ignore=()):
+    """Top floor under (x, y): trace from guess_z + 50 down to guess_z - 150 and take the first hit (crowd-react,
+    04:0x: spawning at player z - 90 put NPCs under Gray London's 28 cm road sheet, and they stood on the city ground
+    below, so planted boots looked buried). Falls back to guess_z."""
+    try:
+        hit = unreal.SystemLibrary.line_trace_single(
+            world, unreal.Vector(x, y, guess_z + 50), unreal.Vector(x, y, guess_z - 150),
+            unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, True, list(ignore), unreal.DrawDebugTrace.NONE, True)
+        t = hit.to_tuple() if hit is not None and hasattr(hit, 'to_tuple') else None
+        if t and t[0]:
+            return t[4].z
+    except Exception:
+        pass
+    return guess_z

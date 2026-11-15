@@ -31,6 +31,11 @@
 #include "NavigationSystem.h"
 #include "UObject/Package.h"
 #include "UObject/UnrealType.h"
+#include "Dom/JsonObject.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogReflectionsLives, Log, All);
 DECLARE_CYCLE_STAT(TEXT("Lives"), STAT_ReflectionsLives, STATGROUP_Game);
@@ -443,6 +448,16 @@ void UReflectionsLivesSubsystem::Tick(float DeltaTime)
         }
         else if (!CanSteer(Life))
         {
+            // Someone who fears or hates Wren is close, but the body is not ours to move: say why (once per 10 s).
+            if (Life.Lod == EReflectionsLifeLod::Full && Player && Now >= Life.NextShyNote &&
+                FVector::Dist2D(Actor->GetActorLocation(), PlayerLocation) < 700.0f && GetPlayerFeeling(Life.Person.Id) > 0)
+            {
+                Life.NextShyNote = Now + 10.0;
+                const UReflectionsNpcReactionComponent* B = Life.Brain.Get();
+                UE_LOG(LogReflectionsLives, Log, TEXT("%s can't keep away from the Silverer: reaction %d, scripted %d, steered elsewhere %d, ambient %d, paused %d"),
+                    *Life.Person.Name, B ? static_cast<int32>(B->Reaction) : -1, B && B->IsScripted() ? 1 : 0,
+                    B && B->IsExternallySteered() && !Life.bSteering ? 1 : 0, Life.bAmbient ? 1 : 0, Life.bPaused ? 1 : 0);
+            }
             ReleaseBody(Life);
             if (Life.Move == EMove::Chat || Life.Move == EMove::Meet) EndChat(Life);
         }
@@ -527,6 +542,122 @@ void UReflectionsLivesSubsystem::DiscoverPlaces()
             New.Radius = 150.0f;
         }
     }
+    // The layout file's named places win over the map's markers (on a scripted town those may sit in a heap).
+    if (!bPlaceFileLoaded) LoadPlaceFile();
+    for (const FReflectionsLifePlace& P : FilePlaces) Places.Add(P.Tag, P);
+}
+
+namespace
+{
+    // Which pool a place name draws from when no marker answers it: homes, work (stalls), or gathering spots.
+    FName PoolKindFor(const FString& S)
+    {
+        if (S.StartsWith(TEXT("Home_")) || S.Contains(TEXT("_Home")) || S.Contains(TEXT("_Doorstep")) || S.Contains(TEXT("_Cellar"))) return TEXT("home");
+        if (S.StartsWith(TEXT("Work_")) || S.Contains(TEXT("_Workshop")) || S.Contains(TEXT("_Market")) || S.Contains(TEXT("_Stall")) ||
+            S.Contains(TEXT("_Laundry")) || S.Contains(TEXT("_Shop"))) return TEXT("work");
+        if (S.StartsWith(TEXT("Haunt_")) || S.StartsWith(TEXT("Spot_")) || S.Contains(TEXT("_Square")) || S.Contains(TEXT("_Fountain")) ||
+            S.Contains(TEXT("_Cistern")) || S.Contains(TEXT("_Well")) || S.Contains(TEXT("_Lane")) || S.Contains(TEXT("_Inn")) || S.Contains(TEXT("_Tavern")))
+            return TEXT("gather");
+        return NAME_None;
+    }
+}
+
+void UReflectionsLivesSubsystem::LoadPlaceFile()
+{
+    bPlaceFileLoaded = true;
+    UWorld* World = GetWorld();
+    if (!World) return;
+    const FString Map = UWorld::RemovePIEPrefix(World->GetMapName());
+    const FString Path = FPaths::ProjectContentDir() / TEXT("Crowd/Spots") / (Map + TEXT("_Lives.json"));
+    FString Text;
+    if (!FFileHelper::LoadFileToString(Text, *Path)) return;  // no layout file: markers and auto places as before
+    TSharedPtr<FJsonObject> Root;
+    if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Root) || !Root.IsValid())
+    {
+        UE_LOG(LogReflectionsLives, Warning, TEXT("Lives places: %s is not valid JSON."), *Path);
+        return;
+    }
+    auto Read = [this](const TSharedPtr<FJsonObject>& O, float DefaultRadius)
+    {
+        FReflectionsLifePlace P;
+        double X = 0, Y = 0, Z = 0, R = DefaultRadius;
+        O->TryGetNumberField(TEXT("x"), X);
+        O->TryGetNumberField(TEXT("y"), Y);
+        O->TryGetNumberField(TEXT("z"), Z);
+        O->TryGetNumberField(TEXT("radius"), R);
+        double DX = X, DY = Y;
+        O->TryGetNumberField(TEXT("door_x"), DX);
+        O->TryGetNumberField(TEXT("door_y"), DY);
+        FString Name;
+        if (O->TryGetStringField(TEXT("name"), Name)) P.Tag = FName(*Name);
+        P.Location = GroundPoint(FVector(X, Y, Z + 50.0));
+        P.Door = GroundPoint(FVector(DX, DY, Z + 50.0));
+        P.Radius = FMath::Clamp(static_cast<float>(R), 60.0f, 2000.0f);
+        P.bAuto = false;
+        return P;
+    };
+    const TArray<TSharedPtr<FJsonValue>>* List = nullptr;
+    if (Root->TryGetArrayField(TEXT("places"), List))
+        for (const TSharedPtr<FJsonValue>& V : *List)
+            if (const TSharedPtr<FJsonObject> O = V.IsValid() ? V->AsObject() : nullptr)
+            {
+                FReflectionsLifePlace P = Read(O, 300.0f);
+                if (!P.Tag.IsNone()) FilePlaces.Add(P);
+            }
+    const TSharedPtr<FJsonObject>* Pools = nullptr;
+    int32 PoolCount = 0;
+    if (Root->TryGetObjectField(TEXT("pools"), Pools))
+        for (const auto& Pair : (*Pools)->Values)
+        {
+            const TArray<TSharedPtr<FJsonValue>>* Points = nullptr;
+            if (!Pair.Value.IsValid() || !Pair.Value->TryGetArray(Points)) continue;
+            const FName Kind(*Pair.Key);
+            const float DefaultRadius = Kind == TEXT("home") ? 150.0f : Kind == TEXT("work") ? 200.0f : 400.0f;
+            TArray<FReflectionsLifePlace>& Pool = PlacePools.FindOrAdd(Kind);
+            for (const TSharedPtr<FJsonValue>& V : *Points)
+                if (const TSharedPtr<FJsonObject> O = V.IsValid() ? V->AsObject() : nullptr) { Pool.Add(Read(O, DefaultRadius)); ++PoolCount; }
+        }
+    const auto Count = [this](const TCHAR* Kind) { const TArray<FReflectionsLifePlace>* P = PlacePools.Find(FName(Kind)); return P ? P->Num() : 0; };
+    UE_LOG(LogReflectionsLives, Log, TEXT("Lives places: %d named and %d pooled (homes %d, work %d, gather %d) from %s"), FilePlaces.Num(), PoolCount,
+        Count(TEXT("home")), Count(TEXT("work")), Count(TEXT("gather")), *Path);
+}
+
+bool UReflectionsLivesSubsystem::PoolPlace(FName Where, const FVector& Near, FReflectionsLifePlace& OutPlace)
+{
+    const FName Kind = PoolKindFor(Where.ToString());
+    const TArray<FReflectionsLifePlace>* Pool = Kind.IsNone() ? nullptr : PlacePools.Find(Kind);
+    if (!Pool || Pool->Num() == 0) return false;
+    int32 Index = INDEX_NONE;
+    if (const int32* Known = PoolPicks.Find(Where)) Index = *Known;
+    else
+    {
+        // Same name, same door every run; homes and stalls go one to a name until the pool runs out, squares are shared.
+        const int32 N = Pool->Num();
+        const int32 Start = static_cast<int32>(Hash32(Where.ToString()) % static_cast<uint32>(N));
+        TSet<int32>& Used = PoolUsed.FindOrAdd(Kind);
+        Index = Start;
+        if (!Near.IsNearlyZero())
+        {
+            // Near where they are: the closest free door or stall (homes and work), or one of the three closest squares
+            // (picked by name, so a crowd spreads over them), so the town's life happens where people already are.
+            TArray<TPair<float, int32>> ByDistance;
+            for (int32 i = 0; i < N; ++i)
+                if (Kind == TEXT("gather") || !Used.Contains(i))
+                    ByDistance.Emplace(FVector::DistSquared2D((*Pool)[i].Location, Near), i);
+            ByDistance.Sort([](const TPair<float, int32>& A, const TPair<float, int32>& B) { return A.Key < B.Key; });
+            if (ByDistance.Num() > 0)
+                Index = ByDistance[Kind == TEXT("gather") ? static_cast<int32>(Hash32(Where.ToString()) % static_cast<uint32>(FMath::Min(3, ByDistance.Num()))) : 0].Value;
+        }
+        else if (Kind != TEXT("gather"))
+            for (int32 i = 0; i < N; ++i)
+                if (!Used.Contains((Start + i) % N)) { Index = (Start + i) % N; break; }
+        Used.Add(Index);
+        PoolPicks.Add(Where, Index);
+    }
+    OutPlace = (*Pool)[Index];
+    OutPlace.Tag = Where;
+    OutPlace.bAuto = false;
+    return true;
 }
 
 FVector UReflectionsLivesSubsystem::GroundPoint(const FVector& Near) const
@@ -990,7 +1121,21 @@ AActor* UReflectionsLivesSubsystem::SpawnLife(FLife& Life, const FVector& Where,
         const bool bGuard = !bSoldier && (Life.Person.Archetype == TEXT("Guard") || Life.Person.LookRole == TEXT("Guard"));
         TSubclassOf<AActor> Look = nullptr;
         TArray<UClass*> Strict, Relaxed;
-        for (const TSoftClassPtr<AActor>& Soft : UReflectionsNpcSubsystem::TeamLooks())
+        // The team's fixed list plus the archetypes' looks for this person's side (Pewterside's grey PewLook_* live
+        // only in the archetypes), so a side with its own clothes never borrows another's.
+        TArray<TSoftClassPtr<AActor>> Candidates = UReflectionsNpcSubsystem::TeamLooks();
+        {
+            const FString SideKey = Life.Person.Side.ToString().Left(4);
+            const FName FullSide = SideKey.Equals(TEXT("Gilt"), ESearchCase::IgnoreCase) ? FName(TEXT("Giltside"))
+                : SideKey.Equals(TEXT("Fros"), ESearchCase::IgnoreCase) ? FName(TEXT("Frostside"))
+                : SideKey.Equals(TEXT("Pewt"), ESearchCase::IgnoreCase) ? FName(TEXT("Pewterside")) : NAME_None;
+            if (!FullSide.IsNone())
+            {
+                const FName Arch = bSoldier ? FName(TEXT("AlliedSoldier")) : bGuard ? FName(TEXT("Guard")) : FName(TEXT("Civilian"));
+                for (const TSoftClassPtr<AActor>& Soft : Npcs->GetLooksForSide(Arch, FullSide)) Candidates.AddUnique(Soft);
+            }
+        }
+        for (const TSoftClassPtr<AActor>& Soft : Candidates)
             if (UClass* Class = Soft.LoadSynchronous())
             {
                 const AActor* Cdo = Class->GetDefaultObject<AActor>();
@@ -1307,6 +1452,7 @@ void UReflectionsLivesSubsystem::Think(FLife& Life, float Now)
     EReflectionsLifeActivity Activity = ActivityFor(Step.Do);
     FName Where = ResolveWhere(Life, Step, StepIndex);
     uint32 VigilSeed = 0;
+    FName DoorOwner = Life.Person.Id;  // whose door a generic home means (the lost one's, at a vigil)
 
     // The street's mood (the Tarnish meter's band) bends everyone's day, by archetype (story book infection_overrides).
     const FName Band = CurrentBand();
@@ -1360,6 +1506,7 @@ void UReflectionsLivesSubsystem::Think(FLife& Life, float Now)
                                 Activity = EReflectionsLifeActivity::Vigil;
                                 Where = LostLife->Person.Home;
                                 VigilSeed = LostLife->Seed;
+                                DoorOwner = State->ConcernFor;
                             }
         }
         else if (bAvoiding)
@@ -1425,13 +1572,30 @@ void UReflectionsLivesSubsystem::Think(FLife& Life, float Now)
             (Life.bAmbient || !FindStoryMarker(Alias.IsNone() ? Where : Alias, Place)))
             Place = AutoPlace(Where, &Life);
         else Places.FindOrAdd(Where) = Place;  // the person's own name for it, found the same way next time
+        // On a scripted town, a place no real marker answers takes a real house door, stall or square spot.
+        FReflectionsLifePlace Pooled;
+        const FVector Near = Life.Actor.IsValid() ? (Life.Brain.IsValid() && !Life.bSpawnedByLives ? Life.Brain->GetHomeLocation() : Life.Actor->GetActorLocation()) : FVector::ZeroVector;
+        // The generic street of homes (Mk_<Side>_Home) is each person's own door there: one pooled door per owner.
+        const FString WhereText = Where.ToString();
+        const bool bGenericHome = WhereText.StartsWith(TEXT("Mk_")) && WhereText.EndsWith(TEXT("_Home"));
+        bool bPooledDoor = false;
+        if (bGenericHome && PoolPlace(FName(*(WhereText + TEXT("_") + DoorOwner.ToString())), DoorOwner == Life.Person.Id ? Near : FVector::ZeroVector, Pooled))
+        {
+            Place = Pooled;
+            bPooledDoor = true;
+        }
+        else if (Place.bAuto && PoolPlace(Where, Near, Pooled))
+        {
+            Place = Pooled;
+            Places.FindOrAdd(Where) = Place;
+        }
         const bool bVigil = Activity == EReflectionsLifeActivity::Vigil;
         Life.PlaceLocation = (Life.bIndoorStep || bVigil) ? Place.Door : Place.Location;
         Life.PlaceRadius = bVigil ? 150.0f : Place.Radius;
         // A generic home (Mk_<Side>_Home: the street of homes) is shared: each person has their own door along it
         // (a vigil is kept at the lost one's door).
         const uint32 DoorSeed = bVigil && VigilSeed ? VigilSeed : Life.Seed;
-        if (Where.ToString().EndsWith(TEXT("_Home")) && Where.ToString().StartsWith(TEXT("Mk_")))
+        if (bGenericHome && !bPooledDoor)
             Life.PlaceLocation = GroundPoint(Life.PlaceLocation + FVector::ForwardVector.RotateAngleAxis(static_cast<float>(DoorSeed % 360u), FVector::UpVector) *
                 (250.0f + static_cast<float>((DoorSeed >> 9) % 400u)));
     }
@@ -2619,6 +2783,8 @@ void UReflectionsLivesSubsystem::TickShy(FLife& Life, double Now, const FVector&
     if (Life.bShyRun) SetWalkGait(Driver, false);
     Life.ShyUntil = Now + (Feeling == 1 ? 9.0 : 6.0);
     Life.Activity = EReflectionsLifeActivity::Shun;
+    UE_LOG(LogReflectionsLives, Log, TEXT("%s keeps away from the Silverer (%s, %.0f cm)"), *Life.Person.Name,
+        Feeling == 1 ? TEXT("afraid") : TEXT("hates them"), Dist);
     if (Now >= Life.NextGreetTime)
     {
         Life.NextGreetTime = Now + 40.0 + (Life.Seed % 20u);

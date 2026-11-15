@@ -1,7 +1,7 @@
 """Lives consequences check (train #12/#13): deaths ripple, fear of the player, crime witnesses, soldiers, sides.
 
 Run through the editor MCP `execute_python`, one phase per call (each must stay under ~60 s), with Saved/PIE_LOCK.json
-taken. Set PHASE ('A'..'D') and optionally MAP (default /Game/GrayLondon/Maps/GrayLondon_Geodata) in the calling namespace, then run
+taken. Set PHASE ('A'..'D') and optionally MAP (default /Game/GrayLondon/Maps/MedievalLondon) in the calling namespace, then run
 this file with top-level await (see verify_lives.py). State is kept on the unreal module between calls.
 
   A  Starts PIE (and opens MAP). Sides: every person's body is of their own side (Look_Side_* vs persona side).
@@ -17,7 +17,7 @@ import json
 import math
 from pathlib import Path
 
-MAP = globals().get('MAP', '/Game/GrayLondon/Maps/GrayLondon_Geodata')
+MAP = globals().get('MAP', '/Game/GrayLondon/Maps/MedievalLondon')
 OUT = Path(unreal.Paths.project_saved_dir()) / 'Lives'
 OUT.mkdir(parents=True, exist_ok=True)
 if PHASE == 'A' or not hasattr(unreal, '_lives_cons'):
@@ -129,7 +129,13 @@ async def run():
             side = str(lives.get_persona_facts(a).side)
             if body and side and body[:4].lower() != side[:4].lower():
                 bad.append(f'{lives.get_person_name(lives.get_person_id(a))}: {side} in a {body} look ({a.get_class().get_name()})')
-        check('A_sides_never_mixed', not bad, {'people': len(people(lives, npcs)), 'mixed': bad})
+        quest = []
+        for a in people(lives, npcs):
+            if any(str(t) == 'QuestSpawned' for t in a.tags):
+                body = next((str(t)[10:] for t in a.tags if str(t).startswith('Look_Side_')), '?')
+                quest.append(f'{lives.get_person_name(lives.get_person_id(a))}: {lives.get_persona_facts(a).side} in {body} ({a.get_class().get_name()})')
+        R['notes']['quest_spawned'] = quest
+        check('A_sides_never_mixed', not bad, {'people': len(people(lives, npcs)), 'mixed': bad, 'quest_spawned': quest})
         lives.set_time_of_day(18.5)
 
     elif PHASE == 'B':
@@ -176,7 +182,19 @@ async def run():
             await asyncio.sleep(5.0)
             m1 = mourner.get_actor_location()
             moved = math.hypot(m1.x - m0.x, m1.y - m0.y)
-            check('B_keeps_away_from_player', moved > 250.0, {'moved_cm': moved, 'feeling': feeling})
+            diag = {'moved_cm': moved, 'feeling': feeling}
+            try:
+                brain = npcs.find_npc(mourner)
+                drv = brain.get_locomotion_driver() if brain else None
+                diag['driver_speed'] = drv.get_velocity().length() if drv else None
+                pl = player.get_actor_location()
+                diag['player_dist_cm'] = math.hypot(m1.x - pl.x, m1.y - pl.y)
+                diag['line'] = next((l for l in str(lives.describe()).splitlines() if str(lives.get_person_name(mid)) in l), '')
+                nav = unreal.NavigationSystemV1.project_point_to_navigation(w, m0, None, None, unreal.Vector(50, 50, 250)) if hasattr(unreal, 'NavigationSystemV1') else None
+                diag['on_navmesh'] = nav is not None
+            except Exception as e:
+                diag['diag_error'] = repr(e)
+            check('B_keeps_away_from_player', moved > 250.0, diag)
             await shot('B_keeps_away')
         else:
             check('B_keeps_away_from_player', False, {'feeling': feeling, 'note': 'opinion not low enough to shun'})

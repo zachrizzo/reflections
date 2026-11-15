@@ -101,6 +101,8 @@ struct FReflectionsLifeRuntime
     bool bShyRun = false;
     /** World seconds of the last crime by the player this person took in (one report per crime). */
     double LastCrimeTime = -100.0;
+    /** Next time a "can't keep away" note may be logged for this life (debug, throttled). */
+    double NextShyNote = 0.0;
     uint32 Seed = 1;
 };
 
@@ -277,6 +279,10 @@ private:
     void DiscoverPlaces();
     FReflectionsLifePlace& AutoPlace(FName Tag, const FLife* For);
     bool FindStoryMarker(FName Tag, FReflectionsLifePlace& OutPlace);
+    /** Places worked out from the map's layout by Tools/Lives/derive_places.py (Content/Crowd/Spots/<Map>_Lives.json):
+     *  named places, plus pools of house doors, stall fronts and gathering spots for places no marker answers. */
+    void LoadPlaceFile();
+    bool PoolPlace(FName Where, const FVector& Near, FReflectionsLifePlace& OutPlace);
     FVector GroundPoint(const FVector& Near) const;
 
     // Population
@@ -368,6 +374,11 @@ private:
     FReflectionsPeopleBook Book;
     TMap<FName, FLife> Lives;
     TMap<FName, FReflectionsLifePlace> Places;
+    TArray<FReflectionsLifePlace> FilePlaces;
+    TMap<FName, TArray<FReflectionsLifePlace>> PlacePools;
+    TMap<FName, int32> PoolPicks;
+    TMap<FName, TSet<int32>> PoolUsed;
+    bool bPlaceFileLoaded = false;
     TMap<int32, FName> CrowdAgents;
     TSet<FString> UsedNames;
     FVector AutoCenter = FVector::ZeroVector;

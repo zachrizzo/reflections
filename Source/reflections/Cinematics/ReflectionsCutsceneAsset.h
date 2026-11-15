@@ -285,6 +285,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cutscene|Anchor")
     bool bSnapAnchorToGround = true;
 
+    /**
+     * Open ground needed in front of the anchor (stage forward). If the anchor faces a wall closer than this, the
+     * stage turns (yaw only) to the nearest heading with this much room. 0 = always keep the anchor's facing.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cutscene|Anchor", meta = (Units = "cm"))
+    float MinStageDepth = 900.0f;
+
     /** Ignore the anchor's pitch and roll. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cutscene|Anchor")
     bool bAnchorYawOnly = true;

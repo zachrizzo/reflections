@@ -5,9 +5,12 @@
 #include "NPC/ReflectionsReputationSubsystem.h"
 #include "Hero/ReflectionsSpellCombat.h"
 #include "Worlds/ReflectionsWorldLibrary.h"
+#include "Voice/ReflectionsAmbientTalk.h"
 #include "AssetRegistry/AssetData.h"
 #include "AssetRegistry/IAssetRegistry.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/InstancedStaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
 #include "Engine/DataTable.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
@@ -27,6 +30,12 @@
 #include "TimerManager.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogReflectionsNpc, Log, All);
+
+static TAutoConsoleVariable<int32> CVarNpcSpawnOnFloor(TEXT("Npc.SpawnOnFloor"), 1,
+    TEXT("1 (default): SpawnNpc stands the NPC on the topmost walkable surface, at least 5 m across both ways, within 50 cm above and 150 cm below the place asked for (a road sheet over the city ground, a kerb; not a bench); a smaller piece counts too when such floor lies within 30 cm under it (paving in a narrow lane). 2: the 5 m rule without that exception. 0: exactly where asked."));
+
+static TAutoConsoleVariable<float> CVarNpcPanicRipple(TEXT("Npc.PanicRipple"), 0.2f,
+    TEXT("Seconds by which each 5 m ring further from a noise, a fight, a death or a taking hears of it later, so that alarm spreads outward (never more than 0.9 s). 0: everyone at once. Alarm calls and direct hits are never delayed."));
 
 static TAutoConsoleVariable<int32> CVarNpcHeat(TEXT("Npc.Heat"), 1,
     TEXT("1 (default): the player's crimes against NPCs raise heat, witnesses call out and guards turn on the player. 0: off."));
@@ -329,8 +338,9 @@ namespace
         const FString Path = Look.ToSoftObjectPath().ToString();
         // Pewterside's looks are grey copies of Giltside outfits in their own folder (PewLook_<X>): asked first.
         if (Path.Contains(TEXT("/Pewterside/")) || Path.Contains(TEXT("PewLook_"))) return PewtersideName;
-        if (Path.Contains(TEXT("Look_Gilt")) || Path.Contains(TEXT("SimpleRed")) || Path.Contains(TEXT("RedLondon"))) return GiltsideName;
-        if (Path.Contains(TEXT("Look_Frost")) || Path.Contains(TEXT("WhiteLook")) || Path.Contains(TEXT("WhiteLondon"))) return FrostsideName;
+        // (The dressed soldier looks are named GiltSoldier_<X> and FrostSoldier_<X>, in Looks/Soldiers.)
+        if (Path.Contains(TEXT("Look_Gilt")) || Path.Contains(TEXT("GiltSoldier_")) || Path.Contains(TEXT("SimpleRed")) || Path.Contains(TEXT("RedLondon"))) return GiltsideName;
+        if (Path.Contains(TEXT("Look_Frost")) || Path.Contains(TEXT("FrostSoldier_")) || Path.Contains(TEXT("WhiteLook")) || Path.Contains(TEXT("WhiteLondon"))) return FrostsideName;
         if (Path.Contains(TEXT("Look_Pewter")) || Path.Contains(TEXT("GrayLondon")) || Path.Contains(TEXT("GreyLondon"))) return PewtersideName;
         return NAME_None;
     }
@@ -452,6 +462,50 @@ AActor* UReflectionsNpcSubsystem::SpawnNpc(FName ArchetypeId, FVector Location, 
     {
         UE_LOG(LogReflectionsNpc, Warning, TEXT("SpawnNpc: no team look could be loaded for '%s'."), *ArchetypeId.ToString());
         return nullptr;
+    }
+    // On the floor that is really there. A street can be a thin sheet above the ground the caller measured from
+    // (Gray London's roads lie 18 cm over the city ground): asked for the lower one, the NPC stood with its feet in
+    // the road. The topmost walkable surface near the place asked for wins; small things (a bench, a crate) do not
+    // count as floor.
+    if (CVarNpcSpawnOnFloor.GetValueOnGameThread() != 0)
+    {
+        TArray<FHitResult> Floors;
+        const FCollisionQueryParams FloorQuery(SCENE_QUERY_STAT(NpcSpawnFloor), true);
+        World->LineTraceMultiByObjectType(Floors, Location + FVector(0.0, 0.0, 50.0), Location - FVector(0.0, 0.0, 150.0),
+            FCollisionObjectQueryParams(ECC_WorldStatic), FloorQuery);
+        // The topmost small walkable piece met on the way down: it is the floor after all when broad floor lies
+        // just under it (paving pieces on the ground slab of a narrow lane; a bench seat is 45 cm up and is not).
+        const bool bPavingCounts = CVarNpcSpawnOnFloor.GetValueOnGameThread() != 2;
+        bool bSmallPiece = false;
+        double SmallPieceTop = 0.0;
+        for (const FHitResult& Floor : Floors)
+        {
+            const UPrimitiveComponent* Surface = Floor.GetComponent();
+            if (!Surface || Floor.ImpactNormal.Z <= 0.7f) continue;
+            // Broad in both directions on the ground (a railing or a kerb strip is long and thin). Street furniture
+            // is instanced, many pieces in one component: there it is the piece that was hit that is measured.
+            FVector HalfSize = Surface->Bounds.BoxExtent;
+            if (const UInstancedStaticMeshComponent* Instanced = Cast<UInstancedStaticMeshComponent>(Surface))
+            {
+                FTransform PieceToWorld;
+                const UStaticMesh* Piece = Instanced->GetStaticMesh();
+                if (!Piece || !Instanced->GetInstanceTransform(Floor.Item, PieceToWorld, true)) continue;
+                HalfSize = Piece->GetBounds().TransformBy(PieceToWorld).BoxExtent;
+            }
+            if (FMath::Min(HalfSize.X, HalfSize.Y) < 250.0)
+            {
+                if (!bSmallPiece)
+                {
+                    bSmallPiece = true;
+                    SmallPieceTop = Floor.ImpactPoint.Z;
+                }
+                continue;
+            }
+            const bool bOnPaving = bPavingCounts && bSmallPiece && SmallPieceTop >= Floor.ImpactPoint.Z &&
+                SmallPieceTop - Floor.ImpactPoint.Z <= 30.0;
+            Location.Z = bOnPaving ? SmallPieceTop : Floor.ImpactPoint.Z;
+            break;
+        }
     }
     // These looks face along their own +Y: the NPC component turns them the same way when it adds the walker.
     FActorSpawnParameters Params;
@@ -671,6 +725,8 @@ void UReflectionsNpcSubsystem::PlayBark(AActor* Actor, FName Group)
     AActor* Owner = Npc ? Npc->GetOwner() : nullptr;
     const UWorld* World = GetWorld();
     if (!Owner || !World || Group.IsNone() || !Owner->GetRootComponent() || World->GetTimeSeconds() < Npc->NextBarkTime) return;
+    // Only near the player, on screen, and a voice free (ReflectionsAmbientTalk); a fight or fear line carries farther.
+    if (!ReflectionsAmbientTalk::MayStart(Owner, Npc->Reaction != EReflectionsNpcReaction::Calm)) return;
     // The tarnished do not always talk: about two times in five they only growl (audio asked for the mix).
     USoundBase* Cue = Group == TEXT("Tarnished_Mutter") && FMath::FRand() < 0.4f ? FindBarkCue(TEXT("Cues/SCue_Infected_Growl")) : nullptr;
     if (!Cue) Cue = FindVoiceCue(Owner, Group);
@@ -688,8 +744,11 @@ void UReflectionsNpcSubsystem::PlayCueFromHead(UReflectionsNpcReactionComponent*
     USkeletalMeshComponent* Body = Npc->GetBodyMesh();
     const bool bHead = Body && Body->IsRegistered() && Body->GetBoneIndex(TEXT("head")) != INDEX_NONE &&
         (Body->LeaderPoseComponent.IsValid() || Body->GetNumComponentSpaceTransforms() > Body->GetBoneIndex(TEXT("head")));
-    if (bHead) UGameplayStatics::SpawnSoundAttached(Cue, Body, TEXT("head"), FVector::ZeroVector, EAttachLocation::SnapToTarget, true);
-    else UGameplayStatics::SpawnSoundAttached(Cue, Owner->GetRootComponent(), NAME_None, FVector(0.0, 0.0, 160.0), EAttachLocation::KeepRelativeOffset, true);
+    UAudioComponent* Audio = bHead
+        ? UGameplayStatics::SpawnSoundAttached(Cue, Body, TEXT("head"), FVector::ZeroVector, EAttachLocation::SnapToTarget, true)
+        : UGameplayStatics::SpawnSoundAttached(Cue, Owner->GetRootComponent(), NAME_None, FVector(0.0, 0.0, 160.0), EAttachLocation::KeepRelativeOffset, true);
+    // Counted against the ambient cap, and faded out when the player walks away.
+    ReflectionsAmbientTalk::Track(Audio, Owner, Npc->Reaction != EReflectionsNpcReaction::Calm);
 }
 
 bool UReflectionsNpcSubsystem::TryPlayRemark(UReflectionsNpcReactionComponent* Npc)
@@ -701,7 +760,7 @@ bool UReflectionsNpcSubsystem::TryPlayRemark(UReflectionsNpcReactionComponent* N
     // One remark at a time across the map, and never on top of the NPC's own bark.
     if (Now < RemarkBusyUntil || Now < Npc->NextBarkTime) return false;
     USoundBase* Cue = FindVoiceCue(Owner, TEXT("Remark"));
-    if (!Cue) return false;
+    if (!Cue || !ReflectionsAmbientTalk::MayStart(Owner, false)) return false;
     // The line's own length, with a breath after it (a cue that reports no length counts as three seconds).
     const float Length = Cue->GetDuration();
     RemarkBusyUntil = Now + (Length > 0.2f && Length < 15.0f ? Length : 3.0f) + 1.0f;
@@ -795,11 +854,63 @@ void UReflectionsNpcSubsystem::ReportStimulus(const FReflectionsNpcStimulus& Sti
     ActiveStimuli.Add(Stamped);
     StimulusEvent.Broadcast(Stamped);
 
+    const bool bCall = Stamped.Kind == EReflectionsNpcStimulusKind::Alarm;
+    if (!bCall)
+    {
+        const double Now = Stamped.WorldTime;
+        RecentViolence.RemoveAll([Now](const TPair<FVector, double>& Old) { return Now - Old.Value > 120.0; });
+        if (RecentViolence.Num() >= 32) RecentViolence.RemoveAt(0);
+        RecentViolence.Emplace(Stamped.Location, Now);
+    }
+
     const float Reputation = GetReputation(Stamped.Instigator.Get());
+    // Alarm spreads: each 5 m ring further out hears of it a little later. A call for help is heard at once.
+    const float PerRing = bCall ? 0.0f : CVarNpcPanicRipple.GetValueOnGameThread();
     // A reaction can enrol or remove NPCs: walk a copy.
     const TArray<TWeakObjectPtr<UReflectionsNpcReactionComponent>> Listeners = Npcs;
     for (const TWeakObjectPtr<UReflectionsNpcReactionComponent>& Weak : Listeners)
-        if (UReflectionsNpcReactionComponent* Npc = Weak.Get()) Npc->ReceiveStimulus(Stamped, Reputation);
+    {
+        UReflectionsNpcReactionComponent* Npc = Weak.Get();
+        const AActor* Listener = Npc ? Npc->GetOwner() : nullptr;
+        if (!Listener) continue;
+        const float Delay = PerRing > 0.0f
+            ? FMath::Min(FMath::FloorToFloat(FVector::Dist2D(Listener->GetActorLocation(), Stamped.Location) / 500.0f) * PerRing, 0.9f) : 0.0f;
+        if (Delay > 0.0f) Npc->QueueStimulus(Stamped, Reputation, Delay);
+        else Npc->ReceiveStimulus(Stamped, Reputation);
+    }
+}
+
+float UReflectionsNpcSubsystem::GetSecondsSinceViolence(FVector Near, float Radius) const
+{
+    const UWorld* World = GetWorld();
+    const double Now = World ? World->GetTimeSeconds() : 0.0;
+    double Latest = -1.0e9;
+    for (const TPair<FVector, double>& Event : RecentViolence)
+        if (Radius <= 0.0f || FVector::DistSquared2D(Event.Key, Near) <= FMath::Square(Radius)) Latest = FMath::Max(Latest, Event.Value);
+    return static_cast<float>(FMath::Min(Now - Latest, 1.0e6));
+}
+
+bool UReflectionsNpcSubsystem::BeginNpcScene(AActor* Actor, UAnimSequenceBase* Loop, bool bPinned, float BlendIn)
+{
+    UReflectionsNpcReactionComponent* Npc = FindNpc(Actor);
+    return Npc && Npc->BeginScene(Loop, bPinned, BlendIn);
+}
+
+bool UReflectionsNpcSubsystem::PlayNpcSceneClip(AActor* Actor, UAnimSequenceBase* Clip, float BlendIn, float BlendOut, bool bThenEnd)
+{
+    UReflectionsNpcReactionComponent* Npc = FindNpc(Actor);
+    return Npc && Npc->PlaySceneClip(Clip, BlendIn, BlendOut, bThenEnd);
+}
+
+void UReflectionsNpcSubsystem::EndNpcScene(AActor* Actor, float BlendOut)
+{
+    if (UReflectionsNpcReactionComponent* Npc = FindNpc(Actor)) Npc->EndScene(false, FMath::Clamp(BlendOut, 0.0f, 2.0f));
+}
+
+bool UReflectionsNpcSubsystem::IsNpcInScene(const AActor* Actor) const
+{
+    const UReflectionsNpcReactionComponent* Npc = FindNpc(Actor);
+    return Npc && Npc->IsInScene();
 }
 
 void UReflectionsNpcSubsystem::HandleSpellEvent(EHeroSpell Spell, FVector Location, AActor* Caster, float Intensity)
@@ -930,7 +1041,7 @@ void UReflectionsNpcSubsystem::PlayReaction(AActor* Actor, FName Group)
     const UWorld* World = GetWorld();
     if (!Npc || !World || Group.IsNone()) return;
     USoundBase* Cue = FindVoiceCue(Npc->GetOwner(), Group);
-    if (!Cue) return;
+    if (!Cue || !ReflectionsAmbientTalk::MayStart(Npc->GetOwner(), true)) return;
     // It has just spoken: an ordinary bark waits a moment, a second reaction does not.
     Npc->NextBarkTime = World->GetTimeSeconds() + 2.0f;
     PlayCueFromHead(Npc, Cue);
@@ -1179,6 +1290,7 @@ bool UReflectionsNpcSubsystem::TryBeginConversion(UReflectionsNpcReactionCompone
     Villain->ProcessEvent(Function, &Params);
     if (Params.ReturnValue <= 0.0f) return false;
     // Both are the villain's for the length of the sequence, with a second of slack as a safety timeout.
+    VictimNpc->EndScene(true);
     Attacker->BeginScriptedHold(Params.ReturnValue + 1.0f);
     VictimNpc->BeginScriptedHold(Params.ReturnValue + 1.0f);
     UE_LOG(LogReflectionsNpc, Log, TEXT("Conversion: %s on %s, held for %.1f s."), *GetNameSafe(Params.Attacker), *GetNameSafe(Params.Victim), Params.ReturnValue);

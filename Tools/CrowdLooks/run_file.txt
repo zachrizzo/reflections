@@ -1,0 +1,11 @@
+# Runner pasted into execute_python: runs a Tools/CrowdLooks script (top-level await allowed) and writes RESULT to OUT.
+import ast, inspect
+PROJECT = 'C:/Users/zachc/Documents/Unreal Projects/reflections/'
+g = dict(globals())
+g.update(PROJECT=PROJECT, **ARGS)
+src = open(PROJECT + 'Tools/CrowdLooks/' + FILE, encoding='utf-8').read()
+co = compile(src, FILE, 'exec', flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+r = eval(co, g)
+if inspect.iscoroutine(r):
+    await r
+open(OUT, 'w', encoding='utf-8').write(str(g.get('RESULT')))

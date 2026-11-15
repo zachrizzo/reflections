@@ -73,7 +73,14 @@ private:
         double AwakeUntil = 0.0;
         float LastDistance = 0.0f;
         EReflectionsCrowdLodTier Tier = EReflectionsCrowdLodTier::Full;
+        /** When its body went ragdoll (dead: root body simulating, driver capsule off); -1 while it is not. */
+        double RagdollSince = -1.0;
+        double NextCorpseCheck = 0.0;
+        int32 CorpseLifts = 0;
     };
+
+    /** Corpse regrounding (Crowd.Lod.RegroundCorpses): lifts a fresh ragdoll that lies under a road or floor sheet. */
+    void TickCorpse(FWalker& Walker, double Time);
 
     void Rescan();
     void UpdateTiers();

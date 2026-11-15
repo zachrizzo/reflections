@@ -1,0 +1,129 @@
+name: Surveyed whole-building roof massing review
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/whole-building-roof-review.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  complete-buildings:
+    if: ${{ github.repository == 'zachrizzo/reflections' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        side: [east, west]
+    env:
+      MASSING_SIDE: ${{ matrix.side }}
+    steps:
+      - name: Check out surveyed sources only
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+          submodules: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.gitattributes
+            /.github/workflows/whole-building-roof-review.yml
+            /Tools/CityPCG/build_whole_buildings_blender.py
+            /Tools/CityPCG/whole_building_styles.py
+            /Tools/CityPCG/whole_building_ridge_variation.py
+            /Tools/CityPCG/whole_building_roof_review_hosted.py
+            /Tools/CityPCG/test_whole_building_ridge_variation.py
+            /Tools/CityPCG/preflight_north_market_details.py
+            /Tools/CityPCG/north_market_roof_variation.py
+            /Tools/CityPCG/north_market_tenancies.py
+            /ArtDirection/CityPCG/Kit/build_facade_kit.py
+            /ArtDirection/CityPCG/MedievalOpening/build_medieval_facades.py
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/build_mark_lane.py
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/prepare_mark_lane_ue_fbx.py
+            /ArtDirection/CityPCG/MedievalOpening/ThamesWarehouse/build_thames_warehouse.py
+            /ArtDirection/CityPCG/MedievalOpening/Guildhall/build_guildhall.py
+            /ArtDirection/CityPCG/MedievalOpening/FollowOn20261115/north_market_east_candidate_20261115.json
+            /ArtDirection/CityPCG/MedievalOpening/FollowOn20261115/north_market_east_plan_20261115.json
+            /ArtDirection/CityPCG/MedievalOpening/FollowOn20261115/north_market_east_style_override_20261115.json
+            /ArtDirection/CityPCG/MedievalOpening/FollowOn20261115/north_market_west_candidate_20261115.json
+            /ArtDirection/CityPCG/MedievalOpening/FollowOn20261115/north_market_west_plan_20261115.json
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/.gitattributes
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/detailed_obj_manifest.json
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/Textures/
+
+      - name: Require an exact workflow-only push
+        if: ${{ github.event_name == 'push' }}
+        shell: bash
+        run: |
+          python3 -B - <<'PY'
+          import json, os, re, subprocess
+          with open(os.environ['GITHUB_EVENT_PATH'],encoding='utf-8') as stream:
+              event=json.load(stream)
+          before,after=event.get('before'),event.get('after'); sha=os.environ['GITHUB_SHA']
+          if (event.get('ref')!='refs/heads/main' or event.get('deleted') is not False
+                  or event.get('created') is not False or event.get('forced') is not False
+                  or not isinstance(before,str) or not re.fullmatch(r'[0-9a-f]{40}',before)
+                  or before=='0'*40 or after!=sha or not re.fullmatch(r'[0-9a-f]{40}',sha)):
+              raise SystemExit('Unexpected push event')
+          parents=subprocess.check_output(['git','rev-list','--parents','-n','1',sha],text=True).split()
+          changed=subprocess.check_output(['git','diff','--no-ext-diff','--no-renames','--name-only','-z',before,sha])
+          if parents!=[sha,before] or changed!=b'.github/workflows/whole-building-roof-review.yml\0':
+              raise SystemExit('Expected one workflow-only non-merge commit')
+          PY
+
+      - name: Test bounded whole-roof variation
+        run: |
+          python3 -B Tools/CityPCG/test_whole_building_ridge_variation.py -v
+          python3 -O -B Tools/CityPCG/test_whole_building_ridge_variation.py -v
+
+      - name: Fetch and verify official Blender
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/blender-4.5.3-linux-x64.tar.xz"
+          fetch() {
+            timeout --signal=TERM --kill-after=10s 420s curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' \
+              --max-redirs 4 --connect-timeout 15 --max-time 360 --max-filesize 400000000 \
+              --retry 2 --retry-all-errors --retry-delay 5 --retry-max-time 400 "$1" --output "$archive"
+          }
+          fetch https://download.blender.org/release/Blender4.5/blender-4.5.3-linux-x64.tar.xz || \
+            fetch https://mirror.blender.org/release/Blender4.5/blender-4.5.3-linux-x64.tar.xz
+          printf '%s  %s\n' '975c58fcb244273838534bba771e64ad87739216b0f9b39a888531a49a72d845' "$archive" | sha256sum --check --strict
+          tar -xJf "$archive" -C "$RUNNER_TEMP"
+
+      - name: Generate and compare complete buildings
+        shell: bash
+        run: |
+          set -euo pipefail
+          review="$GITHUB_WORKSPACE/Tools/CityPCG/whole_building_roof_review_hosted.py"
+          blender="$RUNNER_TEMP/blender-4.5.3-linux-x64/blender"
+          timeout --signal=TERM --kill-after=5s 90s python3 -B "$review" prepare
+          scratch="$RUNNER_TEMP/whole-roof-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$MASSING_SIDE"
+          tool="$scratch/Tools/CityPCG/build_whole_buildings_blender.py"
+          survey="$scratch/ArtDirection/CityPCG/MedievalOpening/FollowOn20261115"
+          candidate="$survey/north_market_${MASSING_SIDE}_candidate_20261115.json"
+          plan="$survey/north_market_${MASSING_SIDE}_plan_20261115.json"
+          style_args=()
+          if [[ "$MASSING_SIDE" == east ]]; then
+            style_args=(--style-overrides "$survey/north_market_east_style_override_20261115.json")
+          fi
+          timeout --signal=TERM --kill-after=10s 360s "$blender" --background --threads 2 --factory-startup --disable-autoexec \
+            --python-exit-code 1 --python "$tool" -- --candidate "$candidate" --plan "$plan" --output "$scratch/baseline" --prefix Baseline \
+            --review-source-facts "${style_args[@]}"
+          timeout --signal=TERM --kill-after=10s 360s "$blender" --background --threads 2 --factory-startup --disable-autoexec \
+            --python-exit-code 1 --python "$tool" -- --candidate "$candidate" --plan "$plan" --output "$scratch/variant" --prefix Variant \
+            --roof-variation asymmetric-ridges-v1 --review-source-facts "${style_args[@]}"
+          timeout --signal=TERM --kill-after=10s 600s "$blender" --background --threads 2 --factory-startup --disable-autoexec \
+            --python-exit-code 1 --python "$review" -- compare
+          test -s "$GITHUB_WORKSPACE/ci-whole-building-roof-massing-$MASSING_SIDE/manifest.json"
+
+      - name: Upload complete-building review bundle
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: whole-building-roof-massing-${{ matrix.side }}
+          path: ci-whole-building-roof-massing-${{ matrix.side }}/
+          if-no-files-found: error
+          retention-days: 3

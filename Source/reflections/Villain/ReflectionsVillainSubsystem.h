@@ -101,6 +101,13 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Villain")
     float BeginConversion(AActor* Attacker, AActor* Victim);
 
+    /**
+     * For scripted beats (cutscenes): BeginConversion without the pacing gap, after bringing the attacker's walker to
+     * arm's length of the victim's, and holding both NPCs for the length of the sequence. Same return. Safe by name.
+     */
+    UFUNCTION(BlueprintCallable, Category = "Villain")
+    float BeginConversionScripted(AActor* Attacker, AActor* Victim);
+
     /** True while the actor is in a conversion (either side). */
     UFUNCTION(BlueprintPure, Category = "Villain")
     bool IsConverting(const AActor* Actor) const;
@@ -139,6 +146,8 @@ public:
 
     /** True if the pawn may become a host or be infected. */
     static bool IsCandidate(const AActor* Actor, bool bAllowInfected);
+    /** Why Actor cannot be taken (nullptr: it can). bIgnoreOptOut: a scripted beat may take a NoVillain person. */
+    static const TCHAR* CandidateProblem(const AActor* Actor, bool bAllowInfected, bool bIgnoreOptOut);
 
 protected:
     virtual bool DoesSupportWorldType(const EWorldType::Type WorldType) const override;
@@ -160,6 +169,8 @@ private:
     bool IsRunLive() const;
     /** This is the map New Game opens (game flow's NewGameMap): a gameplay map even without world anchors. */
     bool IsNewGameMap() const;
+    /** Asks the NPC system to hold Actor still for Seconds (HoldNpc, by name). */
+    void HoldNpcFor(AActor* Actor, float Seconds) const;
     void EnsureFinalSpell();
     void SpawnBossAtArena();
 
@@ -219,6 +230,8 @@ private:
     int32 ConversionsStarted = 0;
     /** Villain.Convert (tests) ignores the pacing gap. */
     bool bIgnoreConvertGap = false;
+    /** BeginConversionScripted is running: the victim may carry the NoVillain opt-out (story beats turn named people). */
+    bool bScriptedConversion = false;
     /** Saved tarnished still to find after a load (people are assigned to bodies a moment after the map starts). */
     TArray<FString> PendingInfectedIds;
     FString PendingHostId;

@@ -796,6 +796,9 @@ namespace
         Wave->NumChannels = 1;
         Wave->Duration = INDEFINITELY_LOOPING_DURATION;
         Wave->bLooping = false;
+        // Out of earshot the reply must keep playing silently: a virtualized source never pulls its audio, the stream
+        // never drains, and the voice stays busy (no talking to anyone else) until the player walks back.
+        Wave->VirtualizationMode = EVirtualizationMode::PlayWhenSilent;
         return Wave;
     }
 }
@@ -1199,7 +1202,15 @@ void UReflectionsRealtimeVoiceComponent::TickComponent(float DeltaTime, ELevelTi
     }
     // The audio component lives on the NPC: if the NPC is gone, nothing will ever drain the stream.
     const bool bStreamDrained = !OutputWave || !IsValid(OutputAudio) || OutputWave->GetAvailableAudioByteCount() <= 0;
-    if (bAwaitingReply && bResponseDone && bStreamDrained)
+    // Backstop: a reply whose audio was never pulled (audio device trouble) ends once it is long overdue.
+    const double ReplySeconds = static_cast<double>(QueuedOutputBytes) / (BytesPerMs * 1000.0);
+    const bool bOverdue = Now - AwaitStarted > ReplyTimeoutSeconds + ReplySeconds + 10.0;
+    if (bAwaitingReply && bResponseDone && !bStreamDrained && bOverdue)
+    {
+        UE_LOG(LogReflectionsNpcDialogue, Log, TEXT("A reply's audio never finished playing; ending the turn."));
+        StopPlayback();
+    }
+    if (bAwaitingReply && bResponseDone && (bStreamDrained || bOverdue))
     {
         bAwaitingReply = false;
         bResponseDone = false;

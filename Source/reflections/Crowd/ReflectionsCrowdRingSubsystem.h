@@ -47,12 +47,28 @@ private:
         TWeakObjectPtr<AActor> Actor;
         /** When it was first found far away and unseen (-1: not now). */
         double FarSince = -1.0;
+        /** Carriers walk with a basket or crate held in front (an additive hold over the walk, and a prop). */
+        bool bCarrier = false;
+        TWeakObjectPtr<class UAnimMontage> CarryMontage;
+        TWeakObjectPtr<class UStaticMeshComponent> CarryProp;
     };
 
+    void TickCarrier(FRingWalker& Walker);
+
+    /** A lane point (ZoneGraph sidewalk lanes). */
     bool FindSpawnPoint(const FVector& Hero, float AheadYaw, bool bAllowSeen, FVector& OutLocation, float& OutYaw) const;
+    /** Without lanes: open street floor near the hero's level, outdoors, with room to stand. */
+    bool FindFloorPoint(const FVector& Hero, float HeroFeetZ, float AheadYaw, bool bAllowSeen, FVector& OutLocation, float& OutYaw) const;
     bool IsSeen(const FVector& Location) const;
-    void SpawnWalker(const FVector& Hero, float AheadYaw, bool bAllowSeen);
+    void SpawnWalker(const FVector& Hero, float HeroFeetZ, float AheadYaw, bool bAllowSeen, bool bLanes);
     void RemoveAll();
+    /** Violence (and loud magic, deaths) near the hero: the street empties, and refills only after a lull. */
+    void HandleStimulus(const struct FReflectionsNpcStimulus& Stimulus);
+
+    FDelegateHandle StimulusHandle;
+    double LastViolenceTime = -1.0e9;
+    FVector LastViolenceLocation = FVector::ZeroVector;
+    int32 RetiredFled = 0;
 
     TArray<FRingWalker> Walkers;
     /** The archetype's looks, loaded in the background at the start so a spawn never waits on a synchronous load. */

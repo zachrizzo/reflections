@@ -29,6 +29,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
+#include "UObject/UnrealType.h"
 
 namespace
 {
@@ -86,6 +87,28 @@ namespace
         const UReflectionsHealthComponent* Health = Player->FindComponentByClass<UReflectionsHealthComponent>();
         return Health && Health->Health <= 0.0f;
     }
+
+    void SetFormationWalk(ACharacter* Driver, bool bWalking)
+    {
+        if (!Driver) return;
+        // The sample pawn defaults to running and strafing. Its pre-CMC Blueprint update reapplies those
+        // wishes every frame, overriding a one-time bOrientRotationToMovement setting on the movement component.
+        FStructProperty* StateProperty = FindFProperty<FStructProperty>(Driver->GetClass(), TEXT("CharacterInputState"));
+        if (!StateProperty || !StateProperty->Struct) return;
+        void* InputState = StateProperty->ContainerPtrToValuePtr<void>(Driver);
+        for (TFieldIterator<FBoolProperty> It(StateProperty->Struct); It; ++It)
+        {
+            const FString Name = It->GetAuthoredName();
+            if (Name.StartsWith(TEXT("WantsToWalk")))
+            {
+                It->SetPropertyValue_InContainer(InputState, bWalking);
+            }
+            else if (Name.StartsWith(TEXT("WantsToStrafe")) || Name.StartsWith(TEXT("WantsToSprint")) || Name.StartsWith(TEXT("WantsToAim")))
+            {
+                It->SetPropertyValue_InContainer(InputState, false);
+            }
+        }
+    }
 }
 
 AReflectionsSquad::AReflectionsSquad()
@@ -120,9 +143,7 @@ AReflectionsSquad::AReflectionsSquad()
     MeleeWeapon = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TEXT("/Game/LanthorneAssets/Frostside/Props/SM_Frostside_MirrorSword.SM_Frostside_MirrorSword")));
     // User: every soldier holds a sword (casters cast from the sword hand) and a shield on the left arm.
     CasterWeapon = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TEXT("/Game/LanthorneAssets/Frostside/Props/SM_Frostside_MirrorSword.SM_Frostside_MirrorSword")));
-    // Kimodo march cycle (Tools/Squads/author_march.py), one copy per soldier skeleton.
-    MarchAnimations.Add(TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Squads/Animation/AS_Soldier_March_Iven.AS_Soldier_March_Iven"))));
-    MarchAnimations.Add(TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Squads/Animation/AS_Soldier_March_BridgeGuard.AS_Soldier_March_BridgeGuard"))));
+    // Formation movement uses the normal locomotion walk with the NPC system's additive weapon/shield hold.
     CastAnimations.Add(TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Characters/Hero/Animation/CombatCasts/AS_Hero_CombatBoltRight.AS_Hero_CombatBoltRight"))));
     // Spell crafting's Kimodo wand set (ArtDirection/CombatMelee): channel while the spell gathers, flick to throw it.
     // One copy per body skeleton in use; ClipFor picks the one that matches each caster.
@@ -932,7 +953,7 @@ void AReflectionsSquad::TickFormation(float DeltaSeconds, bool bReforming)
             SampleTrail(Rank * RankSpacing, Unused, SlotDirection);
         }
         SteerTo(Member, Goal, SlotDirection * AnchorSpeed, MaxSpeed, DeltaSeconds);
-        if (AnchorSpeed < 5.0f && Member.SlotError < 40.0f)
+        if (AnchorSpeed < 5.0f && Member.SlotError < 40.0f && Driver->GetVelocity().SizeSquared2D() < 25.0f)
         {
             FaceYaw(Driver, SlotDirection.Rotation().Yaw, DeltaSeconds);
         }
@@ -954,13 +975,19 @@ void AReflectionsSquad::SteerTo(FReflectionsSquadMember& Member, const FVector& 
     {
         Desired = To.GetSafeNormal() * MaxSpeed;
     }
+    UCharacterMovementComponent* Movement = Driver->GetCharacterMovement();
+    if (State != EReflectionsSquadState::Engaged && FVector::DotProduct(Flat(Driver->GetVelocity()), Desired) < 0.0f)
+    {
+        // The walk turns toward its new input immediately. Stop the old motion first on a reversal, otherwise
+        // the soldier faces the new direction while momentum carries it backward into its formation slot.
+        Movement->StopMovementImmediately();
+    }
     float Speed = Desired.Size();
     if (Speed < 20.0f && Distance < 35.0f)
     {
         return;
     }
     Speed = FMath::Min(Speed, MaxSpeed);
-    UCharacterMovementComponent* Movement = Driver->GetCharacterMovement();
     const float Scale = FMath::Clamp(Speed / FMath::Max(1.0f, Movement->GetMaxSpeed()), 0.05f, 1.0f);
     Driver->AddMovementInput(Desired.GetSafeNormal(), Scale, true);
 }
@@ -1166,12 +1193,15 @@ void AReflectionsSquad::UpdateMarchAnimation(FReflectionsSquadMember& Member, bo
         Member.SavedAnimClass = nullptr;
         return;
     }
+    ACharacter* Driver = ReflectionsSquadNpc::GetDriver(Member.Actor);
+    // Set the gait even when there is no march clip. The armed additive stays on the walker while its normal
+    // locomotion supplies the legs. Leaving formation releases the walk gait so fighting/fleeing can run.
+    SetFormationWalk(Driver, bMarching);
     if (LoadedMarchAnimations.Num() == 0 || (CVarSquadMarchClip.GetValueOnGameThread() == 0 && !Member.bMarchClipActive))
     {
         return;
     }
     USkeletalMeshComponent* Body = ReflectionsSquadNpc::GetBody(Member.Actor);
-    ACharacter* Driver = ReflectionsSquadNpc::GetDriver(Member.Actor);
     UAnimSequence* March = ClipFor(LoadedMarchAnimations, Body);
     if (!Body || !Driver || (!March && !Member.bMarchClipActive))
     {

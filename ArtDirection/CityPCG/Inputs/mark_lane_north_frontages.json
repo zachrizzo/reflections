@@ -1,0 +1,156 @@
+{
+  "coordinate_system": "ue_local_m",
+  "source": "Tile_p03_p00",
+  "attribution": "Base geometry: OpenStreetMap contributors, ODbL 1.0.",
+  "source_geometry": {
+    "facade_primitive": 0,
+    "origin_m": [
+      3000.0,
+      0.0,
+      0.0
+    ],
+    "road_primitive": null
+  },
+  "frontages": [
+    {
+      "id": "Tile_p03_p00_b69db7dfecf5",
+      "start": [
+        3297.126,
+        344.726,
+        0.2
+      ],
+      "end": [
+        3297.688,
+        348.958,
+        0.2
+      ],
+      "height_m": 22.2,
+      "outward": [
+        0.9913,
+        -0.1316
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_guide_visible"
+    },
+    {
+      "id": "Tile_p03_p00_3e8fd5bd3456",
+      "start": [
+        3306.717,
+        333.0,
+        0.2
+      ],
+      "end": [
+        3311.766,
+        365.808,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.9884,
+        0.1521
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_guide_visible"
+    },
+    {
+      "id": "Tile_p03_p00_f28db1f06da6",
+      "start": [
+        3308.279,
+        403.963,
+        0.2
+      ],
+      "end": [
+        3308.691,
+        407.034,
+        0.2
+      ],
+      "height_m": 38.2,
+      "outward": [
+        0.9911,
+        -0.133
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_guide_visible"
+    },
+    {
+      "id": "Tile_p03_p00_5022cb4a1184",
+      "start": [
+        3308.439,
+        407.394,
+        0.2
+      ],
+      "end": [
+        3308.868,
+        411.0,
+        0.2
+      ],
+      "height_m": 35.0,
+      "outward": [
+        0.993,
+        -0.1182
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_guide_visible"
+    },
+    {
+      "id": "Tile_p03_p00_f5deac4af351",
+      "start": [
+        3311.766,
+        365.808,
+        0.2
+      ],
+      "end": [
+        3316.144,
+        387.099,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.9795,
+        0.2014
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_guide_visible"
+    },
+    {
+      "id": "Tile_p03_p00_bfa00690832f",
+      "start": [
+        3316.144,
+        387.099,
+        0.2
+      ],
+      "end": [
+        3318.88,
+        399.801,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.9776,
+        0.2106
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_guide_visible"
+    },
+    {
+      "id": "Tile_p03_p00_0e87a913d487",
+      "start": [
+        3318.88,
+        399.801,
+        0.2
+      ],
+      "end": [
+        3320.834,
+        410.535,
+        0.2
+      ],
+      "height_m": 14.8,
+      "outward": [
+        -0.9838,
+        0.1791
+      ],
+      "source_primitive": 0,
+      "confidence": "rectangular_wall_road_guide_visible"
+    }
+  ]
+}

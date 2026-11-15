@@ -1,10 +1,12 @@
 REFLECTIONS - THIRD-PARTY NOTICES
 =================================
 
-This file lists third-party content in Reflections and the notices its
+This file lists the third-party content in Reflections and the notices its
 licences require. Packaging: copy this file to the root of the game zip.
 
-Draft 2026-11-14. Two items marked [CONFIRM] are still open.
+Revised 2026-11-15 15:20 MST for the shipped map,
+/Game/GrayLondon/Maps/MedievalLondon. One item, marked [CONFIRM], is still
+open.
 
 
 1. MAP DATA - OpenStreetMap
@@ -13,102 +15,30 @@ Map data (c) OpenStreetMap contributors.
 Available under the Open Database License (ODbL) 1.0:
   https://www.openstreetmap.org/copyright
   https://opendatacommons.org/licenses/odbl/1-0/
-Source extracts: Geofabrik, Greater London
-  (https://download.geofabrik.de/europe/united-kingdom/england/greater-london.html),
-  current and 1 January 2014.
+Source extracts: Geofabrik, Greater London.
 
-The city's streets, buildings, parks, river and prop placements were generated
-from this data. Buildings were filtered by date, heights were estimated where
-untagged, and some buildings were excluded or replaced. Under ODbL section
-4.6, the derived data and the method used to make it are offered under the
-ODbL at:
-  [CONFIRM: public link to the generator scripts and exclusion/manifest files]
+The medieval town's street layout, ground and building frontage plans were
+derived from OpenStreetMap tile exports. Under ODbL section 4.6, the derived
+data and the method used to make it are offered under the ODbL at:
+  [CONFIRM: public link to the generator scripts and tile/plan data]
 
 
-2. LANDMARK MODELS - Codriver 3D (CC BY 4.0)
---------------------------------------------
-Buckingham Palace, Tower of London, Tower Bridge, St Paul's Cathedral,
-Palace of Westminster, London Eye, Westminster Abbey, 30 St Mary Axe,
-Albert Bridge, Royal Albert Hall and National Theatre models:
-  (c) 2026 Codriver (9570-6198 Quebec inc.), https://3d-assets.codriver.io/
-  Licensed under Creative Commons Attribution 4.0 International:
-  https://creativecommons.org/licenses/by/4.0/
-  Geographic placement: (c) OpenStreetMap contributors, ODbL 1.0.
-Changes: decompressed, axes converted, meshes combined and re-placed for
-Unreal Engine. The generic building shapes inside each landmark's footprint
-were removed. The models are approximations, not surveys. The licence covers
-the models only. Trademarks and underlying architectural works remain with
-their owners.
+2. TEXTURES - Poly Haven (CC0)
+------------------------------
+Cobblestone Floor 04, Mossy Cobblestone and Leafy Grass from Poly Haven
+(https://polyhaven.com/license), CC0 1.0 (public domain). No attribution is
+required; they are credited with thanks.
 
 
-3. ALBERT MEMORIAL SCAN - artfletch (CC BY 4.0)
------------------------------------------------
-"Albert Memorial" by artfletch, https://zenodo.org/records/10307114
-(DOI 10.5281/zenodo.10307114). Licensed under CC BY 4.0:
-  https://creativecommons.org/licenses/by/4.0/
-Changes: reduced from about 1.85 million to 648,936 triangles, repositioned,
-and given a two-sided material.
+3. IMAGE-TO-3D - TripoSR (MIT)
+------------------------------
+The market well mesh was made with TripoSR (Stability AI and Tripo AI,
+https://github.com/VAST-AI-Research/TripoSR), MIT License, from an AI-generated
+reference image. The model's MIT licence covers the TripoSR software. The
+software is not distributed with the game.
 
 
-4. STREET PROPS - Minimaliano
------------------------------
-"London Street Props (Free)" by Minimaliano, Fab:
-  https://www.fab.com/listings/3a15c74a-8a6f-4f51-b488-28cb6da0205c
-Licence: CC BY 4.0, https://creativecommons.org/licenses/by/4.0/
-  [CONFIRM: the Fab page shows no licence. If the item is under the Fab
-  Standard License instead, replace these lines with "Used under the Fab
-  Standard License".]
-Changes: postbox, bin, bollard, railing and fence meshes recoloured,
-re-materialled and placed procedurally.
-
-
-5. CC0 / PUBLIC DOMAIN (no attribution required; credited with thanks)
----------------------------------------------------------------------
-Poly Haven (https://polyhaven.com/license), CC0: asphalt, concrete pavement,
-  leafy grass, roof slates, yellow, brown and red brick, castle wall
-  variation, brown planks, street lamp 01, outdoor table chair set 01,
-  modular urban apartments facade.
-"Lion sculpture" scan by danielpett (Sketchfab, via Zenodo), CC0 1.0.
-Vegetation textures from OpenGameArt "60 CC0 vegetation textures", CC0.
-ambientCG Bark014, CC0.
-
-
-6. TREE GENERATOR - Cosmo Tree Gen (MIT)
-----------------------------------------
-The ash tree was generated with Cosmo Tree Gen by FrogCosmonaut,
-https://github.com/FrogCosmonaut/cosmo_tree_gen
-
-MIT License
-
-Copyright (c) 2026 CosmonautFrog
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
-7. FONT - Noto Serif (SIL OFL 1.1)
-----------------------------------
-Street-name signs are lettered in Noto Serif (Google Fonts), licensed under
-the SIL Open Font License 1.1 (https://openfontlicense.org). The lettering is
-rendered into textures. No font file is distributed with the game.
-
-
-8. AI TOOLS AND OTHER ATTRIBUTION
+4. AI TOOLS AND OTHER ATTRIBUTION
 ---------------------------------
 Music: Eleven Music by ElevenLabs (elevenlabs.io).
 Fire and water spell sounds: ElevenLabs (elevenlabs.io).
@@ -120,10 +50,13 @@ Made with Unreal Engine 5.9. Unreal(R) is a trademark or registered
   trademark of Epic Games, Inc. in the United States and elsewhere.
 The full credits are on the game's Credits screen.
 
+Everything else in the town (buildings, market stalls, crates, casks, gates,
+palisades and their textures) is original work, made during the jam with
+scripts and Blender.
+
 
 DISCLAIMER
 ----------
-Creative Commons-licensed material is provided by its licensors "as is",
-without warranties of any kind. See each licence for details. Reflections is
-not affiliated with or endorsed by any of the rights holders above, or by the
-owners of any real-world place shown.
+Third-party material is provided by its licensors "as is", without
+warranties of any kind. See each licence for details. Reflections is not
+affiliated with or endorsed by any of the rights holders above.

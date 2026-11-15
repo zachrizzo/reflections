@@ -1,0 +1,16 @@
+{
+ "errors": [],
+ "viewport": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/retint/weave\\soldiers_game_view.png",
+ "GiltSoldier_BridgeGuard": {
+  "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/retint/weave\\soldier_GiltSoldier_BridgeGuard_body.png"
+ },
+ "GiltSoldier_BridgeGuard_feet": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/retint/weave\\soldier_GiltSoldier_BridgeGuard_feet.png",
+ "FrostSoldier_Amara": {
+  "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/retint/weave\\soldier_FrostSoldier_Amara_body.png"
+ },
+ "FrostSoldier_Amara_feet": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/retint/weave\\soldier_FrostSoldier_Amara_feet.png",
+ "GiltFerryman": {
+  "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/retint/weave\\soldier_GiltFerryman_body.png"
+ },
+ "GiltFerryman_feet": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/retint/weave\\soldier_GiltFerryman_feet.png"
+}

@@ -102,7 +102,22 @@ Full licence notices: THIRD_PARTY_NOTICES.txt
 Made with Unreal Engine 5.9
 ```
 
-**Map lines, added 2026-11-14 ~21:10** for Jah's Gray London map. They go in a new key, `Credits.Map`, so that `Credits.Tools` stays unchanged. **Live 21:24.** game-flow-ui saved them in the string table and the C++ fallback (`ReflectionsGameFlowSlate.cpp:1170-1174`). I checked that the CSV matches this block line for line (5 lines). Screenshots `ArtDirection/GameFlow/Screenshots/15_credits_map.png` and `16_victory_credits_map.png` show every line with no clipping. They show in a packaged build, and in the editor from train #14. The full CC BY notices (licence link, changes, disclaimer) are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt), which ships at the root of the zip. Why each line is needed: [gray-london-review.md](gray-london-review.md#1-required-attributions). If Jah finds the Fab props are under the Fab Standard License, not CC BY, drop "· Street props by Minimaliano (Fab), CC BY 4.0".
+**Map lines, added 2026-11-14 ~21:10** for Jah's Gray London map. They go in a new key, `Credits.Map`, so that `Credits.Tools` stays unchanged. **Live 21:24.** game-flow-ui saved them in the string table and the C++ fallback (`ReflectionsGameFlowSlate.cpp:1170-1174`). I checked that the CSV matches this block line for line (5 lines). Screenshots `ArtDirection/GameFlow/Screenshots/15_credits_map.png` and `16_victory_credits_map.png` show every line with no clipping. They show in a packaged build, and in the editor from train #14.
+
+**Map switch, 11-15 ~15:15:** the game now ships `/Game/GrayLondon/Maps/MedievalLondon`, Codex's medieval town, and `GrayLondon_Geodata` no longer cooks. I crawled the map's references (100 packages; packaging counted 89). Only these third-party items ship:
+- OpenStreetMap-derived layout and ground (ODbL);
+- Poly Haven's Cobblestone Floor 04, Mossy Cobblestone and Leafy Grass (CC0);
+- a TripoSR image-to-3D market well (MIT tool, made from an image-generation reference).
+
+The buildings, stalls, gates and kit textures are original, made with scripts and Blender. So the Codriver, Albert Memorial, Minimaliano, Cosmo Tree Gen and Noto Serif lines now credit things that don't ship. **That's harmless**, since over-crediting breaks no licence, and the OSM line is still required. If the string table can still change before the final cook, the accurate `Credits.Map` is:
+
+```
+Map data © OpenStreetMap contributors, ODbL (openstreetmap.org/copyright)
+Cobble and grass textures: Poly Haven (CC0) · Market well: TripoSR image-to-3D (Stability AI and Tripo AI, MIT)
+Full licence notices: THIRD_PARTY_NOTICES.txt
+```
+
+[THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) and the itch credits are already trimmed to this. The full CC BY notices (licence link, changes, disclaimer) are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt), which ships at the root of the zip. Why each line is needed: [gray-london-review.md](gray-london-review.md#1-required-attributions). If Jah finds the Fab props are under the Fab Standard License, not CC BY, drop "· Street props by Minimaliano (Fab), CC BY 4.0".
 
 **If audio deletes the old OpenAI crowd barks**, the voice line stays as it is: the Tarnish and the narrator still use OpenAI. Drop "and OpenAI (…)" only if every OpenAI line is re-voiced.
 

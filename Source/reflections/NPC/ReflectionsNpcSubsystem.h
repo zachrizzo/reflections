@@ -16,6 +16,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FReflectionsNpcDeathEvent, AActor*,
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FReflectionsNpcInfectionEvent, AActor*, Npc, EReflectionsNpcInfection, State, AActor*, Source);
 DECLARE_MULTICAST_DELEGATE_OneParam(FReflectionsNpcStimulusNative, const FReflectionsNpcStimulus&);
 /** The player hurt or killed someone (or another crime was reported): once per witness, Witness null when nobody saw it. */
+/** A street scene ended. bDisturbed: the NPC broke it off itself (a reaction, a hit, death, taken, removed). */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FReflectionsNpcSceneEvent, AActor*, Npc, bool, bDisturbed);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FReflectionsPlayerCrimeEvent, AActor*, Victim, FName, Crime, AActor*, Witness, FVector, Location, float, Heat);
 
 /**
@@ -261,6 +263,43 @@ public:
     UFUNCTION(BlueprintCallable, Category="NPC|Voice")
     void PlayReaction(AActor* Actor, FName Group);
 
+    // ---- Street scenes (the crowd's scenario spots) ----------------------------------------------------
+
+    /**
+     * A street scene takes a calm NPC. Loop (a clip for the hidden walker's skeleton, SK_UEFN_Mannequin; may be
+     * null) plays on the walker, whole body, for as long as the scene lasts. bPinned also stops the walker's
+     * movement, so a seated or leaning occupant stays exactly where the caller put it (move the walker there
+     * first). False, and nothing changed, when the NPC is not calm and free, has no walker, or the clip is for
+     * another skeleton.
+     *
+     * The NPC ends the scene by itself, within a fraction of a second, on any reaction but Calm, any spell hit,
+     * death, being taken by the villain, and removal: the clip stops, movement returns, OnNpcSceneEnded fires
+     * with bDisturbed true. While in a scene it does not roam by itself (stroll is the caller's to hold off).
+     */
+    UFUNCTION(BlueprintCallable, Category="NPC|Scene")
+    bool BeginNpcScene(AActor* Actor, class UAnimSequenceBase* Loop, bool bPinned = false, float BlendIn = 0.25f);
+    /**
+     * One clip once over the scene's loop (an idle break, a sit-down, a stand-up). The loop comes back by itself
+     * when it ends; with bThenEnd the scene ends with the clip instead (a stand-up). False when not in a scene.
+     */
+    UFUNCTION(BlueprintCallable, Category="NPC|Scene")
+    bool PlayNpcSceneClip(AActor* Actor, class UAnimSequenceBase* Clip, float BlendIn = 0.2f, float BlendOut = 0.2f, bool bThenEnd = false);
+    /** Ends the scene: the clip blends out, movement returns, OnNpcSceneEnded fires with bDisturbed false. */
+    UFUNCTION(BlueprintCallable, Category="NPC|Scene")
+    void EndNpcScene(AActor* Actor, float BlendOut = 0.25f);
+    UFUNCTION(BlueprintPure, Category="NPC|Scene")
+    bool IsNpcInScene(const AActor* Actor) const;
+    /** Once for every scene that ends, however it ends. */
+    UPROPERTY(BlueprintAssignable, Category="NPC|Scene")
+    FReflectionsNpcSceneEvent OnNpcSceneEnded;
+
+    /**
+     * Seconds since the last noise, violence, death or taking within Radius of Near (alarm calls do not count); a
+     * very large number when there has been none for two minutes. For "is this street quiet again".
+     */
+    UFUNCTION(BlueprintPure, Category="NPC")
+    float GetSecondsSinceViolence(FVector Near, float Radius) const;
+
     /** A cue of the jam's audio by its path under /Game/Audio/Jam ("Cues/SCue_Shock_Loop"), or null. */
     USoundBase* FindJamCue(const FString& RelativePath) { return FindBarkCue(RelativePath); }
 
@@ -306,6 +345,8 @@ private:
     UPROPERTY(Transient) TMap<FName, TObjectPtr<UReflectionsNpcArchetype>> Archetypes;
     TArray<TWeakObjectPtr<UReflectionsNpcReactionComponent>> Npcs;
     TArray<FReflectionsNpcStimulus> ActiveStimuli;
+    /** Where and when things happened in the last two minutes (GetSecondsSinceViolence). */
+    TArray<TPair<FVector, double>> RecentViolence;
     FReflectionsNpcStimulusNative StimulusEvent;
     FDelegateHandle SpawnedHandle;
     FDelegateHandle LevelAddedHandle;

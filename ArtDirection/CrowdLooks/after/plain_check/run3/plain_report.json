@@ -1,0 +1,248 @@
+{
+ "looks": {
+  "FrostSoldier_Amara": {
+   "moved_cm": 404.8,
+   "pose": {
+    "hand_above_pelvis_cm": -8.6,
+    "hand_below_shoulder_cm": 53.4,
+    "mesh": "SKM_MHC_BridgeGuardFrostSoldier_BodyMesh"
+   },
+   "parts": [
+    {
+     "name": "Body",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Bodies/SKM_MHC_BridgeGuardFrostSoldier_BodyMesh.SKM_MHC_BridgeGuardFrostSoldier_BodyMesh",
+     "mats": [
+      "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Body/Materials/MI_Body_Baked_VT.MI_Body_Baked_VT"
+     ]
+    },
+    {
+     "name": "Face",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Face/SKM_MHC_FrostAmara_FaceMesh.SKM_MHC_FrostAmara_FaceMesh",
+     "mats": [
+      "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Face/Materials/MI_Teeth_Baked.MI_Teeth_Baked",
+      "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Face/Materials/MI_EyeL_Baked.MI_EyeL_Baked",
+      "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Face/Materials/MI_EyeR_Baked.MI_EyeR_Baked",
+      "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Face/Materials/MI_Face_EyeShell.MI_Face_EyeShell",
+      "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Face/Materials/MI_Face_LacrimalFluid.MI_Face_LacrimalFluid",
+      "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Face/Materials/MI_Face_EyelashesHiLODs.MI_Face_EyelashesHiLODs",
+      "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Face/Materials/MI_Face_Skin_Baked_LOD3_VT.MI_Face_Skin_Baked_LOD3_VT",
+      "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Face/Materials/MI_Face_Skin_Baked_LOD5to7_VT.MI_Face_Skin_Baked_LOD5to7_VT"
+     ]
+    },
+    {
+     "name": "Hair",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Grooms/Hair_S_Cornrows.Hair_S_Cornrows",
+     "binding": "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Grooms/Hair_S_Cornrows_Binding.Hair_S_Cornrows_Binding"
+    },
+    {
+     "name": "Eyebrows",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Grooms/Eyebrows_M_Thick.Eyebrows_M_Thick",
+     "binding": "/Game/Characters/Lanthorne/People/FrostAmara/Built/MHC_FrostAmara/Grooms/Eyebrows_M_Thick_Binding.Eyebrows_M_Thick_Binding"
+    },
+    {
+     "name": "BridgeGuard_Gambeson",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "BridgeGuard_Trousers",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "BridgeGuard_Boots",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "BridgeGuard_Armor",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "BridgeGuard_Sash",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "BridgeGuard_RoundShield",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "WhiteGuardWorkTunic",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Frostside/Soldier/SK_Frost_Soldier_F_Upper_BridgeGuard.SK_Frost_Soldier_F_Upper_BridgeGuard",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Frostside/Soldier/Materials/MI_Frost_Soldier_F_Upper_BridgeGuard.MI_Frost_Soldier_F_Upper_BridgeGuard"
+     ]
+    },
+    {
+     "name": "WhiteGuardRagSkirt",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Frostside/Soldier/SK_Frost_Soldier_F_Lower_BridgeGuard.SK_Frost_Soldier_F_Lower_BridgeGuard",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Frostside/Soldier/Materials/MI_Frost_Soldier_F_Lower_BridgeGuard.MI_Frost_Soldier_F_Lower_BridgeGuard"
+     ]
+    },
+    {
+     "name": "WhiteGuardSandals",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Frostside/Soldier/SK_Frost_Soldier_F_Feet_BridgeGuard.SK_Frost_Soldier_F_Feet_BridgeGuard",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Frostside/Soldier/Materials/MI_Frost_Soldier_F_Feet_BridgeGuard.MI_Frost_Soldier_F_Feet_BridgeGuard"
+     ]
+    },
+    {
+     "name": "WhiteGuardTattoos",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    }
+   ],
+   "shots": {
+    "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/plain_check/run3\\one_00_FrostSoldier_Amara_body.png"
+   },
+   "pelvis_before_ragdoll": 102.5,
+   "ragdoll_drop_cm": 56.2,
+   "simulating": true,
+   "ragdoll_shot": {
+    "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/plain_check/run3\\one_00_FrostSoldier_Amara_ragdoll_body.png"
+   },
+   "done": true
+  },
+  "GiltSoldier_Archivist": {
+   "moved_cm": 406.1,
+   "pose": {
+    "hand_above_pelvis_cm": -1.2,
+    "hand_below_shoulder_cm": 52.3,
+    "mesh": "SKM_MHC_ArchiveApprenticeGiltSoldier_BodyMesh"
+   },
+   "parts": [
+    {
+     "name": "Body",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Bodies/SKM_MHC_ArchiveApprenticeGiltSoldier_BodyMesh.SKM_MHC_ArchiveApprenticeGiltSoldier_BodyMesh",
+     "mats": [
+      "/Game/Characters/RedLondon/ArchiveApprentice/Assembled/ArchiveApprentice/Body/Materials/MI_Body_Baked_VT.MI_Body_Baked_VT"
+     ]
+    },
+    {
+     "name": "Face",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/RedLondon/ArchiveApprentice/Assembled/ArchiveApprentice/Face/SKM_MHC_ArchiveApprentice_FaceMesh.SKM_MHC_ArchiveApprentice_FaceMesh",
+     "mats": [
+      "/Game/Characters/RedLondon/ArchiveApprentice/Assembled/ArchiveApprentice/Face/Materials/MI_Teeth_Baked.MI_Teeth_Baked",
+      "/Game/Characters/RedLondon/ArchiveApprentice/Assembled/ArchiveApprentice/Face/Materials/MI_EyeL_Baked.MI_EyeL_Baked",
+      "/Game/Characters/RedLondon/ArchiveApprentice/Assembled/ArchiveApprentice/Face/Materials/MI_EyeR_Baked.MI_EyeR_Baked",
+      "/Game/Characters/RedLondon/ArchiveApprentice/Assembled/ArchiveApprentice/Face/Materials/MI_Face_Skin_Baked_LOD5to7_VT.MI_Face_Skin_Baked_LOD5to7_VT"
+     ]
+    },
+    {
+     "name": "Hair",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/RedLondon/ArchiveApprentice/Assembled/ArchiveApprentice/Grooms/Hair_M_SideSweptFringe.Hair_M_SideSweptFringe",
+     "binding": "/Game/Characters/RedLondon/ArchiveApprentice/Assembled/ArchiveApprentice/Grooms/Hair_M_SideSweptFringe_Binding.Hair_M_SideSweptFringe_Binding"
+    },
+    {
+     "name": "Eyebrows",
+     "class": "GroomComponent",
+     "visible": true,
+     "groom": "/Game/Characters/Lanthorne/People/GiltPriya/Built/MHC_GiltPriya/Grooms/Eyebrows_M_Thick.Eyebrows_M_Thick",
+     "binding": "/Game/Characters/Lanthorne/Grooms/GiltArchivist/Eyebrows_M_Thick_Binding.Eyebrows_M_Thick_Binding"
+    },
+    {
+     "name": "ArchiveApprenticeCoat",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/SK_Gilt_Soldier_M_Upper_ArchiveApprentice.SK_Gilt_Soldier_M_Upper_ArchiveApprentice",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/Materials/MI_Gilt_Soldier_M_Upper_ArchiveApprentice.MI_Gilt_Soldier_M_Upper_ArchiveApprentice"
+     ]
+    },
+    {
+     "name": "ArchiveApprenticeWaistcoat",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "ArchiveApprenticeTrousers",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/SK_Gilt_Soldier_M_Lower_ArchiveApprentice.SK_Gilt_Soldier_M_Lower_ArchiveApprentice",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/Materials/MI_Gilt_Soldier_M_Lower_ArchiveApprentice.MI_Gilt_Soldier_M_Lower_ArchiveApprentice"
+     ]
+    },
+    {
+     "name": "ArchiveApprenticeBoots",
+     "class": "SkeletalMeshComponent",
+     "visible": true,
+     "mesh": "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/SK_Gilt_Soldier_M_Feet_ArchiveApprentice.SK_Gilt_Soldier_M_Feet_ArchiveApprentice",
+     "mats": [
+      "/Game/Characters/Lanthorne/Clothing/Giltside/MedievalSoldier/Materials/MI_Gilt_Soldier_M_Feet_ArchiveApprentice.MI_Gilt_Soldier_M_Feet_ArchiveApprentice"
+     ]
+    },
+    {
+     "name": "ArchiveApprenticeLedger",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    },
+    {
+     "name": "ArchiveApprenticeSatchel",
+     "class": "SkeletalMeshComponent",
+     "visible": false,
+     "mesh": null,
+     "mats": []
+    }
+   ],
+   "shots": {
+    "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/plain_check/run3\\one_01_GiltSoldier_Archivist_body.png"
+   },
+   "pelvis_before_ragdoll": 97.2,
+   "ragdoll_drop_cm": 49.7,
+   "simulating": true,
+   "ragdoll_shot": {
+    "body": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/after/plain_check/run3\\one_01_GiltSoldier_Archivist_ragdoll_body.png"
+   },
+   "done": true
+  }
+ },
+ "errors": [],
+ "order": [
+  "FrostSoldier_Amara",
+  "GiltSoldier_Archivist"
+ ],
+ "seconds": 19.7
+}

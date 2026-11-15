@@ -12,7 +12,9 @@ OTP = unreal.VisibilityBasedAnimTickOption.ONLY_TICK_POSE_WHEN_RENDERED
 
 
 async def bone0(path):
-    r = await call_tool('EditorToolset.SkeletalMeshToolset.GetBoneNames', skeletalMesh={'refPath': path})
+    if '.' not in path.split('/')[-1]:
+        path = path + '.' + path.split('/')[-1]  # the tool wants the object path
+    r = await call_tool('EditorToolset.SkeletalMeshToolset.GetBoneNames', mesh={'refPath': path})
     bones = r.get('returnValue', r) if isinstance(r, dict) else r
     return bones[0] if bones else None
 

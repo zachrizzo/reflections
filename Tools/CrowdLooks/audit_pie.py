@@ -12,10 +12,12 @@ report = {'tag': TAG, 'natural': [], 'lineup': [], 'errors': []}
 T0 = time.time()
 
 await acquire_pie_lock('crowd-looks audit: capture every NPC look (%s)' % TAG, 240)
+STARTED_PIE = False  # 23:02: a lock-free PIE was the USER's own Play; never stop a PIE this script didn't start
 try:
     if unwrap(await call_tool('EditorToolset.EditorAppToolset.IsPIERunning')):
         raise RuntimeError('PIE already running')
     await call_tool('EditorToolset.EditorAppToolset.StartPIE', options={'warmupSeconds': 3.0})
+    STARTED_PIE = True
     world = None
     for _ in range(60):
         world = game_world()
@@ -77,7 +79,8 @@ try:
 
     # --- lineup of every look in the list ---
     right = unreal.Vector(-pfwd.y, pfwd.x, 0)
-    base = unreal.Vector(ploc.x + pfwd.x * 600, ploc.y + pfwd.y * 600, ploc.z - 90)
+    bx, by = ploc.x + pfwd.x * 600, ploc.y + pfwd.y * 600
+    base = unreal.Vector(bx, by, floor_z(world, bx, by, ploc.z - 90, [pc]))
     for i, path in enumerate(LOOKS):
         if time.time() - T0 > 200:
             report['errors'].append('time budget hit at %d' % i)
@@ -106,7 +109,8 @@ try:
         await asyncio.sleep(0)
 finally:
     try:
-        await call_tool('EditorToolset.EditorAppToolset.StopPIE')
+        if STARTED_PIE:
+            await call_tool('EditorToolset.EditorAppToolset.StopPIE')
     except Exception as e:
         report['errors'].append('stop: %s' % e)
     release_pie_lock()

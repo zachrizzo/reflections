@@ -6,10 +6,12 @@ os.makedirs(OUT, exist_ok=True)
 report = {'looks': [], 'errors': []}
 T0 = time.time()
 await acquire_pie_lock('crowd-looks: walk test of new NPC looks', 240)
+STARTED_PIE = False  # 23:02: a lock-free PIE was the USER's own Play; never stop a PIE this script didn't start
 try:
     if unwrap(await call_tool('EditorToolset.EditorAppToolset.IsPIERunning')):
         raise RuntimeError('PIE already running')
     await call_tool('EditorToolset.EditorAppToolset.StartPIE', options={'warmupSeconds': 3.0})
+    STARTED_PIE = True
     world = None
     for _ in range(60):
         world = game_world()
@@ -31,7 +33,8 @@ try:
             report['errors'].append('no class ' + path)
             continue
         off = (i - (len(LOOKS) - 1) / 2.0) * 220
-        loc = unreal.Vector(ploc.x + pfwd.x * 700 + right.x * off, ploc.y + pfwd.y * 700 + right.y * off, ploc.z - 90)
+        sx, sy = ploc.x + pfwd.x * 700 + right.x * off, ploc.y + pfwd.y * 700 + right.y * off
+        loc = unreal.Vector(sx, sy, floor_z(world, sx, sy, ploc.z - 90, [pawn]))
         yaw = math.degrees(math.atan2(-pfwd.y, -pfwd.x)) - 90.0
         a = unreal.ReflectionsWorldLibrary.spawn_actor_into_world(world, cls, unreal.Transform(loc, unreal.Rotator(0, 0, yaw), unreal.Vector(1, 1, 1)))
         tags = list(a.tags)
@@ -55,7 +58,8 @@ try:
         report['looks'].append(row)
 finally:
     try:
-        await call_tool('EditorToolset.EditorAppToolset.StopPIE')
+        if STARTED_PIE:
+            await call_tool('EditorToolset.EditorAppToolset.StopPIE')
     except Exception as e:
         report['errors'].append('stop: %s' % e)
     release_pie_lock()

@@ -18,6 +18,7 @@
 #include "NPC/ReflectionsNpcReactionComponent.h"
 #include "GameFlow/ReflectionsGameFlowSlate.h"
 #include "NPC/ReflectionsNpcSubsystem.h"
+#include "Lives/ReflectionsLivesSubsystem.h"
 #include "Hero/ReflectionsSpellCombat.h"
 #include "Quests/ReflectionsQuestItem.h"
 #include "Quests/ReflectionsQuestSlate.h"
@@ -1593,9 +1594,16 @@ AActor* UReflectionsQuestWorldSubsystem::SpawnPerson(FName PersonId)
     if (!Spot) Spot = Markers->Find(FName(*FString::Printf(TEXT("QuestGiver_%s"), *PersonId.ToString())));
     if (!Spot) return nullptr;
 
+    // Lives knows everyone: side, sex, job and the book's look, with a unique face. Ask it first.
+    AActor* Actor = nullptr;
+    if (UReflectionsLivesSubsystem* Lives = GetWorld()->GetSubsystem<UReflectionsLivesSubsystem>())
+    {
+        Actor = Lives->SpawnPerson(PersonId, Spot->GetActorLocation(), Spot->GetActorRotation().Yaw);
+    }
+
     TSubclassOf<AActor> Look = nullptr;
-    if (P && P->Look.IsValid()) Look = P->Look.TryLoadClass<AActor>();
-    if (!Look && P && !P->Sex.IsNone())
+    if (!Actor && P && P->Look.IsValid()) Look = P->Look.TryLoadClass<AActor>();
+    if (!Actor && !Look && P && !P->Sex.IsNone())
     {
         // A team look of the right sex (the NPC system's own table), picked by id so the same person keeps it: walk the
         // list from the person's hash and stop at the first match, so only a look or two is ever loaded.
@@ -1604,12 +1612,20 @@ AActor* UReflectionsQuestWorldSubsystem::SpawnPerson(FName PersonId)
         const int32 Start = Looks.Num() > 0 ? static_cast<int32>(GetTypeHash(PersonId) % static_cast<uint32>(Looks.Num())) : 0;
         for (int32 n = 0; n < Looks.Num() && !Look; ++n)
         {
+            // Never the other side's clothes (rags only Frostside, red only Giltside): skip a look whose name says
+            // another side, before loading it.
+            const FString LookName = Looks[(Start + n) % Looks.Num()].ToSoftObjectPath().GetAssetName();
+            const auto Says = [&LookName](std::initializer_list<const TCHAR*> Words) { for (const TCHAR* W : Words) if (LookName.Contains(W)) return true; return false; };
+            const bool bGilt = Says({TEXT("Gilt"), TEXT("Red")}), bFrost = Says({TEXT("Frost"), TEXT("White"), TEXT("Rag")}), bPew = Says({TEXT("Pew"), TEXT("Gray"), TEXT("Grey")});
+            const bool bOtherSide = (P->Side == EReflectionsQuestSide::Giltside && (bFrost || bPew)) ||
+                (P->Side == EReflectionsQuestSide::Frostside && (bGilt || bPew)) || (P->Side == EReflectionsQuestSide::Pewterside && (bGilt || bFrost));
+            if (bOtherSide) continue;
             UClass* Class = Looks[(Start + n) % Looks.Num()].LoadSynchronous();
             if (Class && UReflectionsNpcSubsystem::GetLookSex(Class->GetDefaultObject<AActor>()) == Want) Look = Class;
         }
     }
     const FName Archetype = P && !P->Archetype.IsNone() ? P->Archetype : FName(TEXT("Civilian"));
-    AActor* Actor = Npcs->SpawnNpc(Archetype, Spot->GetActorLocation(), Spot->GetActorRotation().Yaw, Look);
+    if (!Actor) Actor = Npcs->SpawnNpc(Archetype, Spot->GetActorLocation(), Spot->GetActorRotation().Yaw, Look);
     if (!Actor && Archetype != TEXT("Civilian"))
     {
         Actor = Npcs->SpawnNpc(TEXT("Civilian"), Spot->GetActorLocation(), Spot->GetActorRotation().Yaw, Look);

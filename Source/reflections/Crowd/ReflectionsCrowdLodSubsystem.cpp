@@ -1,10 +1,14 @@
 #include "Crowd/ReflectionsCrowdLodSubsystem.h"
 #include "NPC/ReflectionsNpcSubsystem.h"
 
+#include "Components/CapsuleComponent.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/IConsoleManager.h"
 
@@ -35,8 +39,65 @@ namespace
         TEXT("Switch off the gameplay camera on each walker's hidden locomotion pawn (nobody views through an NPC's pawn; ")
         TEXT("each evaluated its camera rig every frame, about 0.1 ms). Applies to walkers found after it is set."));
 
+    TAutoConsoleVariable<int32> CVarCrowdLodReground(TEXT("Crowd.Lod.Reground"), 1,
+        TEXT("Lift a walker's hidden driver back onto a walkable surface 3-45 cm above its feet (Gray London's roads are one-sided ")
+        TEXT("sheets at 28 cm over the 10 cm city ground: a walker stepping off the pavement slides under them and wades through the road)."));
+
+    TAutoConsoleVariable<int32> CVarCrowdLodRegroundCorpses(TEXT("Crowd.Lod.RegroundCorpses"), 1,
+        TEXT("For 8 s after a walker dies into a ragdoll, lift the whole ragdoll when its torso (pelvis or spine body) lies under a ")
+        TEXT("broad walkable surface 1-45 cm above it (one-sided road sheets and city ground: a body that slid or started under one rests below it)."));
+
     const FName WalkerTag(TEXT("NPC_SampleLocomotion"));
     constexpr double UpdatePeriod = 0.25;
+    constexpr double CorpseWindow = 8.0;
+    constexpr int32 MaxCorpseLifts = 4;
+    /** Lifts since start (all worlds; tests read them through Describe). */
+    int64 GRegroundLifts = 0;
+    int64 GCorpseLifts = 0;
+
+    /**
+     * A road or city-ground sheet, not furniture: what was hit spans more than 5 m both ways (a whole OSM tile).
+     * Gray London places its benches, bins and bollards with instanced components whose bounds cover every instance,
+     * so for those the hit instance's own bounds count, not the component's.
+     */
+    bool IsBroadFloor(const FHitResult& Hit)
+    {
+        const UPrimitiveComponent* Component = Hit.GetComponent();
+        if (!Component || Hit.ImpactNormal.Z < 0.7f) return false;
+        FVector Extent = Component->Bounds.BoxExtent;
+        if (const UInstancedStaticMeshComponent* Instances = Cast<UInstancedStaticMeshComponent>(Component))
+        {
+            FTransform Instance;
+            const UStaticMesh* Mesh = Instances->GetStaticMesh();
+            if (!Mesh || !Instances->GetInstanceTransform(Hit.Item, Instance, true)) return false;
+            Extent = Mesh->GetBounds().TransformBy(Instance).BoxExtent;
+        }
+        return FMath::Min(Extent.X, Extent.Y) > 250.0;
+    }
+
+    /** One line trace down from the capsule centre; returns 1 when the driver was lifted onto the surface above its feet. */
+    int32 RegroundDriver(ACharacter* Driver)
+    {
+        if (!Driver || Driver->IsPlayerControlled()) return 0;
+        UCharacterMovementComponent* Movement = Driver->GetCharacterMovement();
+        UCapsuleComponent* Capsule = Driver->GetCapsuleComponent();
+        // Only walkers on the ground: not falling, not pinned in a scene (None), not seated (collision off).
+        if (!Movement || !Capsule || Movement->MovementMode != MOVE_Walking || Capsule->GetCollisionEnabled() == ECollisionEnabled::NoCollision) return 0;
+        const FVector Centre = Driver->GetActorLocation();
+        const float Bottom = Centre.Z - Capsule->GetScaledCapsuleHalfHeight();
+        FCollisionQueryParams Params(SCENE_QUERY_STAT(CrowdReground), true, Driver);
+        TArray<AActor*> Attached;
+        Driver->GetAttachedActors(Attached);
+        Params.AddIgnoredActors(Attached);
+        FHitResult Hit;
+        if (!Driver->GetWorld()->LineTraceSingleByObjectType(Hit, Centre, FVector(Centre.X, Centre.Y, Bottom - 5.0f),
+            FCollisionObjectQueryParams(ECC_WorldStatic), Params)) return 0;
+        const float Lift = Hit.ImpactPoint.Z - Bottom;
+        if (Lift < 3.0f || Lift > 45.0f || !IsBroadFloor(Hit)) return 0;
+        Driver->SetActorLocation(Centre + FVector(0.0, 0.0, Lift + 1.0f), false, nullptr, ETeleportType::TeleportPhysics);
+        ++GRegroundLifts;
+        return 1;
+    }
 
     /**
      * The sample locomotion pawn carries the hero's GameplayCameraComponent, which keeps evaluating its camera rig
@@ -161,11 +222,92 @@ void UReflectionsCrowdLodSubsystem::Tick(float DeltaTime)
         NextRescan = Time + RescanPeriod;
         Rescan();
     }
-    if (Time >= NextUpdate)
+    const bool bUpdate = Time >= NextUpdate;
+    if (bUpdate)
     {
         NextUpdate = Time + UpdatePeriod;
         UpdateTiers();
     }
+    const bool bReground = CVarCrowdLodReground.GetValueOnGameThread() != 0;
+    const bool bCorpses = CVarCrowdLodRegroundCorpses.GetValueOnGameThread() != 0;
+    for (FWalker& Walker : Walkers)
+    {
+        // Near, visible walkers every frame (no visible dip at a road edge); the rest with the tier update.
+        const bool bNear = Walker.Tier == EReflectionsCrowdLodTier::Full || Walker.Tier == EReflectionsCrowdLodTier::Mid;
+        if (bReground && (bNear || bUpdate)) RegroundDriver(Walker.Driver.Get());
+        if (bCorpses) TickCorpse(Walker, Time);
+    }
+}
+
+void UReflectionsCrowdLodSubsystem::TickCorpse(FWalker& Walker, double Time)
+{
+    USkeletalMeshComponent* Body = Walker.Body.Get();
+    AActor* Actor = Walker.Actor.Get();
+    const ACharacter* Driver = Walker.Driver.Get();
+    const UCapsuleComponent* Capsule = Driver ? Driver->GetCapsuleComponent() : nullptr;
+    // Dead: the whole body (root included) simulates and the driver no longer collides. Hit jolts and knockdowns
+    // simulate part of the body only, or none of it, and keep the driver.
+    const bool bRagdoll = Body && Actor && Body->IsSimulatingPhysics()
+        && (!Capsule || Capsule->GetCollisionEnabled() == ECollisionEnabled::NoCollision);
+    if (!bRagdoll)
+    {
+        Walker.RagdollSince = -1.0;
+        Walker.CorpseLifts = 0;
+        return;
+    }
+    if (Walker.RagdollSince < 0.0) Walker.RagdollSince = Time;
+    if (Time - Walker.RagdollSince > CorpseWindow || Walker.CorpseLifts >= MaxCorpseLifts || Time < Walker.NextCorpseCheck) return;
+    Walker.NextCorpseCheck = Time + 0.1;
+
+    // The physics bodies themselves (not the bone pose). Only the torso (pelvis and spine) decides: a corpse whose
+    // torso lies under a broad walkable surface is under the road. Feet and hands sink a few cm into every floor
+    // (road middle and pavement alike, train #23 test), and lifting for them only bounced corpses that were at rest.
+    TArray<FVector, TInlineAllocator<8>> Centres;
+    int32 Simulating = 0;
+    float Lowest = TNumericLimits<float>::Max(), Highest = TNumericLimits<float>::Lowest();
+    for (const FBodyInstance* Instance : Body->Bodies)
+    {
+        if (!Instance || !Instance->IsInstanceSimulatingPhysics()) continue;
+        const FVector Centre = Instance->GetUnrealWorldTransform().GetLocation();
+        ++Simulating;
+        Lowest = FMath::Min(Lowest, static_cast<float>(Centre.Z));
+        Highest = FMath::Max(Highest, static_cast<float>(Centre.Z));
+        const FString Bone = Body->GetBoneName(Instance->InstanceBoneIndex).ToString();
+        if (Bone == TEXT("pelvis") || Bone.StartsWith(TEXT("spine_"))) Centres.Add(Centre);
+    }
+    // A collapsed ragdoll (every body at one height) is broken, not under a sheet: lifting it would only bounce it.
+    if (Simulating < 4 || Highest - Lowest < 1.0f || Centres.Num() == 0) return;
+    UWorld* World = GetWorld();
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(CrowdCorpseReground), true, Actor);
+    const FCollisionObjectQueryParams Statics(ECC_WorldStatic);
+    float Lift = 0.0f;
+    for (const FVector& Centre : Centres)
+    {
+        FHitResult Hit;
+        if (!World->LineTraceSingleByObjectType(Hit, Centre + FVector(0.0, 0.0, 50.0), Centre, Statics, Params) || Hit.bStartPenetrating) continue;
+        const float Above = Hit.ImpactPoint.Z - Centre.Z;
+        if (Above < 1.0f || Above > 45.0f || !IsBroadFloor(Hit)) continue;
+        // Enough to bring that torso body's centre a body radius over the surface; extra height only drops back.
+        Lift = FMath::Max(Lift, Above + 14.0f);
+    }
+    if (Lift <= 0.0f) return;
+    for (FBodyInstance* Instance : Body->Bodies)
+    {
+        if (!Instance || !Instance->IsInstanceSimulatingPhysics()) continue;
+        FTransform Transform = Instance->GetUnrealWorldTransform();
+        Transform.AddToTranslation(FVector(0.0, 0.0, Lift));
+        Instance->SetBodyTransform(Transform, ETeleportType::TeleportPhysics);
+        FVector Velocity = Instance->GetUnrealWorldVelocity();
+        if (Velocity.Z < 0.0)
+        {
+            Velocity.Z = 0.0;
+            Instance->SetLinearVelocity(Velocity, false);
+        }
+    }
+    ++Walker.CorpseLifts;
+    ++GCorpseLifts;
+    UE_LOG(LogReflectionsCrowd, Verbose, TEXT("Crowd LOD: lifted %s's ragdoll %.0f cm out from under a floor sheet (lift %d)."),
+        *Actor->GetName(), Lift, Walker.CorpseLifts);
 }
 
 void UReflectionsCrowdLodSubsystem::CollectMeshes(FWalker& Walker) const
@@ -345,10 +487,11 @@ void UReflectionsCrowdLodSubsystem::HandleNpcSpellHit(AActor* Npc, const FReflec
 FString UReflectionsCrowdLodSubsystem::Describe() const
 {
     const double Time = Now();
-    FString Out = FString::Printf(TEXT("Crowd LOD: %d walkers (Full %d, Mid %d, Far %d, Hidden %d), enabled %d"),
+    FString Out = FString::Printf(TEXT("Crowd LOD: %d walkers (Full %d, Mid %d, Far %d, Hidden %d), enabled %d, reground %d (%lld lifts), corpses %d (%lld lifts)"),
         Walkers.Num(), CountInTier(EReflectionsCrowdLodTier::Full), CountInTier(EReflectionsCrowdLodTier::Mid),
         CountInTier(EReflectionsCrowdLodTier::Far), CountInTier(EReflectionsCrowdLodTier::Hidden),
-        CVarCrowdLodEnable.GetValueOnGameThread());
+        CVarCrowdLodEnable.GetValueOnGameThread(), CVarCrowdLodReground.GetValueOnGameThread(), GRegroundLifts,
+        CVarCrowdLodRegroundCorpses.GetValueOnGameThread(), GCorpseLifts);
     for (const FWalker& Walker : Walkers)
     {
         const AActor* Actor = Walker.Actor.Get();

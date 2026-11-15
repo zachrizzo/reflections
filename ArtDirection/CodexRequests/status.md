@@ -46,3 +46,16 @@ distribution restrictions for the EU, UK, and South Korea.
 - `/Game/LanthorneAssets/Frostside/City/SM_Frostside_FacadeCornice.SM_Frostside_FacadeCornice` — Local Hunyuan3D-2 facade reference + Blender modular reconstruction
 - `/Game/LanthorneAssets/Frostside/City/SM_Frostside_FacadeGround.SM_Frostside_FacadeGround` — Local Hunyuan3D-2 facade reference + Blender modular reconstruction
 - `/Game/LanthorneAssets/Frostside/City/SM_Frostside_FacadeUpper.SM_Frostside_FacadeUpper` — Local Hunyuan3D-2 facade reference + Blender modular reconstruction
+
+## Street crowd hand props — 2026-11-14
+
+These source assets are intentionally **not** imported into Unreal; the Claude session owns import.
+
+| Source FBX | Specification and validation | Generation provenance |
+| --- | --- | --- |
+| `ArtDirection/CodexRequests/Props2026_11_14/Street/StreetWoodenCrate.fbx` | 103,036 bytes; 2,800 tris; 45.1 cm maximum width; centre pivot; smooth normals; UV0; 512x512 full-coverage base color | Built-in ImageGen reference, then local Tencent Hunyuan3D-2 image-to-3D, Blender 5.3 export |
+| `ArtDirection/CodexRequests/Props2026_11_14/Street/StreetClayPipe.fbx` | 101,084 bytes; 2,800 tris; 18.0 cm long; mouthpiece at local origin and bowl toward +X; smooth normals; UV0; 512x512 full-coverage base color | Built-in ImageGen reference, then local Tencent Hunyuan3D-2 image-to-3D, Blender 5.3 export |
+
+Audit: `ArtDirection/CodexRequests/Props2026_11_14/Street/street_props_audit.json` passed with 0 violations, including UV, material, and identity-transform checks.
+
+Licence record: Tencent Hunyuan3D-2 was used under its Community License. In the United States, it permits commercial use within its defined Territory, subject to the licence and Acceptable Use Policy; a separate Tencent licence is required only where the licensee's products/services exceed 1 million monthly active users. Tencent states that it claims no rights in generated outputs. The licence excludes the EU, UK, and South Korea, so do not distribute or use these Hunyuan outputs there without separate clearance. Image references were generated with built-in ImageGen.

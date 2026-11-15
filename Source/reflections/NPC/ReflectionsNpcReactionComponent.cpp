@@ -336,6 +336,186 @@ bool UReflectionsNpcReactionComponent::PlayOnWalker(UAnimSequenceBase* Clip, flo
     return Anim->PlaySlotAnimationAsDynamicMontage(Clip, TEXT("DefaultSlot"), 0.1f, 0.15f, FMath::Max(0.1f, PlayRate), FMath::Max(1, Loops)) != nullptr;
 }
 
+static TAutoConsoleVariable<int32> CVarNpcFleeExits(TEXT("Npc.FleeExits"), 1,
+    TEXT("1 (default): a frightened NPC runs the clearest way out, up to 25 m, preferring one that ends out of the player's sight, and picks again when blocked. 0: 7 m straight away from the threat."));
+
+namespace
+{
+    // A scene's loop is played as one long montage: enough repeats for an hour.
+    int32 NpcSceneLoops(const UAnimSequenceBase* Loop)
+    {
+        return FMath::Clamp(FMath::CeilToInt(3600.0f / FMath::Max(0.1f, Loop->GetPlayLength())), 1, 100000);
+    }
+}
+
+bool UReflectionsNpcReactionComponent::BeginScene(UAnimSequenceBase* Loop, bool bPinned, float BlendIn)
+{
+    ACharacter* Driver = LocomotionDriver.Get();
+    USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr;
+    UAnimInstance* Anim = Mesh ? Mesh->GetAnimInstance() : nullptr;
+    // Only the calm and free: nothing that is reacting, taken, down, shocked, frozen or alight sits down.
+    if (!Anim || !Mesh->GetSkeletalMeshAsset() || Reaction != EReflectionsNpcReaction::Calm || Infection != EReflectionsNpcInfection::None ||
+        UReflectionsNpcArchetype::IsHostileDisposition(Disposition) || WalkerDown != EWalkerDown::None || bWalkerJolting || bShocked ||
+        FrozenRemaining > 0.0f || BurningRemaining > 0.0f) return false;
+    if (Loop && Loop->GetSkeleton() != Mesh->GetSkeletalMeshAsset()->GetSkeleton()) return false;
+    BlendIn = FMath::Clamp(BlendIn, 0.0f, 2.0f);
+    // Taken over from another scene: its clips go, without the ended event (the NPC never left a scene).
+    if (SceneMontage && Anim->Montage_IsPlaying(SceneMontage)) Anim->Montage_Stop(BlendIn, SceneMontage);
+    if (SceneOneShot && Anim->Montage_IsPlaying(SceneOneShot)) Anim->Montage_Stop(BlendIn, SceneOneShot);
+    SceneMontage = nullptr;
+    SceneOneShot = nullptr;
+    bSceneEndsAfterClip = false;
+    UCharacterMovementComponent* Movement = Driver->GetCharacterMovement();
+    if (bInScene && bScenePinned && !bPinned && Movement->MovementMode == MOVE_None) Movement->SetMovementMode(MOVE_Walking);
+    bInScene = true;
+    bScenePinned = bPinned;
+    SceneLoop = Loop;
+    KnockbackVelocity = FVector::ZeroVector;
+    Movement->StopMovementImmediately();
+    if (bPinned) Movement->DisableMovement();
+    if (Loop)
+    {
+        // The armed hold (soldiers) gives way to the scene's clip; it returns by itself after the scene.
+        if (StanceMontage && Anim->Montage_IsPlaying(StanceMontage)) Anim->Montage_Stop(BlendIn, StanceMontage);
+        StanceMontage = nullptr;
+        SceneMontage = Anim->PlaySlotAnimationAsDynamicMontage(Loop, TEXT("DefaultSlot"), BlendIn, 0.25f, 1.0f, NpcSceneLoops(Loop));
+    }
+    return true;
+}
+
+bool UReflectionsNpcReactionComponent::PlaySceneClip(UAnimSequenceBase* Clip, float BlendIn, float BlendOut, bool bThenEnd)
+{
+    const ACharacter* Driver = LocomotionDriver.Get();
+    USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr;
+    UAnimInstance* Anim = Mesh ? Mesh->GetAnimInstance() : nullptr;
+    if (!bInScene || !Clip || !Anim || !Mesh->GetSkeletalMeshAsset() || Clip->GetSkeleton() != Mesh->GetSkeletalMeshAsset()->GetSkeleton()) return false;
+    // (Playing it takes the slot from the loop, which blends out by itself; TickScene brings the loop back.)
+    SceneOneShot = Anim->PlaySlotAnimationAsDynamicMontage(Clip, TEXT("DefaultSlot"), FMath::Clamp(BlendIn, 0.0f, 2.0f), FMath::Clamp(BlendOut, 0.0f, 2.0f), 1.0f, 1);
+    bSceneEndsAfterClip = SceneOneShot && bThenEnd;
+    return SceneOneShot != nullptr;
+}
+
+void UReflectionsNpcReactionComponent::TickScene()
+{
+    ACharacter* Driver = LocomotionDriver.Get();
+    USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr;
+    UAnimInstance* Anim = Mesh ? Mesh->GetAnimInstance() : nullptr;
+    if (!Anim)
+    {
+        EndScene(true);
+        return;
+    }
+    // Pinned means pinned, whoever else switched its movement back on.
+    UCharacterMovementComponent* Movement = Driver->GetCharacterMovement();
+    if (bScenePinned && Movement->MovementMode != MOVE_None) Movement->DisableMovement();
+    if (SceneOneShot && Anim->Montage_IsPlaying(SceneOneShot)) return;
+    if (SceneOneShot)
+    {
+        // The one-off clip is over (it is blending out now): the scene ends with it, or its loop comes back under it.
+        SceneOneShot = nullptr;
+        if (bSceneEndsAfterClip)
+        {
+            EndScene(false, 0.2f);
+            return;
+        }
+    }
+    if (SceneLoop && !(SceneMontage && Anim->Montage_IsPlaying(SceneMontage)))
+        SceneMontage = Anim->PlaySlotAnimationAsDynamicMontage(SceneLoop, TEXT("DefaultSlot"), 0.2f, 0.25f, 1.0f, NpcSceneLoops(SceneLoop));
+}
+
+void UReflectionsNpcReactionComponent::EndScene(bool bDisturbed, float BlendOut)
+{
+    if (!bInScene) return;
+    bInScene = false;
+    ACharacter* Driver = LocomotionDriver.Get();
+    // (A world that is being torn down: nothing is played, moved or announced any more.)
+    const UWorld* World = GetWorld();
+    const bool bLive = World && !World->bIsTearingDown;
+    if (bLive && IsValid(Driver) && !Driver->IsActorBeingDestroyed())
+    {
+        USkeletalMeshComponent* Mesh = Driver->GetMesh();
+        if (UAnimInstance* Anim = Mesh ? Mesh->GetAnimInstance() : nullptr)
+        {
+            if (SceneMontage && Anim->Montage_IsPlaying(SceneMontage)) Anim->Montage_Stop(BlendOut, SceneMontage);
+            if (SceneOneShot && Anim->Montage_IsPlaying(SceneOneShot)) Anim->Montage_Stop(BlendOut, SceneOneShot);
+        }
+        // A pinned one walks again (not one lying knocked down: the get-up gives its movement back).
+        UCharacterMovementComponent* Movement = Driver->GetCharacterMovement();
+        if (bScenePinned && Movement && Movement->MovementMode == MOVE_None && WalkerDown == EWalkerDown::None)
+            Movement->SetMovementMode(MOVE_Walking);
+    }
+    bScenePinned = false;
+    bSceneEndsAfterClip = false;
+    SceneLoop = nullptr;
+    SceneMontage = nullptr;
+    SceneOneShot = nullptr;
+    if (bLive && Subsystem.IsValid()) Subsystem->OnNpcSceneEnded.Broadcast(GetOwner(), bDisturbed);
+}
+
+void UReflectionsNpcReactionComponent::QueueStimulus(const FReflectionsNpcStimulus& Stimulus, float InstigatorReputation, float Delay)
+{
+    if (Delay <= 0.0f || PendingStimuli.Num() >= 8)
+    {
+        // (More than eight on their way at once: the newest is not kept waiting.)
+        ReceiveStimulus(Stimulus, InstigatorReputation);
+        return;
+    }
+    FPendingStimulus& Pending = PendingStimuli.AddDefaulted_GetRef();
+    Pending.Stimulus = Stimulus;
+    Pending.Reputation = InstigatorReputation;
+    Pending.In = Delay;
+}
+
+FVector UReflectionsNpcReactionComponent::PickFleeDestination(const FVector& Threat) const
+{
+    const AActor* Owner = GetOwner();
+    const UWorld* World = GetWorld();
+    const UReflectionsNpcArchetype* Active = GetActiveArchetype();
+    const ACharacter* Runner = GetMovementCharacter();
+    const FVector Feet = Owner->GetActorLocation();
+    FVector Away = (Feet - Threat).GetSafeNormal2D();
+    if (Away.IsNearlyZero()) Away = -Owner->GetActorForwardVector().GetSafeNormal2D();
+    if (Away.IsNearlyZero()) Away = FVector::ForwardVector;
+    const float Plain = Active ? Active->Reaction.FleeDistance : 700.0f;
+    // The old rule, and the answer when nothing better is found: straight away from the threat.
+    FVector Best = Feet + Away * Plain;
+    if (!World || CVarNpcFleeExits.GetValueOnGameThread() == 0)
+        return UReflectionsNpcArchetype::FleeDestination(Active ? Active->Reaction : FReflectionsNpcReactionProfile(), Feet, Threat,
+            -Owner->GetActorForwardVector(), GetTypeHash(Owner->GetFName()));
+    // Chest height: over kerbs and steps, under awnings.
+    const FVector Chest(Feet.X, Feet.Y, (Runner ? Runner->GetActorLocation().Z : Feet.Z + 90.0) + 20.0);
+    const APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(NpcFlee), false, Owner);
+    if (Runner) Params.AddIgnoredActor(Runner);
+    if (Player) Params.AddIgnoredActor(Player);
+    const FCollisionObjectQueryParams Walls(ECC_WorldStatic);
+    const float Run = 2500.0f;
+    // A different lean for each NPC, so that a street does not empty in single file.
+    const float Lean = static_cast<float>(GetTypeHash(Owner->GetFName()) % 21) - 10.0f;
+    // 90 either side is the lane itself when the threat is across it (a lane of 4 m leaves nothing else).
+    static const float Angles[] = { 0.0f, 35.0f, -35.0f, 70.0f, -70.0f, 90.0f, -90.0f, 110.0f, -110.0f };
+    float BestScore = 0.0f;
+    for (const float Angle : Angles)
+    {
+        const FVector Direction = Away.RotateAngleAxis(Angle + Lean, FVector::UpVector);
+        FHitResult Hit;
+        const bool bBlocked = World->LineTraceSingleByObjectType(Hit, Chest, Chest + Direction * Run, Walls, Params);
+        const float Clear = bBlocked ? FMath::Max(0.0f, Hit.Distance - 120.0f) : Run;
+        if (Clear < 300.0f) continue;
+        const FVector End = Feet + Direction * Clear;
+        // Ending out of the player's sight is worth a lot: that is where the street's crowd lets its people go.
+        FHitResult Sight;
+        const bool bHidden = Player && World->LineTraceSingleByObjectType(Sight, Player->GetPawnViewLocation(), End + FVector(0.0, 0.0, 120.0), Walls, Params);
+        const float Score = Clear * (1.0f - FMath::Abs(Angle) / 220.0f) + (bHidden ? 1200.0f : 0.0f);
+        if (Score > BestScore)
+        {
+            BestScore = Score;
+            Best = End;
+        }
+    }
+    return Best;
+}
+
 void UReflectionsNpcReactionComponent::ForgivePlayer()
 {
     AActor* Owner = GetOwner();
@@ -430,6 +610,18 @@ void UReflectionsNpcReactionComponent::EndShock(bool bFell)
 
 void UReflectionsNpcReactionComponent::TwitchRagdoll()
 {
+    if (bWalkerCorpse)
+    {
+        // The same small jolt, through a limb of the walker's ragdoll.
+        const ACharacter* Downed = LocomotionDriver.Get();
+        USkeletalMeshComponent* DownedMesh = Downed ? Downed->GetMesh() : nullptr;
+        static const FName WalkerLimbs[] = { TEXT("hand_l"), TEXT("hand_r"), TEXT("foot_l"), TEXT("foot_r"), TEXT("spine_03"), TEXT("head") };
+        const FName Limb = WalkerLimbs[FMath::RandHelper(UE_ARRAY_COUNT(WalkerLimbs))];
+        if (!DownedMesh || !DownedMesh->IsAnySimulatingPhysics() || DownedMesh->GetBoneIndex(Limb) == INDEX_NONE) return;
+        DownedMesh->WakeAllRigidBodies();
+        DownedMesh->AddImpulse((FMath::VRand() + FVector(0.0, 0.0, 0.6)).GetSafeNormal() * FMath::FRandRange(90.0f, 170.0f), Limb, true);
+        return;
+    }
     USkeletalMeshComponent* Body = FindNpcBody(GetOwner());
     if (!Body || !Body->IsSimulatingPhysics()) return;
     // A small jolt through one limb of the ragdoll that is already lying there: the same kind of push a hit on a
@@ -772,7 +964,10 @@ void UReflectionsNpcReactionComponent::HideLookParts()
 }
 
 static TAutoConsoleVariable<int32> CVarNpcWalkerPhysics(TEXT("Npc.WalkerPhysics"), 0,
-    TEXT("1: a spell's hit jolts an NPC's upper body with real physics, on its hidden walker (the visible body copies the walker and is never simulated). 0 (default until tested): off."));
+    TEXT("Real physics on an NPC's hidden walker (the visible body copies the walker and is never simulated while alive). 2: a strong blast, knockdown or shove throws the NPC off its feet as a ragdoll; it lies there and gets up, or stays down if killed. 1: only the jolt, and only with Npc.WalkerJolts 1. 0 (default until proven): off."));
+
+static TAutoConsoleVariable<int32> CVarNpcWalkerJolts(TEXT("Npc.WalkerJolts"), 0,
+    TEXT("1: with Npc.WalkerPhysics on, every hit jolts the NPC's upper body for half a second. 0 (default): no jolts. NOT SAFE as it is: an NPC killed in the middle of a jolt can be left without a pose (seen 04:54 on 2026-11-15, and behind the 23:42 crash)."));
 
 void UReflectionsNpcReactionComponent::FacePoint(const FVector& Point, float DeltaTime)
 {
@@ -797,7 +992,8 @@ bool UReflectionsNpcReactionComponent::StartWalkerJolt(const FVector& Direction,
     ACharacter* Driver = LocomotionDriver.Get();
     USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr;
     USkeletalMeshComponent* Body = Owner ? FindNpcBody(Owner) : nullptr;
-    if (CVarNpcWalkerPhysics.GetValueOnGameThread() == 0 || WalkerDown != EWalkerDown::None || IsIncapacitated() || !Mesh || !Body || !Mesh->GetPhysicsAsset() ||
+    if (CVarNpcWalkerPhysics.GetValueOnGameThread() == 0 || CVarNpcWalkerJolts.GetValueOnGameThread() == 0 ||
+        WalkerDown != EWalkerDown::None || IsIncapacitated() || !Mesh || !Body || !Mesh->GetPhysicsAsset() ||
         Mesh->GetBoneIndex(WalkerJoltRoot) == INDEX_NONE || Direction.IsNearlyZero()) return false;
     Strength = FMath::Clamp(Strength, 0.0f, 1.0f);
     if (!bWalkerJolting)
@@ -828,6 +1024,7 @@ void UReflectionsNpcReactionComponent::EndWalkerJolt()
     if (!bWalkerJolting) return;
     bWalkerJolting = false;
     WalkerJoltRemaining = 0.0f;
+    if (const UWorld* World = GetWorld()) WalkerPhysicsEndedAt = World->GetTimeSeconds();
     AActor* Owner = GetOwner();
     const ACharacter* Driver = LocomotionDriver.Get();
     if (USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr)
@@ -965,12 +1162,43 @@ void UReflectionsNpcReactionComponent::ReattachWalkerMesh()
     if (Mesh->GetAttachParent() == Capsule) Mesh->SetRelativeTransform(WalkerMeshRelative, false, nullptr, ETeleportType::None);
 }
 
+bool UReflectionsNpcReactionComponent::KeepWalkerDownAsCorpse()
+{
+    const ACharacter* Driver = LocomotionDriver.Get();
+    USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr;
+    if (!Mesh || WalkerDown == EWalkerDown::None) return false;
+    if (WalkerDown == EWalkerDown::Rising)
+    {
+        // Killed on the way up: the get-up stops and it drops again from where it is.
+        if (UAnimInstance* Anim = Mesh->GetAnimInstance()) Anim->Montage_Stop(0.1f);
+        if (!Mesh->IsAnySimulatingPhysics())
+        {
+            // The physics had already faded out and the mesh was back on its capsule: off it comes again, set up
+            // the way a knockdown sets it up.
+            Mesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+            Mesh->SetCollisionObjectType(ECC_PhysicsBody);
+            Mesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+            Mesh->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+            Mesh->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+            Mesh->PhysicsTransformUpdateMode = EPhysicsTransformUpdateMode::SimulationUpatesComponentTransform;
+        }
+        Mesh->SetAllBodiesSimulatePhysics(true);
+        Mesh->SetAllBodiesPhysicsBlendWeight(1.0f);
+        WalkerRiseRemaining = 0.0f;
+        WalkerRiseBlend = 0.0f;
+        WalkerDown = EWalkerDown::Down;
+    }
+    bWalkerCorpse = true;
+    return true;
+}
+
 void UReflectionsNpcReactionComponent::EndWalkerKnockdown(bool bLeaveWhereItLies)
 {
     if (WalkerDown == EWalkerDown::None) return;
     WalkerDown = EWalkerDown::None;
     WalkerRiseRemaining = 0.0f;
     WalkerRiseBlend = 0.0f;
+    if (const UWorld* World = GetWorld()) WalkerPhysicsEndedAt = World->GetTimeSeconds();
     AActor* Owner = GetOwner();
     if (ACharacter* Driver = LocomotionDriver.Get())
     {
@@ -1398,6 +1626,8 @@ void UReflectionsNpcReactionComponent::EndPlay(const EEndPlayReason::Type Reason
     }
     EndWalkerJolt();
     EndWalkerKnockdown(true);
+    EndScene(true, 0.0f);
+    PendingStimuli.Reset();
     // Nothing of a cast or of a spell's after-effect outlives the NPC (a stand-in released in the middle of a
     // cast, a level that unloads): the glow and light go, the loops stop, the walker's clock runs again.
     CastWindupRemaining = 0.0f;
@@ -1439,6 +1669,7 @@ void UReflectionsNpcReactionComponent::SetArchetype(UReflectionsNpcArchetype* Ne
 bool UReflectionsNpcReactionComponent::ApplyInfection(EReflectionsNpcInfection NewState, UReflectionsNpcArchetype* InTakenArchetype)
 {
     if (NewState == Infection) return false;
+    EndScene(true);
     const auto IsTaken = [](EReflectionsNpcInfection State)
     {
         return State == EReflectionsNpcInfection::Infected || State == EReflectionsNpcInfection::VillainHost;
@@ -1506,6 +1737,8 @@ void UReflectionsNpcReactionComponent::ConfigureMotor()
 void UReflectionsNpcReactionComponent::SetReaction(EReflectionsNpcReaction Next, AActor* Cause, FVector EventLocation)
 {
     if (Reaction == EReflectionsNpcReaction::Incapacitated) return;
+    // Anything but calm ends a street scene at once: the clip stops, a pinned one can move again.
+    if (Next != EReflectionsNpcReaction::Calm) EndScene(true);
     const UReflectionsNpcArchetype* Active = GetActiveArchetype();
     const FReflectionsNpcReactionProfile DefaultProfile;
     const FReflectionsNpcReactionProfile& Profile = Active ? Active->Reaction : DefaultProfile;
@@ -1518,8 +1751,10 @@ void UReflectionsNpcReactionComponent::SetReaction(EReflectionsNpcReaction Next,
         if (Subsystem.IsValid()) Subsystem->NotifyReaction(this, Reaction, Cause, EventLocation);
     }
     if (Next == EReflectionsNpcReaction::Fleeing)
-        SafeDestination = UReflectionsNpcArchetype::FleeDestination(Profile, GetOwner()->GetActorLocation(), EventLocation,
-            -GetOwner()->GetActorForwardVector(), GetTypeHash(GetOwner()->GetFName()));
+    {
+        SafeDestination = PickFleeDestination(EventLocation);
+        FleeRepickIn = 0.8f;
+    }
 }
 
 void UReflectionsNpcReactionComponent::ReceiveStimulus(const FReflectionsNpcStimulus& Stimulus, float InstigatorReputation)
@@ -1549,6 +1784,7 @@ void UReflectionsNpcReactionComponent::ReceiveSpellHit(const FReflectionsSpellHi
     AActor* Owner = GetOwner();
     const UReflectionsNpcArchetype* Active = GetActiveArchetype();
     if (!IsValid(Owner) || !Active) return;
+    EndScene(true);
     if (IsIncapacitated())
     {
         // The hit that killed it (health is spent before the hit event) or a later hit on the body.
@@ -1685,12 +1921,29 @@ bool UReflectionsNpcReactionComponent::StartRagdoll()
     Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     Mesh->SetSimulatePhysics(true);
     Mesh->WakeAllRigidBodies();
-    return Mesh->IsSimulatingPhysics();
+    if (!Mesh->IsSimulatingPhysics()) return false;
+    // From here on only the physics blend writes this body's pose. Left evaluating its own animation as well (the
+    // retarget from the walker), a Frost soldier's body lost its pose buffer within two seconds of death in 3 of 8
+    // deaths: the ragdoll fell and the body on screen stayed standing (05:11 on 2026-11-15); with this set, 0 of 8.
+    Mesh->bNoSkeletonUpdate = true;
+    return true;
 }
 
 void UReflectionsNpcReactionComponent::KickRagdoll(const FReflectionsSpellHitData& Hit)
 {
     AActor* Owner = GetOwner();
+    if (bWalkerCorpse)
+    {
+        // It lies there as the hidden walker's ragdoll: the hit shoves that, the way it shoves a living one that is down.
+        const ACharacter* Downed = LocomotionDriver.Get();
+        USkeletalMeshComponent* DownedMesh = Downed ? Downed->GetMesh() : nullptr;
+        if (DownedMesh && DownedMesh->IsAnySimulatingPhysics())
+        {
+            DownedMesh->WakeAllRigidBodies();
+            DownedMesh->AddImpulse(FVector(Hit.Impulse.X, Hit.Impulse.Y, FMath::Abs(Hit.Impulse.Z) + 60.0) * 0.5, NAME_None, true);
+        }
+        return;
+    }
     USkeletalMeshComponent* Body = FindNpcBody(Owner);
     if (!Body || !Body->IsSimulatingPhysics() || !ReflectionsSpellCatalog::IsValid(Hit.Spell)) return;
 
@@ -1759,10 +2012,17 @@ void UReflectionsNpcReactionComponent::OnOwnerDied(AActor* Source)
     CastWindupRemaining = 0.0f;
     EndCastTelegraph();
     CancelTarnishCast();
+    // (Read before the jolt is ended just below: was the visible body ticking after physics a moment ago?)
+    const UWorld* DeathWorld = GetWorld();
+    const bool bJustLeftWalkerPhysics = bWalkerJolting || (DeathWorld && DeathWorld->GetTimeSeconds() - WalkerPhysicsEndedAt < 0.25f);
     EndWalkerJolt();
-    // Killed while knocked down: the walker stops where it lies and the visible body, which is lying there with
-    // it, goes limp in its place like any other death.
-    EndWalkerKnockdown(true);
+    // Killed while knocked down or getting up: the hidden walker, already a ragdoll, is the body on the ground from
+    // here on, and the visible body goes on copying it as it did a moment ago. The visible body is NOT made a
+    // ragdoll of its own and nothing about its ticking is changed: doing that at this moment left it with an empty
+    // pose buffer (the engine's ensure one frame later), and the next spell that woke the corpse took the editor
+    // down (23:42 and 03:50 on 2026-11-14/15).
+    const bool bCorpseOnWalker = WalkerDown != EWalkerDown::None && KeepWalkerDownAsCorpse();
+    if (!bCorpseOnWalker) EndWalkerKnockdown(true);
     // Whatever it was going through ends here: the loops stop, the walker's clock runs again, and it has a last
     // sound of its own. One that dies while the current runs through it goes on twitching on the ground.
     if (bShocked)
@@ -1794,7 +2054,10 @@ void UReflectionsNpcReactionComponent::OnOwnerDied(AActor* Source)
         if (Capsule && Capsule->ComponentHasTag(HitProxyTag)) Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
     const bool bWantsRagdoll = bEnableRagdollOnDeath || (Active && Active->bRagdollOnLethalHit);
-    if (!bWantsRagdoll || !StartRagdoll())
+    // A body that was ticking after physics until a moment ago (a jolt, or a get-up that has only just ended) is not
+    // made a ragdoll now: that is the moment that left bodies without a pose. It tips over instead, like any body
+    // that cannot be a ragdoll.
+    if (!bCorpseOnWalker && (!bWantsRagdoll || bJustLeftWalkerPhysics || !StartRagdoll()))
     {
         // No usable physics body: freeze the pose and tip over so the death still reads.
         if (USkeletalMeshComponent* Body = FindNpcBody(Owner)) Body->bPauseAnims = true;
@@ -1963,12 +2226,15 @@ void UReflectionsNpcReactionComponent::TickStance(float DeltaTime)
     }
     const bool bOn = CVarNpcArmedStance.GetValueOnGameThread() != 0 && !bShocked && FrozenRemaining <= 0.0f &&
         CastWindupRemaining <= 0.0f && !bHiddenUntilPosed;
-    // The additive hold lies over whatever the legs do, so it is wanted all the time. Without it, the guard
-    // stance (a whole-body clip) only while standing still: over a walk it would stop the legs.
+    // Standing still: the guard stance, a whole-body clip posed for it (over a walk it would stop the legs).
+    // Moving: the additive hold, which lies over whatever the legs do. (The hold alone, used standing too, left
+    // the blade 40 degrees to the side and the shield's face up: it is an additive against the neutral stand,
+    // and the walker's own idle is not that pose.) Either one alone serves both when the other is missing.
     UAnimSequence* Hold = bOn ? Active->Combat.WalkerArmedHold.LoadSynchronous() : nullptr;
     if (Hold && !Hold->IsValidAdditive()) Hold = nullptr;
-    UAnimSequence* Guard = bOn && !Hold ? Active->Combat.WalkerGuardIdle.LoadSynchronous() : nullptr;
-    UAnimSequence* Wanted = Hold ? Hold : (StanceStillFor >= 0.35f ? Guard : nullptr);
+    UAnimSequence* Guard = bOn ? Active->Combat.WalkerGuardIdle.LoadSynchronous() : nullptr;
+    const bool bStill = StanceStillFor >= 0.35f;
+    UAnimSequence* Wanted = (bStill && Guard) ? Guard : Hold;
     const bool bWantHold = Wanted && Wanted == Hold;
     if (bMine && Wanted && bWantHold == bStanceIsMarch) return;
     // A guard stance that is playing is given a moment after the NPC stops being still before it is dropped.
@@ -2017,6 +2283,24 @@ void UReflectionsNpcReactionComponent::TickAmbientMovement(float DeltaTime)
         constexpr float RouteRadius = 200.0f;
         const float Angle = RoamLeg * 120.0f + RoamOrigin.X * 0.24f + RoamOrigin.Y * 0.09f;
         RoamTarget = RoamOrigin + FVector::ForwardVector.RotateAngleAxis(Angle, FVector::UpVector) * RouteRadius;
+        // In a lane a few metres wide the corners of this route lie in the house walls, and the walker would press
+        // against a wall for the whole leg. The leg ends 70 cm short of whatever is in the way; with no room at all
+        // it ends where the walker stands, which starts the next leg.
+        if (const UWorld* World = GetWorld())
+        {
+            const ACharacter* Walker = LocomotionDriver.Get();
+            const FVector Chest = Walker->GetActorLocation() + FVector(0.0, 0.0, 20.0);
+            const FVector Leg(RoamTarget.X - Chest.X, RoamTarget.Y - Chest.Y, 0.0);
+            FHitResult Wall;
+            FCollisionQueryParams Params(SCENE_QUERY_STAT(NpcRoam), false, GetOwner());
+            Params.AddIgnoredActor(Walker);
+            if (!Leg.IsNearlyZero() &&
+                World->LineTraceSingleByObjectType(Wall, Chest, Chest + Leg, FCollisionObjectQueryParams(ECC_WorldStatic), Params))
+            {
+                const FVector Short = Chest + Leg.GetSafeNormal() * FMath::Max(0.0f, Wall.Distance - 70.0f);
+                RoamTarget = FVector(Short.X, Short.Y, RoamTarget.Z);
+            }
+        }
         RoamLegTime = 4.5f;
         RoamPause = RoamLeg > 1 ? 0.35f : 0.0f;
         if (RoamPause > 0.0f) return;
@@ -2128,6 +2412,16 @@ void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick
     // an animated mesh) must never be left with empty bone buffers. The repair itself skips simulating bodies.
     RepairBodyPose();
     if (!bTriedLocomotion && !IsIncapacitated()) InitializeLocomotion();
+    // The panic ripple: what happened further away is heard of a moment later.
+    for (int32 Index = PendingStimuli.Num() - 1; Index >= 0; --Index)
+    {
+        PendingStimuli[Index].In -= DeltaTime;
+        if (PendingStimuli[Index].In > 0.0f) continue;
+        const FPendingStimulus Due = PendingStimuli[Index];
+        PendingStimuli.RemoveAtSwap(Index);
+        ReceiveStimulus(Due.Stimulus, Due.Reputation);
+    }
+    if (bInScene) TickScene();
     if (HitMesh.IsValid())
     {
         HitPhysicsRemaining -= DeltaTime;
@@ -2314,7 +2608,7 @@ void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick
 
     if (Reaction == EReflectionsNpcReaction::Calm)
     {
-        if (Active->Reaction.bRoamsWhenCalm && !bExternallySteered) TickAmbientMovement(DeltaTime);
+        if (Active->Reaction.bRoamsWhenCalm && !bExternallySteered && !bInScene) TickAmbientMovement(DeltaTime);
         TickRemark(DeltaTime);
         return;
     }
@@ -2328,7 +2622,19 @@ void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick
     }
     // Whoever steers the body decides where it goes, except that a frightened NPC always runs by itself.
     if (bExternallySteered && Reaction != EReflectionsNpcReaction::Fleeing) return;
-    if (Reaction == EReflectionsNpcReaction::Fleeing) TryMove(SafeDestination, DeltaTime);
+    if (Reaction == EReflectionsNpcReaction::Fleeing)
+    {
+        FleeRepickIn -= DeltaTime;
+        if (FleeRepickIn <= 0.0f && CVarNpcFleeExits.GetValueOnGameThread() != 0)
+        {
+            FleeRepickIn = 0.6f;
+            const ACharacter* Runner = GetMovementCharacter();
+            if (FVector::DistSquared2D(Owner->GetActorLocation(), SafeDestination) < FMath::Square(150.0) ||
+                (Runner && Runner->GetVelocity().SizeSquared2D() < FMath::Square(40.0)))
+                SafeDestination = PickFleeDestination(ThreatLocation);
+        }
+        TryMove(SafeDestination, DeltaTime);
+    }
     else if (Reaction == EReflectionsNpcReaction::Investigating &&
         FVector::Dist2D(Owner->GetActorLocation(), ThreatLocation) > Active->Reaction.InvestigateStopDistance) TryMove(ThreatLocation, DeltaTime);
     else if (Reaction == EReflectionsNpcReaction::Attacking && Focus.IsValid() && !MotorTarget && !bCasting)

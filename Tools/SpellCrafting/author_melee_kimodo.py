@@ -1622,6 +1622,121 @@ def aim_sword_shield(clip, name):
     return report
 
 
+def ik_arm(C, s, target, pole, axes_s=None, palm_want=None):
+    """Two-bone IK for one arm in component space: the hand goes to `target` (clamped to reach), the elbow toward
+    `pole`, the hand keeps its angle to the forearm; then (with palm_want) the forearm rolls so the palm faces that way.
+    C(bone) gives the current component transform. Returns local rotations for upperarm and lowerarm."""
+    S, E, H = C('upperarm_' + s).translation, C('lowerarm_' + s).translation, C('hand_' + s).translation
+    qc, qu, ql, qh = (C(b + s).rotation for b in ('clavicle_', 'upperarm_', 'lowerarm_', 'hand_'))
+    L1, L2 = (E - S).length(), (H - E).length()
+    to = target - S
+    dist = max(abs(L1 - L2) + 1.0, min(to.length(), (L1 + L2) * 0.995))
+    u = to.normal()
+    a = (L1 * L1 - L2 * L2 + dist * dist) / (2 * dist)
+    h = math.sqrt(max(0.0, L1 * L1 - a * a))
+    w = (pole - u * pole.dot(u)).normal()
+    E2 = S + u * a + w * h
+    T2 = S + u * dist
+    n_old = (E - S).cross(H - E)
+    n_old = n_old.normal() if n_old.length() > 1e-3 else (E - S).cross(pole).normal()
+    n_new = (E2 - S).cross(T2 - E2).normal()
+    Ru = frame_quat(E2 - S, n_new) * qinv(frame_quat(E - S, n_old)) * qu
+    Rl = frame_quat(T2 - E2, n_new) * qinv(frame_quat(H - E, n_old)) * ql
+    if palm_want is not None and axes_s is not None:
+        hand_now = Rl * (qinv(ql) * qh)
+        axis = (T2 - E2).normal()
+        palm = hand_now.rotate_vector(axes_s[2])
+        Rl = axis_quat(axis, signed_angle(palm, palm_want, axis)) * Rl
+    return qinv(qc) * Ru, qinv(Ru) * Rl, (T2 - target).length()
+
+
+def place_arms(clip, targets):
+    """Re-keys the arms of a walker clip by ik_arm on every frame. targets(t, pose, C, front, lat, up) returns
+    {side: (target, pole, palm_want or None, weight)}; weight blends the IK result with the clip's own arm (0 = keep)."""
+    mesh = find_asset(WALKER)
+    opts = eval_opts(mesh)
+    W, L = unreal.AnimPoseSpaces.WORLD, unreal.AnimPoseSpaces.LOCAL
+    skel = clip.get_editor_property('skeleton')
+    axes = {s: hand_axes_local(skel, s) for s in 'lr'}
+    n = clip.data_model_interface.get_number_of_keys()
+    keys, miss = {}, 0.0
+    for i in range(n):
+        pose = X.get_anim_pose_at_frame(clip, i, opts)
+        front, lat, up = body_axes(pose)
+        C = lambda b: X.get_bone_pose(pose, b, W)
+        for s, (target, pole, palm_want, weight) in targets(i / FPS, pose, C, front, lat, up).items():
+            lu, ll = X.get_bone_pose(pose, 'upperarm_' + s, L), X.get_bone_pose(pose, 'lowerarm_' + s, L)
+            if weight > 0.0:
+                tgt = C('hand_' + s).translation * (1.0 - weight) + target * weight
+                ru, rl, m = ik_arm(C, s, tgt, pole, axes[s], palm_want if weight >= 0.999 else None)
+                ru, rl = slerp(lu.rotation, ru, min(1.0, weight * 1.5)), slerp(ll.rotation, rl, min(1.0, weight * 1.5))
+                miss = max(miss, m)
+            else:
+                ru, rl = lu.rotation, ll.rotation
+            keys.setdefault('upperarm_' + s, []).append((lu.translation, ru, lu.scale3d))
+            keys.setdefault('lowerarm_' + s, []).append((ll.translation, rl, ll.scale3d))
+    c = clip.get_editor_property('controller')
+    c.open_bracket(unreal.Text('Arm placement'), False)
+    for b, xs in keys.items():
+        c.set_bone_track_keys(b, [x[0] for x in xs], [x[1] for x in xs], [x[2] for x in xs], False)
+    c.close_bracket(False)
+    save(clip)
+    return round(miss, 1)
+
+
+def carry_targets(t, pose, C, front, lat, up):
+    """Both hands on a basket held at waist height, 30 cm in front, 32 cm apart, forearms level, palms facing in."""
+    base = C('spine_01').translation + front * 30.0 + up * 4.0
+    out = {}
+    for s, side in (('l', 1.0), ('r', -1.0)):
+        out[s] = (base + lat * (16.0 * side), lat * side + front * -0.7 + up * -0.3, lat * -side, 1.0)
+    return out
+
+
+def vendor_targets(t, pose, C, front, lat, up):
+    """Right arm raised high and waving to passers-by (0.6-2.9 s of the 4 s loop: up, three waves, down)."""
+    w = smooth01((t - 0.6) / 0.4) * (1.0 - smooth01((t - 2.4) / 0.5))
+    sh = C('upperarm_r').translation
+    wave = math.sin(2 * math.pi * 1.5 * (t - 1.0)) if t > 1.0 else 0.0
+    target = sh + up * 48.0 + front * 18.0 + lat * (-14.0 + 12.0 * wave * smooth01((t - 1.0) / 0.2))
+    return {'r': (target, lat * -1.0 + up * -0.4 + front * 0.2, front, w)}
+
+
+def fix_street(names=('Street_Carry_Hold', 'Street_Vendor_Call')):
+    """Authored arm placement where Kimodo stayed too calm: the carry hold's basket and the vendor's raised, waving arm."""
+    mesh = find_asset(WALKER)
+    out = {}
+    for name in names:
+        final = walker_name(name)
+        clip = unreal.load_object(None, '%s/%s.%s' % (FOLDER, final, final))
+        miss = place_arms(clip, carry_targets if name == 'Street_Carry_Hold' else vendor_targets)
+        if name == 'Street_Carry_Hold':
+            grip_fingers(clip)
+        opts = eval_opts(mesh)
+        W = unreal.AnimPoseSpaces.WORLD
+        n = clip.data_model_interface.get_number_of_keys()
+        top = max(X.get_bone_pose(X.get_anim_pose_at_frame(clip, i, opts), 'hand_r', W).translation.z
+                  - X.get_bone_pose(X.get_anim_pose_at_frame(clip, i, opts), 'head', W).translation.z for i in range(0, n, 3))
+        p0 = X.get_anim_pose_at_frame(clip, 0, opts)
+        last = X.get_anim_pose_at_frame(clip, n - 1, opts)
+        out[final] = {'ik_miss_cm': miss, 'right_hand_max_above_head_cm': round(top, 1),
+                      'seam_cm': round(max((X.get_bone_pose(p0, b, W).translation - X.get_bone_pose(last, b, W).translation).length() for b in ('hand_l', 'hand_r')), 2),
+                      'right': clearance(clip, mesh, 'r'), 'left': clearance(clip, mesh, 'l')}
+    return out
+
+
+def make_additive(name, base=IDLE0, frame=0):
+    """Turns a walker clip into a local-space additive over one frame of `base` (crowd and npc-unify play upper-body
+    holds this way in the walker's DefaultSlot, on top of the walk)."""
+    clip = unreal.load_object(None, '%s/%s.%s' % (FOLDER, name, name))
+    clip.set_editor_property('additive_anim_type', unreal.AdditiveAnimationType.AAT_LOCAL_SPACE_BASE)
+    clip.set_editor_property('ref_pose_type', unreal.AdditiveBasePoseType.ABPT_ANIM_FRAME)
+    clip.set_editor_property('ref_pose_seq', find_asset(base))
+    clip.set_editor_property('ref_frame_index', frame)
+    save(clip)
+    return {k: str(clip.get_editor_property(k)) for k in ('additive_anim_type', 'ref_pose_type', 'ref_pose_seq', 'ref_frame_index')}
+
+
 def build_shield(names=None):
     """For each finished take: the whole take baked on the Kimodo skeleton, AS_Melee_<Name>_Walker made by walker()
     (retarget, hand anticlip, seamless loop), then both fists closed. Restores the throttle and closes Sequencer."""
@@ -1749,6 +1864,10 @@ elif stage == 'shield_status':
     RESULT = json.dumps(shield_status())
 elif stage == 'build_shield':
     RESULT = json.dumps(build_shield(ARGS[1:] or None), default=str, indent=1)
+elif stage == 'make_additive':
+    RESULT = json.dumps({n: make_additive(n) for n in ARGS[1:]}, default=str, indent=1)
+elif stage == 'fix_street':
+    RESULT = json.dumps(fix_street(tuple(ARGS[1:]) or ('Street_Carry_Hold', 'Street_Vendor_Call')), default=str, indent=1)
 elif stage == 'getups':
     RESULT = json.dumps(getups(), default=str, indent=1)
 elif stage == 'grip_check':

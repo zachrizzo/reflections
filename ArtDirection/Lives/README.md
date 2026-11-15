@@ -114,7 +114,7 @@ Packaging: re-import after the story file changes (Python):
 `unreal.ReflectionsPeopleBookAsset.import_from_file(unreal.load_asset('/Game/Lives/DA_PeopleBook'), path)`, then save.
 `/Game/Lives` must be in `DirectoriesToAlwaysCook` (it is loaded by path).
 
-## Consequences (merged build 19:30, Nov 14; not yet verified in PIE)
+## Consequences (merged build 19:30, Nov 14; PIE on Gray London, Nov 15 01:53, 5 of 7)
 
 - **Deaths ripple.** A death at Wren's hand marks the person dead and killed by the player (saved). Family mourn for
   16 game hours and friends for 8, 1.5 times longer when Wren did it. From 17:00 to 23:00 the bereaved keep vigil at the
@@ -134,6 +134,14 @@ Packaging: re-import after the story file changes (Python):
 - **Sides never mix.** Casting and spawning match the look's `Look_Side_*` tag. Without a tag the look's name decides:
   Gilt or Red is Giltside, Frost, White or Rag is Frostside. Spawned looks also match sex and job. The least-worn face
   is picked, never one already worn within 30 m.
+
+**PIE on Gray London (Nov 15, 01:53; `Tools/Lives/verify_consequences.py`), 5 of 7** (`Screenshots/Gray_crime_witness.png`):
+- PASS: DA_PeopleBook loads (29 bodies cast, 71 lives).
+- PASS: a death at Wren's hand ripples. Benedict Sparkworth died, and his friend Gisela Glimmerton turned grieving, opinion 0 to -0.61. She went to keep vigil at his door, and her persona says "They killed Benedict Sparkworth; you will never forgive it".
+- PASS: a theft seen by Marisol Candlewick. She is wary, has 1 crime on record, and her persona says "saw the Silverer steal from Damaris Radiance".
+- PASS: Brask's men are on patrol at their markers. They have no bodies yet (virtual).
+- FAIL: sides. 2 of 29 people wore another side's look: Hester Quaile (Pewterside) in FrostHyeon, Sorrel Vey (Frostside) in GiltPriya. Both are quest-system spawns, which pick a look by sex only. quest-system fixed it for the next train (01:57): it now spawns through Lives' SpawnPerson and only falls back to a side-filtered pick. Re-check after train #15 (02:56): Sorrel Vey is now Frostside in FrostHyeon. Hester Quaile (Pewterside) came up in GiltMaren through Lives' own fallback, because Lives picked only from the NPC system's fixed look list, which has no grey PewLook_* looks. Fixed for train #16: SpawnLife also takes npc-unify's `GetLooksForSide` for the person's side.
+- FAIL: keep-away. Gisela was afraid (feeling 1), but her walker did not move at all: 0 cm in 5 s, velocity 0, while 20 of 35 other walkers moved. The test also put Wren facing a wall away from her. It is likely a stuck walker (no navmesh or geometry at her vigil door), not the fear logic. Not yet shown either way. Re-try after #15: Gisela was off the navmesh (on_navmesh false), and Wren stayed 27 m away because the test's teleport did not land. A moving walker (Valentine Radiance, made afraid) walked straight past Wren and showed "Getting away", not "Keeping away". The likely cause is the NPC system's fear reaction taking the body (Lives only steers Calm brains). From #16, Lives logs "X keeps away" or "X can't keep away: reaction N..." to settle it.
 
 **Map.** From train #13 the only map is Gray London (`/Game/GrayLondon/Maps/GrayLondon_Geodata`). It is "one London for
 now", with no side switching. Lives has no map names in its code: homes and workplaces resolve by the story markers'

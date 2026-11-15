@@ -201,7 +201,7 @@ def add_chimneys(bay, plot, profile, style):
     return heads
 
 
-def from_plan(record, planned, style_plan, shared, override=None):
+def from_plan(record, planned, style_plan, shared, override=None, roof_variation=None):
     plot, x_axis, y_axis = local_frame(record)
     if (math.dist(record['origin_m'], planned['origin_m']) > .00002
             or len(plot) != len(planned['footprint_local_m'])
@@ -219,6 +219,11 @@ def from_plan(record, planned, style_plan, shared, override=None):
     walls = inset(plot, .315)
     gables = inset(plot, .14)
     profile = roof_profile(plot, planned, style_plan)
+    if roof_variation is not None:
+        if roof_variation != 'asymmetric-ridges-v1':
+            raise ValueError('Unknown opt-in roof variation')
+        from whole_building_ridge_variation import vary_ridges
+        profile = vary_ridges(profile, planned['id'], planned['source_max_height_m'], shared)
     bay = Bay()
     shell(bay, plot, walls, gables, profile, style)
     tiled_roof(bay, plot, profile)
@@ -306,6 +311,10 @@ def arguments():
     cli.add_argument('--candidate', type=Path, default=ART / 'west_connector_whole_buildings_candidate.json')
     cli.add_argument('--plan', type=Path, default=SAVED / 'MedievalSurvey/west_connector_whole_building_plan.json')
     cli.add_argument('--style-overrides', type=Path, help='Optional plan-pinned style presets by surveyed building ID')
+    cli.add_argument('--roof-variation', choices=('asymmetric-ridges-v1',),
+                     help='Opt in to reviewed asymmetric ridge positions; rejects party walls')
+    cli.add_argument('--review-source-facts', action='store_true',
+                     help='Record extra pre-export mesh channel counts for a review round trip')
     cli.add_argument('--output', type=Path, default=SAVED / 'WholeBuildings/WestConnector')
     cli.add_argument('--prefix', default='WestConnector')
     cli.add_argument('--preview', action='store_true')
@@ -324,6 +333,8 @@ def main():
         raise ValueError('Asset name prefix must be ASCII alphanumeric')
     plan_hash = sha256(args.plan)
     overrides = read_style_overrides(args.style_overrides, args.plan, records.keys()) if args.style_overrides else {}
+    if args.roof_variation and paired_edges(plan):
+        raise ValueError('Roof variation cannot run on plans containing shared party-wall edges')
     output = args.output.resolve()
     if output.exists():
         raise FileExistsError(f'Choose a fresh output directory; refusing to overwrite {output}')
@@ -333,6 +344,8 @@ def main():
               'candidate_sha256': sha256(args.candidate), 'plan_sha256': plan_hash, 'buildings': {}}
     if args.style_overrides:
         report['style_overrides_sha256'] = sha256(args.style_overrides)
+    if args.roof_variation:
+        report['roof_variation'] = args.roof_variation
     shared_edges = paired_edges(plan)
     if not shared_edges.keys() <= records.keys():
         raise ValueError('Party wall references an unknown plan building')
@@ -342,11 +355,16 @@ def main():
     for row in plan['buildings']:
         key = row['id']
         bay, outline, profile, style, x_axis, y_axis, stacks = from_plan(
-            records[key], row, plan['styles'][key], shared_edges.get(key, set()), overrides.get(key))
+            records[key], row, plan['styles'][key], shared_edges.get(key, set()), overrides.get(key),
+            args.roof_variation)
         name = f'SM_GLMedieval_{args.prefix}_{style.name}_{key.rsplit("_", 1)[-1][:8]}'
         obj = make_object(bay, name)
         source = meshes / f'{name}.fbx'
         expected = mesh_facts(obj.data)
+        if args.review_source_facts:
+            pre_export_channels = {'vertices': len(obj.data.vertices), 'edges': len(obj.data.edges),
+                                   'polygons': len(obj.data.polygons),
+                                   'color_attributes': len(obj.data.color_attributes)}
         bpy.ops.object.select_all(action='DESELECT')
         obj.select_set(True)
         bpy.context.view_layer.objects.active = obj
@@ -363,6 +381,8 @@ def main():
                                         chimney_heads_local_m=stacks,
                                         source_height_cm=100 * row['source_max_height_m'], entry=row['entry'],
                                         party_wall_edges=sorted(shared_edges.get(key, set())), collision=False)
+        if args.review_source_facts:
+            report['buildings'][key]['pre_export_channels'] = pre_export_channels
         audit.append((key, source, outline, expected))
     for key, source, outline, expected in audit:
         bpy.ops.wm.read_factory_settings(use_empty=True)

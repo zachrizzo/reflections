@@ -1,5 +1,10 @@
 # Gray London map review: jam and later sale
 
+> **Update 2026-11-15 ~15:15:** `GrayLondon_Geodata` **no longer ships**. The game cooks `/Game/GrayLondon/Maps/MedievalLondon`, Codex's medieval town, instead. Its references reach 100 packages, and none are Codriver models, the Albert scan, Minimaliano props or branded signs.
+> - **The trademark findings (§2.1) and the Albert caveat (§2.2) apply only if this map comes back.**
+> - **ODbL (§2.3) still applies:** the town was built from the OSM tiles.
+> - Trimmed notices: [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
+
 Reviewed 2026-11-14 at ~21:05 MST. The map is Jah's PR #1 ("Add Gray London prototype level", `4aac7d0d` on `origin/main`), which the orchestrator says becomes the main map.
 
 **How I checked**, with no editor and no checkout:

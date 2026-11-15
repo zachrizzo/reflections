@@ -1,0 +1,9 @@
+{
+  "Tile_p03_p00_b69db7dfecf5": {"style": "stone_office", "entrance": true},
+  "Tile_p03_p00_f28db1f06da6": {"style": "glass_office", "entrance": false},
+  "Tile_p03_p00_5022cb4a1184": {"style": "glass_office", "entrance": false},
+  "Tile_p03_p00_3e8fd5bd3456": {"building_id": "mark_lane_east_block", "style": "edwardian_brick", "entrance": true},
+  "Tile_p03_p00_f5deac4af351": {"building_id": "mark_lane_east_block", "style": "edwardian_brick", "entrance": false},
+  "Tile_p03_p00_bfa00690832f": {"building_id": "mark_lane_east_block", "style": "edwardian_brick", "entrance": false},
+  "Tile_p03_p00_0e87a913d487": {"building_id": "mark_lane_east_block", "style": "edwardian_brick", "entrance": false}
+}

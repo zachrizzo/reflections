@@ -536,7 +536,7 @@ async def story(run, n):
                 await press(world, 'Gamepad_FaceButton_Bottom')
             await press(world, 'Gamepad_FaceButton_Bottom')   # accept
             run.note('ui_sq9_accepted', ui(world))
-            await press(world, 'Escape')
+            await pick(world, 'goodbye')
             await asyncio.sleep(1.0)
             await run.shot('32_sq9_tracked')
     elif n == 2:
@@ -558,8 +558,7 @@ async def story(run, n):
             await asyncio.sleep(0.6)
             await run.shot('33_sq9_talk_%d' % i)
             run.note('ui_sq9_talk_%d' % i, ui(world))
-            await press(world, 'Escape')
-            await press(world, 'Escape')
+            qw.close_talk() if hasattr(qw, 'close_talk') else await pick(world, 'goodbye')   # never a bare Escape: in PIE it stops PIE
             await asyncio.sleep(0.8)
         run.note('sq9_end', str(q.get_status('sq9_unsigned')))
         run.note('seam_held', q.has_unlock('Seam_Held'))

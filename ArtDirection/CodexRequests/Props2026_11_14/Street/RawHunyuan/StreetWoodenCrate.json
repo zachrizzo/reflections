@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "ArtDirection\\CodexRequests\\Props2026_11_14\\Street\\References\\StreetWoodenCrate.png",
+  "output": "ArtDirection\\CodexRequests\\Props2026_11_14\\Street\\RawHunyuan\\StreetWoodenCrate.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 12,
+  "resolution": 256,
+  "seed": 2201,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 496284,
+  "faces": 992636,
+  "seconds": 38.9,
+  "bounds": [
+    [
+      -0.9982950687408447,
+      -0.8906831741333008,
+      -0.939956545829773
+    ],
+    [
+      0.9910251498222351,
+      0.8766574263572693,
+      0.9350402355194092
+    ]
+  ]
+}

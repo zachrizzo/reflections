@@ -1,0 +1,26 @@
+{
+  "status": "complete",
+  "input": "ArtDirection\\CodexRequests\\Props2026_11_14\\Street\\References\\StreetClayPipe.png",
+  "output": "ArtDirection\\CodexRequests\\Props2026_11_14\\Street\\RawHunyuan\\StreetClayPipe.glb",
+  "provider": "local Hunyuan3D-2",
+  "steps": 12,
+  "resolution": 256,
+  "seed": 2202,
+  "textured": false,
+  "gpu": "NVIDIA GeForce RTX 5080",
+  "vertices": 18658,
+  "faces": 37312,
+  "seconds": 29.4,
+  "bounds": [
+    [
+      -0.9978685975074768,
+      -0.1797289103269577,
+      -0.13790424168109894
+    ],
+    [
+      0.989542543888092,
+      0.1740022450685501,
+      0.12758664786815643
+    ]
+  ]
+}

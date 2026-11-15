@@ -1,6 +1,7 @@
 #include "Crowd/ReflectionsCrowdChatSubsystem.h"
 #include "NPC/ReflectionsNpcReactionComponent.h"
 #include "NPC/ReflectionsNpcSubsystem.h"
+#include "Voice/ReflectionsAmbientTalk.h"
 
 #include "Components/AudioComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -161,7 +162,8 @@ bool UReflectionsCrowdChatSubsystem::CanStart(const TArray<AActor*>& Speakers) c
     {
         if (FVector::Dist(Player->GetActorLocation(), CentreOf(Speakers)) > CVarChatHearDistance.GetValueOnGameThread()) return false;
     }
-    return true;
+    // Near the player (13 m), someone in view, a voice free, and not over the player's own conversation.
+    return ReflectionsAmbientTalk::MayStartGroup(Speakers);
 }
 
 void UReflectionsCrowdChatSubsystem::StartChat(const FReflectionsAmbientConversationRow& Row, FName RowName, const TArray<AActor*>& Roles)
@@ -339,6 +341,7 @@ void UReflectionsCrowdChatSubsystem::PlayLine(FActiveChat& Chat)
             ? UGameplayStatics::SpawnSoundAttached(Sound, Body, TEXT("head"), FVector::ZeroVector, EAttachLocation::SnapToTarget, true)
             : UGameplayStatics::SpawnSoundAttached(Sound, Speaker->GetRootComponent(), NAME_None, FVector(0.0, 0.0, 160.0), EAttachLocation::KeepRelativeOffset, true);
         Chat.Playing = Audio;
+        ReflectionsAmbientTalk::Track(Audio, Speaker, false);
         if (Duration <= 0.0f)
         {
             const float SoundDuration = Sound->GetDuration();
@@ -370,6 +373,8 @@ void UReflectionsCrowdChatSubsystem::Tick(float DeltaTime)
         {
             bBroken |= !IsValid(Role) || !IsCalm(Npcs->FindNpc(Role)) || FVector::Dist2D(Role->GetActorLocation(), Centre) > MaxSpread;
         }
+        // The player walked away: the conversation fades out rather than playing on to nobody.
+        bBroken |= !ReflectionsAmbientTalk::IsPlaceWithinHearing(World, Centre, false);
         if (bBroken)
         {
             Finish(Index, true);

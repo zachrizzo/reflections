@@ -98,11 +98,29 @@ def audit_component(unreal, component, mesh, expected_position, expected_yaw, so
         raise RuntimeError(f'{mesh.get_name()} is not a persistent child of the filtered tile.')
 
 
-def run():
+def checked_pcg_placements(rows, placements):
+    if set(placements) != {row['asset'] for row in rows}:
+        raise RuntimeError('PCG did not generate exactly the three reviewed building meshes.')
+    result = []
+    for row in rows:
+        position, rotation, scale = placements[row['asset']]
+        roll, pitch, yaw = rotation
+        if (not all(math.isfinite(value) for value in (*position, *rotation, *scale)) or
+                math.dist(position, row['world_cm']) > .05 or
+                abs((yaw - row['yaw_deg'] + 180) % 360 - 180) > .0001 or
+                abs(roll) > .0001 or abs(pitch) > .0001 or math.dist(scale, [1, 1, 1]) > .00001):
+            raise RuntimeError(f'PCG transform differs from the reviewed footprint for {row["asset"]}.')
+        result.append({**row, 'world_cm': position, 'yaw_deg': yaw})
+    return result
+
+
+def run(*, pcg_placements=None):
     import unreal
 
     project = Path(unreal.Paths.project_dir()).resolve()
     rows = checked_plan(project)
+    if pcg_placements is not None:
+        rows = checked_pcg_placements(rows, pcg_placements)
     require_lease_and_editor(unreal)
     if not hasattr(unreal, 'ReflectionsCityTileReplacement') or not hasattr(unreal, 'ReflectionsCityBuildingPart'):
         raise RuntimeError('Build and reload the city replacement runtime classes before placement.')

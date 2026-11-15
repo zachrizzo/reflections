@@ -149,7 +149,7 @@ How each scene adapts when a person isn't on the map:
 ## Packaging
 
 - **Cooking:** cutscenes are loaded by path, so `/Game/Cinematics` must be in `DirectoriesToAlwaysCook`.
-- **Size:** a sequence and its data asset are a few hundred KB. Kimodo takes are about 1–3 MB each before compression. Stand-ins reuse existing characters.
+- **Size:** measured in the Sun 01:10 build, `/Game/Cinematics` cooks to about 110 KB compressed: sequences ~30 KB, data assets ~8 KB, fallback takes ~73 KB. The 40 cutscene voice cues are counted under `/Game/Audio/Jam`. `/Game/Cinematics/Takes/Source` (editor-only Kimodo sources) is in `DirectoriesToNeverCook`.
 
 ## Status: PIE proof, Sat 14 Nov, 20:26–20:41 (Lvl_HeroSampleCrowd, train #12)
 
@@ -170,3 +170,19 @@ What the frames show:
   - On the small test map, the high wide shots show the slab's edge in empty space. They need a city around them (`Lvl_MockCity`, or the real map).
   - Crowd NPCs stand inside close shots. Fix: "clear the set" (train #13, `ClearRadius` on the asset) hides non-cast NPCs within 15 m of the anchor during the scene.
   - Two BurningEyes shots frame empty ground: the cast stood off their marks. To be rechecked on the mock city with the set cleared.
+
+## Status: PIE proof on Gray London, Sun 15 Nov, 02:03–02:10 (GrayLondon_Geodata, train #13)
+
+All six cutscenes **pass**. Each played to the end and was skipped 3 s in. After both, the cutscene had stopped, input was back, the view target was the gameplay camera from before, and the hero could be damaged. Anchors came from world-jump's `CutsceneAnchor_*` story markers. Results are in `Saved/CinematicsTest/runall_*.json`, and the contact sheets `ContactSheet_<Name>.png` are in this folder.
+
+The camera check moved 11 camera keys that were inside buildings or had lost sight of their subject (`camera_fixes.md`, applied through `CAMERA_FIX`). It left 5 that it couldn't clear.
+
+Known framing problems (seen on the contact sheets):
+- **BurningEyes:**
+  - The anchor faces a wall about 6 m away, so the conversion plays against the wall and shots 6–7 frame brick.
+  - Fix, next train: `MinStageDepth` (default 9 m) turns the stage toward open ground when the anchor's facing is blocked.
+- **MirrorWhole:**
+  - The first two close shots show a white mannequin torso instead of Wren's MetaHuman body (the driver mesh). Under investigation.
+  - The "way up" shot (20–25 s) looks at empty sky.
+- **GiltTower:** shot 2 frames Pim, not Wren. Wren's mark and Pim's stand-in placement are under investigation.
+- **Intro:** the low street shot at 15 s looks up into a market stall's roof. Re-author it by hand on the real street.
