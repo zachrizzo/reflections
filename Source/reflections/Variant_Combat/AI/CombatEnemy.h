@@ -13,6 +13,7 @@
 class UWidgetComponent;
 class UCombatLifeBar;
 class UAnimMontage;
+class UBrainComponent;
 
 /** Completed attack animation delegate for StateTree */
 DECLARE_DELEGATE(FOnEnemyAttackCompleted);
@@ -40,6 +41,8 @@ public:
 	
 	/** Constructor */
 	ACombatEnemy();
+
+    bool ApplySpellFreeze(float Duration);
 
 protected:
 
@@ -132,6 +135,18 @@ protected:
 
 	/** Enemy death timer */
 	FTimerHandle DeathTimer;
+
+private:
+    FTimerHandle FreezeTimer;
+    TWeakObjectPtr<UBrainComponent> BrainPausedByFreeze;
+    TEnumAsByte<EMovementMode> MovementBeforeFreeze = MOVE_Walking;
+    uint8 CustomMovementBeforeFreeze = 0;
+    bool bAnimationsWerePaused = false;
+    bool bSpellFrozen = false;
+
+    void EndSpellFreeze();
+
+protected:
 
 	/** Attack montage ended delegate */
 	FOnMontageEnded OnAttackMontageEnded;

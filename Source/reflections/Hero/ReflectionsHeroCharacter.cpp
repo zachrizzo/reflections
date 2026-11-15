@@ -1,5 +1,7 @@
 #include "ReflectionsHeroCharacter.h"
 #include "ReflectionsHeroAnimInstance.h"
+#include "ReflectionsSpellCatalog.h"
+#include "ReflectionsSpellCombat.h"
 
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -19,14 +21,6 @@
 namespace
 {
     const FName BodyComponentName(TEXT("Body"));
-
-    float GetLevitationHeight(float MontagePosition)
-    {
-        // Match the cinematic's lift, hover and landing at frames 15, 46, 81 and 112 at 30 fps.
-        const float Rise = FMath::SmoothStep(15.0f / 30.0f, 46.0f / 30.0f, MontagePosition);
-        const float Fall = FMath::SmoothStep(81.0f / 30.0f, 112.0f / 30.0f, MontagePosition);
-        return 65.0f * (Rise - Fall);
-    }
 
     UInputAction* FindInputAction(const TCHAR* AssetPath)
     {
@@ -73,7 +67,7 @@ void AReflectionsHeroCharacter::BeginPlay()
 
     HeroVisual->SetMobility(EComponentMobility::Movable);
     HeroVisual->SetAbsolute(false, false, false);
-    UpdateVisualHeight(0.0f);
+    UpdateVisualHeight();
     if (AActor* Visual = HeroVisual->GetChildActor())
     {
         TInlineComponentArray<USkeletalMeshComponent*> Meshes(Visual);
@@ -97,12 +91,12 @@ void AReflectionsHeroCharacter::BeginPlay()
     RefreshSpeed();
 }
 
-void AReflectionsHeroCharacter::UpdateVisualHeight(float Lift)
+void AReflectionsHeroCharacter::UpdateVisualHeight()
 {
     // Crouching changes both the capsule center and height. The outfit follows its base.
     const UCapsuleComponent* Capsule = GetCapsuleComponent();
     FVector RelativeLocation = HeroVisual->GetRelativeLocation();
-    const float TargetHeight = Lift - Capsule->GetUnscaledCapsuleHalfHeight();
+    const float TargetHeight = -Capsule->GetUnscaledCapsuleHalfHeight();
     if (!FMath::IsNearlyEqual(RelativeLocation.Z, TargetHeight))
     {
         RelativeLocation.Z = TargetHeight;
@@ -121,10 +115,10 @@ void AReflectionsHeroCharacter::SetupPlayerInputComponent(UInputComponent* Playe
     PlayerInputComponent->BindKey(EKeys::LeftControl, IE_Pressed, this, &AReflectionsHeroCharacter::StartCrouch);
     PlayerInputComponent->BindKey(EKeys::LeftControl, IE_Released, this, &AReflectionsHeroCharacter::StopCrouch);
     PlayerInputComponent->BindKey(EKeys::V, IE_Pressed, this, &AReflectionsHeroCharacter::CycleCoat);
-    PlayerInputComponent->BindKey(EKeys::One, IE_Pressed, this, &AReflectionsHeroCharacter::Heal);
-    PlayerInputComponent->BindKey(EKeys::Two, IE_Pressed, this, &AReflectionsHeroCharacter::Levitate);
-    PlayerInputComponent->BindKey(EKeys::Three, IE_Pressed, this, &AReflectionsHeroCharacter::CastWater);
-    PlayerInputComponent->BindKey(EKeys::Four, IE_Pressed, this, &AReflectionsHeroCharacter::CastFire);
+    PlayerInputComponent->BindKey(EKeys::One, IE_Pressed, this, &AReflectionsHeroCharacter::CastMagicJump);
+    PlayerInputComponent->BindKey(EKeys::Two, IE_Pressed, this, &AReflectionsHeroCharacter::CastFireball);
+    PlayerInputComponent->BindKey(EKeys::Three, IE_Pressed, this, &AReflectionsHeroCharacter::Heal);
+    PlayerInputComponent->BindKey(EKeys::Four, IE_Pressed, this, &AReflectionsHeroCharacter::CastFreeze);
 }
 
 bool AReflectionsHeroCharacter::SetCoatVariant(int32 Index)
@@ -230,13 +224,27 @@ void AReflectionsHeroCharacter::RefreshSpeed()
 }
 
 void AReflectionsHeroCharacter::Heal() { CastHeroSpell(EHeroSpell::Healing); }
-void AReflectionsHeroCharacter::Levitate() { CastHeroSpell(EHeroSpell::Levitation); }
-void AReflectionsHeroCharacter::CastWater() { CastHeroSpell(EHeroSpell::Water); }
-void AReflectionsHeroCharacter::CastFire() { CastHeroSpell(EHeroSpell::Fire); }
+void AReflectionsHeroCharacter::CastMagicJump() { CastHeroSpell(EHeroSpell::Levitation); }
+void AReflectionsHeroCharacter::CastFireball() { CastHeroSpell(EHeroSpell::Firestorm); }
+void AReflectionsHeroCharacter::CastFreeze() { CastHeroSpell(EHeroSpell::Freeze); }
 
 bool AReflectionsHeroCharacter::CastHeroSpell(EHeroSpell Spell)
 {
+    if (!ReflectionsSpellCatalog::IsValid(Spell) || !GetWorld() || IsCastingHeroSpell()) return false;
+    const FReflectionsSpellSpec& Spec = ReflectionsSpellCatalog::Get(Spell);
+    const bool bPlayerSpell = ReflectionsSpellCatalog::FindPlayerSpellSlot(Spell) != INDEX_NONE;
+    const double Now = GetWorld()->GetTimeSeconds();
+    if (bPlayerSpell && Now < SpellCooldownUntil.FindRef(Spell)) return false;
+    if (Spec.Delivery == EReflectionsSpellDelivery::Jump)
+    {
+        if (!ReflectionsSpellCombat::TryMagicJump(this)) return false;
+        SpellCooldownUntil.Add(Spell, Now + Spec.Cooldown);
+        OnHeroSpellReleased.Broadcast(Spell, GetActorTransform());
+        return true;
+    }
+
     const FHeroSpellDefinition* Selection = Spells.Find(Spell);
+    if (!Selection || !Selection->Animation) Selection = Spells.Find(Spec.AnimationFamily);
     UAnimInstance* Instance = AnimatedBody ? AnimatedBody->GetAnimInstance() : nullptr;
     UCharacterMovementComponent* Movement = GetCharacterMovement();
     if (!Selection || !Selection->Animation || !Instance || IsCastingHeroSpell()
@@ -252,6 +260,7 @@ bool AReflectionsHeroCharacter::CastHeroSpell(EHeroSpell Spell)
         return false;
     }
 
+    if (bPlayerSpell) SpellCooldownUntil.Add(Spell, Now + Spec.Cooldown);
     ActiveSpell = Spell;
     bCastReleased = false;
     Movement->StopMovementImmediately();
@@ -270,30 +279,27 @@ void AReflectionsHeroCharacter::Tick(float DeltaSeconds)
     const UAnimInstance* Instance = AnimatedBody ? AnimatedBody->GetAnimInstance() : nullptr;
     const bool bHasActiveMontage = ActiveCast && Instance;
     const float Position = bHasActiveMontage ? Instance->Montage_GetPosition(ActiveCast) : 0.0f;
-    const bool bIsLevitating = bHasActiveMontage && ActiveSpell == EHeroSpell::Levitation;
-    const float Lift = bIsLevitating ? GetLevitationHeight(Position) : 0.0f;
-    UpdateVisualHeight(Lift);
+    UpdateVisualHeight();
 
     if (bHasActiveMontage && !bCastReleased)
     {
+        const FReflectionsSpellSpec& Spec = ReflectionsSpellCatalog::Get(ActiveSpell);
         const FHeroSpellDefinition* Selection = Spells.Find(ActiveSpell);
+        if (!Selection || !Selection->Animation) Selection = Spells.Find(Spec.AnimationFamily);
         if (Selection && Position >= Selection->ReleaseTime)
         {
             bCastReleased = true;
             ReleaseHeroSpell(*Selection);
         }
     }
-    if (bIsLevitating && SpellPreview->IsVisible())
-    {
-        SpellPreview->SetWorldLocation(HeroVisual->GetComponentLocation() + GetActorUpVector() * 7.0f);
-    }
     MoveSpellPreview(DeltaSeconds);
 }
 
 void AReflectionsHeroCharacter::ReleaseHeroSpell(const FHeroSpellDefinition& Spell)
 {
-    const bool bProjectile = ActiveSpell == EHeroSpell::Water || ActiveSpell == EHeroSpell::Fire;
-    const FName HandBone = ActiveSpell == EHeroSpell::Water ? TEXT("hand_l") : TEXT("hand_r");
+    const FReflectionsSpellSpec& Spec = ReflectionsSpellCatalog::Get(ActiveSpell);
+    const bool bProjectile = Spec.Delivery == EReflectionsSpellDelivery::Projectile;
+    const FName HandBone = Spec.AnimationFamily == EHeroSpell::Water ? TEXT("hand_l") : TEXT("hand_r");
     const FVector Location = bProjectile ? AnimatedBody->GetSocketLocation(HandBone) : GetActorLocation();
     const FTransform Origin(GetActorRotation(), Location);
     if (Spell.PreviewMesh)
@@ -302,9 +308,7 @@ void AReflectionsHeroCharacter::ReleaseHeroSpell(const FHeroSpellDefinition& Spe
         SpellPreview->SetMaterial(0, Spell.PreviewMaterial);
         SpellPreview->SetWorldTransform(Origin);
         SpellPreview->SetVisibility(true);
-        PreviewTime = ActiveSpell == EHeroSpell::Levitation
-            ? FMath::Max(0.0f, 112.0f / 30.0f - Spell.ReleaseTime)
-            : bProjectile ? 0.32f : 0.70f;
+        PreviewTime = bProjectile ? 0.32f : 0.70f;
     }
     OnHeroSpellReleased.Broadcast(ActiveSpell, Origin);
 }
@@ -314,12 +318,6 @@ void AReflectionsHeroCharacter::FinishHeroSpell(UAnimMontage* Montage, bool bInt
     if (ActiveCast == Montage)
     {
         ActiveCast = nullptr;
-        if (ActiveSpell == EHeroSpell::Levitation)
-        {
-            UpdateVisualHeight(0.0f);
-            PreviewTime = 0.0f;
-            SpellPreview->SetVisibility(false);
-        }
     }
 }
 
@@ -330,7 +328,7 @@ void AReflectionsHeroCharacter::MoveSpellPreview(float DeltaSeconds)
         return;
     }
     PreviewTime -= DeltaSeconds;
-    const bool bProjectile = ActiveSpell == EHeroSpell::Water || ActiveSpell == EHeroSpell::Fire;
+    const bool bProjectile = ReflectionsSpellCatalog::Get(ActiveSpell).Delivery == EReflectionsSpellDelivery::Projectile;
     if (bProjectile)
     {
         SpellPreview->AddWorldOffset(SpellPreview->GetForwardVector() * 760.0f * DeltaSeconds);

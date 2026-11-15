@@ -88,7 +88,7 @@ private:
     UPROPERTY(Transient) TObjectPtr<class USoundBase> BodyHitHeavyCue;
     UPROPERTY(Transient) TArray<TObjectPtr<class USoundBase>> BodyElementCues;
     double LastHitShake = -1.0;
-    void AfflictBody(AActor* Target, int32 Kind, float Duration, float Magnitude);
+    void AfflictBody(AActor* Target, int32 Kind, float Duration, float Magnitude, float MaxDuration = 5.0f);
     /** Spawns System on a body's pelvis (or its middle), as a world-up capsule sized to the body. */
     UNiagaraComponent* AttachToBody(UNiagaraSystem* System, AActor* Target, USceneComponent*& OutParent, FName& OutSocket);
     /** Bodies crackling now, by target; a new Electrify hit on the same body extends it. */

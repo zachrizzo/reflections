@@ -5,6 +5,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "CombatAIController.h"
+#include "BrainComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Engine/DamageEvents.h"
 #include "CombatLifeBar.h"
@@ -42,10 +43,52 @@ ACombatEnemy::ACombatEnemy()
 	CurrentHP = MaxHP;
 }
 
+bool ACombatEnemy::ApplySpellFreeze(float Duration)
+{
+    if (CurrentHP <= 0.0f || Duration <= 0.0f) return false;
+
+    UCharacterMovementComponent* Movement = GetCharacterMovement();
+    if (!bSpellFrozen)
+    {
+        bSpellFrozen = true;
+        MovementBeforeFreeze = Movement->MovementMode;
+        CustomMovementBeforeFreeze = Movement->CustomMovementMode;
+        bAnimationsWerePaused = GetMesh()->bPauseAnims;
+        GetMesh()->bPauseAnims = true;
+
+        if (AAIController* AI = Cast<AAIController>(GetController()))
+        {
+            AI->StopMovement();
+            UBrainComponent* Brain = AI->FindComponentByClass<UBrainComponent>();
+            if (Brain && Brain->IsRunning() && !Brain->IsPaused())
+            {
+                Brain->PauseLogic(TEXT("Freeze spell"));
+                BrainPausedByFreeze = Brain;
+            }
+        }
+        Movement->StopMovementImmediately();
+        Movement->DisableMovement();
+    }
+    GetWorldTimerManager().SetTimer(FreezeTimer, this, &ACombatEnemy::EndSpellFreeze, Duration);
+    return true;
+}
+
+void ACombatEnemy::EndSpellFreeze()
+{
+    bSpellFrozen = false;
+    GetMesh()->bPauseAnims = bAnimationsWerePaused;
+    if (CurrentHP > 0.0f)
+    {
+        GetCharacterMovement()->SetMovementMode(MovementBeforeFreeze, CustomMovementBeforeFreeze);
+        if (UBrainComponent* Brain = BrainPausedByFreeze.Get()) Brain->ResumeLogic(TEXT("Freeze spell"));
+    }
+    BrainPausedByFreeze.Reset();
+}
+
 void ACombatEnemy::DoAIComboAttack()
 {
-	// ignore if we're already playing an attack animation
-	if (bIsAttacking)
+	// Ignore requests during an attack or while stunned.
+	if (bIsAttacking || bSpellFrozen)
 	{
 		return;
 	}
@@ -75,8 +118,8 @@ void ACombatEnemy::DoAIComboAttack()
 
 void ACombatEnemy::DoAIChargedAttack()
 {
-	// ignore if we're already playing an attack animation
-	if (bIsAttacking)
+	// Ignore requests during an attack or while stunned.
+	if (bIsAttacking || bSpellFrozen)
 	{
 		return;
 	}
@@ -125,6 +168,7 @@ float ACombatEnemy::GetLastDangerTime() const
 
 void ACombatEnemy::DoAttackTrace(FName DamageSourceBone)
 {
+    if (bSpellFrozen) return;
 	// sweep for objects in front of the character to be hit by the attack
 	TArray<FHitResult> OutHits;
 
@@ -231,6 +275,11 @@ void ACombatEnemy::ApplyDamage(float Damage, AActor* DamageCauser, const FVector
 
 void ACombatEnemy::HandleDeath()
 {
+    if (bSpellFrozen)
+    {
+        GetWorldTimerManager().ClearTimer(FreezeTimer);
+        EndSpellFreeze();
+    }
 	// hide the life bar
 	LifeBar->SetHiddenInGame(true);
 
@@ -340,4 +389,5 @@ void ACombatEnemy::EndPlay(EEndPlayReason::Type EndPlayReason)
 
 	// clear the death timer
 	GetWorld()->GetTimerManager().ClearTimer(DeathTimer);
+    GetWorldTimerManager().ClearTimer(FreezeTimer);
 }

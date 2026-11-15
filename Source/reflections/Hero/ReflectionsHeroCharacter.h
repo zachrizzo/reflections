@@ -17,7 +17,7 @@ UENUM(BlueprintType)
 enum class EHeroSpell : uint8
 {
     Healing,
-    Levitation,
+    Levitation UMETA(DisplayName = "Magic Jump"),
     Water,
     Fire,
     FlameBurst,
@@ -36,6 +36,7 @@ enum class EHeroSpell : uint8
     GreaterHeal,
     HealingPulse,
     Shield,
+    Freeze,
     MAX UMETA(Hidden)
 };
 
@@ -141,12 +142,12 @@ private:
     void StartCrouch();
     void StopCrouch();
     void RefreshSpeed();
-    void UpdateVisualHeight(float Lift);
+    void UpdateVisualHeight();
 
     void Heal();
-    void Levitate();
-    void CastWater();
-    void CastFire();
+    void CastMagicJump();
+    void CastFreeze();
+    void CastFireball();
     void ReleaseHeroSpell(const FHeroSpellDefinition& Spell);
     void FinishHeroSpell(UAnimMontage* Montage, bool bInterrupted);
     void MoveSpellPreview(float DeltaSeconds);
@@ -161,6 +162,7 @@ private:
     TObjectPtr<UStaticMeshComponent> SpellPreview;
 
     EHeroSpell ActiveSpell = EHeroSpell::Healing;
+    TMap<EHeroSpell, double> SpellCooldownUntil;
     float PreviewTime = 0.0f;
     int32 CoatVariantIndex = 0;
     bool bCastReleased = false;

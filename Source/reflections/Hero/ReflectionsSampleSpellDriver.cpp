@@ -11,7 +11,6 @@
 #include "Components/ChildActorComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "Components/StaticMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -59,7 +58,8 @@ namespace
         case EHeroSpell::LightningBolt:
         case EHeroSpell::ChainLightning: return bOdd ? &BoltLeft : &BoltRight;
         case EHeroSpell::Water:
-        case EHeroSpell::IceShard: return bOdd ? &BoltRight : &BoltLeft;
+        case EHeroSpell::IceShard:
+        case EHeroSpell::Freeze: return bOdd ? &BoltRight : &BoltLeft;
         case EHeroSpell::Firestorm:
         case EHeroSpell::WaterOrb:
         case EHeroSpell::StoneShard:
@@ -118,8 +118,6 @@ void UReflectionsSampleSpellDriver::BeginPlay()
     {
         if (Child->GetFName() == TEXT("HeroVisual"))
         {
-            Visual = Child;
-            VisualBase = Child->GetRelativeLocation();
             if (AActor* VisualActor = Child->GetChildActor())
             {
                 TInlineComponentArray<USkeletalMeshComponent*> Meshes(VisualActor);
@@ -130,12 +128,6 @@ void UReflectionsSampleSpellDriver::BeginPlay()
         }
     }
     if (Body) RetargetClass = Body->GetAnimClass();
-    Preview = NewObject<UStaticMeshComponent>(GetOwner(), TEXT("SampleSpellPreview"));
-    Preview->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    Preview->SetCastShadow(false);
-    Preview->RegisterComponent();
-    Preview->SetVisibility(false);
-
     Aim = GetOwner()->FindComponentByClass<UReflectionsSpellAimComponent>();
     if (!Aim)
     {
@@ -305,12 +297,10 @@ void UReflectionsSampleSpellDriver::BindControls()
     UInputAction* NextAction = MakeAction(TEXT("IA_SpellNext"), true);
     UInputAction* PreviousAction = MakeAction(TEXT("IA_SpellPrevious"), true);
     UInputAction* ShiftAction = MakeAction(TEXT("IA_SpellShift"), false);
-    UInputAction* PageNextAction = MakeAction(TEXT("IA_SpellPageNext"), true);
     // Jam build: the GASP sample's IA_NextPawn (N) and IA_NextVisualOverride (F8) cycle the hero into third-party
     // characters. This higher-priority context claims those keys with a consuming no-op so the sample actions never
     // fire. IMC_Sandbox maps them on the keyboard only; no gamepad buttons.
     UInputAction* BlockAction = MakeAction(TEXT("IA_SpellBlockSampleDebug"), true);
-    UInputAction* PagePreviousAction = MakeAction(TEXT("IA_SpellPagePrevious"), true);
     UInputAction* SlotActions[4] = {MakeAction(TEXT("IA_SpellSlot1"), true), MakeAction(TEXT("IA_SpellSlot2"), true),
         MakeAction(TEXT("IA_SpellSlot3"), true), MakeAction(TEXT("IA_SpellSlot4"), true)};
 
@@ -333,10 +323,6 @@ void UReflectionsSampleSpellDriver::BindControls()
     }
     SpellContext->MapKey(NextAction, EKeys::Gamepad_RightShoulder);
     SpellContext->MapKey(PreviousAction, EKeys::Gamepad_LeftShoulder);
-    SpellContext->MapKey(PageNextAction, EKeys::RightBracket);
-    SpellContext->MapKey(PageNextAction, EKeys::Gamepad_DPad_Right);
-    SpellContext->MapKey(PagePreviousAction, EKeys::LeftBracket);
-    SpellContext->MapKey(PagePreviousAction, EKeys::Gamepad_DPad_Left);
     const FKey SlotKeys[4] = {EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four};
     for (int32 Index = 0; Index < 4; ++Index)
     {
@@ -356,8 +342,6 @@ void UReflectionsSampleSpellDriver::BindControls()
     SpellInput->BindAction(CastAction, ETriggerEvent::Canceled, this, &UReflectionsSampleSpellDriver::OnCastReleased);
     SpellInput->BindAction(NextAction, ETriggerEvent::Started, this, &UReflectionsSampleSpellDriver::NextSpell);
     SpellInput->BindAction(PreviousAction, ETriggerEvent::Started, this, &UReflectionsSampleSpellDriver::PreviousSpell);
-    SpellInput->BindAction(PageNextAction, ETriggerEvent::Started, this, &UReflectionsSampleSpellDriver::NextPage);
-    SpellInput->BindAction(PagePreviousAction, ETriggerEvent::Started, this, &UReflectionsSampleSpellDriver::PreviousPage);
     SpellInput->BindAction(SlotActions[0], ETriggerEvent::Started, this, &UReflectionsSampleSpellDriver::SelectFirstSlot);
     SpellInput->BindAction(SlotActions[1], ETriggerEvent::Started, this, &UReflectionsSampleSpellDriver::SelectSecondSlot);
     SpellInput->BindAction(SlotActions[2], ETriggerEvent::Started, this, &UReflectionsSampleSpellDriver::SelectThirdSlot);
@@ -464,46 +448,46 @@ bool UReflectionsSampleSpellDriver::CastExternal(const FReflectionsExternalCast&
 
 void UReflectionsSampleSpellDriver::SetSelectedSpell(EHeroSpell Spell)
 {
-    if (ReflectionsSpellCatalog::IsValid(Spell))
-    {
-        SelectedSpell = Spell;
-        SpellPage = static_cast<uint8>(Spell) / ReflectionsSpellCatalog::PageSize;
-        if (Aim) Aim->SetSelectedSpell(Spell);
-    }
+    if (ReflectionsSpellCatalog::FindPlayerSpellSlot(Spell) == INDEX_NONE) return;
+    SelectedSpell = Spell;
+    if (Aim) Aim->SetSelectedSpell(Spell);
 }
-void UReflectionsSampleSpellDriver::ChangeSpellPage(int32 Delta)
+
+void UReflectionsSampleSpellDriver::ChangeSpellPage(int32)
 {
-    constexpr int32 Pages = (ReflectionsSpellCatalog::Count + ReflectionsSpellCatalog::PageSize - 1) / ReflectionsSpellCatalog::PageSize;
-    SpellPage = ((SpellPage + Delta) % Pages + Pages) % Pages;
-    SetSelectedSpell(static_cast<EHeroSpell>(SpellPage * ReflectionsSpellCatalog::PageSize));
+    // Kept for existing Blueprint callers. The player now has a single hotbar.
 }
+
 void UReflectionsSampleSpellDriver::SelectSpellSlot(int32 Slot)
 {
-    if (Slot >= 0 && Slot < ReflectionsSpellCatalog::PageSize)
-        SetSelectedSpell(static_cast<EHeroSpell>(SpellPage * ReflectionsSpellCatalog::PageSize + Slot));
+    if (Slot >= 0 && Slot < ReflectionsSpellCatalog::PlayerSpellCount)
+        SetSelectedSpell(ReflectionsSpellCatalog::PlayerSpells[Slot]);
 }
+
 FString UReflectionsSampleSpellDriver::GetSpellSlotName(int32 Slot) const
 {
-    const EHeroSpell Spell = static_cast<EHeroSpell>(SpellPage * ReflectionsSpellCatalog::PageSize + Slot);
-    return Slot >= 0 && Slot < ReflectionsSpellCatalog::PageSize && ReflectionsSpellCatalog::IsValid(Spell)
-        ? FString(ReflectionsSpellCatalog::Get(Spell).Name) : FString();
+    return Slot >= 0 && Slot < ReflectionsSpellCatalog::PlayerSpellCount
+        ? FString(ReflectionsSpellCatalog::Get(ReflectionsSpellCatalog::PlayerSpells[Slot]).Name) : FString();
 }
+
 void UReflectionsSampleSpellDriver::SelectFirstSlot() { SelectSpellSlot(0); }
 void UReflectionsSampleSpellDriver::SelectSecondSlot() { SelectSpellSlot(1); }
 void UReflectionsSampleSpellDriver::SelectThirdSlot() { SelectSpellSlot(2); }
 void UReflectionsSampleSpellDriver::SelectFourthSlot() { SelectSpellSlot(3); }
-void UReflectionsSampleSpellDriver::PreviousPage() { ChangeSpellPage(-1); }
-void UReflectionsSampleSpellDriver::NextPage() { ChangeSpellPage(1); }
+
 void UReflectionsSampleSpellDriver::PreviousSpell()
 {
-    const int32 Previous = (static_cast<int32>(SelectedSpell) + ReflectionsSpellCatalog::Count - 1) % ReflectionsSpellCatalog::Count;
-    SetSelectedSpell(static_cast<EHeroSpell>(Previous));
+    const int32 Slot = ReflectionsSpellCatalog::FindPlayerSpellSlot(SelectedSpell);
+    const int32 Count = ReflectionsSpellCatalog::PlayerSpellCount;
+    SelectSpellSlot((Slot + Count - 1) % Count);
 }
+
 void UReflectionsSampleSpellDriver::NextSpell()
 {
-    const int32 Next = (static_cast<int32>(SelectedSpell) + 1) % ReflectionsSpellCatalog::Count;
-    SetSelectedSpell(static_cast<EHeroSpell>(Next));
+    const int32 Slot = ReflectionsSpellCatalog::FindPlayerSpellSlot(SelectedSpell);
+    SelectSpellSlot((Slot + 1) % ReflectionsSpellCatalog::PlayerSpellCount);
 }
+
 void UReflectionsSampleSpellDriver::CastSelected() { CastSelectedSpell(); }
 
 void UReflectionsSampleSpellDriver::PrimaryPressed()
@@ -569,24 +553,33 @@ bool UReflectionsSampleSpellDriver::ResolveCast(EHeroSpell Spell, int32 Count, F
 bool UReflectionsSampleSpellDriver::CastSpell(EHeroSpell Spell)
 {
     ACharacter* Character = Cast<ACharacter>(GetOwner());
-    if (bDefeated || !ReflectionsSpellCatalog::IsValid(Spell) || !Character || !Body || !RetargetClass || !ReadyForNextCast(false)) return false;
+    if (bDefeated || !ReflectionsSpellCatalog::IsValid(Spell) || !Character || !ReadyForNextCast(false)) return false;
     const FReflectionsSpellSpec& Spec = ReflectionsSpellCatalog::Get(Spell);
     if (!CanAfford(Spell)) return false;
-    const bool bHover = Spec.Delivery == EReflectionsSpellDelivery::Hover;
-    // Levitation still needs the full body and solid ground; everything else casts on the move.
-    const bool bFullBody = !bUseLayeredCasting || bHover;
-    if (bFullBody && (!Character->GetCharacterMovement()->IsMovingOnGround() || Character->bIsCrouched)) return false;
-
+    const bool bJump = Spec.Delivery == EReflectionsSpellDelivery::Jump;
     const int32 Count = CastCounts.FindRef(Spell);
-    FHeroSpellDefinition Definition;
-    bool bBoth = false;
-    if (!ResolveCast(Spell, Count, Definition, bBoth)) return false;
-    if (!PlayCast(Spell, Definition, bBoth)) return false;
+    if (bJump)
+    {
+        if (!ReflectionsSpellCombat::TryMagicJump(Character)) return false;
+    }
+    else
+    {
+        if (!Body || !RetargetClass || (!bUseLayeredCasting &&
+            (!Character->GetCharacterMovement()->IsMovingOnGround() || Character->bIsCrouched))) return false;
+        FHeroSpellDefinition Definition;
+        bool bBoth = false;
+        if (!ResolveCast(Spell, Count, Definition, bBoth) || !PlayCast(Spell, Definition, bBoth)) return false;
+    }
     SetMana(Mana - Spec.ManaCost);
     LastCastTime = GetWorld()->GetTimeSeconds();
     if (Spec.Cooldown > 0.0f) CooldownUntil.Add(Spell, LastCastTime + Spec.Cooldown);
     CastCounts.Add(Spell, Count + 1);
     ActiveExternal.Reset();
+    if (bJump)
+    {
+        if (UReflectionsSpellCombatComponent* Combat = GetOwner()->FindComponentByClass<UReflectionsSpellCombatComponent>())
+            Combat->ReleaseSpell(Spell, Character->GetActorTransform());
+    }
     return true;
 }
 
@@ -595,7 +588,7 @@ bool UReflectionsSampleSpellDriver::PlayCast(EHeroSpell Spell, const FHeroSpellD
     ACharacter* Character = Cast<ACharacter>(GetOwner());
     if (!Character || !Body || !Definition.Animation) return false;
     const FReflectionsSpellSpec& Spec = ReflectionsSpellCatalog::Get(Spell);
-    const bool bFullBody = !bUseLayeredCasting || Spec.Delivery == EReflectionsSpellDelivery::Hover;
+    const bool bFullBody = !bUseLayeredCasting;
 
     // Start late in long wind-ups and speed them up so release lands CastWindup seconds after the press.
     const float Windup = WindupFor(Spec, CastWindup);
@@ -666,7 +659,6 @@ FVector UReflectionsSampleSpellDriver::ReleaseLocation() const
 
 void UReflectionsSampleSpellDriver::Release()
 {
-    const FHeroSpellDefinition* Definition = &ActiveDefinition;
     const FReflectionsSpellSpec& Spec = ReflectionsSpellCatalog::Get(ActiveSpell);
     const FVector Location = ReleaseLocation();
     FRotator AimRotation = GetOwner()->GetActorRotation();
@@ -689,14 +681,6 @@ void UReflectionsSampleSpellDriver::Release()
     }
     if (UReflectionsSpellCombatComponent* Combat = GetOwner()->FindComponentByClass<UReflectionsSpellCombatComponent>())
         Combat->ReleaseSpellAt(ActiveSpell, Origin, Target, AimTarget);
-    if (Spec.Delivery == EReflectionsSpellDelivery::Hover && Preview && Definition && Definition->PreviewMesh)
-    {
-        Preview->SetStaticMesh(Definition->PreviewMesh);
-        Preview->SetMaterial(0, Definition->PreviewMaterial);
-        Preview->SetWorldTransform(FTransform(GetOwner()->GetActorRotation(), GetOwner()->GetActorLocation()));
-        Preview->SetVisibility(true);
-        PreviewTime = ActiveSpell == EHeroSpell::Levitation ? 2.4f : .7f;
-    }
 }
 
 void UReflectionsSampleSpellDriver::FinishCast(UAnimMontage* Montage, bool bInterrupted)
@@ -771,15 +755,12 @@ void UReflectionsSampleSpellDriver::TickComponent(float DeltaTime, ELevelTick Ti
     if (bRestorePending)
     {
         bRestorePending = false;
-        if (Visual) Visual->SetRelativeLocation(VisualBase);
         if (!bUseLayeredCasting && Body && RetargetClass) Body->SetAnimInstanceClass(RetargetClass);
         if (bMovementLocked)
         {
             bMovementLocked = false;
             if (ACharacter* Character = Cast<ACharacter>(GetOwner())) Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
         }
-        if (Preview) Preview->SetVisibility(false);
-        PreviewTime = 0.0f;
     }
     if (ActiveMontage && Body && Body->GetAnimInstance())
     {
@@ -798,21 +779,10 @@ void UReflectionsSampleSpellDriver::TickComponent(float DeltaTime, ELevelTick Ti
             bStopping = true;
             Anim->Montage_Stop(0.25f, ActiveMontage);
         }
-        if (ActiveSpell == EHeroSpell::Levitation && Visual)
-        {
-            const float Lift = 65.0f * (FMath::SmoothStep(.5f, 46.f/30.f, Position) - FMath::SmoothStep(81.f/30.f, 112.f/30.f, Position));
-            Visual->SetRelativeLocation(VisualBase + FVector(0, 0, Lift));
-        }
     }
     if (bPrimaryHeld && ReadyForNextCast(true))
     {
         if (!PrimaryCastOverride || !PrimaryCastOverride()) CastSelectedSpell();
     }
     UpdateAimPose();
-    if (PreviewTime > 0.0f && Preview)
-    {
-        PreviewTime -= DeltaTime;
-        Preview->AddLocalRotation(FRotator(0,120.f*DeltaTime,0));
-        if (PreviewTime <= 0.0f) Preview->SetVisibility(false);
-    }
 }

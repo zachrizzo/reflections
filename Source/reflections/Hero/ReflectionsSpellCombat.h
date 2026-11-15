@@ -204,6 +204,9 @@ private:
 
 namespace ReflectionsSpellCombat
 {
+    /** Launch a grounded character to five standing capsule heights above takeoff. */
+    REFLECTIONS_API bool TryMagicJump(ACharacter* Character);
+
     /** An explosion at Center: damage and push (Push = knock-back speed in cm/s) fall off from 1 to 0.35 across
      *  Radius, loose physics objects are thrown, and every body gets an Explosion reaction. Goes through the same
      *  per-target path as every spell (including the NPC harm gate). Actors in Ignore are skipped (a caster's hidden

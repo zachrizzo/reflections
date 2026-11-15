@@ -13,6 +13,8 @@
 #include "GameFramework/DamageType.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Variant_Combat/AI/CombatEnemy.h"
 #include "Interfaces/CombatDamageable.h"
 #include "NPC/ReflectionsNpcReactionComponent.h"
 #include "NPC/ReflectionsNpcSubsystem.h"
@@ -56,7 +58,10 @@ namespace
             R.Magnitude = FMath::Max(R.Magnitude, 0.6f);
             break;
         case EReflectionsSpellElement::Water: R.Type = EReflectionsSpellReaction::Push; break;
-        case EReflectionsSpellElement::Ice: R.Type = EReflectionsSpellReaction::Freeze; R.Duration = 2.5f; break;
+        case EReflectionsSpellElement::Ice:
+            R.Type = EReflectionsSpellReaction::Freeze;
+            R.Duration = Spell == EHeroSpell::Freeze ? ReflectionsSpellCatalog::FreezeDuration : 2.5f;
+            break;
         case EReflectionsSpellElement::Earth: R.Type = EReflectionsSpellReaction::Knockdown; break;
         case EReflectionsSpellElement::Air: R.Type = EReflectionsSpellReaction::Lift; break;
         case EReflectionsSpellElement::Arcane:
@@ -91,6 +96,12 @@ namespace
             return;
         }
         const FSpellReaction React = Reaction ? *Reaction : ReactionFor(Spell, Damage, Push);
+        if (Spell == EHeroSpell::Freeze && !bNpc)
+        {
+            // The main world's people use the NPC system. The combat template uses a separate AI pawn.
+            ACombatEnemy* Enemy = Cast<ACombatEnemy>(Target);
+            if (!Enemy || !Enemy->ApplySpellFreeze(React.Duration)) return;
+        }
         const bool bBlast = React.Type == EReflectionsSpellReaction::Explosion;
         const FVector Direction = (Target->GetActorLocation() - Origin).GetSafeNormal();
         UPrimitiveComponent* Primitive = DirectHit ? DirectHit->GetComponent() : Cast<UPrimitiveComponent>(Target->GetRootComponent());
@@ -519,6 +530,21 @@ void AReflectionsSpellProjectile::OnProjectileHit(UPrimitiveComponent* HitCompon
     Destroy();
 }
 
+bool ReflectionsSpellCombat::TryMagicJump(ACharacter* Character)
+{
+    if (!Character || Character->bIsCrouched) return false;
+    const UCharacterMovementComponent* Movement = Character->GetCharacterMovement();
+    if (!Movement || !Movement->IsMovingOnGround()) return false;
+
+    const double Gravity = -Movement->GetGravityZ();
+    if (Gravity <= UE_SMALL_NUMBER) return false;
+    const double StandingHeight = 2.0 * Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+    const double Rise = 5.0 * StandingHeight;
+    // v² = 2gh. Launch the collision capsule and preserve horizontal momentum.
+    Character->LaunchCharacter(FVector(0.0, 0.0, FMath::Sqrt(2.0 * Gravity * Rise)), false, true);
+    return true;
+}
+
 UReflectionsSpellCombatComponent::UReflectionsSpellCombatComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
@@ -595,7 +621,7 @@ void UReflectionsSpellCombatComponent::ReleaseSpellAt(EHeroSpell Spell, FTransfo
         if (Events) Events->OnSupportSpellVisual.Broadcast(Spell, Caster->GetActorLocation(), Caster, Spec.Power);
         return;
     }
-    if (Spec.Delivery == EReflectionsSpellDelivery::Hover)
+    if (Spec.Delivery == EReflectionsSpellDelivery::Jump)
     {
         if (Events) Events->OnSupportSpellVisual.Broadcast(Spell, Caster->GetActorLocation(), Caster, 1.0f);
         return;

@@ -6,8 +6,8 @@ namespace
     using E = EReflectionsSpellElement;
     using A = EHeroSpell;
     const FReflectionsSpellSpec Specs[] = {
-        {TEXT("Healing"), A::Healing, E::Life, D::Heal, 35, 0, 0, 0, 0, 20, 6},
-        {TEXT("Levitation"), A::Levitation, E::Air, D::Hover, 0, 0, 0, 0, 0, 15, 6},
+        {TEXT("Healing"), A::Healing, E::Life, D::Heal, 35, 0, 0, 0, 0, 20, 12},
+        {TEXT("Magic Jump"), A::Levitation, E::Air, D::Jump, 0, 0, 0, 0, 0, 15, 6},
         {TEXT("Water Bolt"), A::Water, E::Water, D::Projectile, 10, 0, 1250, 2200, 450, 8, 4},
         {TEXT("Fire Bolt"), A::Fire, E::Fire, D::Projectile, 14, 0, 1500, 2400, 380, 10, 4},
         {TEXT("Flame Burst"), A::Fire, E::Fire, D::Area, 16, 260, 0, 0, 120, 18, 6},
@@ -26,8 +26,18 @@ namespace
         {TEXT("Greater Heal"), A::Healing, E::Life, D::Heal, 70, 0, 0, 0, 0, 35, 10},
         {TEXT("Healing Pulse"), A::Healing, E::Life, D::Heal, 25, 400, 0, 0, 0, 25, 8},
         {TEXT("Arcane Shield"), A::Levitation, E::Arcane, D::Ward, 40, 0, 0, 0, 0, 25, 10},
+        {TEXT("Freeze"), A::Water, E::Ice, D::Projectile, 0, 0, 1800, 2600, 0, 12, 10},
     };
     static_assert(UE_ARRAY_COUNT(Specs) == ReflectionsSpellCatalog::Count, "Every spell needs a specification");
+}
+
+int32 ReflectionsSpellCatalog::FindPlayerSpellSlot(EHeroSpell Spell)
+{
+    for (int32 Slot = 0; Slot < PlayerSpellCount; ++Slot)
+    {
+        if (PlayerSpells[Slot] == Spell) return Slot;
+    }
+    return INDEX_NONE;
 }
 
 bool ReflectionsSpellCatalog::IsValid(EHeroSpell Spell)
