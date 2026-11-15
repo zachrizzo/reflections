@@ -54,3 +54,14 @@ Once both groups are accepted, their union removes 128 wall and 52 roof faces
 from six source shells. A derivative based on the connector alone would
 restore the first three old shells. Keep the original source and each
 approved derivative addressable for rollback.
+
+After both groups have passed live review, produce their cumulative offline
+mask from the same original tile export. Use a fresh output path:
+
+```powershell
+python Tools/CityPCG/combine_replacement_candidates.py "$city/Tile_p03_p00.glb" "$survey/p03_p00_six_shell_candidate.json" "$art/west_mark_lane_whole_buildings_candidate.json" "$art/west_connector_whole_buildings_candidate.json"
+python Tools/CityPCG/subtract_building_shells.py "$city/Tile_p03_p00.glb" "$city/Tile_p03_p00.asset.json" "$survey/p03_p00_six_shell_candidate.json" "$survey/p03_p00_without_six_shells.glb" "$survey/p03_p00_without_six_shells.audit.json"
+```
+
+The combiner rejects different source hashes, duplicate buildings and repeated
+face signatures. It does not approve any unreviewed gameplay replacement.
