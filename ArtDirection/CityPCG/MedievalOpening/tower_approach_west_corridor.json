@@ -1,0 +1,23 @@
+{
+  "name": "Eastcheap and Great Tower Street toward Byward Street",
+  "tile": "Tile_p03_p00",
+  "bounds_m": [3318, 226, 3482, 330],
+  "protected_landmarks": [
+    {
+      "label": "Seething Lane Garden, Weigh-House and watch gate",
+      "bounds_m": [3317, 298, 3351, 320]
+    },
+    {
+      "label": "All Hallows by the Tower churchyard and Bell Square",
+      "bounds_m": [3359, 271, 3380, 292]
+    },
+    {
+      "label": "Watch Barracks and Trinity Square stronghold",
+      "bounds_m": [3418, 288, 3440, 313]
+    },
+    {
+      "label": "Tower of London - Codriver",
+      "bounds_m": [3437, -3, 3734, 252]
+    }
+  ]
+}
