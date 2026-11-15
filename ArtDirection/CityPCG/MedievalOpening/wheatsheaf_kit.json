@@ -1,0 +1,20 @@
+{
+  "fbx": "Source/SM_GLMedieval_Wheatsheaf.fbx",
+  "texture": "Textures/T_GLMedieval_Wheatsheaf.png",
+  "mesh": "SM_GLMedieval_Wheatsheaf",
+  "min_cm": [
+    -8.339,
+    -15.0,
+    -37.7
+  ],
+  "max_cm": [
+    2.5,
+    15.0,
+    11.772
+  ],
+  "materials": [
+    "M_GLMedieval_Wheatsheaf",
+    "M_GLMedieval_Oak",
+    "M_GLMedieval_Lead"
+  ]
+}
