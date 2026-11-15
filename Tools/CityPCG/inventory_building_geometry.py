@@ -6,7 +6,7 @@ removing geometry, choose protected landmarks, or change the source tile.
 """
 
 import argparse
-from collections import Counter
+from collections import Counter, defaultdict
 import hashlib
 import json
 import math
@@ -23,6 +23,48 @@ def identity(tile, triangles):
     return f"{tile}_roof_{digest[:16]}"
 
 
+def roof_rings(boundary):
+    """Split a planar roof boundary into independent closed rings."""
+    neighbors = defaultdict(set)
+    for start, end in boundary:
+        neighbors[start].add(end)
+        neighbors[end].add(start)
+    if not neighbors or any(len(group) != 2 for group in neighbors.values()):
+        return []
+    remaining = set(neighbors)
+    rings = []
+    while remaining:
+        vertices = {min(remaining)}
+        pending = list(vertices)
+        while pending:
+            for neighbor in neighbors[pending.pop()]:
+                if neighbor not in vertices:
+                    vertices.add(neighbor)
+                    pending.append(neighbor)
+        ring = boundary_ring([edge for edge in boundary if edge[0] in vertices])
+        if not ring or set(ring) != vertices:
+            return []
+        rings.append(ring)
+        remaining.difference_update(vertices)
+    return rings
+
+
+def point_inside(point, ring):
+    """Check whether a point is strictly inside a ring; reject boundary contact."""
+    x, y = point
+    inside = False
+    for start, end in zip(ring, ring[1:] + ring[:1]):
+        ax, ay = start
+        bx, by = end
+        cross = (x - ax) * (by - ay) - (y - ay) * (bx - ax)
+        if (abs(cross) <= 1e-8 and min(ax, bx) <= x <= max(ax, bx)
+                and min(ay, by) <= y <= max(ay, by)):
+            return False
+        if (ay > y) != (by > y) and x < ax + (y - ay) * (bx - ax) / (by - ay):
+            inside = not inside
+    return inside
+
+
 def describe_component(tile, indices, roof, walls):
     triangles = [roof[index] for index in indices]
     topology = Counter(edge for triangle in triangles for edge in edges(triangle))
@@ -36,37 +78,54 @@ def describe_component(tile, indices, roof, walls):
         return result
 
     boundary = [edge for edge, count in topology.items() if count == 1]
-    ring = boundary_ring(boundary)
-    if len(ring) < 3:
+    rings = roof_rings(boundary)
+    if not rings:
         result["classification"] = "complex_roof_boundary"
         result["boundary_edges"] = len(boundary)
         return result
 
-    footprint = [point[:2] for point in ring]
+    rings = [[point[:2] for point in ring] for ring in rings]
+    rings.sort(key=lambda ring: abs(signed_area(ring)), reverse=True)
+    footprint, courtyards = rings[0], rings[1:]
     area = signed_area(footprint)
-    result["area_m2"] = round(abs(area), 3)
     if abs(area) < 1:
+        result["area_m2"] = round(abs(area), 3)
         result["classification"] = "small_roof"
         return result
     if area < 0:
         footprint = [footprint[0], *reversed(footprint[1:])]
     result["footprint_m"] = footprint
+    if courtyards:
+        if any(not all(point_inside(point, footprint) for point in ring) for ring in courtyards):
+            result["classification"] = "invalid_courtyard_boundary"
+            return result
+        for index, ring in enumerate(courtyards):
+            if any(point_inside(ring[0], other) for other in courtyards[:index] + courtyards[index + 1:]):
+                result["classification"] = "nested_courtyard_boundary"
+                return result
+        courtyards = [ring if signed_area(ring) < 0 else [ring[0], *reversed(ring[1:])]
+                      for ring in courtyards]
+        result["courtyards_m"] = courtyards
+    net_area = abs(area) - sum(abs(signed_area(ring)) for ring in courtyards)
+    result["area_m2"] = round(net_area, 3)
     roof_area = sum(abs(signed_area([point[:2] for point in triangle])) for triangle in triangles)
-    if not math.isclose(abs(area), roof_area, rel_tol=1e-6, abs_tol=1e-6):
+    if not math.isclose(net_area, roof_area, rel_tol=1e-6, abs_tol=1e-6):
         result["classification"] = "roof_area_mismatch"
         result["triangle_area_m2"] = round(roof_area, 3)
         return result
 
     matches = []
     missing, ambiguous = [], []
-    for edge_index, (start, end) in enumerate(zip(footprint, footprint[1:] + footprint[:1])):
-        options = walls.get((tuple(sorted((start, end))), result["roof_height_m"]), [])
-        if not options:
-            missing.append(edge_index)
-        elif len(options) != 1:
-            ambiguous.append(edge_index)
-        else:
-            matches.append({"edge": edge_index, "base_m": options[0][0], "wall_faces": options[0][1]})
+    for ring_index, ring in enumerate([footprint, *courtyards]):
+        for edge_index, (start, end) in enumerate(zip(ring, ring[1:] + ring[:1])):
+            options = walls.get((tuple(sorted((start, end))), result["roof_height_m"]), [])
+            address = {"ring": ring_index, "edge": edge_index}
+            if not options:
+                missing.append(address)
+            elif len(options) != 1:
+                ambiguous.append(address)
+            else:
+                matches.append({**address, "base_m": options[0][0], "wall_faces": options[0][1]})
     result["wall_matches"] = matches
     if missing:
         result["classification"] = "missing_wall"
@@ -81,6 +140,8 @@ def describe_component(tile, indices, roof, walls):
             result["classification"] = "varying_foundations"
         elif not -.5 <= bases[0] <= .75:
             result["classification"] = "raised_foundations"
+        elif courtyards:
+            result["classification"] = "complete_ground_courtyard"
         else:
             result["classification"] = "complete_ground_shell"
     return result
