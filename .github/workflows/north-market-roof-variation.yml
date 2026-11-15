@@ -1,0 +1,103 @@
+name: North Market upper-storey review
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/north-market-roof-variation.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    if: ${{ github.repository == 'zachrizzo/reflections' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out only reviewed inputs
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+          lfs: true
+          submodules: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.gitattributes
+            /.github/workflows/north-market-roof-variation.yml
+            /Tools/CityPCG/north_market_roof_variation.py
+            /Tools/CityPCG/north_market_roof_variation_hosted.py
+            /Tools/CityPCG/test_north_market_roof_variation.py
+            /Tools/CityPCG/north_market_street_review_common.py
+            /Tools/CityPCG/north_market_tenancies.py
+            /Tools/CityPCG/north_market_tenancy_preview.py
+            /Tools/CityPCG/north_market_roundtrip_common.py
+            /Tools/CityPCG/north_market_hosted_blender.py
+            /ArtDirection/CityPCG/MedievalOpening/FollowOn20261115/north_market_east_plan_20261115.json
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/.gitattributes
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/detailed_obj_manifest.json
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/NorthMarketDetail.mtl
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/SM_GLMedieval_NorthMarketDetail_east_0a73564b.obj
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/SM_GLMedieval_NorthMarketDetail_east_31c9ff1a.obj
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/Textures/
+            /ArtDirection/CityPCG/MedievalOpening/WholeBuildings/NorthMarketDetailedObj/HostedStreetReview/north-market-street-illustrative-review.zip
+
+      - name: Require an exact workflow-only push
+        if: ${{ github.event_name == 'push' }}
+        shell: bash
+        run: |
+          python3 -B - <<'PY'
+          import json, os, re, subprocess
+          with open(os.environ['GITHUB_EVENT_PATH'],encoding='utf-8') as stream:
+              event=json.load(stream)
+          before,after=event.get('before'),event.get('after')
+          sha=os.environ['GITHUB_SHA']
+          if (event.get('ref')!='refs/heads/main' or event.get('deleted') is not False
+                  or event.get('created') is not False or event.get('forced') is not False
+                  or not isinstance(before,str) or not re.fullmatch(r'[0-9a-f]{40}',before)
+                  or before=='0'*40 or after!=sha or not re.fullmatch(r'[0-9a-f]{40}',sha)):
+              raise SystemExit('Unexpected push event')
+          parents=subprocess.check_output(['git','rev-list','--parents','-n','1',sha],text=True).split()
+          changed=subprocess.check_output(['git','diff','--no-ext-diff','--no-renames','--name-only','-z',before,sha])
+          if parents!=[sha,before] or changed!=b'.github/workflows/north-market-roof-variation.yml\0':
+              raise SystemExit('Expected one workflow-only non-merge commit')
+          PY
+
+      - name: Test footprint and roof-slope geometry
+        run: |
+          python3 -B Tools/CityPCG/test_north_market_roof_variation.py -v
+          python3 -O -B Tools/CityPCG/test_north_market_roof_variation.py -v
+
+      - name: Fetch pinned official Blender
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/blender-4.5.3-linux-x64.tar.xz"
+          timeout --signal=TERM --kill-after=10s 420s curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' \
+            --max-redirs 3 --connect-timeout 15 --max-time 360 --max-filesize 400000000 \
+            --retry 2 --retry-all-errors --retry-delay 5 --retry-max-time 400 \
+            https://download.blender.org/release/Blender4.5/blender-4.5.3-linux-x64.tar.xz --output "$archive"
+          printf '%s  %s\n' '975c58fcb244273838534bba771e64ad87739216b0f9b39a888531a49a72d845' "$archive" | sha256sum --check --strict
+          tar -xJf "$archive" -C "$RUNNER_TEMP"
+
+      - name: Build and independently inspect the review scene
+        shell: bash
+        run: |
+          set -euo pipefail
+          script="$GITHUB_WORKSPACE/Tools/CityPCG/north_market_roof_variation_hosted.py"
+          blender="$RUNNER_TEMP/blender-4.5.3-linux-x64/blender"
+          timeout --signal=TERM --kill-after=5s 90s python3 -B "$script" prepare
+          timeout --signal=TERM --kill-after=10s 600s "$blender" --background --threads 2 --factory-startup --disable-autoexec \
+            --python-exit-code 1 --python "$script" -- build
+          timeout --signal=TERM --kill-after=10s 180s "$blender" --background --threads 2 --factory-startup --disable-autoexec \
+            --python-exit-code 1 --python "$script" -- verify
+          test -s "$GITHUB_WORKSPACE/ci-north-market-roof-variation/manifest.json"
+
+      - name: Upload review-only scene and overlays
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: north-market-upper-roof-review
+          path: ci-north-market-roof-variation/
+          if-no-files-found: error
+          retention-days: 3
