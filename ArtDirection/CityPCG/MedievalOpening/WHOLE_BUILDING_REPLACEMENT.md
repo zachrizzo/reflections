@@ -55,3 +55,22 @@ authored actor bounds and run the nine door-approach sweeps and all three local
 street guards in the loaded map. Compare rooftop collision and quest movement
 before publishing the replacement. Original and derivative are independently
 addressable for rollback.
+
+## Find stepped source buildings
+
+Run `inventory_building_geometry.py` on the source export, then inspect the
+same export with `group_stacked_roofs.py`.
+
+```powershell
+$city = 'Saved/CityPCG'
+$survey = "$city/MedievalSurvey"
+python Tools/CityPCG/group_stacked_roofs.py "$city/Tile_p03_p00.glb" "$city/Tile_p03_p00.asset.json" "$survey/Tile_p03_p00_building_inventory.json" "$survey/Tile_p03_p00_stacked_roofs.json"
+```
+
+The diagnostic compares projected roof triangles and follows upper wall bases
+that match the lower roof elevation or the source's 0.20 m foundation offset.
+It records actual bearing length and shared wall seams, then reports groups
+only where each upper layer has a unique qualifying support. The p03_p00
+export has eight candidate stacks, four with a recovered ground shell.
+Review the original building ownership and neighboring landmarks, quests and
+authored overlays before considering face removal.
