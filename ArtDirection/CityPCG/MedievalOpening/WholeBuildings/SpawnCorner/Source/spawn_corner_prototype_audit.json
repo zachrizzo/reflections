@@ -1,0 +1,37 @@
+{
+  "status": "blocked_review_only",
+  "source_sha256": "5c946436fce01c086598966fcca3c379381b29776e1e03df2b37ada9fb4b08f4",
+  "wall_triangles": 16,
+  "roof_triangles": 6,
+  "retained_party_wall_triangles": 8,
+  "spawn_rays_hitting_shell": 13,
+  "spawn_rays": 23,
+  "protected_overlap_m2": 255.791521,
+  "inside_or_on_boundary_marker_projections": [
+    "CutsceneAnchor_FirstPage",
+    "Home_frank_dunning"
+  ],
+  "render_triangles": 4436,
+  "closed_components": 361,
+  "structural_triangles": 52,
+  "world_pivot_m": [
+    3303.169,
+    309.942,
+    0.2
+  ],
+  "forward_xy": [
+    -0.9883657015783018,
+    0.15209615361221698
+  ],
+  "roof_held_world_z_m": 15.0,
+  "party_edges": [
+    0,
+    4,
+    6
+  ],
+  "collision": "Original tile collision is the unchanged reference. This file is render geometry only.",
+  "source_files_sha256": {
+    "SM_GLMedieval_SpawnCorner_Review.obj": "eae68dee5ccd75ebb7e7242dfd5c93c5b7ac6351464384a831f6eb67b5492e3a",
+    "SM_GLMedieval_SpawnCorner_Review.mtl": "4ea6fe8155d7174fbc27063535fc40462c0727fcd262432c1fd94c2946a8d048"
+  }
+}
