@@ -20,4 +20,11 @@ python ArtDirection/CityPCG/MedievalOpening/Ground/build_opening_ground.py Saved
 python ArtDirection/CityPCG/MedievalOpening/Ground/plan_street_patch.py Saved/CityPCG/Tile_p03_p00.glb Saved/CityPCG/medieval_west_ground_plan.json
 ```
 
-The pinned source export should produce eight patches and 157 floor probes with `trace_status` set to `requires_live_editor_traces`. In Unreal, load the pinned tile and call `collect_street_floor_traces.collect(plan_path, output_path)` outside PIE. Pass the observed output to the planner with `--observations`. The planner then requires every probe to agree on the source actor, height within 0.8 cm, and upward normal. The lower layer stays provisional until those observations pass. This stage writes only geometry and checks for review.
+The pinned source export should produce eight patches and 157 floor probes with `trace_status` set to `requires_live_editor_traces`. In Unreal, load the pinned tile and call `collect_street_floor_traces.collect(plan_path, output_path)` outside PIE. Pass the observed output to the planner with `--observations`. The planner requires every probe to agree on the source actor, height within 0.8 cm, and upward normal. The lower layer stays provisional until those observations pass.
+
+```powershell
+python ArtDirection/CityPCG/MedievalOpening/Ground/plan_street_patch.py Saved/CityPCG/Tile_p03_p00.glb Saved/CityPCG/medieval_west_ground_verified_plan.json --observations Saved/CityPCG/medieval_west_ground_live_floors.json
+python ArtDirection/CityPCG/MedievalOpening/Ground/export_street_patch.py Saved/CityPCG/medieval_west_ground_verified_plan.json ArtDirection/CityPCG/MedievalOpening/Ground/West
+```
+
+All 157 editor traces passed for the installed west stretch. It uses the 13-triangle GLB in `West/`, with one UV set, and shares the opening's existing PBR material. To install it, call `apply_west_street_patch.apply(verified_plan_path)` in the Gray London editor outside PIE. It checks the plan and source mesh hashes, repeats all live floor probes before writing, and saves only the mesh and its external actor package. The actor is `GL_1450_West_StreetPaving` at `/Game/__ExternalActors__/GrayLondon/Maps/GrayLondon_Geodata/6/LE/5YHYVTTHAU8OXRS48K6MUE`, with collision disabled.

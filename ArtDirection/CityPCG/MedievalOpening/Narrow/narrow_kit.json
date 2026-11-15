@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "width_cm": 300,
+  "height_cm": 1484,
+  "pivot": "bottom-center wall seam, +X street face, +Z up",
+  "meshes": {
+    "SM_GLMedieval_Narrow_Cellarer": {
+      "fbx": "Source/SM_GLMedieval_Narrow_Cellarer.fbx",
+      "min_cm": [
+        -6.5,
+        -150.0,
+        0.0
+      ],
+      "max_cm": [
+        90.6,
+        150.0,
+        1484.0
+      ],
+      "materials": [
+        "M_GLMedieval_Interior",
+        "M_GLMedieval_WarmPlaster",
+        "M_GLMedieval_Fieldstone",
+        "M_GLMedieval_ShopRed",
+        "M_GLMedieval_Oak",
+        "M_GLMedieval_WeatheredOak",
+        "M_GLMedieval_LeadedGlass",
+        "M_GLMedieval_Lead",
+        "M_GLMedieval_ClayTile"
+      ],
+      "triangles": 2540
+    }
+  }
+}

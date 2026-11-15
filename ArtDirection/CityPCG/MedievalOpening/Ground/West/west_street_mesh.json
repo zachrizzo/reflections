@@ -1,0 +1,20 @@
+{
+  "mesh": "SM_GL1450_WestStreetPaving",
+  "actor_origin_cm": [
+    324395.362,
+    28667.305,
+    0.0
+  ],
+  "mesh_sha256": "bb810bb35ffd8204866c869e19cfcc092b067589047b9cc962f235a411df927d",
+  "plan_sha256": "f7ed17f46e16eb4f682ce3a78492482dab65371e7b72cd3663ede72af8588d79",
+  "triangles": 13,
+  "source_frontages": [
+    "Tile_p03_p00_bf35b92bbdc6",
+    "Tile_p03_p00_75b969c36aae",
+    "Tile_p03_p00_c4e9f04b4c37",
+    "Tile_p03_p00_a173d04f6f3c"
+  ],
+  "source_tile_sha256": "5c946436fce01c086598966fcca3c379381b29776e1e03df2b37ada9fb4b08f4",
+  "material_asset": "/Game/GrayLondon/MedievalOpening/Ground/SM_GL1450_OpeningGround/Materials/M_GL1450_WornCobblesAndEarth",
+  "collision_profile": "NoCollision"
+}
