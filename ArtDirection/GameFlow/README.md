@@ -27,6 +27,11 @@ Owner: the game-flow side session.
     - Mouse clicks on the slot rows.
 - **Settings Back fix (train #10):** verified in PIE at 18:42 (`test_credits_settings_pie.py`, 11/11). From a Custom quality mix, Back put every scalability group back exactly.
 - **Credits:** the 9-line Gemini credits fit on the Credits and Victory screens even in a 1920×794 PIE window (`Screenshots/13`, `14`).
+- **Map credits (21:24, for train #14):** the new key `Credits.Map` holds 5 lines for the map's licences: OpenStreetMap ODbL, Codriver 3D CC BY, artfletch CC BY, Minimaliano, Poly Haven / Cosmo Tree Gen / Noto Serif, and the notices file. They sit in BUILT ON, between Epic's line and "Made with Unreal Engine 5.9", which stays last. `Credits.Tools` is unchanged.
+  - The table is saved (103 keys), and the C++ fallback has the same five lines. The train #13 DLL doesn't read the key yet, so in the editor the lines appear from train #14. A packaged build compiles them in from source.
+  - **Layout checked in PIE** (`test_credits_map_pie.py`, 21:23): for that run only, the same seven BUILT ON lines were put in `Credits.Thanks`, then put back. Nothing is cut off (`Screenshots/15_credits_map.png`, `16_victory_credits_map.png`). The Victory panel used 87% of the screen height, and the standalone Credits panel 93%.
+  - So the panels are wider for train #14 (both targets compile at 21:24): the Credits screen goes from 820 to 1040, and the Victory credits from 660 to 760 (the row stays under 1440, so it still fits 4:3). That leaves room for the team names.
+  - If the Fab props turn out not to be CC BY, delete "· Street props by Minimaliano (Fab), CC BY 4.0" from line 3. That's a table edit only (and the fallback, for tidiness).
 
 ## Status (2026-11-14, 12:50 local, build train #5)
 
@@ -87,7 +92,7 @@ All names and story text are entries in `/Game/UI/ST_GameFlowText`.
 | `Tip.<Aim,Cast,Craft>.<Title,Keys,Pad>`, `Tip.Shard(.Title)`, `Tip.Step.<Title,Keys,Pad>` | Tutorial tips (`Keys` = keyboard wording, `Pad` = controller wording) |
 | `Controls.StepUp`, `Controls.StepDown`, `Controls.Note` | Controls screen |
 | `Title.Saved` | "Last checkpoint: ..." under the title buttons |
-| `Credits.Game`, `Credits.Team`, `Credits.Tools`, `Credits.Thanks` | Credits. The last three are multi-line: one line per credit. |
+| `Credits.Game`, `Credits.Team`, `Credits.Tools`, `Credits.Thanks`, `Credits.Map` | Credits. All but the first are multi-line: one line per credit. `Credits.Map` (the map's licence lines) is drawn just before the last `Credits.Thanks` line, the engine line. |
 
 `Credits.Team` reads "Team names to come" until the team sends names and roles; filling them in is a table edit. `Credits.Tools` follows the submission kit's AI declaration (`ArtDirection/Submission/ai-declaration.md`, "Credits block") word for word.
 
@@ -314,6 +319,7 @@ CVars:
 
 The other test scripts take the PIE lock from outside the editor first:
 - `test_credits_settings_pie.py`: Settings Back from a Custom quality mix, plus the Credits and Victory layout.
+- `test_credits_map_pie.py`: the Credits and Victory layout with the map lines, using the loaded DLL (it puts them in `Credits.Thanks` for the run, then back), then writes `Credits.Map` and saves the table.
 - `test_save_system_pie.py`: Save screen → Slot 1, quick save, Load screen → Slot 1 (with the confirm), the death screen and respawn, then quick load. It moves any real saves aside first and puts them back after.
 
 ## Packaging notes

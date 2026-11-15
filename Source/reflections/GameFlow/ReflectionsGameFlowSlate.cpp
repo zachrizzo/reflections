@@ -565,7 +565,9 @@ void SReflectionsFlowMenu::SetScreen(EReflectionsFlowScreen InScreen)
     case EReflectionsFlowScreen::Title: Body = BuildTitle(); break;
     case EReflectionsFlowScreen::Pause: Body = BuildPause(); break;
     case EReflectionsFlowScreen::Controls: Body = BuildControls(); break;
-    case EReflectionsFlowScreen::Credits: Body = MakePanel(BuildCredits(false), 820.0f); break;
+    // Wide enough that the long licence lines mostly fit on one line: with the map credits the 820 panel used 93% of
+    // the screen height, and the team names are still to come.
+    case EReflectionsFlowScreen::Credits: Body = MakePanel(BuildCredits(false), 1040.0f); break;
     case EReflectionsFlowScreen::Confirm: Body = BuildConfirm(); break;
     case EReflectionsFlowScreen::Lose: Body = BuildLose(); break;
     case EReflectionsFlowScreen::Victory: Body = BuildVictory(); break;
@@ -1402,7 +1404,7 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildVictory()
         ]
         + SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
         [
-            SNew(SBox).WidthOverride(660)
+            SNew(SBox).WidthOverride(760)   // 660 before the map credits; the whole row stays under 1440 (4:3)
             [
                 SNew(SBorder)
                 .BorderImage(Rounded(12.0f))

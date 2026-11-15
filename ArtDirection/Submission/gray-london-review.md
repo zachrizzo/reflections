@@ -36,7 +36,7 @@ Every source the docs name, and whether it ships in this repo (checked against t
 | Wikimedia Commons, Geograph and Flickr photos, Historic England listings | CC BY-SA 2.0 and 3.0 and others | **No**: the docs say "reference only, not textures" | Nothing. |
 | **Not shipped, so no credit:** Dekogon *City Street Props* (an original substitute awning is used, per the README), the Old Vic Fab interior, artfletch's drinking-fountain scan, Replex's *Modular Urban houses* | — | No (none in the file list) | — |
 
-**Credit lines.** These were sent to game-flow-ui for the Credits panel. They are also in [ai-declaration.md](ai-declaration.md#credits-block-the-source-for-the-itch-page-and-game-flow-uis-creditsvictory-panel):
+**Credit lines.** These are **live** as `Credits.Map` (21:24), and I checked that they match word for word, with no clipping on the Credits or Victory screens. They are also in [ai-declaration.md](ai-declaration.md#credits-block-the-source-for-the-itch-page-and-game-flow-uis-creditsvictory-panel):
 
 ```
 Map data © OpenStreetMap contributors, ODbL (openstreetmap.org/copyright)

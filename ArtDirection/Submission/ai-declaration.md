@@ -102,7 +102,7 @@ Full licence notices: THIRD_PARTY_NOTICES.txt
 Made with Unreal Engine 5.9
 ```
 
-**Map lines, added 2026-11-14 ~21:10** for Jah's Gray London map. They go in a new key (suggested name `Credits.Map`) so that `Credits.Tools` stays unchanged. Sent to game-flow-ui. The full CC BY notices (licence link, changes, disclaimer) are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt), which ships at the root of the zip. Why each line is needed: [gray-london-review.md](gray-london-review.md#1-required-attributions). If Jah finds the Fab props are under the Fab Standard License, not CC BY, drop "· Street props by Minimaliano (Fab), CC BY 4.0".
+**Map lines, added 2026-11-14 ~21:10** for Jah's Gray London map. They go in a new key, `Credits.Map`, so that `Credits.Tools` stays unchanged. **Live 21:24.** game-flow-ui saved them in the string table and the C++ fallback (`ReflectionsGameFlowSlate.cpp:1170-1174`). I checked that the CSV matches this block line for line (5 lines). Screenshots `ArtDirection/GameFlow/Screenshots/15_credits_map.png` and `16_victory_credits_map.png` show every line with no clipping. They show in a packaged build, and in the editor from train #14. The full CC BY notices (licence link, changes, disclaimer) are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt), which ships at the root of the zip. Why each line is needed: [gray-london-review.md](gray-london-review.md#1-required-attributions). If Jah finds the Fab props are under the Fab Standard License, not CC BY, drop "· Street props by Minimaliano (Fab), CC BY 4.0".
 
 **If audio deletes the old OpenAI crowd barks**, the voice line stays as it is: the Tarnish and the narrator still use OpenAI. Drop "and OpenAI (…)" only if every OpenAI line is re-voiced.
 
