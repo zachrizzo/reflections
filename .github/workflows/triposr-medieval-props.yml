@@ -104,6 +104,7 @@ jobs:
             --output "$RUNNER_TEMP/TripoSR-model/model.ckpt"
           printf '%s  %s\n' '429e2c6b22a0923967459de24d67f05962b235f79cde6b032aa7ed2ffcd970ee' "$RUNNER_TEMP/TripoSR-model/model.ckpt" | sha256sum --check --strict
 
+      # The upstream license pin uses the LF Git bytes checked out on Linux.
       - name: Generate and read back one raw model on CPU
         shell: bash
         run: |
