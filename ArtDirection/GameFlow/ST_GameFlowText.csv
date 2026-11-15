@@ -3,6 +3,7 @@
 "Controls.StepDown","Step down into the previous side"
 "Controls.StepUp","Step up into the next side"
 "Credits.Game","REFLECTIONS  -  a 2026 Epic AI MegaJam entry"
+"Credits.Map","Map data © OpenStreetMap contributors, ODbL (openstreetmap.org/copyright)\nLandmark models adapted from Codriver 3D (3d-assets.codriver.io), CC BY 4.0\nAlbert Memorial scan by artfletch (Zenodo), CC BY 4.0 · Street props by Minimaliano (Fab), CC BY 4.0\nTextures and props: Poly Haven (CC0) · Trees: Cosmo Tree Gen by FrogCosmonaut (MIT) · Signs set in Noto Serif (SIL OFL 1.1)\nFull licence notices: THIRD_PARTY_NOTICES.txt"
 "Credits.Team","Team names to come"
 "Credits.Thanks","Epic's Game Animation Sample and Third Person template\nMade with Unreal Engine 5.9"
 "Credits.Tools","Code: Claude Code (Anthropic), OpenAI Codex\nWardrobe textures and references: OpenAI image generation\n3D garments: Tencent Hunyuan3D-2 (Powered by Tencent Hunyuan)\nSpell animations: NVIDIA Kimodo text-to-motion (Kimodo-SOMA-RP-v1.1, licensed by NVIDIA Corporation under the NVIDIA Open Model License)\nCharacters: Epic MetaHuman Creator\nCharacter voices: AI-generated with Google Gemini (designed voices, Gemini 3.8 Flash TTS) and OpenAI (gpt-realtime-2.1, gpt-4o-mini-tts), not human actors\nLive NPC replies: Google Gemini (gemini-3.5-transcribe-live, gemini-3.5-flash-lite, gemini-3.8-flash-tts). What you say to NPCs is sent to Google.\nMusic: Eleven Music by ElevenLabs (elevenlabs.io)\nFire and water spell sounds: ElevenLabs (elevenlabs.io); all other sounds procedurally synthesized"

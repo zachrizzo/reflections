@@ -30,6 +30,8 @@ with OUT.open('w', encoding='utf-8-sig', newline='') as f:
     w = csv.writer(f, quoting=csv.QUOTE_ALL)
     w.writerow(['Key', 'SourceString'])
     for key in sorted(rows):
-        # Keep C++ escapes (\n) as written: the string table importer un-escapes them.
-        w.writerow([key, rows[key].replace("\\'", "'").replace('\\"', '"')])
+        # Keep C++ escapes (\n) as written: the string table importer un-escapes them. \uXXXX (the credits' (c) and
+        # middle dots) it does not, so those become the characters themselves.
+        value = re.sub(r'\\u([0-9A-Fa-f]{4})', lambda m: chr(int(m.group(1), 16)), rows[key])
+        w.writerow([key, value.replace("\\'", "'").replace('\\"', '"')])
 print('%d rows -> %s' % (len(rows), OUT))
