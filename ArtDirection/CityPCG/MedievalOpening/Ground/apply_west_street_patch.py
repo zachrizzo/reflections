@@ -1,4 +1,4 @@
-"""Import and place the verified west patch using the existing opening material."""
+"""Import and place verified street patches using the existing opening material."""
 
 import hashlib
 import json
@@ -19,7 +19,7 @@ def verify_current_floor(plan):
     editor_world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
     world = editor_world.get_editor_world()
     if not world or world.get_path_name().split('.')[0] != LEVEL or editor_world.get_game_world():
-        raise RuntimeError('West paving requires Gray London in the editor outside PIE')
+        raise RuntimeError('Street paving requires Gray London in the editor outside PIE')
     failures = []
     for guard in plan['floor_trace_guards']:
         x, y = guard['xy_cm']
@@ -37,12 +37,12 @@ def verify_current_floor(plan):
     return len(plan['floor_trace_guards'])
 
 
-def import_mesh(source, report, plan, material):
-    assets = unreal.EditorAssetLibrary.list_assets(DESTINATION, recursive=True, include_folder=False)
+def import_mesh(source, report, plan, material, destination):
+    assets = unreal.EditorAssetLibrary.list_assets(destination, recursive=True, include_folder=False)
     if not assets:
         task = unreal.AssetImportTask()
         task.set_editor_properties({
-            'filename': str(source), 'destination_path': DESTINATION, 'destination_name': report['mesh'],
+            'filename': str(source), 'destination_path': destination, 'destination_name': report['mesh'],
             'automated': True, 'save': False, 'replace_existing': False,
         })
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
@@ -53,8 +53,8 @@ def import_mesh(source, report, plan, material):
         raise RuntimeError(f'Expected one untextured static mesh: {imported}')
     mesh, = imported
     path = mesh.get_package().get_name()
-    if not path.startswith(f'{DESTINATION}/') or mesh.get_name() != report['mesh']:
-        raise RuntimeError(f'Unexpected west paving mesh: {path}')
+    if not path.startswith(f'{destination}/') or mesh.get_name() != report['mesh']:
+        raise RuntimeError(f'Unexpected street paving mesh: {path}')
 
     editor = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
     box = mesh.get_bounding_box()
@@ -67,7 +67,7 @@ def import_mesh(source, report, plan, material):
             raise RuntimeError(f'Unexpected coordinate conversion for {path}/{key}')
     triangles = mesh.get_static_mesh_description(0).get_triangle_count()
     if triangles != report['triangles'] or editor.get_num_uv_channels(mesh, 0) != 1:
-        raise RuntimeError(f'Unexpected west paving topology or UVs: {triangles} triangles')
+        raise RuntimeError(f'Unexpected street paving topology or UVs: {triangles} triangles')
     if editor.get_simple_collision_count(mesh):
         editor.remove_collisions(mesh)
     mesh.set_material(0, material)
@@ -76,20 +76,20 @@ def import_mesh(source, report, plan, material):
     return mesh
 
 
-def place_actor(mesh, origin):
+def place_actor(mesh, origin, label, folder):
     editor = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     selection = editor.get_selected_level_actors()
-    matching = [actor for actor in editor.get_all_level_actors() if actor.get_actor_label() == ACTOR]
+    matching = [actor for actor in editor.get_all_level_actors() if actor.get_actor_label() == label]
     if len(matching) > 1:
-        raise RuntimeError(f'Duplicate west paving actors: {matching}')
+        raise RuntimeError(f'Duplicate street paving actors: {matching}')
     try:
-        with unreal.ScopedEditorTransaction('Place west medieval street paving'):
+        with unreal.ScopedEditorTransaction(f'Place {label}'):
             actor = matching[0] if matching else editor.spawn_actor_from_object(mesh, origin, unreal.Rotator())
             if not actor or not actor.get_package().get_name().startswith(ACTOR_PACKAGES):
-                raise RuntimeError('West paving actor must be an external Gray London actor')
+                raise RuntimeError('Street paving actor must be an external Gray London actor')
             actor.modify()
-            actor.set_actor_label(ACTOR)
-            actor.set_folder_path('Gray London/Medieval Opening/West Street')
+            actor.set_actor_label(label)
+            actor.set_folder_path(folder)
             actor.set_actor_location(origin, False, True)
             component = actor.get_component_by_class(unreal.StaticMeshComponent)
             component.modify()
@@ -98,28 +98,28 @@ def place_actor(mesh, origin):
             actor.set_actor_enable_collision(False)
             if (str(component.get_collision_profile_name()) != 'NoCollision' or
                     actor.get_actor_enable_collision() or component.get_editor_property('static_mesh') != mesh):
-                raise RuntimeError('West paving actor needs the exact visual-only draft mesh')
+                raise RuntimeError('Street paving actor needs the exact visual-only draft mesh')
             return actor
     finally:
         editor.set_selected_level_actors(selection)
 
 
-def apply(plan_path):
+def _apply(plan_path, patch_root, manifest, destination, label, folder):
     plan_bytes = Path(plan_path).read_bytes()
     plan = json.loads(plan_bytes)
-    report = json.loads((ROOT/'west_street_mesh.json').read_text(encoding='utf-8'))
-    mesh_file = ROOT / f'{report["mesh"]}.glb'
+    report = json.loads((patch_root/manifest).read_text(encoding='utf-8'))
+    mesh_file = patch_root / f'{report["mesh"]}.glb'
     if (plan['trace_status'] != 'verified' or plan['collision_profile'] != 'NoCollision' or
             report['plan_sha256'] != hashlib.sha256(plan_bytes).hexdigest() or
             report['mesh_sha256'] != hashlib.sha256(mesh_file.read_bytes()).hexdigest()):
-        raise RuntimeError('West paving source and floor evidence must match the verified plan')
+        raise RuntimeError('Street paving source and floor evidence must match the verified plan')
     material = unreal.load_asset(report['material_asset'])
     if not isinstance(material, unreal.MaterialInterface) or material.get_package().get_name() != plan['material_asset']:
         raise RuntimeError('The existing shared paving material must already be available')
 
     probes = verify_current_floor(plan)
-    mesh = import_mesh(mesh_file, report, plan, material)
-    actor = place_actor(mesh, unreal.Vector(*report['actor_origin_cm']))
+    mesh = import_mesh(mesh_file, report, plan, material, destination)
+    actor = place_actor(mesh, unreal.Vector(*report['actor_origin_cm']), label, folder)
     asset_package = mesh.get_package().get_name()
     actor_package = actor.get_package()
     if not unreal.EditorAssetLibrary.save_asset(asset_package, only_if_is_dirty=False):
@@ -130,3 +130,15 @@ def apply(plan_path):
     if unreal.MultiUserClientStatics.get_multi_user_connection_status_detail() == unreal.MultiUserConnectionStatus.CONNECTED:
         unreal.MultiUserClientStatics.persist_specified_packages([unreal.Name(path) for path in packages])
     return {'packages': packages, 'actor': actor.get_actor_label(), 'material': material.get_path_name(), 'checked_floor_probes': probes}
+
+
+def apply(plan_path):
+    return _apply(plan_path, ROOT, 'west_street_mesh.json', DESTINATION, ACTOR,
+                  'Gray London/Medieval Opening/West Street')
+
+
+def apply_leadenhall(plan_path):
+    return _apply(plan_path, ROOT.with_name('Leadenhall'), 'leadenhall_street_mesh.json',
+                  '/Game/GrayLondon/MedievalOpening/Ground/Leadenhall',
+                  'GL_1450_Leadenhall_WestApproachPaving',
+                  'Gray London/Medieval Opening/Leadenhall')

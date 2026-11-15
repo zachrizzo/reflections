@@ -145,10 +145,10 @@ def make_patches(section, axes, road):
             'triangles': [[0, i, i+1] for i in range(1, len(xy)-1)],
         }
 
-    return [
-        polygon(band, section['city_ground_height_cm'], section['city_ground_actor']),
-        *(polygon(xy, z, section['tile_actor']) for xy, z, _ in road),
-    ]
+    patches = [polygon(xy, z, section['tile_actor']) for xy, z, _ in road]
+    if section.get('include_city_ground', True):
+        patches.insert(0, polygon(band, section['city_ground_height_cm'], section['city_ground_actor']))
+    return patches
 
 
 def validate_observations(guards, observations):
@@ -185,6 +185,9 @@ def build_plan(section, survey, tile, observations=None):
     road = clip_road(tile, section, band)
     patches = make_patches(section, axes, road)
     guards = make_guards(section, axes, road)
+    if not section.get('include_city_ground', True) and any(
+            guard['expect_actor'] != section['tile_actor'] for guard in guards):
+        raise ValueError('Road-only patch contains unsupported floor probes')
     if observations is not None:
         validate_observations(guards, observations)
     return {

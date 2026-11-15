@@ -1,0 +1,19 @@
+{
+  "mesh": "SM_GL1450_LeadenhallWestApproachPaving",
+  "actor_origin_cm": [
+    301431.842,
+    59515.938,
+    0.0
+  ],
+  "mesh_sha256": "3fd6844f86a4b2e92338d253465095589519342bffaf8c30e4e12d5a34d435be",
+  "plan_sha256": "90f96a4785a24996e34b1dcf153d54585876a0d335ff0ef1313ac55b617f756a",
+  "triangles": 9,
+  "source_frontages": [
+    "Tile_p03_p01_3d6c3bde4424",
+    "Tile_p03_p01_46734619b7ce",
+    "Tile_p03_p01_fcf4a06d2cc5"
+  ],
+  "source_tile_sha256": "411a895aedeb642f0250cdd4c3e4725a1d04b73035ea4a75335f60193ca7102c",
+  "material_asset": "/Game/GrayLondon/MedievalOpening/Ground/SM_GL1450_OpeningGround/Materials/M_GL1450_WornCobblesAndEarth",
+  "collision_profile": "NoCollision"
+}

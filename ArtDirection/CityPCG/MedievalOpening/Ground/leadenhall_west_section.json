@@ -1,0 +1,24 @@
+{
+  "id": "Medieval_x18_y3_LanternWestApproach",
+  "tile_actor": "OSM Tile_p03_p01",
+  "tile_origin_cm": [300000, 100000, 0],
+  "tile_sha256": "411a895aedeb642f0250cdd4c3e4725a1d04b73035ea4a75335f60193ca7102c",
+  "road_primitive_index": 2,
+  "city_ground_actor": "City ground",
+  "city_ground_height_cm": 10.0,
+  "frontages": [
+    "Tile_p03_p01_3d6c3bde4424",
+    "Tile_p03_p01_46734619b7ce",
+    "Tile_p03_p01_fcf4a06d2cc5"
+  ],
+  "bounds_m": [3009, 555, 3032, 645],
+  "axis_end_trim_cm": 60,
+  "near_edge_setback_cm": 95,
+  "gutter_setback_cm": 245,
+  "far_edge_setback_cm": 450,
+  "include_city_ground": false,
+  "lift_cm": 0.7,
+  "material_asset": "/Game/GrayLondon/MedievalOpening/Ground/SM_GL1450_OpeningGround/Materials/M_GL1450_WornCobblesAndEarth",
+  "atlas_cm": [1512, 1213],
+  "atlas_cross_scale": 0.7
+}

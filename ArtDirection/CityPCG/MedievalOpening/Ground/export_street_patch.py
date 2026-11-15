@@ -1,10 +1,11 @@
 """Export a trace-verified street patch without embedding its Unreal material."""
 
+import argparse
 import hashlib
 import json
 from pathlib import Path
 import struct
-import sys
+import re
 
 import numpy as np
 
@@ -12,7 +13,9 @@ import numpy as np
 ASSET = 'SM_GL1450_WestStreetPaving'
 
 
-def export_street_patch(plan_path, output):
+def export_street_patch(plan_path, output, asset=ASSET, manifest='west_street_mesh.json'):
+    if not re.fullmatch(r'SM_GL1450_[A-Za-z0-9_]+', asset) or not re.fullmatch(r'[a-z_]+\.json', manifest):
+        raise ValueError('Expected a medieval ground mesh name and a local JSON manifest name')
     plan_bytes = plan_path.read_bytes()
     plan = json.loads(plan_bytes)
     if plan['trace_status'] != 'verified' or plan['collision_profile'] != 'NoCollision':
@@ -56,8 +59,8 @@ def export_street_patch(plan_path, output):
     indices = add(np.asarray(triangles).reshape(-1), '<u4', 'SCALAR', 5125, 34963)
     gltf = {
         'asset': {'version': '2.0', 'generator': 'Reflections verified street patch'},
-        'scene': 0, 'scenes': [{'nodes': [0]}], 'nodes': [{'mesh': 0, 'name': ASSET}],
-        'meshes': [{'name': ASSET, 'primitives': [{'attributes': attributes, 'indices': indices}]}],
+        'scene': 0, 'scenes': [{'nodes': [0]}], 'nodes': [{'mesh': 0, 'name': asset}],
+        'meshes': [{'name': asset, 'primitives': [{'attributes': attributes, 'indices': indices}]}],
         'buffers': [{'byteLength': len(binary)}], 'bufferViews': views, 'accessors': accessors,
     }
     header = json.dumps(gltf, separators=(',', ':')).encode('utf-8')
@@ -68,16 +71,22 @@ def export_street_patch(plan_path, output):
         + struct.pack('<I4s', len(binary), b'BIN\0') + binary
     )
     output.mkdir(parents=True, exist_ok=True)
-    (output/f'{ASSET}.glb').write_bytes(payload)
+    (output/f'{asset}.glb').write_bytes(payload)
     report = {
-        'mesh': ASSET, 'actor_origin_cm': origin.tolist(), 'mesh_sha256': hashlib.sha256(payload).hexdigest(),
+        'mesh': asset, 'actor_origin_cm': origin.tolist(), 'mesh_sha256': hashlib.sha256(payload).hexdigest(),
         'plan_sha256': hashlib.sha256(plan_bytes).hexdigest(), 'triangles': len(triangles),
         'source_frontages': plan['frontages'], 'source_tile_sha256': plan['tile_sha256'],
         'material_asset': plan['material_asset'], 'collision_profile': plan['collision_profile'],
     }
-    (output/'west_street_mesh.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
+    (output/manifest).write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     print(json.dumps(report))
 
 
 if __name__ == '__main__':
-    export_street_patch(Path(sys.argv[1]), Path(sys.argv[2]))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('plan', type=Path)
+    parser.add_argument('output', type=Path)
+    parser.add_argument('--asset', default=ASSET)
+    parser.add_argument('--manifest', default='west_street_mesh.json')
+    arguments = parser.parse_args()
+    export_street_patch(arguments.plan, arguments.output, arguments.asset, arguments.manifest)

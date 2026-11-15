@@ -28,3 +28,27 @@ python ArtDirection/CityPCG/MedievalOpening/Ground/export_street_patch.py Saved/
 ```
 
 All 157 editor traces passed for the installed west stretch. It uses the 13-triangle GLB in `West/`, with one UV set, and shares the opening's existing PBR material. To install it, call `apply_west_street_patch.apply(verified_plan_path)` in the Gray London editor outside PIE. It checks the plan and source mesh hashes, repeats all live floor probes before writing, and saves only the mesh and its external actor package. The actor is `GL_1450_West_StreetPaving` at `/Game/__ExternalActors__/GrayLondon/Maps/GrayLondon_Geodata/6/LE/5YHYVTTHAU8OXRS48K6MUE`, with collision disabled.
+
+## Leadenhall west approach
+
+`leadenhall_west_section.json` clips an 18.48 × 3.55 m approach strip along three frontage runs. It covers the exposed road outside the arcade and leaves the threshold clear. All 66 editor traces matched the pinned `OSM Tile_p03_p01` road surface at Z=28 cm. The nine-triangle mesh uses the opening cobble material and keeps the existing road collision.
+
+```powershell
+$ground = 'ArtDirection/CityPCG/MedievalOpening/Ground'
+$tile = 'Saved/CityPCG/MedievalSurvey/Tile_p03_p01.glb'
+$survey = 'Saved/CityPCG/medieval_lantern_row_frontages.json'
+$plan = 'Saved/CityPCG/leadenhall_west_paving_candidate_plan.json'
+$floor = 'Saved/CityPCG/leadenhall_west_paving_live_floors.json'
+$verified = 'Saved/CityPCG/leadenhall_west_paving_verified_plan.json'
+python Tools/CityPCG/survey_medieval_corridor.py 'Saved/CityPCG/MedievalSurvey/Tile_p03_p01.assets.json' 'ArtDirection/CityPCG/MedievalOpening/lantern_row_corridor.json' $survey
+python "$ground/plan_street_patch.py" $tile $plan --section "$ground/leadenhall_west_section.json" --survey $survey
+```
+
+With `OSM Tile_p03_p01` loaded in the Gray London editor outside PIE, run `collect_street_floor_traces.collect(plan_path, output_path)` using `$plan` and `$floor`. Then rebuild the source GLB and manifest.
+
+```powershell
+python "$ground/plan_street_patch.py" $tile $verified --section "$ground/leadenhall_west_section.json" --survey $survey --observations $floor
+python "$ground/export_street_patch.py" $verified "$ground/Leadenhall" --asset SM_GL1450_LeadenhallWestApproachPaving --manifest leadenhall_street_mesh.json
+```
+
+Call `apply_west_street_patch.apply_leadenhall(verified_plan_path)` in the Gray London editor outside PIE. It repeats the floor traces and uses the same exact-package write path as the west stretch. The installed `GL_1450_Leadenhall_WestApproachPaving` actor has external package `/Game/__ExternalActors__/GrayLondon/Maps/GrayLondon_Geodata/7/TF/15RV4R9DXJFFU22AL3MZRW`.
