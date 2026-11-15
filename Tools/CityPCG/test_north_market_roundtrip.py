@@ -97,6 +97,64 @@ class PolygonComparisonTests(unittest.TestCase):
             qa.compare(before, after)
 
 
+class FlatNormalPlanTests(unittest.TestCase):
+    def test_matches_cyclic_shape_without_trusting_imported_normals(self):
+        shifted = tuple(c[:5] + (0.02, 0.0, 0.9998) for c in TRI[1])
+        imported = ('M_wall', shifted[1:] + shifted[:1])
+        self.assertEqual(qa.flat_source_normal_plan(mesh(TRI), mesh(imported)), [(0, 0, 1)])
+        with self.assertRaises(ValueError):
+            qa.compare(mesh(TRI), mesh(imported))
+
+    def test_missing_changed_uv_and_reversed_shapes_are_rejected(self):
+        changed = list(TRI[1][1])
+        changed[3] += 0.01
+        for face in (('M_wall', (TRI[1][0], tuple(changed), TRI[1][2])),
+                     ('M_wall', tuple(reversed(TRI[1])))):
+            with self.subTest(face=face), self.assertRaisesRegex(ValueError, 'missing or ambiguous'):
+                qa.flat_source_normal_plan(mesh(TRI), mesh(face))
+
+    def test_nonflat_and_zero_source_normals_rejected(self):
+        varied = list(TRI[1][1])
+        varied[5:8] = (1, 0, 0)
+        for face in (('M_wall', (TRI[1][0], tuple(varied), TRI[1][2])),
+                     ('M_wall', tuple(c[:5] + (0, 0, 0) for c in TRI[1]))):
+            with self.subTest(face=face), self.assertRaisesRegex(ValueError, 'unit and flat'):
+                qa.flat_source_normal_plan(mesh(face), mesh(face))
+
+    def test_identical_shapes_with_different_normals_are_ambiguous(self):
+        other = ('M_wall', tuple(c[:5] + (1, 0, 0) for c in TRI[1]))
+        with self.assertRaisesRegex(ValueError, 'different normals'):
+            qa.flat_source_normal_plan(mesh(TRI, other), mesh(TRI, other))
+
+    def test_duplicate_imported_faces_are_not_guessed(self):
+        with self.assertRaisesRegex(ValueError, 'missing or ambiguous'):
+            qa.flat_source_normal_plan(mesh(TRI, TRI), mesh(TRI, TRI))
+
+    def test_only_differing_normal_edge_is_marked_then_reimport_checked(self):
+        other = ('M_wall', (corner(0, 3, v=1, nx=0, ny=1, nz=0),
+                            corner(2, 0, u=1, nx=0, ny=1, nz=0),
+                            corner(2, 3, u=1, v=1, nx=0, ny=1, nz=0)))
+        source = mesh(TRI, other)
+        imported = mesh(TRI, other)
+        edges = [Stub(use_edge_sharp=False) for _ in range(5)]
+        loops = [Stub(edge_index=i) for i in (0, 1, 2, 1, 3, 4)]
+        polygons = [Stub(loop_indices=(0, 1, 2)), Stub(loop_indices=(3, 4, 5))]
+        data = Stub(edges=edges, loops=loops, polygons=polygons,
+                    normals_split_custom_set=mock.Mock(), update=mock.Mock())
+        obj = Stub(data=data)
+        report = adapter.restore_flat_source_normals(obj, source, imported, apply=True)
+        self.assertEqual(report['required_sharp_edges'], 1)
+        self.assertFalse(report['face_smooth_flags_edited'])
+        self.assertEqual([edge.use_edge_sharp for edge in edges], [False, True, False, False, False])
+        self.assertEqual(data.normals_split_custom_set.call_args.args[0], [(0, 0, 1)] * 3 + [(0, 1, 0)] * 3)
+        data.normals_split_custom_set.reset_mock()
+        adapter.restore_flat_source_normals(obj, source, imported, apply=False)
+        data.normals_split_custom_set.assert_not_called()
+        edges[1].use_edge_sharp = False
+        with self.assertRaisesRegex(ValueError, 'boundary'):
+            adapter.restore_flat_source_normals(obj, source, imported, apply=False)
+
+
 class SourceParserTests(unittest.TestCase):
     def parse(self, source):
         with mock.patch('pathlib.Path.open', return_value=io.StringIO(source)):
