@@ -186,6 +186,23 @@ class Mesh:
                    (b[0]+py,b[1]+pz), (a[0]+py,a[1]+pz)]
         self.prism_yz(polygon, x0, x1, role)
 
+    def beam_xz(self, y0, y1, a, b, width, role='Oak'):
+        """Extrude a rectangular beam on a side elevation, with outward winding."""
+        dx, dz = b[0]-a[0], b[1]-a[1]
+        length = math.hypot(dx, dz)
+        if length < 1e-8 or not y0 < y1:
+            raise ValueError('Invalid side-elevation beam')
+        px, pz = -dz * width/(2*length), dx * width/(2*length)
+        contour = [(a[0]-px,a[1]-pz), (b[0]-px,b[1]-pz),
+                   (b[0]+px,b[1]+pz), (a[0]+px,a[1]+pz)]
+        left = [(x,y0,z) for x,z in contour]
+        right = [(x,y1,z) for x,z in contour]
+        self.quad(*left,role)
+        self.quad(*reversed(right),role)
+        for i in range(4):
+            j = (i+1)%4
+            self.quad(left[i],right[i],right[j],left[j],role)
+
     def triangles(self):
         return (points for _, points, _, _ in self.faces)
 
@@ -194,6 +211,11 @@ def arch_height(y):
     # A pointed cusp and curved shoulders. The piecewise-linear underside is
     # built above the 2.5 x 2.7 m clearance and spans the whole gate depth.
     return 2.70 + .90 * math.sqrt(max(0., 1. - abs(y)/1.75))
+
+
+def main_roof_height(x):
+    """Main roof surface height at local depth x, away from the front gable."""
+    return 7.40 - (1.60/3.50)*abs(x)
 
 
 def make_masonry(mesh, detail):
@@ -245,8 +267,59 @@ def windows(mesh, center, bottom, upper=False):
             mesh.beam_yz(3.36,3.39,(lo+.04,bottom+.08),(hi-.04,bottom+height-.08),.055,'Oak')
 
 
+def make_end_gables(mesh):
+    """Close the attic ends exactly up to the main roof, on both side walls."""
+    eave = main_roof_height(3.28)
+    for y in (-6.38,6.38):
+        fill = [(-3.28,y,5.70),(3.28,y,5.70),(3.28,y,eave),(-3.28,y,eave)]
+        peak = [(-3.28,y,eave),(3.28,y,eave),(0,y,main_roof_height(0))]
+        if y > 0:  # Outward +Y; the negative side faces outward -Y.
+            fill.reverse()
+            peak.reverse()
+        mesh.quad(*fill,'WarmPlaster')
+        mesh.triangle(*peak,'WarmPlaster')
+
+
+def make_side_elevations(mesh):
+    """Restrained timber framing and small glazed windows on the two end walls."""
+    for side in (-1,1):
+        y0,y1 = (-6.44,-6.38) if side < 0 else (6.38,6.44)
+        glass_y0,glass_y1 = (-6.425,-6.38) if side < 0 else (6.38,6.425)
+        frame_y0,frame_y1 = (-6.46,-6.425) if side < 0 else (6.425,6.46)
+        # Timber on the jettied upper storey, clear of the central cart passage.
+        for z in (3.94,5.64):
+            mesh.box(-3.22,3.22,y0,y1,z-.055,z+.055,'Oak')
+        for x in (-3.12,-2.25,0,2.25,3.12):
+            mesh.box(x-.05,x+.05,y0,y1,3.98,5.64,'Oak')
+        for a,b in (((-3.0,3.99),(-2.32,5.59)),((3.0,3.99),(2.32,5.59))):
+            mesh.beam_xz(y0,y1,a,b,.10,'Oak')
+        for x in (-1.14,1.14):
+            lo,hi = x-.55,x+.55
+            mesh.box(lo,hi,glass_y0,glass_y1,4.35,5.25,'LeadedGlass')
+            for frame_x in (lo,x,hi):
+                mesh.box(frame_x-.04,frame_x+.04,frame_y0,frame_y1,4.31,5.29,'Oak')
+            for z in (4.35,5.25):
+                mesh.box(lo-.04,hi+.04,frame_y0,frame_y1,z-.04,z+.04,'Oak')
+        # A single modest narrow stone-storey window on each end wall.
+        lower_y0,lower_y1 = (-6.40,-6.35) if side < 0 else (6.35,6.40)
+        lower_frame_y0,lower_frame_y1 = (-6.42,-6.40) if side < 0 else (6.40,6.42)
+        mesh.box(-1.36,-1.02,lower_y0,lower_y1,1.30,2.08,'LeadedGlass')
+        for x in (-1.36,-1.02):
+            mesh.box(x-.035,x+.035,lower_frame_y0,lower_frame_y1,1.26,2.12,'Oak')
+        for z in (1.30,2.08):
+            mesh.box(-1.395,-.985,lower_frame_y0,lower_frame_y1,z-.035,z+.035,'Oak')
+        # Gable timber sits on the new closed plaster surface under the roof.
+        eave,peak = main_roof_height(3.16),main_roof_height(0)
+        mesh.box(-3.18,3.18,y0,y1,5.72,5.82,'Oak')
+        mesh.box(-.055,.055,y0,y1,5.80,peak-.08,'Oak')
+        mesh.beam_xz(y0,y1,(-3.16,eave),(0,peak),.10,'Oak')
+        mesh.beam_xz(y0,y1,(0,peak),(3.16,eave),.10,'Oak')
+
+
 def make_upper(mesh):
     mesh.box(-3.28, 3.28, -6.38, 6.38, 3.88, 5.70, 'WarmPlaster')
+    make_end_gables(mesh)
+    make_side_elevations(mesh)
     for x0,x1 in ((3.28,3.34),(-3.34,-3.28)):
         for z in (3.90,5.62):
             mesh.box(x0,x1,-6.39,6.39,z-.07,z+.07,'Oak')
@@ -276,8 +349,7 @@ def make_roof(mesh, detail):
     # 158.75 mm. V's 1.32 m slope repeat is an unreviewed exposure estimate.
     slope = 1.60/3.50
     roof_uv = lambda p: (p[1]/1.984375, p[0]*math.sqrt(1+slope*slope)/1.32)
-    def zmain(x):
-        return 7.40 - slope*abs(x)
+    zmain = main_roof_height
     def main_patch(x0,x1,y0,y1):
         mesh.quad((x0,y0,zmain(x0)),(x1,y0,zmain(x1)),
                   (x1,y1,zmain(x1)),(x0,y1,zmain(x0)), 'ClayTile',roof_uv)

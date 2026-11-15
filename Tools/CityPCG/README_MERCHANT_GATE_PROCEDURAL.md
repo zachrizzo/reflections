@@ -4,8 +4,9 @@ This separate, original source-art generator models the checked-in ImageGen
 gateway reference with project-owned textures. It creates stone piers, a
 pointed full-depth cart passage, dressed arch stones, an upper plaster and
 timber storey, glazed shop windows and shutters, a crossing front gable,
-clay-tiled roof and two chimneys. It is not image-to-3D output and does not
-use the Hunyuan or TripoSR model.
+clay-tiled roof and two chimneys. Both roof-end gables are closed to the main
+roof and have restrained timber framing and windows. It is not image-to-3D
+output and does not use the Hunyuan or TripoSR model.
 
 **The real full-detail generator has not run. No gate OBJ, preview, Unreal
 asset or map change has been produced by this draft.** The tests below use a
@@ -19,7 +20,9 @@ audit clips every triangle against the full-depth 2.5 m wide x 2.7 m high
 corridor above the 6 cm floor band; it also probes both piers, the header and
 upper lumen. In-memory tests confirm these properties for the coarse mesh and
 prove a wall inserted into the opening is rejected. The real full-detail
-output must pass that audit again before its manifest is written.
+output must pass that audit again before its manifest is written. Independent
+section samples check coverage and outward normals at both roof ends; the
+side-elevation detail is also checked against the cart corridor.
 
 Existing texture files and the reference PNG are SHA-256-pinned; textures are
 copied into the new output folder and checked again. The roof uses an

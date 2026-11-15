@@ -6,7 +6,16 @@ import unittest
 from unittest import mock
 
 import build_merchant_gate_procedural as gate
-from audit_merchant_gate import audit_geometry
+from audit_merchant_gate import audit_geometry, intersects_clearance
+
+
+def point_in_xz_triangle(points, x, z):
+    """Independent 2-D section check for a wall at a constant Y coordinate."""
+    def edge(a,b,p):
+        return (b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0])
+    triangle = [(p[0],p[2]) for p in points]
+    areas = [edge(a,b,(x,z)) for a,b in zip(triangle,triangle[1:]+triangle[:1])]
+    return min(areas) >= -1e-9 or max(areas) <= 1e-9
 
 
 class GateGeometryTests(unittest.TestCase):
@@ -31,6 +40,38 @@ class GateGeometryTests(unittest.TestCase):
         self.assertEqual(report['status'],'failed')
         self.assertGreater(report['obstructing_triangles'],0)
         self.assertIn('Geometry obstructs the continuous passage clearance',report['errors'])
+
+    def test_both_roof_end_gables_fill_the_whole_roof_section(self):
+        for side in (-1,1):
+            plane = side*6.38
+            walls = [(points,normal) for role,points,_,normal in self.mesh.faces
+                     if role=='WarmPlaster' and all(abs(p[1]-plane)<1e-9 for p in points)
+                     and max(p[2] for p in points)>5.700001]
+            self.assertTrue(walls, f'No end gable on side {side}')
+            self.assertTrue(all(side*normal[1] > .999 for _,normal in walls))
+            for i in range(-32,33,4):
+                x=i/10
+                roof_z=7.40-1.60*abs(x)/3.50
+                for fraction in (.001,.25,.50,.75,.999):
+                    z=5.70+(roof_z-5.70)*fraction
+                    with self.subTest(side=side,x=x,z=z):
+                        self.assertTrue(any(point_in_xz_triangle(points,x,z) for points,_ in walls))
+                self.assertFalse(any(point_in_xz_triangle(points,x,roof_z+.02) for points,_ in walls))
+
+    def test_side_elevation_details_stay_outside_the_cart_passage(self):
+        side_detail=gate.Mesh()
+        gate.make_side_elevations(side_detail)
+        for side in (-1,1):
+            for role in ('Oak','LeadedGlass'):
+                self.assertTrue(any(face_role==role and all(side*p[1] >= 6.35 for p in points)
+                                    for face_role,points,_,_ in side_detail.faces),
+                                f'Missing {role} on side {side}')
+        for _,points,_,_ in side_detail.faces:
+            self.assertTrue(all(6.35 <= abs(point[1]) <= 6.50 and abs(point[0]) <= 3.5
+                                for point in points))
+            low=[min(p[i] for p in points) for i in range(3)]
+            high=[max(p[i] for p in points) for i in range(3)]
+            self.assertFalse(intersects_clearance(points,low,high))
 
     def test_obj_readback_keeps_materials_uv_normals_and_winding(self):
         stream = io.StringIO()
