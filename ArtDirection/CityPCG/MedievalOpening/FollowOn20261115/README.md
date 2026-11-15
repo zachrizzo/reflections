@@ -4,7 +4,7 @@ These are review-only inputs for four complete medieval replacement buildings
 on two more road-connected blocks. East and west describe their positions in
 the project's local coordinate frame, not a claim about historical addresses.
 The candidates pin the original tile and anonymous-shop export hashes, record
-their surveyed footprints, and retain the source road and landmark sections.
+their surveyed footprints, and retain the nonselected export primitives.
 Both blocks were screened again against the current story, corridor, overlay
 and neighboring-tile inputs on 15 November 2026.
 
@@ -12,8 +12,11 @@ The two plans cover four shells and 171 road samples. An offline cumulative
 preflight combining these blocks with the earlier Leadenhall, West Mark Lane,
 West Connector and Royal Mint candidates checked 18 buildings across three
 tiles. On p03_p01 its combined mask contains eight buildings, 200 ordinary
-wall triangles and 86 roof triangles; the protected sections remain intact.
-This is not a live approval, an imported mesh, or proof of navigation.
+wall triangles and 86 roof triangles according to the recorded slot mapping;
+the other export primitives remain intact. Multiple original sections share a
+material, so verify the export-to-Unreal section mapping independently before
+assuming these are the intended walls and roofs. This is not a live approval,
+an imported mesh, or proof of navigation.
 
 ## Generate the source meshes
 

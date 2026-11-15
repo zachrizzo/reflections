@@ -1,5 +1,11 @@
 # West Mark Lane whole-building pilot
 
+The exported primitive-to-Unreal section mapping remains a live verification
+requirement. Several original sections share a material, so the current GLB
+primitive count and recorded slot names alone do not prove that correspondence.
+Treat the face and road checks below as checks against the recorded mapping
+until the original Unreal source sections are compared independently.
+
 Three ordinary p03_p00 source shells share one street block. The workshop and
 merchant house meet along a 5.528 m party wall. The old models are flat-topped
 and the new houses use pitched roofs inside the measured footprints. Roles,

@@ -28,8 +28,10 @@ systems without taking over that work.
 ## Current checkpoint
 
 The first West Mark Lane pilot has three complete medieval buildings and a
-filtered source tile that removes their three modern shells while retaining
-the original road, park, water and landmark geometry. Their assets have been
+filtered source tile that removes their three surveyed shells while retaining
+the other exported primitives. The original Unreal section-to-export mapping
+still needs independent verification before road, park, water and landmark
+preservation can be claimed. Their assets have been
 imported and their geometry and collision settings audited. The pilot still
 needs placement, in-editor visual review, streaming/gameplay checks and a
 current standalone build; it is not yet the finished city. Its runtime module
@@ -41,9 +43,10 @@ more complete source models, checked against their surveyed footprints and
 Blender round trips. They have not yet been imported or placed in Unreal.
 The east Royal Mint block also needs several neighboring exports before review.
 
-The cumulative rollout preflight covers those 14 proposed buildings across
-three of the 117 source tile assets on disk. They remain review-only: the other tiles
-need exports and the candidate blocks need live actor and route checks. The
+The cumulative rollout preflight covers 18 proposed buildings across three of
+the 117 source tile assets on disk; four of those have plans but no meshes yet.
+They remain review-only: the other tiles need exports, the original section
+mapping needs verification, and candidate blocks need live actor and route checks. The
 three large modern shells immediately visible from the real spawn overlap
 story markers, so replacing them needs a coordinated gameplay and visual review.
 

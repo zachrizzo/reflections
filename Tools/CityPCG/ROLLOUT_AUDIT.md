@@ -1,10 +1,13 @@
 # Whole-building rollout preflight
 
 The rollout audit inventories saved tile exports and combines reviewed building
-shell masks for each original tile. It checks that the geometry, material-slot
-order, tile origin and protected road/landmark sections match the exact source
-export. Passing this preflight does not approve a block for gameplay: actor,
-quest, road, collision, navigation and visual checks still need the live map.
+shell masks for each original tile. It checks that geometry, recorded slot
+order, tile origin and protected primitive references match the pinned export
+and metadata. Several Unreal sections use the same material, so the metadata's
+primitive-to-section mapping still needs an independent check against the
+original Unreal mesh. Passing this preflight does not approve a block for
+gameplay: actor, quest, road, collision, navigation and visual checks still
+need the live map.
 
 Export the original tiles and their metadata before running the audit. From the
 project root, an example using the four current review-only candidates is:
