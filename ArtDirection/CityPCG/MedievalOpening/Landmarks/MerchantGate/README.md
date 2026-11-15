@@ -13,6 +13,41 @@ player capsule, ground, collision and navigation in the actual map. Survey
 adjacent roads and story actors before deciding where it belongs. Plot selection
 and in-map validation are pending.
 
+## MIT-licensed local alternative
+
+The official [TripoSR code](https://github.com/VAST-AI-Research/TripoSR) and
+[pretrained model](https://huggingface.co/stabilityai/TripoSR) are MIT-licensed.
+The upstream project lists about 6 GB of GPU memory for its default single
+image run. This is a candidate for regions where the installed Hunyuan model's
+output terms below are unsuitable. The actual generated result and its quality,
+Windows compatibility, background removal, arch opening, UVs and Unreal
+import have not yet been tested.
+
+For a reproducible local setup, use a fresh directory under this project's
+`Saved/CityPCG/ImageTo3D` and the following pinned revisions:
+
+```powershell
+$base = 'Saved/CityPCG/ImageTo3D'
+$source = "$base/TripoSR-upstream"
+$model = "$base/TripoSR-model"
+git clone --filter=blob:none --no-checkout https://github.com/VAST-AI-Research/TripoSR.git $source
+git -C $source checkout --detach 107cefdc244c39106fa830359024f6a2f1c78871
+New-Item -ItemType Directory -Path $model
+Invoke-WebRequest -Uri 'https://huggingface.co/stabilityai/TripoSR/resolve/5b521936b01fbe1890f6f9baed0254ab6351c04a/config.yaml' -OutFile "$model/config.yaml"
+Invoke-WebRequest -Uri 'https://huggingface.co/facebook/dino-vitb16/resolve/f205d5d8e640a89a2b8ef0369670dfc37cc07fc2/config.json' -OutFile "$model/dino_config.json"
+python -B Tools/CityPCG/fetch_triposr_weights.py
+```
+
+The 1,677,246,742-byte checkpoint is pinned to SHA-256
+`429e2c6b22a0923967459de24d67f05962b235f79cde6b032aa7ed2ffcd970ee`.
+The fetcher keeps a partial file and resumes in short sessions, publishing
+the completed checkpoint only after checking that hash. It defers during an
+editor lease or build, a closed editor, or low memory. Re-run it in an idle
+window until verification completes. The fetcher's resume, lock and hash checks
+pass small offline tests; the full network transfer has not run yet. A separate
+inference runner and a successful generation are still needed; fetching files
+alone produces no 3D asset.
+
 ## Prepare a local trial
 
 The gray opening in the reference shows the intended rear exit. The stone jambs, dark interior and visible floor make it a useful single view for geometry conditioning. Its rear elevation, actual arch depth and covered ceiling still need review because the image only shows one side. The street paving in the foreground is reference context and can be removed from the mesh. Keep the original PNG and its hash in `source_metadata.json`.
