@@ -15,7 +15,8 @@ on the new build (the look pools and the allied caster come from there).
   U3  Fireball on a soldier from 2.6 m: thrown between 2 and 6 m (it was 9.7 m).
   U4  Water Orb on a soldier: shoved between 1 and 4 m (it was 6.7 m).
   U5  Look pools: Pewterside townspeople and guards are PewLook_*, Giltside and Frostside pools hold none of them.
-  U6  AlliedSoldierCaster spawns, is on the player's side (Guard disposition), and holds the wand.
+  U6  AlliedSoldierCaster spawns, is on the player's side (Guard disposition), and holds the sword (casters carry
+      the sword too, the user's ask of 20:00).
 Result: Saved/NpcUnified/verify_tuning.json and U*_ pictures.
 """
 
@@ -125,9 +126,11 @@ else:
             return next(m for m in actor.get_components_by_class(unreal.SkeletalMeshComponent) if m.get_name() == 'Body')
 
         def hand_out(actor):
-            """How far the visible body's right hand is from the actor's upright axis, in cm (arms out: 50 or more)."""
-            delta = body_of(actor).get_socket_location('hand_r') - actor.get_actor_location()
-            return round(unreal.Vector(delta.x, delta.y, 0).length())
+            """How far the lower of the visible body's hands is above its pelvis, in cm, plus 50. The reference pose
+            (arms held out) has both hands about 6 cm above the pelvis: 56. Standing or walking they hang below: 40 or less."""
+            body = body_of(actor)
+            pelvis = body.get_socket_location('pelvis').z
+            return round(min(body.get_socket_location('hand_r').z, body.get_socket_location('hand_l').z) - pelvis + 50.0)
 
         def aim_point(actor):
             for capsule in actor.get_components_by_class(unreal.CapsuleComponent):
@@ -207,7 +210,7 @@ else:
                 await asyncio.sleep(0.25)
                 result['U0'][body_name] = {'look': row['look'], 'spawned': True, 'hand_out_cm': [first, hand_out(actor)],
                                            'walker': bool(brain(actor).get_locomotion_driver())}
-            check('U0_the_five_bodies_have_their_arms_down', all(v.get('spawned') and max(v['hand_out_cm']) < 46 for v in result['U0'].values()), result['U0'])
+            check('U0_the_five_bodies_have_their_arms_down', all(v.get('spawned') and max(v['hand_out_cm']) < 50 for v in result['U0'].values()), result['U0'])
             for row in stood.values():
                 if row['actor']:
                     unreal.GameplayStatics.apply_damage(row['actor'], 999.0, None, None, unreal.DamageType)
@@ -253,7 +256,7 @@ else:
             one = npcs.spawn_npc('Civilian', SPOT, TOWARD_HERO, None)
             result['U1'] = judge(await watch_spawn([one], 2.2))
             worst = [v['worst_hand_while_shown'] for v in result['U1'].values()]
-            check('U1_fresh_spawn_is_never_shown_with_its_arms_out', all(w is not None and w < 46 for w in worst), result['U1'])
+            check('U1_fresh_spawn_is_never_shown_with_its_arms_out', all(w is not None and w < 50 for w in worst), result['U1'])
             unreal.GameplayStatics.apply_damage(one, 999.0, None, None, unreal.DamageType)
 
             # ---- U2: six at once -------------------------------------------------------------------------
@@ -264,7 +267,7 @@ else:
             await shot('U2_six_just_spawned')
             result['U2'] = judge(await watch_spawn(crowd, 2.4))
             worst = [v['worst_hand_while_shown'] for v in result['U2'].values()]
-            check('U2_six_at_once_are_never_shown_with_their_arms_out', len(worst) == 6 and all(w is not None and w < 46 for w in worst), result['U2'])
+            check('U2_six_at_once_are_never_shown_with_their_arms_out', len(worst) == 6 and all(w is not None and w < 50 for w in worst), result['U2'])
             await shot('U2_six_after_two_seconds')
             for actor in crowd:
                 unreal.GameplayStatics.apply_damage(actor, 999.0, None, None, unreal.DamageType)
@@ -315,14 +318,14 @@ else:
                 props = [part.get_editor_property('static_mesh').get_name() for part in caster.get_components_by_class(unreal.StaticMeshComponent) if part.get_editor_property('static_mesh')]
                 result['U6'] = {'class': caster.get_class().get_name(), 'archetype': str(brain(caster).get_active_archetype().get_editor_property('archetype_id')),
                                 'hostile_to_player': npcs.is_hostile_to_player(caster), 'props': props, 'health': health(caster)}
-                check('U6_allied_caster_is_friendly_and_holds_a_wand', result['U6']['archetype'] == 'AlliedSoldierCaster' and not result['U6']['hostile_to_player']
-                      and any('Wand' in p for p in props), result['U6'])
+                check('U6_allied_caster_is_friendly_and_holds_a_sword', result['U6']['archetype'] == 'AlliedSoldierCaster' and not result['U6']['hostile_to_player']
+                      and any('Sword' in p for p in props), result['U6'])
                 controller.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(player.get_actor_location(), caster.get_actor_location() + unreal.Vector(0, 0, 105)))
                 await asyncio.sleep(0.2)
                 await shot('U6_allied_caster')
             else:
                 result['U6'] = 'no AlliedSoldierCaster in this build'
-                check('U6_allied_caster_is_friendly_and_holds_a_wand', False, result['U6'])
+                check('U6_allied_caster_is_friendly_and_holds_a_sword', False, result['U6'])
     except Exception as error:
         import traceback
         result['error'] = repr(error)

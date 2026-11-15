@@ -144,10 +144,10 @@ async def case_pointblank(world, pc, pawn, driver):
     aim_at(pc, chest(guard))
     await asyncio.sleep(0.1)
     h0 = health(guard)
-    unreal.SystemLibrary.execute_console_command(world, 'Spell.LogHits 1', pc)
     ok = await ready_cast(driver, unreal.HeroSpell.FIRE)
+    if not ok:
+        report['pointblank_refused'] = {'feedback': driver.get_cast_feedback(), 'defeated': driver.is_defeated(), 'hero_health': health(pawn)}
     await asyncio.sleep(1.0)
-    unreal.SystemLibrary.execute_console_command(world, 'Spell.LogHits 0', pc)
     out = {'guard': guard.get_name(), 'cast': ok, 'hero_to_guard_cm': round((pawn.get_actor_location() - guard.get_actor_location()).length(), 1),
            'health_before': h0, 'health_after': health(guard)}
     if ok and (out['health_after'] is None or out['health_after'] >= (h0 or 0)):
@@ -243,6 +243,18 @@ async def run():
             pc.set_control_rotation(unreal.Rotator(roll=0.0, pitch=0.0, yaw=start.get_actor_rotation().yaw))
             await asyncio.sleep(4.0)
         report['hero_start'] = pawn.get_actor_location()
+        # No crime heat for this run (spells on a civilian would turn guards on the hero mid-test); log every hit.
+        report['heat_was'] = unreal.SystemLibrary.get_console_variable_int_value('Npc.Heat')
+        unreal.SystemLibrary.execute_console_command(world, 'Npc.Heat 0', pc)
+        unreal.SystemLibrary.execute_console_command(world, 'Spell.LogHits 1', pc)
+        log_path = Path(unreal.Paths.project_log_dir()).resolve() / 'reflections.log'
+        log_start = log_path.stat().st_size if log_path.exists() else 0
+        if 'regen' in CASES:
+            report['regen'] = await case_regen(world, pawn)
+            flush()
+        if 'pointblank' in CASES:
+            report['pointblank'] = await case_pointblank(world, pc, pawn, driver)
+            flush()
         if 'strip' in CASES:
             fb = await strip(world, world_ref, pc, pawn, driver, unreal.HeroSpell.FIRESTORM, 'fireball')
             report['strip_fireball'] = fb
@@ -253,15 +265,21 @@ async def run():
             report['strip_lightning'] = lb
             report['strip_lightning_png'] = compose('lightning', 'Lightning Bolt hit (%s)' % TAG, lb.get('frames', []))
             flush()
-        if 'regen' in CASES:
-            report['regen'] = await case_regen(world, pawn)
-            flush()
-        if 'pointblank' in CASES:
-            report['pointblank'] = await case_pointblank(world, pc, pawn, driver)
-            flush()
+        try:
+            with open(log_path, 'rb') as f:
+                f.seek(log_start)
+                report['hit_log'] = [l.strip()[-220:] for l in f.read().decode('utf-8', 'replace').splitlines() if 'Spell hit' in l or 'spared' in l][-20:]
+        except Exception as ex:
+            report['hit_log'] = ['log read failed: %r' % ex]
     except Exception as e:
         fail('script error: %r' % e)
     finally:
+        try:
+            unreal.SystemLibrary.execute_console_command(None, 'Spell.LogHits 0')
+            if 'heat_was' in report:
+                unreal.SystemLibrary.execute_console_command(None, 'Npc.Heat %d' % report['heat_was'])
+        except Exception:
+            pass
         try:
             await call_tool(APP + 'StopPIE')
         except Exception:

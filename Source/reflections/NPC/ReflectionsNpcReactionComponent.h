@@ -284,6 +284,8 @@ private:
     void TickWalkerKnockdown(float DeltaTime);
     void BeginWalkerGetUp();
     void EndWalkerKnockdown(bool bLeaveWhereItLies = false);
+    /** Puts the walker's mesh back on its capsule. Only once its bodies no longer simulate: the engine refuses otherwise. */
+    void ReattachWalkerMesh();
     EWalkerDown WalkerDown = EWalkerDown::None;
     float WalkerDownTime = 0.0f;
     float WalkerStillTime = 0.0f;

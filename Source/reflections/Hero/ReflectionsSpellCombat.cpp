@@ -8,6 +8,7 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/OverlapResult.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "HAL/IConsoleManager.h"
 #include "GameFramework/DamageType.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -449,6 +450,14 @@ void AReflectionsSpellProjectile::BeginPlay()
         {
             Collision->IgnoreActorWhenMoving(Child, true);
         }
+    }
+    // Spells pass through each other. Otherwise chain-lightning hops spawned at the same point struck each other at
+    // once (seen in PIE, 14 Nov), and rapid bolts or crossing enemy bolts cancelled out.
+    for (TActorIterator<AReflectionsSpellProjectile> It(GetWorld()); It; ++It)
+    {
+        if (*It == this || !It->Collision) continue;
+        Collision->IgnoreActorWhenMoving(*It, true);
+        It->Collision->IgnoreActorWhenMoving(this, true);
     }
 }
 

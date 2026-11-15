@@ -887,6 +887,7 @@ void UReflectionsNpcReactionComponent::TickWalkerKnockdown(float DeltaTime)
             Mesh->SetAllBodiesSimulatePhysics(false);
             Mesh->PhysicsTransformUpdateMode = EPhysicsTransformUpdateMode::SimulationUpatesComponentTransform;
             Mesh->SetCollisionEnabled(WalkerCollisionBefore);
+            ReattachWalkerMesh();
         }
     }
     if (WalkerRiseRemaining <= 0.0f && WalkerRiseBlend <= 0.0f) EndWalkerKnockdown();
@@ -924,9 +925,10 @@ void UReflectionsNpcReactionComponent::BeginWalkerGetUp()
     Driver->SetActorLocationAndRotation(Stand, Turn, false, nullptr, ETeleportType::TeleportPhysics);
     // The mesh goes back on the capsule as a kinematic component while its bodies still simulate where they lie:
     // the pose then blends from the ragdoll to the get-up clip as the physics fades (see the tick).
+    // (Moved, not attached: the engine refuses to attach a component whose bodies simulate. It is attached when
+    // the physics is off. The capsule does not move meanwhile.)
     Mesh->PhysicsTransformUpdateMode = EPhysicsTransformUpdateMode::ComponentTransformIsKinematic;
-    Mesh->AttachToComponent(Capsule, FAttachmentTransformRules::KeepWorldTransform);
-    Mesh->SetRelativeTransform(WalkerMeshRelative, false, nullptr, ETeleportType::None);
+    Mesh->SetWorldTransform(WalkerMeshRelative * Capsule->GetComponentTransform(), false, nullptr, ETeleportType::None);
     float Length = 0.6f;
     UAnimSequence* Clip = WalkerClipNamed(bOnBack ? TEXT("AS_GetUp_Back_Walker") : TEXT("AS_GetUp_Front_Walker"));
     if (Clip && PlayOnWalker(Clip)) Length = Clip->GetPlayLength();
@@ -935,10 +937,19 @@ void UReflectionsNpcReactionComponent::BeginWalkerGetUp()
     WalkerDown = EWalkerDown::Rising;
 }
 
+void UReflectionsNpcReactionComponent::ReattachWalkerMesh()
+{
+    ACharacter* Driver = LocomotionDriver.Get();
+    USkeletalMeshComponent* Mesh = Driver ? Driver->GetMesh() : nullptr;
+    UCapsuleComponent* Capsule = Driver ? Driver->GetCapsuleComponent() : nullptr;
+    if (!Mesh || !Capsule || Mesh->IsAnySimulatingPhysics()) return;
+    if (Mesh->GetAttachParent() != Capsule) Mesh->AttachToComponent(Capsule, FAttachmentTransformRules::KeepWorldTransform);
+    if (Mesh->GetAttachParent() == Capsule) Mesh->SetRelativeTransform(WalkerMeshRelative, false, nullptr, ETeleportType::None);
+}
+
 void UReflectionsNpcReactionComponent::EndWalkerKnockdown(bool bLeaveWhereItLies)
 {
     if (WalkerDown == EWalkerDown::None) return;
-    const bool bStillDown = WalkerDown == EWalkerDown::Down;
     WalkerDown = EWalkerDown::None;
     WalkerRiseRemaining = 0.0f;
     WalkerRiseBlend = 0.0f;
@@ -952,12 +963,8 @@ void UReflectionsNpcReactionComponent::EndWalkerKnockdown(bool bLeaveWhereItLies
             Mesh->SetAllBodiesSimulatePhysics(false);
             Mesh->PhysicsTransformUpdateMode = EPhysicsTransformUpdateMode::SimulationUpatesComponentTransform;
             Mesh->SetCollisionEnabled(WalkerCollisionBefore);
-            // Cut short while it still lay there and it is to go on (not a death): back on its capsule.
-            if (bStillDown && !bLeaveWhereItLies && Capsule)
-            {
-                Mesh->AttachToComponent(Capsule, FAttachmentTransformRules::KeepWorldTransform);
-                Mesh->SetRelativeTransform(WalkerMeshRelative, false, nullptr, ETeleportType::None);
-            }
+            // It is to go on (not a death): back on its capsule, if the get-up had not put it there yet.
+            if (!bLeaveWhereItLies) ReattachWalkerMesh();
         }
         if (Capsule) Capsule->SetCollisionEnabled(WalkerCapsuleCollisionBefore);
         if (!bLeaveWhereItLies && !IsIncapacitated())
