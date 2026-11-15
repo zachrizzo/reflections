@@ -11,14 +11,17 @@ import sys
 import bpy
 from mathutils import Vector
 
-PROJECT = Path(__file__).resolve().parents[2]
+TOOLS = Path(__file__).resolve().parent
+PROJECT = TOOLS.parents[1]
 ART = PROJECT / 'ArtDirection/CityPCG/MedievalOpening'
 SAVED = PROJECT / 'Saved/CityPCG'
+sys.path.insert(0, str(TOOLS))
 sys.path.insert(0, str(ART / 'WholeBuildings'))
 from build_mark_lane import (Bay, BuildingStyle, contains, cross, crossbeam, doorway, dress_gables, elevation,
                              inset, leaded, local_frame, make_object, move_elevation, party_wall, preview,
                              ring_pairs, roof_z, shell, shutter, tiled_roof, verify_envelope)
 from prepare_mark_lane_ue_fbx import mesh_facts, prepare, solid_volume
+from whole_building_styles import STYLE_PRESETS, read_style_overrides
 
 
 def read_json(path):
@@ -42,7 +45,7 @@ def paired_edges(plan):
     return edges
 
 
-def styles_for(plan_row, style_plan, shared):
+def styles_for(plan_row, style_plan, shared, override=None):
     front_width = plan_row['dimensions_x_y_m'][1]
     eave = float(style_plan['eave_m'])
     if not 5.2 <= eave <= 11.4:
@@ -50,11 +53,16 @@ def styles_for(plan_row, style_plan, shared):
     storeys = max(2, round(eave / 2.7))
     floors = tuple(eave * i / storeys for i in range(storeys + 1))
     party_edge = min(shared) if shared else None
-    if front_width >= 23:
-        return BuildingStyle('TradingRange', party_edge, 'GuildRubble', 'LimePlaster', 'Oak', 'ShopRed', floors, eave, 2)
-    if 'market' in plan_row['role'].casefold():
-        return BuildingStyle('SteppedMarket', party_edge, 'Fieldstone', 'WarmPlaster', 'Oak', 'ShopRed', floors, eave, 2)
-    return BuildingStyle('DeepWorkshop', party_edge, 'WarmPlaster', 'WarmPlaster', 'WeatheredOak', 'ShopGreen', floors, eave, 1)
+    name = override
+    if name is None:
+        if front_width >= 23:
+            name = 'TradingRange'
+        elif 'market' in plan_row['role'].casefold():
+            name = 'SteppedMarket'
+        else:
+            name = 'DeepWorkshop'
+    ground, upper, timber, shutter_color, window_bays = STYLE_PRESETS[name]
+    return BuildingStyle(name, party_edge, ground, upper, timber, shutter_color, floors, eave, window_bays)
 
 
 def roof_profile(plot, plan_row, style_plan):
@@ -193,7 +201,7 @@ def add_chimneys(bay, plot, profile, style):
     return heads
 
 
-def from_plan(record, planned, style_plan, shared):
+def from_plan(record, planned, style_plan, shared, override=None):
     plot, x_axis, y_axis = local_frame(record)
     if (math.dist(record['origin_m'], planned['origin_m']) > .00002
             or len(plot) != len(planned['footprint_local_m'])
@@ -207,7 +215,7 @@ def from_plan(record, planned, style_plan, shared):
     entry_edge = planned['entry']['edge']
     if entry_edge != record['entry']['edge'] or entry_edge in shared:
         raise ValueError(f'{record["id"]}: door must be on its reviewed, exposed edge')
-    style = styles_for(planned, style_plan, shared)
+    style = styles_for(planned, style_plan, shared, override)
     walls = inset(plot, .315)
     gables = inset(plot, .14)
     profile = roof_profile(plot, planned, style_plan)
@@ -297,6 +305,7 @@ def arguments():
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument('--candidate', type=Path, default=ART / 'west_connector_whole_buildings_candidate.json')
     cli.add_argument('--plan', type=Path, default=SAVED / 'MedievalSurvey/west_connector_whole_building_plan.json')
+    cli.add_argument('--style-overrides', type=Path, help='Optional plan-pinned style presets by surveyed building ID')
     cli.add_argument('--output', type=Path, default=SAVED / 'WholeBuildings/WestConnector')
     cli.add_argument('--prefix', default='WestConnector')
     cli.add_argument('--preview', action='store_true')
@@ -313,13 +322,17 @@ def main():
         raise ValueError('The candidate and approved model plan must have matching source and shell IDs')
     if not args.prefix.isascii() or not args.prefix.isalnum():
         raise ValueError('Asset name prefix must be ASCII alphanumeric')
+    plan_hash = sha256(args.plan)
+    overrides = read_style_overrides(args.style_overrides, args.plan, records.keys()) if args.style_overrides else {}
     output = args.output.resolve()
     if output.exists():
         raise FileExistsError(f'Choose a fresh output directory; refusing to overwrite {output}')
     meshes = output / 'Source'
     meshes.mkdir(parents=True)
     report = {'schema': 1, 'source_tile': candidate['source_tile'], 'pivot': 'survey origin at ground; +X entrance; +Z up',
-              'candidate_sha256': sha256(args.candidate), 'plan_sha256': sha256(args.plan), 'buildings': {}}
+              'candidate_sha256': sha256(args.candidate), 'plan_sha256': plan_hash, 'buildings': {}}
+    if args.style_overrides:
+        report['style_overrides_sha256'] = sha256(args.style_overrides)
     shared_edges = paired_edges(plan)
     if not shared_edges.keys() <= records.keys():
         raise ValueError('Party wall references an unknown plan building')
@@ -329,7 +342,7 @@ def main():
     for row in plan['buildings']:
         key = row['id']
         bay, outline, profile, style, x_axis, y_axis, stacks = from_plan(
-            records[key], row, plan['styles'][key], shared_edges.get(key, set()))
+            records[key], row, plan['styles'][key], shared_edges.get(key, set()), overrides.get(key))
         name = f'SM_GLMedieval_{args.prefix}_{style.name}_{key.rsplit("_", 1)[-1][:8]}'
         obj = make_object(bay, name)
         source = meshes / f'{name}.fbx'
