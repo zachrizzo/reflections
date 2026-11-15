@@ -7,10 +7,13 @@ clean round trip does not establish Unreal scale or orientation: a conversion
 can cancel itself when Blender exports and reimports the same FBX.
 
 The first hosted attempt passed both east models but stopped on the first
-west model before the combined artifact upload, so it retained no FBX
-bundle. The updated workflow gives each model its own matrix job and artifact;
-failure of one job does not cancel the others. The updated matrix has not yet
-been run.
+west model before the combined artifact upload, so it retained no FBX bundle.
+The parallel [matrix run 43723954546](https://github.com/zachrizzo/reflections/actions/runs/43723954546)
+then passed both east models and `west_d08bbb3b`, retaining a separate bundle
+for each. `west_736fd5c6` failed before FBX export: one imported face normal
+differed from the source by 0.0041 in one component, exceeding the 0.001
+tolerance. Its position, UV, material and winding matched. The cause and a
+safe correction are still under investigation.
 
 Each job uses an isolated GitHub-hosted `ubuntu-24.04` VM, `contents: read`,
 no secrets or self-hosted runners, a 20-minute timeout and one-day artifact
