@@ -1,15 +1,16 @@
-# Gray London medieval conversion
+# Goal: rebuild Gray London as a medieval city
 
-The playable Gray London map is the only city to rebuild. Replace the ordinary
-modern building shells with complete, varied late-medieval buildings, extending
-the approach across the playable city instead of relying on edits to the old
-buildings. Build whole streets and neighborhoods with reusable kits and
-procedural placement;
-use individually authored or image-to-3D assets when they improve difficult
-landmarks. The aim is a lived-in city with distinct streets and enemy
-strongholds that players can reclaim to win back the city. The separate people
-workstream owns characters and crowds; integrate city objectives with the
-existing game systems without taking over that work.
+Rebuild the playable Gray London map as a lived-in, late-medieval London.
+Replace the city's modern building shells with complete period buildings.
+Extend the replacement across the playable city, not just the opening street.
+
+Create a varied, reusable medieval building kit and use procedural placement
+to build whole streets and neighborhoods efficiently. Use individually authored
+or image-to-3D assets where they improve difficult landmarks or distinctive
+buildings. Add environmental details that make the city feel occupied, and
+turn parts of it into enemy strongholds that players can reclaim to win back
+the city. The separate people workstream owns characters and crowds; integrate
+city objectives with the existing game systems without taking over that work.
 
 Replace buildings in verified sections, preserving the street network,
 essential landmarks and gameplay routes. Keep the original source geometry
@@ -19,8 +20,9 @@ workstreams.
 
 ## Completion checks
 
-- The replacement buildings are present in the actual playable Gray London map
-  and packaged game, including when their world-partition cells stream in.
+- Modern building shells throughout the playable city have been replaced with
+  varied medieval buildings in the actual Gray London map and packaged game,
+  including when their world-partition cells stream in.
 - Streets, collision, navigation, quests, landmarks and access to objectives
   remain usable. Existing source city geometry remains recoverable.
 - The medieval treatment extends beyond the opening street, with sufficient
