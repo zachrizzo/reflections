@@ -1,6 +1,9 @@
 """Small mocked preservation checks; no network, asset processing or Git writes."""
 from pathlib import Path
+import io
 import stat
+import subprocess
+import sys
 from types import SimpleNamespace
 import unittest
 from unittest import mock
@@ -50,6 +53,110 @@ class PreservationTests(unittest.TestCase):
         p.check_pointer(good,item)
         for value in (good.replace(item['sha256'].encode(),b'0'*64),good.replace(str(item['size']).encode(),b'1'),good[:-1]):
             with self.assertRaisesRegex(RuntimeError,'lfs-pointer'): p.check_pointer(value,item)
+
+    def test_readback_is_isolated_and_environment_is_strict(self):
+        original={'GIT_LFS_SKIP_SMUDGE':'1','GIT_LFS_SKIP_DOWNLOAD_ERRORS':'1',
+                  'GIT_ALTERNATE_OBJECT_DIRECTORIES':'bad','GH_TOKEN':'mock-token'}
+        scoped=p.readback_environment(original)
+        self.assertEqual(original['GIT_LFS_SKIP_SMUDGE'],'1')
+        for key in ('GIT_LFS_SKIP_SMUDGE','GIT_LFS_SKIP_DOWNLOAD_ERRORS','GIT_ALTERNATE_OBJECT_DIRECTORIES'):
+            self.assertNotIn(key,scoped)
+        self.assertEqual(scoped['GIT_CONFIG_NOSYSTEM'],'1')
+        self.assertEqual(scoped['GIT_CONFIG_GLOBAL'],'/dev/null')
+        store=Path('/private/readback')
+        options=p.readback_options(store)
+        for option in ('lfs.fetchinclude=','lfs.fetchexclude=','lfs.skipdownloaderrors=false',
+                       'lfs.basictransfersonly=true','lfs.remote.autodetect=false','lfs.remote.searchall=false'):
+            self.assertIn(option,options)
+        good=('LocalReferenceDirs=\nLocalMediaDir='+str(store/'objects')+'\nLfsStorageDir='+str(store)
+              +'\nSkipDownloadErrors=false\nBasicTransfersOnly=true\n').encode()
+        p.check_readback_environment(good,store)
+        for bad in (good.replace(b'LocalReferenceDirs=',b'LocalReferenceDirs=/other'),
+                    good.replace(b'SkipDownloadErrors=false',b'SkipDownloadErrors=true'),
+                    good+b'FetchExclude=*.zip\n',good+b'GIT_ALTERNATE_OBJECT_DIRECTORIES=bad\n'):
+            with self.assertRaisesRegex(RuntimeError,'lfs-readback-environment'):
+                p.check_readback_environment(bad,store)
+
+    def test_child_limit_covers_each_file(self):
+        resource=SimpleNamespace(RLIMIT_FSIZE=17,setrlimit=mock.Mock())
+        with mock.patch.dict(sys.modules,{'resource':resource}): p.limit_child_files(1234)
+        resource.setrlimit.assert_called_once_with(17,(1234,1234))
+
+    def test_smudge_receives_only_checked_pointer_and_capped_sink(self):
+        item=p.ARTIFACTS[0]; pointer=p.pointer_bytes(item)
+        process=SimpleNamespace(pid=321,returncode=0,communicate=mock.Mock(),wait=mock.Mock())
+        with mock.patch.object(p.Path,'open',return_value=io.BytesIO()) as opened, \
+             mock.patch.object(p.subprocess,'Popen',return_value=process) as spawn:
+            p.smudge_to_file({'GH_TOKEN':'mock-token'},Path('/store'),item,pointer,Path('/output'))
+        opened.assert_called_once_with('xb')
+        args,kwargs=spawn.call_args
+        self.assertEqual(args[0][-2:],['smudge',(p.TARGET_REL/(item['key']+'.zip')).as_posix()])
+        self.assertEqual(kwargs['stderr'],subprocess.DEVNULL)
+        self.assertTrue(kwargs['start_new_session'])
+        self.assertTrue(callable(kwargs['preexec_fn']))
+        process.communicate.assert_called_once_with(input=pointer,timeout=60)
+        with self.assertRaisesRegex(RuntimeError,'lfs-pointer'):
+            p.smudge_to_file({},Path('/store'),item,b'bad pointer',Path('/output'))
+
+    def test_smudge_timeout_and_failure_kill_process_group(self):
+        item=p.ARTIFACTS[0]; pointer=p.pointer_bytes(item)
+        cases=((subprocess.TimeoutExpired('mock',60),0),(TimeoutError('overall-timeout'),0),(None,3))
+        for exception,code in cases:
+            process=SimpleNamespace(pid=321,returncode=code,communicate=mock.Mock(side_effect=exception),wait=mock.Mock())
+            with self.subTest(code=code),mock.patch.object(p.Path,'open',return_value=io.BytesIO()), \
+                 mock.patch.object(p.subprocess,'Popen',return_value=process), \
+                 mock.patch.object(p.os,'killpg',create=True) as kill, \
+                 mock.patch.object(p.signal,'SIGKILL',9,create=True):
+                with self.assertRaises((RuntimeError,subprocess.TimeoutExpired,TimeoutError)):
+                    p.smudge_to_file({},Path('/store'),item,pointer,Path('/output'))
+                kill.assert_called_once_with(321,9)
+                process.wait.assert_called_once_with(timeout=5)
+
+    def test_overall_deadline_raises_for_child_cleanup(self):
+        with self.assertRaisesRegex(TimeoutError,'overall-timeout'):
+            p.overall_timeout(None,None)
+
+    def test_streamed_hash_rejects_wrong_or_oversized_output(self):
+        data=b'small synthetic output'
+        with mock.patch.object(p.Path,'open',return_value=io.BytesIO(data)):
+            size,digest=p.sha_file(Path('/output'),len(data))
+        self.assertEqual(size,len(data))
+        self.assertEqual(digest,p.hashlib.sha256(data).hexdigest())
+        with mock.patch.object(p.Path,'open',return_value=io.BytesIO(data)):
+            with self.assertRaisesRegex(RuntimeError,'file-size'): p.sha_file(Path('/output'),len(data)-1)
+
+    def test_readback_requires_both_output_and_fresh_cache_to_match(self):
+        item=p.ARTIFACTS[0]; expected=(item['size'],item['sha256'])
+        store=Path('/stage')/('lfs-readback-'+item['key'])
+        report=('LocalReferenceDirs=\nLocalMediaDir='+str(store/'objects')+'\nLfsStorageDir='+str(store)
+                +'\nSkipDownloadErrors=false\nBasicTransfersOnly=true\n').encode()
+        for values,ok in (((expected,expected),True),(((1,'bad'),expected),False),((expected,(1,'bad')),False)):
+            replies=[SimpleNamespace(stdout=report),SimpleNamespace(stdout=p.pointer_bytes(item))]
+            with self.subTest(ok=ok,values=values),mock.patch.object(p.Path,'mkdir'), \
+                 mock.patch.object(p.Path,'exists',return_value=False), \
+                 mock.patch.object(p.Path,'is_symlink',return_value=False), \
+                 mock.patch.object(p,'git',side_effect=replies), \
+                 mock.patch.object(p,'smudge_to_file'),mock.patch.object(p,'sha_file',side_effect=values):
+                if ok: p.verify_lfs_readback({},Path('/stage'),'a'*40,item)
+                else:
+                    with self.assertRaisesRegex(RuntimeError,'lfs-readback'):
+                        p.verify_lfs_readback({},Path('/stage'),'a'*40,item)
+
+    def test_no_readback_alternates_or_custom_agents(self):
+        def response(data=b'',code=0): return SimpleNamespace(stdout=data,returncode=code)
+        for alternate,agent,lfsconfig,expected in ((False,False,False,None),(True,False,False,'git-alternates'),
+                (False,True,False,'lfs-standalone-agent'),(False,False,True,'lfsconfig')):
+            outputs=[response(b'.git\n'),response(b'lfs.standalonetransferagent=bad\n' if agent else b'',0 if agent else 1),
+                     response(b'.lfsconfig\n' if lfsconfig else b'')]
+            with self.subTest(alternate=alternate,agent=agent,lfsconfig=lfsconfig), \
+                 mock.patch.object(p,'git',side_effect=outputs), \
+                 mock.patch.object(p.Path,'resolve',return_value=Path('/repo/.git')), \
+                 mock.patch.object(p.Path,'exists',return_value=alternate), \
+                 mock.patch.object(p.Path,'is_symlink',return_value=False):
+                if expected:
+                    with self.assertRaisesRegex(RuntimeError,expected): p.check_no_readback_alternates({},'a'*40)
+                else:
+                    p.check_no_readback_alternates({},'a'*40)
 
     def test_only_canonical_fetch_and_push_origins_are_accepted(self):
         sha='a'*40

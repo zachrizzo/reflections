@@ -83,11 +83,15 @@ def safe_git_env(stage):
     return env
 
 
-def git(env,*args,allow_failure=False):
-    command=['git','-C',str(ROOT),'-c','credential.helper=','-c','core.hooksPath=/dev/null',
+def git_command(*args):
+    return ['git','-C',str(ROOT),'-c','credential.helper=','-c','core.hooksPath=/dev/null',
              '-c','http.followRedirects=false','-c','lfs.url='+LFS_ENDPOINT,
              '-c','lfs.pushurl='+LFS_ENDPOINT,'-c','remote.origin.lfsurl='+LFS_ENDPOINT,
              '-c','remote.origin.lfspushurl='+LFS_ENDPOINT,*args]
+
+
+def git(env,*args,allow_failure=False):
+    command=git_command(*args)
     result=subprocess.run(command,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=120,check=False)
     if result.returncode and not allow_failure:
         raise RuntimeError('git-command')
@@ -284,13 +288,117 @@ def inspect_preview(zip_path,stage):
         return values
 
 
+def pointer_bytes(item):
+    return (f"version https://git-lfs.github.com/spec/v1\noid sha256:{item['sha256']}\nsize {item['size']}\n").encode()
+
+
 def check_pointer(data,item):
-    expected=(f"version https://git-lfs.github.com/spec/v1\noid sha256:{item['sha256']}\nsize {item['size']}\n").encode()
-    if data!=expected:
+    if data!=pointer_bytes(item):
         raise RuntimeError('lfs-pointer')
 
 
+def readback_environment(env):
+    # Keep upload's skip-smudge guard in place; only this isolated subprocess
+    # is permitted to download. Avoid inherited alternate object directories.
+    result=dict(env)
+    for name in ('GIT_LFS_SKIP_SMUDGE','GIT_LFS_SKIP_DOWNLOAD_ERRORS','GIT_ALTERNATE_OBJECT_DIRECTORIES'):
+        result.pop(name,None)
+    result.update({'GIT_CONFIG_NOSYSTEM':'1','GIT_CONFIG_GLOBAL':'/dev/null'})
+    return result
+
+
+def readback_options(store):
+    return ('-c','lfs.storage='+str(store),'-c','lfs.fetchinclude=',
+            '-c','lfs.fetchexclude=','-c','lfs.skipdownloaderrors=false',
+            '-c','lfs.basictransfersonly=true','-c','lfs.remote.autodetect=false',
+            '-c','lfs.remote.searchall=false','-c','remote.lfsdefault=origin')
+
+
+def check_readback_environment(data,store):
+    lines=data.decode('utf-8').splitlines()
+    required=('LocalReferenceDirs=', 'LocalMediaDir='+str(store/'objects'),
+              'LfsStorageDir='+str(store), 'SkipDownloadErrors=false', 'BasicTransfersOnly=true')
+    if any(lines.count(line)!=1 for line in required):
+        raise RuntimeError('lfs-readback-environment')
+    if any(line.startswith(('FetchInclude=','FetchExclude=','GIT_ALTERNATE_OBJECT_DIRECTORIES=')) for line in lines):
+        raise RuntimeError('lfs-readback-environment')
+
+
+def check_no_readback_alternates(env,sha):
+    common=git(env,'rev-parse','--git-common-dir').stdout.decode('utf-8').strip()
+    if not common:
+        raise RuntimeError('git-common-dir')
+    common_dir=Path(common)
+    if not common_dir.is_absolute(): common_dir=ROOT/common_dir
+    common_dir=common_dir.resolve(strict=True)
+    alternate=common_dir/'objects'/'info'/'alternates'
+    if alternate.exists() or alternate.is_symlink():
+        raise RuntimeError('git-alternates')
+    # A standalone agent can bypass the normal LFS download endpoint.
+    configured=git(env,'config','--get-regexp',r'^lfs\..*standalonetransferagent$',allow_failure=True)
+    if configured.returncode not in (0,1) or configured.stdout:
+        raise RuntimeError('lfs-standalone-agent')
+    # Do not accept a future repository LFS configuration that this sparse
+    # checkout has not reviewed, including its URL-specific configuration.
+    if git(env,'ls-tree','--name-only',sha,'--','.lfsconfig').stdout:
+        raise RuntimeError('lfsconfig')
+
+
+def limit_child_files(size):
+    # Linux hosted runner only. Inherited by Git LFS and its child transfers;
+    # bounds its temporary download as well as the private stdout sink.
+    import resource
+    resource.setrlimit(resource.RLIMIT_FSIZE,(size,size))
+
+
+def smudge_to_file(env,store,item,pointer,dest):
+    check_pointer(pointer,item)
+    rel=(TARGET_REL/(item['key']+'.zip')).as_posix()
+    command=git_command(*readback_options(store),'lfs','smudge',rel)
+    with dest.open('xb') as output:
+        process=subprocess.Popen(command,env=env,stdin=subprocess.PIPE,stdout=output,
+                                 stderr=subprocess.DEVNULL,start_new_session=True,
+                                 preexec_fn=lambda:limit_child_files(item['size']))
+        try:
+            process.communicate(input=pointer,timeout=60)
+            if process.returncode!=0:
+                raise RuntimeError('lfs-smudge-exit')
+        except BaseException:
+            # Kill the whole hosted process group, not merely its Git parent.
+            try:
+                os.killpg(process.pid,signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait(timeout=5)
+            raise
+
+
+def verify_lfs_readback(env,stage,commit,item):
+    store=stage/('lfs-readback-'+item['key'])
+    store.mkdir()
+    scoped=readback_environment(env)
+    options=readback_options(store)
+    check_readback_environment(git(scoped,*options,'lfs','env').stdout,store)
+    rel=(TARGET_REL/(item['key']+'.zip')).as_posix()
+    pointer=git(env,'show',commit+':'+rel).stdout
+    check_pointer(pointer,item)
+    cached=store/'objects'/item['sha256'][:2]/item['sha256'][2:4]/item['sha256']
+    if cached.exists() or cached.is_symlink():
+        raise RuntimeError('lfs-readback-cache-not-empty')
+    output=stage/('lfs-output-'+item['key'])
+    smudge_to_file(scoped,store,item,pointer,output)
+    expected=(item['size'],item['sha256'])
+    if sha_file(output,item['size'])!=expected or sha_file(cached,item['size'])!=expected:
+        raise RuntimeError('lfs-readback')
+
+
+def overall_timeout(_signum,_frame):
+    # Raising allows an active smudge process group to be killed and reaped.
+    raise TimeoutError('overall-timeout')
+
+
 def run(ctx):
+    signal.signal(signal.SIGALRM,overall_timeout)
     signal.alarm(540)
     if shutil.disk_usage(ctx['temp']).free<256*2**20:
         raise RuntimeError('disk-space')
@@ -356,18 +464,14 @@ def run(ctx):
     for item in ARTIFACTS:
         if sha_file(TARGET/(item['key']+'.zip'),item['size'])!=(item['size'],item['sha256']):
             raise RuntimeError('prepush-integrity')
+    check_no_readback_alternates(readback_environment(env),ctx['sha'])
     print('Uploading the four verified LFS objects.',flush=True)
     git(env,'lfs','push','--object-id','origin',*oids)
     print('LFS upload completed; checking remote readback.',flush=True)
-    # Refetch only these LFS objects into a fresh store, then hash actual bytes.
-    verify_store=stage/'lfs-readback'; verify_store.mkdir()
-    includes=','.join((TARGET_REL/(item['key']+'.zip')).as_posix() for item in ARTIFACTS)
-    git(env,'-c','lfs.storage='+str(verify_store),'-c','lfs.fetchrecentalways=false',
-        'lfs','fetch','--refetch','--include='+includes,'--exclude=','origin',commit)
+    # Smudge exact committed pointers into independent fresh stores. Unlike
+    # `lfs fetch`, this avoids scanning a blobless checkout's entire tree.
     for item in ARTIFACTS:
-        oid=item['sha256']; path=verify_store/'objects'/oid[:2]/oid[2:4]/oid
-        if sha_file(path,item['size'])!=(item['size'],oid):
-            raise RuntimeError('lfs-readback')
+        verify_lfs_readback(env,stage,commit,item)
     print('Remote LFS readback verified.',flush=True)
     if remote_head(env)!=ctx['sha']:
         raise RuntimeError('remote-advanced')
