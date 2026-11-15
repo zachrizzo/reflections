@@ -74,10 +74,11 @@ The east Royal Mint block also needs several neighboring exports before review.
 
 The cumulative rollout preflight covers 18 proposed buildings across three of
 the 117 source tile assets on disk. Four of those North Market buildings
-now have detailed OBJ source meshes with timber, roofs, windows and doors;
-these were produced without Blender and are review-only, not imported Unreal
-assets. They still need Blender and Unreal checks, approved collision and a
-matching cumulative tile filter. All the proposals remain review-only: the
+now have detailed OBJ source meshes with timber, roofs, windows and doors.
+Three passed a hosted Blender-to-FBX round trip; the fourth stopped on an
+imported normal mismatch. All are review-only and have not been imported
+into Unreal. They still need visual and Unreal checks, approved collision and
+a matching cumulative tile filter. All proposals remain review-only: the
 other tiles need exports, the original section mapping needs verification, and
 candidate blocks need live actor and route checks. The
 three large modern shells immediately visible from the real spawn overlap
