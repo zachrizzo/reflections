@@ -291,6 +291,7 @@ private:
     // Saves
     int32 PendingSlot = -1;
     FText SaveStatus;
+    bool bSlotSavePending = false;
     /** Gamepad Start: a short press pauses on release, a hold (0.8 s) quick-saves. */
     double StartHeldSince = -1.0;
     bool bStartHoldConsumed = false;

@@ -41,10 +41,10 @@ namespace
     TAutoConsoleVariable<float> CVarBossHealth(TEXT("Villain.BossHealth"), 1250.0f, TEXT("Health of his true form."));
     TAutoConsoleVariable<float> CVarFinalDamage(TEXT("Villain.FinalSpellDamage"), 125.0f, TEXT("Damage of one Final Spell hit."));
     TAutoConsoleVariable<float> CVarOtherScale(TEXT("Villain.OtherSpellScale"), 0.03f, TEXT("Fraction of damage his true form takes from anything but the Final Spell."));
-    TAutoConsoleVariable<float> CVarFinalMana(TEXT("Villain.FinalSpellMana"), 20.0f, TEXT("Mana cost of the Final Spell."));
+    TAutoConsoleVariable<float> CVarFinalMana(TEXT("Villain.FinalSpellMana"), 28.0f, TEXT("Mana cost of the Final Spell."));
     TAutoConsoleVariable<float> CVarFinalCooldown(TEXT("Villain.FinalSpellCooldown"), 1.2f, TEXT("Cooldown of the Final Spell (s)."));
     TAutoConsoleVariable<float> CVarManifestRadius(TEXT("Villain.ManifestRadius"), 3200.0f, TEXT("He manifests when the player comes this close (cm, across the ground; capped at the arena radius + 8 m, and within 6 m of its height) to the arena."));
-    TAutoConsoleVariable<float> CVarAttackDamage(TEXT("Villain.AttackDamageScale"), 0.4f, TEXT("Scales the damage of his attacks."));
+    TAutoConsoleVariable<float> CVarAttackDamage(TEXT("Villain.AttackDamageScale"), 0.85f, TEXT("Scales the damage of his attacks."));
     TAutoConsoleVariable<float> CVarTelegraph(TEXT("Villain.TelegraphScale"), 1.0f, TEXT("Scales every attack telegraph (bigger = easier)."));
     TAutoConsoleVariable<int32> CVarRangedSpread(TEXT("Villain.RangedSpread"), 0, TEXT("0 (default): only tackles convert (the NPC system calls BeginConversion). 1: hosts also infect at range with a wisp (test maps without the NPC hunt)."));
     TAutoConsoleVariable<int32> CVarVeinOverlay(TEXT("Villain.VeinOverlay"), 0, TEXT("1: violet veins over tarnished bodies. 0: black eyes and aura only."));

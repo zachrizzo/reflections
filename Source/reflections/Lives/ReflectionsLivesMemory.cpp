@@ -47,23 +47,36 @@ void UReflectionsLivesMemory::SyncWithCheckpoint(bool bHasCheckpoint)
         StoryFlags.Reset();
         return;
     }
-    if (!LoadSnapshot())
+    const UReflectionsGameFlowSubsystem* Flow = GetGameInstance()->GetSubsystem<UReflectionsGameFlowSubsystem>();
+    TArray<uint8> Bytes;
+    const bool bLoaded = Flow && Flow->GetSaveData(TEXT("File:Reflections_Lives"), Bytes)
+        ? ApplySnapshot(Cast<UReflectionsLivesSave>(UGameplayStatics::LoadGameFromMemory(Bytes))) : LoadSnapshot();
+    if (!bLoaded)
         UE_LOG(LogReflectionsLivesMemory, Log, TEXT("Checkpoint without a Lives snapshot: keeping what people know now"));
 }
 
 void UReflectionsLivesMemory::HandleCheckpointSaved(const FReflectionsCheckpoint& Checkpoint)
 {
-    SaveSnapshot();
+    TArray<uint8> Bytes;
+    if (UGameplayStatics::SaveGameToMemory(MakeSnapshot(), Bytes))
+    {
+        GetGameInstance()->GetSubsystem<UReflectionsGameFlowSubsystem>()->SetSaveData(TEXT("File:Reflections_Lives"), Bytes);
+    }
 }
 
-bool UReflectionsLivesMemory::SaveSnapshot()
+UReflectionsLivesSave* UReflectionsLivesMemory::MakeSnapshot() const
 {
-    UReflectionsLivesSave* Save = Cast<UReflectionsLivesSave>(UGameplayStatics::CreateSaveGameObject(UReflectionsLivesSave::StaticClass()));
-    if (!Save) return false;
+    UReflectionsLivesSave* Save = NewObject<UReflectionsLivesSave>();
     Save->Version = UReflectionsLivesSave::CurrentVersion;
     Save->GameHours = GameHours;
     People.GenerateValueArray(Save->People);
     Save->StoryFlags = StoryFlags.Array();
+    return Save;
+}
+
+bool UReflectionsLivesMemory::SaveSnapshot()
+{
+    UReflectionsLivesSave* Save = MakeSnapshot();
     const bool bOk = UGameplayStatics::SaveGameToSlot(Save, SlotName(), 0);
     UE_LOG(LogReflectionsLivesMemory, Log, TEXT("Lives snapshot %s: %d people, hour %.2f"), bOk ? TEXT("saved") : TEXT("FAILED"), Save->People.Num(), GameHours);
     return bOk;
@@ -71,8 +84,11 @@ bool UReflectionsLivesMemory::SaveSnapshot()
 
 bool UReflectionsLivesMemory::LoadSnapshot()
 {
-    if (!UGameplayStatics::DoesSaveGameExist(SlotName(), 0)) return false;
-    const UReflectionsLivesSave* Save = Cast<UReflectionsLivesSave>(UGameplayStatics::LoadGameFromSlot(SlotName(), 0));
+    return ApplySnapshot(Cast<UReflectionsLivesSave>(UGameplayStatics::LoadGameFromSlot(SlotName(), 0)));
+}
+
+bool UReflectionsLivesMemory::ApplySnapshot(const UReflectionsLivesSave* Save)
+{
     if (!Save || Save->Version > UReflectionsLivesSave::CurrentVersion) return false;
     People.Reset();
     for (const FReflectionsPersonState& State : Save->People)

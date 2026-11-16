@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Engine/TimerHandle.h"
 #include "Hero/ReflectionsSpellEventSubsystem.h"
 #include "NPC/ReflectionsNpcArchetype.h"
 #include "ReflectionsNpcReactionComponent.generated.h"
@@ -255,6 +256,7 @@ private:
     void EndBurning();
     void StartFreeze(float Seconds);
     void EndFreeze();
+    void OnFreezeExpired();
     /** A body dropped by lightning keeps twitching for a moment: small kicks to the ragdoll that is already there. */
     void TwitchRagdoll();
     float CorpseShockRemaining = 0.0f;
@@ -266,7 +268,10 @@ private:
     UPROPERTY(Transient) FReflectionsSpellHitData ShockHit;
     float BurningRemaining = 0.0f;
     float NextBurnBarkIn = 0.0f;
-    float FrozenRemaining = 0.0f;
+    FTimerHandle FreezeTimer;
+    TWeakObjectPtr<ACharacter> FrozenMover;
+    float TimeDilationBeforeFreeze = 1.0f;
+    bool bFrozen = false;
     bool bMagicFrozen = false;
     /** Which way the freezing hit pushed; the ice breaks that way. */
     FVector FrozenAlong = FVector::ZeroVector;

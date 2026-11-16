@@ -541,20 +541,12 @@ bool UReflectionsGameFlowWorldSubsystem::CanSaveNow() const
 
 void UReflectionsGameFlowWorldSubsystem::RequestQuickSave()
 {
-    TrackPickups();
-    UReflectionsGameFlowSubsystem* Flow = UReflectionsGameFlowSubsystem::Get(this);
-    const bool bOk = Flow && CanSaveNow() && Flow->QuickSave();
-    SaveStatus = bOk ? FLOWTEXT("Save.QuickDone", "Quick saved") : FLOWTEXT("Save.CantNow", "Can't save right now");
-    PlayUiSound(bOk ? TEXT("UI_Confirm") : TEXT("UI_Click"));
-    ShowToast(SaveStatus);
-    if (IsMenuOpen() && Menu.IsValid())
-    {
-        Menu->SetScreen(Screen);  // the status line
-    }
+    DoSave(ReflectionsSaveSlots::Quick);
 }
 
 void UReflectionsGameFlowWorldSubsystem::RequestQuickLoad()
 {
+    if (bSlotSavePending) return;
     UReflectionsGameFlowSubsystem* Flow = UReflectionsGameFlowSubsystem::Get(this);
     if (Flow && Flow->GetSaveSlotInfo(ReflectionsSaveSlots::Quick).bUsed)
     {
@@ -605,13 +597,32 @@ void UReflectionsGameFlowWorldSubsystem::SaveSlotAction(int32 Slot)
 
 void UReflectionsGameFlowWorldSubsystem::DoSave(int32 Slot)
 {
+    if (bSlotSavePending) return;
     TrackPickups();
     UReflectionsGameFlowSubsystem* Flow = UReflectionsGameFlowSubsystem::Get(this);
-    const bool bOk = Flow && CanSaveNow() && Flow->SaveToSlot(Slot);
-    SaveStatus = bOk ? FText::Format(FLOWTEXT("Save.Done", "Saved to {0}"), UReflectionsGameFlowSubsystem::GetSlotDisplayName(Slot))
-                     : FLOWTEXT("Save.CantNow", "Can't save right now");
-    PlayUiSound(bOk ? TEXT("UI_Confirm") : TEXT("UI_Click"));
-    RefreshSaveScreen();
+    const bool bQuick = Slot == ReflectionsSaveSlots::Quick;
+    const auto ShowResult = [WeakThis = TWeakObjectPtr<UReflectionsGameFlowWorldSubsystem>(this), Slot, bQuick](bool bSaved)
+    {
+        UReflectionsGameFlowWorldSubsystem* Self = WeakThis.Get();
+        if (!Self) return;
+        Self->bSlotSavePending = false;
+        Self->SaveStatus = !bSaved ? FLOWTEXT("Save.CantNow", "Can't save right now")
+            : bQuick ? FLOWTEXT("Save.QuickDone", "Quick saved")
+            : FText::Format(FLOWTEXT("Save.Done", "Saved to {0}"), UReflectionsGameFlowSubsystem::GetSlotDisplayName(Slot));
+        Self->PlayUiSound(bSaved ? TEXT("UI_Confirm") : TEXT("UI_Click"));
+        if (bQuick) Self->ShowToast(Self->SaveStatus);
+        if (Self->IsMenuOpen() && Self->Menu.IsValid()) Self->Menu->SetScreen(Self->Screen);
+    };
+    if (Flow && CanSaveNow() && Flow->SaveToSlotAsync(Slot, ShowResult))
+    {
+        bSlotSavePending = true;
+        SaveStatus = LOCTEXT("SavingToDisk", "Saving…");
+        RefreshSaveScreen();
+    }
+    else
+    {
+        ShowResult(false);
+    }
 }
 
 void UReflectionsGameFlowWorldSubsystem::LoadSlotAction(int32 Slot)

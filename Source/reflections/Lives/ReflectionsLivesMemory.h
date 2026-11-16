@@ -7,7 +7,7 @@
 #include "GameFlow/ReflectionsGameFlowTypes.h"
 #include "ReflectionsLivesMemory.generated.h"
 
-/** Lives' own save slot, written with every game-flow checkpoint. */
+/** Lives' save data, embedded in game-flow checkpoints. */
 UCLASS()
 class REFLECTIONS_API UReflectionsLivesSave : public USaveGame
 {
@@ -25,8 +25,8 @@ public:
 /**
  * What every person remembers (of the player and of each other), and the game clock, across map reloads.
  *
- * It lives on the game instance, so a restart keeps it in memory; it is also written to the slot
- * Reflections_Lives whenever game flow saves a checkpoint. When a map starts and game flow has a checkpoint, the
+ * It lives on the game instance and is embedded whenever game flow saves a checkpoint.
+ * When a map starts and game flow has a checkpoint, the
  * people are put back to what they knew at that checkpoint; a new game (no checkpoint) forgets everything.
  */
 UCLASS()
@@ -67,6 +67,8 @@ public:
     static FString SlotName() { return TEXT("Reflections_Lives"); }
 
 private:
+    UReflectionsLivesSave* MakeSnapshot() const;
+    bool ApplySnapshot(const UReflectionsLivesSave* Save);
     UFUNCTION() void HandleCheckpointSaved(const FReflectionsCheckpoint& Checkpoint);
     TMap<FName, FReflectionsPersonState> People;
     bool bBound = false;

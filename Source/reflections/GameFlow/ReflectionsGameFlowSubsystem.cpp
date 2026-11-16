@@ -1,6 +1,9 @@
 #include "GameFlow/ReflectionsGameFlowSubsystem.h"
 
+#include "Async/Async.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Engine/GameInstance.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
 #include "Framework/Application/IInputProcessor.h"
 #include "Framework/Application/SlateApplication.h"
@@ -9,6 +12,7 @@
 #include "GameFlow/ReflectionsGameFlowText.h"
 #include "GameFlow/ReflectionsGameFlowWorldSubsystem.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Pawn.h"
 #include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -25,13 +29,6 @@ DEFINE_LOG_CATEGORY_STATIC(LogReflectionsGameFlow, Log, All);
 
 namespace
 {
-    /**
-     * Save files other systems write on every checkpoint (their OnCheckpointSaved handlers). Each save slot keeps a
-     * copy, and loading writes the copy back before the map reloads, so they read the loaded state at map start.
-     */
-    const TCHAR* const MirroredSaveFiles[] = {TEXT("Reflections_Quests"), TEXT("Reflections_Lives")};
-    const TCHAR* const MirroredPrefix = TEXT("File:");
-
     FReflectionsSaveBlob* FindBlob(TArray<FReflectionsSaveBlob>& Blobs, FName System)
     {
         return Blobs.FindByPredicate([System](const FReflectionsSaveBlob& Blob) { return Blob.System == System; });
@@ -143,6 +140,8 @@ void UReflectionsGameFlowSubsystem::Initialize(FSubsystemCollectionBase& Collect
 
 void UReflectionsGameFlowSubsystem::Deinitialize()
 {
+    if (SaveWriteTask.IsValid()) SaveWriteTask.Wait();
+    TravelAssets.Reset();
     if (InputTracker.IsValid() && FSlateApplication::IsInitialized())
     {
         FSlateApplication::Get().UnregisterInputPreProcessor(InputTracker);
@@ -332,6 +331,11 @@ void UReflectionsGameFlowSubsystem::ShowLose()
 
 bool UReflectionsGameFlowSubsystem::SaveCheckpoint(const FString& Reason)
 {
+    return CaptureCheckpoint(Reason) && WriteSave();
+}
+
+bool UReflectionsGameFlowSubsystem::CaptureCheckpoint(const FString& Reason)
+{
     if (bTravelPending)
     {
         return false;  // a load or restart is opening its map: this world's state must not overwrite it
@@ -342,11 +346,17 @@ bool UReflectionsGameFlowSubsystem::SaveCheckpoint(const FString& Reason)
     {
         return false;
     }
-    SetCheckpoint(New);
+    RecordCheckpoint(New);
     return true;
 }
 
 void UReflectionsGameFlowSubsystem::SetCheckpoint(const FReflectionsCheckpoint& InCheckpoint)
+{
+    RecordCheckpoint(InCheckpoint);
+    WriteSave();
+}
+
+void UReflectionsGameFlowSubsystem::RecordCheckpoint(const FReflectionsCheckpoint& InCheckpoint)
 {
     Checkpoint = InCheckpoint;
     UE_LOG(LogReflectionsGameFlow, Log, TEXT("Checkpoint (%s): %s at %s, coins %s, %d pages."), *Checkpoint.Reason,
@@ -354,13 +364,10 @@ void UReflectionsGameFlowSubsystem::SetCheckpoint(const FReflectionsCheckpoint& 
         *FString::JoinBy(Checkpoint.Coins, TEXT("/"), [](int32 Value) { return FString::FromInt(Value); }),
         Checkpoint.Pages.Num());
     {
-        // Handlers store their own state with SetSaveData (and write their own files) while this runs.
+        // Handlers add their state to the same snapshot before it is serialized.
         TGuardValue<bool> Broadcasting(bBroadcastingCheckpoint, true);
         OnCheckpointSaved.Broadcast(Checkpoint);
     }
-    CaptureMirroredFiles();
-    WriteSave();
-    InvalidateSlotCache();
     if (UReflectionsGameFlowWorldSubsystem* Flow = GetWorldFlow())
     {
         Flow->NotifyCheckpointSaved();
@@ -371,7 +378,6 @@ void UReflectionsGameFlowSubsystem::ClearCheckpoint()
 {
     Checkpoint = FReflectionsCheckpoint();
     WriteSave();
-    InvalidateSlotCache();
 }
 
 // ---- Save slots --------------------------------------------------------------------------------------------
@@ -404,6 +410,16 @@ FText UReflectionsGameFlowSubsystem::GetSlotDisplayName(int32 Slot)
 
 bool UReflectionsGameFlowSubsystem::SaveToSlot(int32 Slot)
 {
+    return SaveSlot(Slot, true, {});
+}
+
+bool UReflectionsGameFlowSubsystem::SaveToSlotAsync(int32 Slot, TFunction<void(bool)> OnSaved)
+{
+    return SaveSlot(Slot, false, MoveTemp(OnSaved));
+}
+
+bool UReflectionsGameFlowSubsystem::SaveSlot(int32 Slot, bool bWait, TFunction<void(bool)> OnSaved)
+{
     if (Slot < ReflectionsSaveSlots::Quick || Slot >= ReflectionsSaveSlots::Count || IsGameOver())
     {
         return false;
@@ -411,27 +427,12 @@ bool UReflectionsGameFlowSubsystem::SaveToSlot(int32 Slot)
     // A save is also a checkpoint: every system stores its state through OnCheckpointSaved first.
     const FString Reason = Slot == ReflectionsSaveSlots::Quick ? FString(TEXT("Quick save"))
         : FString::Printf(TEXT("Slot %d"), Slot - ReflectionsSaveSlots::FirstManual + 1);
-    if (!SaveCheckpoint(Reason))
-    {
-        return false;
-    }
-    UReflectionsGameFlowSave* Save = Cast<UReflectionsGameFlowSave>(UGameplayStatics::CreateSaveGameObject(UReflectionsGameFlowSave::StaticClass()));
-    if (!Save)
-    {
-        return false;
-    }
-    Save->Version = UReflectionsGameFlowSave::CurrentVersion;
-    Save->Checkpoint = Checkpoint;
-    Save->SeenTips = SeenTips;
-    const bool bOk = UGameplayStatics::SaveGameToSlot(Save, SaveSlotFileName(Slot), 0);
-    InvalidateSlotCache();
-    UE_LOG(LogReflectionsGameFlow, Log, TEXT("Saved to %s: %s (%d system blobs)."), *SaveSlotFileName(Slot), bOk ? TEXT("ok") : TEXT("FAILED"), Checkpoint.SystemData.Num());
-    return bOk;
+    return CaptureCheckpoint(Reason) && WriteSave(Slot, bWait, MoveTemp(OnSaved));
 }
 
 bool UReflectionsGameFlowSubsystem::LoadFromSlot(int32 Slot)
 {
-    if (Slot < 0 || Slot >= ReflectionsSaveSlots::Count)
+    if (bTravelPending || Slot < 0 || Slot >= ReflectionsSaveSlots::Count)
     {
         return false;
     }
@@ -442,43 +443,26 @@ bool UReflectionsGameFlowSubsystem::LoadFromSlot(int32 Slot)
     }
     else
     {
-        const FString File = SaveSlotFileName(Slot);
-        const UReflectionsGameFlowSave* Save = UGameplayStatics::DoesSaveGameExist(File, 0)
-            ? Cast<UReflectionsGameFlowSave>(UGameplayStatics::LoadGameFromSlot(File, 0)) : nullptr;
+        // An immediate load of a just-written slot should see the most recent save.
+        if (SaveWriteTask.IsValid()) SaveWriteTask.Wait();
+        const UReflectionsGameFlowSave* Save = Cast<UReflectionsGameFlowSave>(UGameplayStatics::LoadGameFromSlot(SaveSlotFileName(Slot), 0));
         if (!Save || Save->Version > UReflectionsGameFlowSave::CurrentVersion)
         {
             return false;
         }
         Loaded = Save->Checkpoint;
     }
-    if (!Loaded.bValid || Loaded.MapPath.IsEmpty())
+    if (!Loaded.bValid || Loaded.MapPath.IsEmpty() ||
+        (Loaded.MapPath != CurrentMapPath() && !FPackageName::DoesPackageExist(Loaded.MapPath)))
     {
         return false;
     }
     // This state is now the one in use: it (and its slot) sort as the newest, ahead of saves from the run left behind.
     Loaded.UsedAt = FDateTime::UtcNow();
-    if (Slot != ReflectionsSaveSlots::Autosave)
-    {
-        if (UReflectionsGameFlowSave* Stamped = Cast<UReflectionsGameFlowSave>(UGameplayStatics::CreateSaveGameObject(UReflectionsGameFlowSave::StaticClass())))
-        {
-            Stamped->Version = UReflectionsGameFlowSave::CurrentVersion;
-            Stamped->Checkpoint = Loaded;
-            Stamped->SeenTips = SeenTips;
-            UGameplayStatics::SaveGameToSlot(Stamped, SaveSlotFileName(Slot), 0);
-        }
-    }
     UE_LOG(LogReflectionsGameFlow, Log, TEXT("Loading %s (%s, %s)."), *SaveSlotFileName(Slot), *Loaded.Reason, *Loaded.SavedAt.ToString());
-    // The loaded state becomes the checkpoint (death and Try again go back to it), and the other systems' files
-    // go back on disk before the map reload makes them read them.
-    RestoreMirroredFiles(Loaded);
-    Checkpoint = Loaded;
-    WriteSave(true);
-    InvalidateSlotCache();
-    bRestoreVitals = true;
-    ResetInfection();
-    ClearGameOver();
-    PendingStart = EReflectionsFlowStart::Restore;
-    OpenMap(Loaded.MapPath);
+    Checkpoint = MoveTemp(Loaded);
+    WriteSave(Slot == ReflectionsSaveSlots::Autosave ? INDEX_NONE : Slot);
+    ResumeSavedCheckpoint();
     return true;
 }
 
@@ -507,12 +491,10 @@ FReflectionsSaveSlotInfo UReflectionsGameFlowSubsystem::GetSaveSlotInfo(int32 Sl
     if (Slot > ReflectionsSaveSlots::Autosave && Slot < ReflectionsSaveSlots::Count)
     {
         const FString File = SaveSlotFileName(Slot);
-        if (UGameplayStatics::DoesSaveGameExist(File, 0))
+        if (const UReflectionsGameFlowSave* Save = Cast<UReflectionsGameFlowSave>(UGameplayStatics::LoadGameFromSlot(File, 0));
+            Save && Save->Version <= UReflectionsGameFlowSave::CurrentVersion)
         {
-            if (const UReflectionsGameFlowSave* Save = Cast<UReflectionsGameFlowSave>(UGameplayStatics::LoadGameFromSlot(File, 0)))
-            {
-                Info = MakeSlotInfo(Slot, Save->Checkpoint);
-            }
+            Info = MakeSlotInfo(Slot, Save->Checkpoint);
         }
     }
     SlotCache.Add(Slot, Info);
@@ -560,32 +542,6 @@ bool UReflectionsGameFlowSubsystem::GetSaveData(FName System, TArray<uint8>& Dat
     return true;
 }
 
-void UReflectionsGameFlowSubsystem::CaptureMirroredFiles()
-{
-    for (const TCHAR* File : MirroredSaveFiles)
-    {
-        TArray<uint8> Bytes;
-        if (UGameplayStatics::DoesSaveGameExist(File, 0) && UGameplayStatics::LoadDataFromSlot(Bytes, File, 0))
-        {
-            SetBlob(Checkpoint.SystemData, FName(*(FString(MirroredPrefix) + File)), Bytes);
-        }
-    }
-}
-
-void UReflectionsGameFlowSubsystem::RestoreMirroredFiles(const FReflectionsCheckpoint& From) const
-{
-    for (const FReflectionsSaveBlob& Blob : From.SystemData)
-    {
-        const FString Name = Blob.System.ToString();
-        if (Name.StartsWith(MirroredPrefix) && Blob.Data.Num() > 0)
-        {
-            const FString File = Name.RightChop(FCString::Strlen(MirroredPrefix));
-            const bool bOk = UGameplayStatics::SaveDataToSlot(Blob.Data, File, 0);
-            UE_LOG(LogReflectionsGameFlow, Log, TEXT("Restored %s from the save (%d bytes): %s."), *File, Blob.Data.Num(), bOk ? TEXT("ok") : TEXT("FAILED"));
-        }
-    }
-}
-
 void UReflectionsGameFlowSubsystem::MarkTipSeen(EReflectionsTip Tip)
 {
     const int32 Bit = 1 << static_cast<int32>(Tip);
@@ -602,24 +558,52 @@ void UReflectionsGameFlowSubsystem::ResetTips()
     WriteSave();
 }
 
-void UReflectionsGameFlowSubsystem::WriteSave(bool bSync)
+bool UReflectionsGameFlowSubsystem::WriteSave(int32 Slot, bool bWait, TFunction<void(bool)> OnSaved)
 {
-    UReflectionsGameFlowSave* Save = Cast<UReflectionsGameFlowSave>(UGameplayStatics::CreateSaveGameObject(UReflectionsGameFlowSave::StaticClass()));
-    if (!Save)
-    {
-        return;
-    }
+    UReflectionsGameFlowSave* Save = NewObject<UReflectionsGameFlowSave>();
     Save->Version = UReflectionsGameFlowSave::CurrentVersion;
     Save->Checkpoint = Checkpoint;
     Save->SeenTips = SeenTips;
-    if (bSync)
+    TArray<uint8> Bytes;
+    if (!UGameplayStatics::SaveGameToMemory(Save, Bytes)) return false;
+    const FString Autosave = SlotName();
+    const FString Extra = Slot == INDEX_NONE ? FString() : SaveSlotFileName(Slot);
+    const FReflectionsSaveSlotInfo Info = MakeSlotInfo(Slot, Checkpoint);
+    const TWeakObjectPtr<UReflectionsGameFlowSubsystem> WeakThis(this);
+    TArray<UE::Tasks::FTask> Prerequisites;
+    if (SaveWriteTask.IsValid()) Prerequisites.Add(SaveWriteTask);
+    SaveWriteTask = UE::Tasks::Launch(UE_SOURCE_LOCATION,
+        [Bytes = MoveTemp(Bytes), Autosave, Extra, Info, WeakThis, bWait, OnSaved = MoveTemp(OnSaved)]() mutable
     {
-        UGameplayStatics::SaveGameToSlot(Save, SlotName(), 0);
-    }
-    else
-    {
-        UGameplayStatics::AsyncSaveGameToSlot(Save, SlotName(), 0);
-    }
+        const bool bExtraSaved = Extra.IsEmpty() || UGameplayStatics::SaveDataToSlot(Bytes, Extra, 0);
+        const bool bAutosaved = UGameplayStatics::SaveDataToSlot(Bytes, Autosave, 0);
+        if (!bExtraSaved || !bAutosaved)
+        {
+            UE_LOG(LogReflectionsGameFlow, Warning, TEXT("Save write failed (checkpoint: %d, slot %s: %d)."),
+                bAutosaved, *Extra, bExtraSaved);
+        }
+        const bool bSaved = Extra.IsEmpty() ? bAutosaved : bExtraSaved;
+        if (!bWait && (!Extra.IsEmpty() || OnSaved))
+        {
+            AsyncTask(ENamedThreads::GameThread, [WeakThis, Info, bSaved, OnSaved = MoveTemp(OnSaved)]() mutable
+            {
+                if (UReflectionsGameFlowSubsystem* Flow = WeakThis.Get())
+                {
+                    if (bSaved && Info.Slot != INDEX_NONE)
+                    {
+                        const FReflectionsSaveSlotInfo* Current = Flow->SlotCache.Find(Info.Slot);
+                        if (!Current || Info.UsedAt >= Current->UsedAt) Flow->SlotCache.Add(Info.Slot, Info);
+                    }
+                    if (OnSaved) OnSaved(bSaved);
+                }
+            });
+        }
+        return bSaved;
+    }, Prerequisites, UE::Tasks::ETaskPriority::BackgroundNormal);
+    if (!bWait) return true;
+    const bool bSaved = SaveWriteTask.GetResult();
+    if (bSaved && Slot != INDEX_NONE) SlotCache.Add(Slot, Info);
+    return bSaved;
 }
 
 // ---- Flow --------------------------------------------------------------------------------------------------
@@ -646,6 +630,33 @@ void UReflectionsGameFlowSubsystem::OpenMap(const FString& MapPath)
         // start action there: stay in this map instead.
         UE_LOG(LogReflectionsGameFlow, Error, TEXT("Map %s does not exist in this build; reloading %s instead."), *Target, *CurrentMapPath());
         Target = CurrentMapPath();
+    }
+    TravelAssets.Reset();
+    if (Target == CurrentMapPath())
+    {
+        // The hero's assets can be reused, but the old pawn and its level must be collected.
+        const APlayerController* Player = World->GetFirstPlayerController();
+        if (Player && Player->GetPawn())
+        {
+            TArray<AActor*> Parts;
+            Player->GetPawn()->GetAttachedActors(Parts, true, true);
+            Parts.Add(Player->GetPawn());
+            const auto KeepAsset = [this](UObject* Asset)
+            {
+                if (Asset && !Asset->GetOutermost()->ContainsMap()) TravelAssets.Add(Asset);
+            };
+            KeepAsset(Player->GetClass());
+            for (const AActor* Part : Parts)
+            {
+                KeepAsset(Part->GetClass());
+                TInlineComponentArray<USkeletalMeshComponent*> Meshes(Part);
+                for (USkeletalMeshComponent* Mesh : Meshes)
+                {
+                    KeepAsset(Mesh->GetSkeletalMeshAsset());
+                    KeepAsset(Mesh->GetAnimClass());
+                }
+            }
+        }
     }
     UGameplayStatics::SetGamePaused(World, false);
     bTravelPending = true;
@@ -742,6 +753,11 @@ void UReflectionsGameFlowSubsystem::ContinueFromCheckpoint()
         StartNewGame();
         return;
     }
+    ResumeSavedCheckpoint();
+}
+
+void UReflectionsGameFlowSubsystem::ResumeSavedCheckpoint()
+{
     ResetInfection();
     ClearGameOver();
     // Continue resumes a save: the saved health and mana come back too.
@@ -765,7 +781,7 @@ void UReflectionsGameFlowSubsystem::QuitGame()
     UWorld* World = GameInstance ? GameInstance->GetWorld() : nullptr;
     if (Checkpoint.bValid)
     {
-        WriteSave(true);  // an async write still in flight at quit could leave a half-written file
+        WriteSave(INDEX_NONE, true);
     }
     if (World)
     {
@@ -813,6 +829,7 @@ EReflectionsFlowStart UReflectionsGameFlowSubsystem::ConsumeStartAction()
 {
     const EReflectionsFlowStart Start = PendingStart;
     PendingStart = EReflectionsFlowStart::None;
+    TravelAssets.Reset();
     return Start;
 }
 

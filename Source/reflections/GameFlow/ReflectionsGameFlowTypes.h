@@ -97,7 +97,7 @@ struct FReflectionsCheckpoint
     /** The Tarnish meter when saved (shown in the slot list; the villain's restore re-reports the hosts). */
     UPROPERTY(BlueprintReadOnly, Category = "Checkpoint") int32 InfectionCount = 0;
     UPROPERTY(BlueprintReadOnly, Category = "Checkpoint") int32 InfectionCap = 0;
-    /** Other systems' state (SetSaveData), and copies of the save files they write with each checkpoint. */
+    /** Other systems' state attached to this checkpoint through SetSaveData. */
     UPROPERTY() TArray<FReflectionsSaveBlob> SystemData;
 };
 

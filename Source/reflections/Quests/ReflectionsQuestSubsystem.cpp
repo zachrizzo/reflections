@@ -154,17 +154,10 @@ void UReflectionsQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection
     }
     ReloadContent();
 
-    if (UGameplayStatics::DoesSaveGameExist(SlotName(), 0))
-    {
-        if (const UReflectionsQuestSave* Save = Cast<UReflectionsQuestSave>(UGameplayStatics::LoadGameFromSlot(SlotName(), 0)))
-        {
-            CheckpointSnapshot = Save->Snapshot;
-        }
-    }
-
     UGameInstance* GI = GetGameInstance();
     if (UReflectionsGameFlowSubsystem* Flow = GI->GetSubsystem<UReflectionsGameFlowSubsystem>())
     {
+        ReadCheckpointSnapshot(Flow);
         Flow->OnCheckpointSaved.AddDynamic(this, &UReflectionsQuestSubsystem::HandleCheckpointSaved);
     }
     if (UReflectionsWorldJumpSubsystem* Progress = GI->GetSubsystem<UReflectionsWorldJumpSubsystem>())
@@ -1727,19 +1720,27 @@ void UReflectionsQuestSubsystem::ResetAll()
     OnQuestsChanged.Broadcast();
 }
 
-void UReflectionsQuestSubsystem::WriteSlot(const FReflectionsQuestSnapshot& Snapshot) const
+void UReflectionsQuestSubsystem::ReadCheckpointSnapshot(const UReflectionsGameFlowSubsystem* Flow)
 {
-    UReflectionsQuestSave* Save = Cast<UReflectionsQuestSave>(UGameplayStatics::CreateSaveGameObject(UReflectionsQuestSave::StaticClass()));
-    if (!Save) return;
-    Save->Snapshot = Snapshot;
-    UGameplayStatics::SaveGameToSlot(Save, SlotName(), 0);
+    TArray<uint8> Bytes;
+    // Older saves use this same embedded payload. The separate file is only needed for checkpoints without one.
+    USaveGame* Payload = Flow->GetSaveData(TEXT("File:Reflections_Quests"), Bytes)
+        ? UGameplayStatics::LoadGameFromMemory(Bytes) : UGameplayStatics::LoadGameFromSlot(SlotName(), 0);
+    const UReflectionsQuestSave* Save = Cast<UReflectionsQuestSave>(Payload);
+    CheckpointSnapshot = Save ? Save->Snapshot : FReflectionsQuestSnapshot();
 }
 
 void UReflectionsQuestSubsystem::HandleCheckpointSaved(const FReflectionsCheckpoint& Checkpoint)
 {
     CheckpointSnapshot = Capture();
     CheckpointSnapshot.CheckpointSavedAt = Checkpoint.SavedAt;
-    WriteSlot(CheckpointSnapshot);
+    UReflectionsQuestSave* Save = NewObject<UReflectionsQuestSave>();
+    Save->Snapshot = CheckpointSnapshot;
+    TArray<uint8> Bytes;
+    if (UGameplayStatics::SaveGameToMemory(Save, Bytes))
+    {
+        GetGameInstance()->GetSubsystem<UReflectionsGameFlowSubsystem>()->SetSaveData(TEXT("File:Reflections_Quests"), Bytes);
+    }
 }
 
 void UReflectionsQuestSubsystem::HandleProgressRestored()
@@ -1748,11 +1749,7 @@ void UReflectionsQuestSubsystem::HandleProgressRestored()
     if (!Flow || !Flow->HasCheckpoint()) return;
     if (!CheckpointSnapshot.bValid || Flow->GetCheckpoint().SavedAt != CheckpointSnapshot.CheckpointSavedAt)
     {
-        // A loaded save slot: game flow wrote that save's quest bytes back to our slot. Read it again once.
-        if (const UReflectionsQuestSave* Save = Cast<UReflectionsQuestSave>(UGameplayStatics::LoadGameFromSlot(SlotName(), 0)))
-        {
-            CheckpointSnapshot = Save->Snapshot;
-        }
+        ReadCheckpointSnapshot(Flow);
     }
     if (!CheckpointSnapshot.bValid || Flow->GetCheckpoint().SavedAt != CheckpointSnapshot.CheckpointSavedAt)
     {

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "GameFlow/ReflectionsGameFlowTypes.h"
+#include "Tasks/Task.h"
 #include "ReflectionsGameFlowSubsystem.generated.h"
 
 class AActor;
@@ -171,6 +172,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Game Flow|Save")
     bool SaveToSlot(int32 Slot);
 
+    /** Queues disk I/O and reports its result on the game thread. */
+    bool SaveToSlotAsync(int32 Slot, TFunction<void(bool)> OnSaved);
+
     /** Loads a slot: the saved state becomes the checkpoint, and its map reloads with everything put back. */
     UFUNCTION(BlueprintCallable, Category = "Game Flow|Save")
     bool LoadFromSlot(int32 Slot);
@@ -297,17 +301,18 @@ private:
     UReflectionsGameFlowWorldSubsystem* GetWorldFlow() const;
     void BroadcastInfection();
     void CheckInfectionCap();
-    /** Writes the autosave slot (async; bSync before quitting or loading, so nothing is left half-written). */
-    void WriteSave(bool bSync = false);
+    bool CaptureCheckpoint(const FString& Reason);
+    void RecordCheckpoint(const FReflectionsCheckpoint& InCheckpoint);
+    bool SaveSlot(int32 Slot, bool bWait, TFunction<void(bool)> OnSaved);
+    bool WriteSave(int32 Slot = INDEX_NONE, bool bWait = false, TFunction<void(bool)> OnSaved = {});
+    void ResumeSavedCheckpoint();
     void OpenMap(const FString& MapPath);
     FString CurrentMapPath() const;
-    /** Copies the save files other systems write on every checkpoint (quests, lives) into the checkpoint. */
-    void CaptureMirroredFiles();
-    /** Writes those copies back, so the systems read the loaded slot's state when its map starts. */
-    void RestoreMirroredFiles(const FReflectionsCheckpoint& From) const;
-    void InvalidateSlotCache() { SlotCache.Reset(); }
 
     mutable TMap<int32, FReflectionsSaveSlotInfo> SlotCache;
+    UE::Tasks::TTask<bool> SaveWriteTask;
+    /** Reusable content held only during a same-map reload, while the old actors are destroyed. */
+    UPROPERTY(Transient) TSet<TObjectPtr<UObject>> TravelAssets;
     bool bBroadcastingCheckpoint = false;
 
     /** Hosts currently infected; a destroyed host stays counted until ReportCured. */

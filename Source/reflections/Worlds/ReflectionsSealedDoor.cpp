@@ -65,10 +65,18 @@ void AReflectionsSealedDoor::OnConstruction(const FTransform& Transform)
 void AReflectionsSealedDoor::BeginPlay()
 {
     Super::BeginPlay();
-    PanelMaterial = Panel->CreateAndSetMaterialInstanceDynamic(0);
-    if (PanelMaterial)
+    if (Panel->GetStaticMesh() && Panel->GetStaticMesh()->GetPathName() == TEXT("/Engine/BasicShapes/Cube.Cube"))
     {
-        PanelMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.20f, 0.03f, 0.03f));
+        PanelMaterial = Panel->CreateAndSetMaterialInstanceDynamic(0);
+        if (PanelMaterial)
+        {
+            PanelMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.20f, 0.03f, 0.03f));
+        }
+    }
+    else
+    {
+        SealLight->SetLightColor(FLinearColor(1.0f, 0.56f, 0.24f));
+        SealLight->SetIntensity(550.0f);
     }
     Trigger->OnComponentBeginOverlap.AddDynamic(this, &AReflectionsSealedDoor::HandleOverlap);
 }
