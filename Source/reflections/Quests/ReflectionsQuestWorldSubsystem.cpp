@@ -14,6 +14,7 @@
 #include "Hero/ReflectionsSpellEventSubsystem.h"
 #include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "NavigationSystem.h"
 #include "NPC/ReflectionsNpcArchetype.h"
 #include "NPC/ReflectionsNpcReactionComponent.h"
 #include "GameFlow/ReflectionsGameFlowSlate.h"
@@ -29,6 +30,7 @@
 #include "Worlds/ReflectionsSealedDoor.h"
 #include "Villain/ReflectionsVillainSubsystem.h"
 #include "Worlds/ReflectionsWorldJumpSubsystem.h"
+#include "Worlds/ReflectionsWorldPickups.h"
 
 #define LOCTEXT_NAMESPACE "ReflectionsQuests"
 
@@ -1149,7 +1151,7 @@ int32 UReflectionsQuestWorldSubsystem::QueryEventCount(FName Key, FName Arg) con
         int32 N = 0;
         for (const TPair<EReflectionsWorld, int32>& C : Progress->GetAllCoins())
         {
-            if (Arg.IsNone() || !IsWorldJumpActive() || SideName(C.Key) == Arg) N += C.Value;
+            if (Arg.IsNone() || SideName(C.Key) == Arg) N += C.Value;
         }
         return N;
     }
@@ -1294,6 +1296,7 @@ void UReflectionsQuestWorldSubsystem::EvaluateObjectives(float DeltaTime)
     TArray<FUpdate> Updates;
     TArray<AActor*> TalkedByProximity;
     TArray<FName> NarrationChoices;
+    const bool bRefreshEncounters = FMath::FloorToInt(Clock / 2.0f) != FMath::FloorToInt((Clock - DeltaTime) / 2.0f);
     for (const FReflectionsQuestDef& Def : Quests->GetQuests())
     {
         const FReflectionsQuestState* S = Quests->FindState(Def.Id);
@@ -1307,7 +1310,14 @@ void UReflectionsQuestWorldSubsystem::EvaluateObjectives(float DeltaTime)
             const FReflectionsObjectiveState& OS = S->Objectives[i];
             if (!OS.bDone && !O.bOptional) bRequiredDone = false;
             if (OS.bDone) continue;
-            if (!OS.bSpawned && !O.SpawnArchetype.IsNone() && O.Type != EReflectionsObjectiveType::Protect && O.Type != EReflectionsObjectiveType::Defeat)
+            const bool bCureEncounter = O.Type == EReflectionsObjectiveType::Event && O.Target == TEXT("NpcCured") &&
+                (O.SpawnArchetype == TEXT("Infected") || O.SpawnArchetype == TEXT("Tarnished"));
+            if (bCureEncounter)
+            {
+                // Refill missing targets on arrival and after a checkpoint reload or an NPC death.
+                if (bRefreshEncounters && !IsCutscenePlaying()) Updates.Add({Def.Id, O.Id, -1, 0.0f, true});
+            }
+            else if (!OS.bSpawned && !O.SpawnArchetype.IsNone() && O.Type != EReflectionsObjectiveType::Protect && O.Type != EReflectionsObjectiveType::Defeat)
             {
                 Updates.Add({Def.Id, O.Id, -1, 0.0f, true});
             }
@@ -1315,6 +1325,21 @@ void UReflectionsQuestWorldSubsystem::EvaluateObjectives(float DeltaTime)
             {
             case EReflectionsObjectiveType::GoTo:
             {
+                if (O.Target == TEXT("Tower_Giltside"))
+                {
+                    const AReflectionsSealedDoor* Seal = nullptr;
+                    for (TActorIterator<AReflectionsSealedDoor> It(GetWorld()); It; ++It)
+                    {
+                        if (It->RequiredKey != TEXT("GiltTowerKey")) continue;
+                        Seal = *It;
+                        break;
+                    }
+                    if (Seal)
+                    {
+                        if (Seal->IsOpen()) Updates.Add({Def.Id, O.Id, O.Count, 0.0f, false});
+                        break;
+                    }
+                }
                 FReflectionsQuestTarget T;
                 // One London: the walks are long and the places big (a churchyard, a market), so 25 m at least.
                 if (ResolveObjectiveTarget(Def, O, T) && !T.bOtherSide && IsHeroNear(T.Location, IsWorldJumpActive() ? T.Radius : FMath::Max(T.Radius, 2500.0f)))
@@ -1506,6 +1531,62 @@ bool UReflectionsQuestWorldSubsystem::ResolveObjectiveTarget(const FReflectionsQ
         return UseMarker(FName(*FString::Printf(TEXT("QuestGiver_%s"), *Person.ToString())));
     };
 
+    if (O.Type == EReflectionsObjectiveType::Event && O.Target == TEXT("ShardCollected"))
+    {
+        const AReflectionsCoinPickup* Nearest = nullptr;
+        double NearestDistance = TNumericLimits<double>::Max();
+        const bool bSameSideOnly = Hero && IsWorldJumpActive();
+        const EReflectionsWorld CurrentSide = HeroSide();
+        for (TActorIterator<AReflectionsCoinPickup> It(GetWorld()); It; ++It)
+        {
+            if (It->IsHidden() || It->IsActorBeingDestroyed() || !It->GetActorEnableCollision()) continue;
+            if (!O.Spell.IsNone() && SideName(It->CoinWorld) != O.Spell) continue;
+            if (bSameSideOnly && SideOf(It->GetActorLocation()) != CurrentSide) continue;
+            const double Distance = FVector::DistSquared(From, It->GetActorLocation());
+            if (Distance < NearestDistance)
+            {
+                Nearest = *It;
+                NearestDistance = Distance;
+            }
+        }
+        if (Nearest) return UseLocation(Nearest->GetActorLocation(), 150.0f, O.Text);
+    }
+
+    if (O.Type == EReflectionsObjectiveType::Event && (O.Target == TEXT("PageFound") || O.Target == TEXT("BookComplete")))
+    {
+        const bool bSingleCity = !IsWorldJumpActive();
+        const FName Tower = O.Target == TEXT("BookComplete") ? FName(TEXT("Tower_Frostside"))
+            : O.Spell.IsNone() ? NAME_None : FName(*FString::Printf(TEXT("Tower_%s"), *O.Spell.ToString()));
+        const UReflectionsWorldJumpSubsystem* Progress = UReflectionsWorldJumpSubsystem::Get(this);
+        const AReflectionsBookPagePickup* Nearest = nullptr;
+        double NearestDistance = TNumericLimits<double>::Max();
+        for (TActorIterator<AReflectionsBookPagePickup> It(GetWorld()); It; ++It)
+        {
+            if (It->IsHidden() || It->IsActorBeingDestroyed() || !It->GetActorEnableCollision()) continue;
+            const FName Page = It->PageId.IsNone() ? It->GetFName() : It->PageId;
+            if (Progress && Progress->HasPage(Page)) continue;
+            if (bSingleCity && It->ActorHasTag(Tower))
+            {
+                return UseLocation(It->GetActorLocation(), 150.0f, It->GetDisplayTitle());
+            }
+            const EReflectionsWorld PageSide = SideOf(It->GetActorLocation());
+            if (!bSingleCity && O.Target == TEXT("PageFound") && !O.Spell.IsNone() && SideName(PageSide) != O.Spell) continue;
+            if (!bSingleCity && O.Target == TEXT("BookComplete") && Hero && PageSide != SideOf(From)) continue;
+            const double Distance = FVector::DistSquared(From, It->GetActorLocation());
+            if (Distance < NearestDistance)
+            {
+                Nearest = *It;
+                NearestDistance = Distance;
+            }
+        }
+        // In a city with world jumping, keep an authored route marker (such as the stair at the tower's foot).
+        if (Nearest && (bSingleCity || O.Marker.IsNone()))
+        {
+            return UseLocation(Nearest->GetActorLocation(), 150.0f, Nearest->GetDisplayTitle());
+        }
+        if (O.Marker.IsNone() && !Tower.IsNone()) return UseMarker(Tower);
+    }
+
     if (!O.Marker.IsNone() && O.Type != EReflectionsObjectiveType::Collect && O.Type != EReflectionsObjectiveType::Defeat)
     {
         return UseMarker(O.Marker);
@@ -1562,7 +1643,6 @@ bool UReflectionsQuestWorldSubsystem::ResolveObjectiveTarget(const FReflectionsQ
     }
     case EReflectionsObjectiveType::Event:
         if (O.Target == TEXT("BossDefeated") || O.Target == TEXT("FinaleStarted")) return UseMarker(TEXT("VillainArena"));
-        if (O.Target == TEXT("PageFound") && !O.Spell.IsNone()) return UseMarker(FName(*FString::Printf(TEXT("Tower_%s"), *O.Spell.ToString())));
         if (O.Target == TEXT("KeyFound"))
         {
             for (TActorIterator<AReflectionsKeyPickup> It(GetWorld()); It; ++It)
@@ -1734,12 +1814,25 @@ void UReflectionsQuestWorldSubsystem::SpawnFor(FName QuestId, const FReflections
         return;
     }
     int32 Count = FMath::Max(1, O.SpawnCount > 0 ? O.SpawnCount : O.Count);
-    if (O.SpawnArchetype == TEXT("Infected") || O.SpawnArchetype == TEXT("Tarnished"))
+    const bool bInfected = O.SpawnArchetype == TEXT("Infected") || O.SpawnArchetype == TEXT("Tarnished");
+    if (bInfected)
     {
+        const float Radius = O.Radius > 0.0f ? O.Radius : 4000.0f;
+        if (O.Type == EReflectionsObjectiveType::Event && O.Target == TEXT("NpcCured"))
+        {
+            if (!IsHeroNear(Center, Radius + 800.0f)) return;
+            UReflectionsQuestSubsystem* Quests = UReflectionsQuestSubsystem::Get(this);
+            if (const FReflectionsObjectiveState* State = Quests ? Quests->FindObjectiveState(QuestId, O.Id) : nullptr)
+            {
+                Count = FMath::Min(Count, O.Count - State->Progress);
+            }
+        }
         // Only make up the difference: tarnished already near the spot count.
         for (AActor* A : Npcs->GetNpcActors())
         {
-            if (A && Npcs->GetInfection(A) != EReflectionsNpcInfection::None && FVector::Dist(A->GetActorLocation(), Center) < 4000.0f) --Count;
+            const UReflectionsNpcReactionComponent* Npc = A ? Npcs->FindNpc(A) : nullptr;
+            if (Npc && !Npc->IsIncapacitated() && Npcs->GetInfection(A) != EReflectionsNpcInfection::None &&
+                FVector::Dist2D(A->GetActorLocation(), Center) < Radius) --Count;
         }
         if (Count <= 0) return;
         // The story's rule: turn townsfolk near the spot first (they get the Tarnish look and count on the meter).
@@ -1748,23 +1841,34 @@ void UReflectionsQuestWorldSubsystem::SpawnFor(FName QuestId, const FReflections
         {
             if (!A || Npcs->GetInfection(A) != EReflectionsNpcInfection::None || Npcs->IsHostileToPlayer(A)) continue;
             if (A->ActorHasTag(TEXT("NoVillain")) || A->ActorHasTag(TEXT("QuestSpawned")) || !UReflectionsQuestSubsystem::GetPersonId(A).IsNone()) continue;
-            if (FVector::Dist(A->GetActorLocation(), Center) < 4000.0f) Near.Add(A);
+            if (FVector::Dist2D(A->GetActorLocation(), Center) < Radius) Near.Add(A);
         }
         if (Count <= 0) return;
         Near.Sort([&Center](const AActor& L, const AActor& R) { return FVector::DistSquared(L.GetActorLocation(), Center) < FVector::DistSquared(R.GetActorLocation(), Center); });
-        for (int32 i = 0; i < Near.Num() && Count > 0; ++i, --Count)
+        for (int32 i = 0; i < Near.Num() && Count > 0; ++i)
         {
-            Npcs->SetInfection(Near[i], EReflectionsNpcInfection::Infected, nullptr);
-            Near[i]->Tags.AddUnique(FName(*FString::Printf(TEXT("QuestSpawn_%s"), *QuestId.ToString())));
+            if (Npcs->SetInfection(Near[i], EReflectionsNpcInfection::Infected, nullptr))
+            {
+                --Count;
+                Near[i]->Tags.AddUnique(FName(*FString::Printf(TEXT("QuestSpawn_%s"), *QuestId.ToString())));
+            }
         }
     }
+    const FName Archetype = bInfected ? FName(TEXT("Civilian")) : O.SpawnArchetype;
+    const UNavigationSystemV1* Nav = bInfected ? FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()) : nullptr;
     for (int32 i = 0; i < Count; ++i)
     {
         const float Angle = (2.0f * PI * i) / Count;
-        const FVector L = Center + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0.0f) * 900.0f;
-        if (AActor* A = Npcs->SpawnNpc(O.SpawnArchetype, L, (Center - L).Rotation().Yaw))
+        FVector L = Center + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0.0f) * 900.0f;
+        FNavLocation Walkable;
+        if (Nav && Nav->ProjectPointToNavigation(L, Walkable, FVector(850.0f, 850.0f, 300.0f)))
+        {
+            L = Walkable.Location;
+        }
+        if (AActor* A = Npcs->SpawnNpc(Archetype, L, (Center - L).Rotation().Yaw))
         {
             A->Tags.AddUnique(FName(*FString::Printf(TEXT("QuestSpawn_%s"), *QuestId.ToString())));
+            if (bInfected) Npcs->SetInfection(A, EReflectionsNpcInfection::Infected, nullptr);
         }
     }
 }

@@ -99,9 +99,9 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hero|Spells|Resources", meta=(ClampMin="1"))
     float MaxMana = 100.0f;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hero|Spells|Resources", meta=(ClampMin="0"))
-    float ManaRegenPerSecond = 8.0f;
+    float ManaRegenPerSecond = 4.5f;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hero|Spells|Resources", meta=(ClampMin="0", Units="s"))
-    float ManaRegenDelay = 0.8f;
+    float ManaRegenDelay = 1.75f;
 
     /** Health the hero regains per second once out of combat (no damage for HealthRegenDelay). 0 turns it off. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Hero|Spells|Resources", meta=(ClampMin="0"))

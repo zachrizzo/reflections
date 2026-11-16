@@ -183,7 +183,13 @@ namespace ReflectionsFlowCommands
             if (UReflectionsGameFlowSubsystem* Flow = UReflectionsGameFlowSubsystem::Get(World))
             {
                 const int32 Slot = ParseSlot(Args, ReflectionsSaveSlots::FirstManual);
-                UE_LOG(LogTemp, Log, TEXT("GameFlow.Save %d: %s"), Slot, Flow->SaveToSlot(Slot) ? TEXT("saved") : TEXT("FAILED"));
+                if (!Flow->SaveToSlotAsync(Slot, [Slot](bool bSaved)
+                {
+                    UE_LOG(LogTemp, Log, TEXT("GameFlow.Save %d: %s"), Slot, bSaved ? TEXT("saved") : TEXT("FAILED"));
+                }))
+                {
+                    UE_LOG(LogTemp, Log, TEXT("GameFlow.Save %d: FAILED"), Slot);
+                }
             }
         }));
 

@@ -452,7 +452,7 @@ FCraftedSpellResolved UReflectionsSpellCraftingLibrary::Resolve(const FCraftedSp
     // ---- cost, cooldown.
     const int32 Synergies = FMath::CountBits64(static_cast<uint64>(R.SynergyMask));
     const float Resonance = FMath::Pow(1.08f, float(Synergies));
-    R.ManaCost = FMath::Clamp(FMath::RoundToFloat(Base.Cost * CostScale * ModCost * TriggerCost * Resonance), 4.0f, 95.0f);
+    R.ManaCost = FMath::Clamp(FMath::RoundToFloat(Base.Cost * CostScale * ModCost * TriggerCost * Resonance * 1.25f), 5.0f, 98.0f);
     R.Cooldown = Base.Cooldown * (0.75f + 0.1f * P) + 0.25f * Rec.Modifiers.Num();
 
     // ---- name.

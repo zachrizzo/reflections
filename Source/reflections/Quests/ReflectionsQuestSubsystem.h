@@ -6,6 +6,8 @@
 #include "Quests/ReflectionsQuestTypes.h"
 #include "ReflectionsQuestSubsystem.generated.h"
 
+class UReflectionsGameFlowSubsystem;
+
 class AActor;
 class APawn;
 class UReflectionsQuestPack;
@@ -327,7 +329,7 @@ private:
     void Broadcast(FName QuestId, FName StepId, FName ObjectiveId, EReflectionsQuestEventType Type);
     void Changed();
     void AutoTrack();
-    void WriteSlot(const FReflectionsQuestSnapshot& Snapshot) const;
+    void ReadCheckpointSnapshot(const UReflectionsGameFlowSubsystem* Flow);
     /** Whether a quest still needs this person: an unfinished objective now or later, a choice, failIfDies. */
     bool StillNeeds(const FReflectionsQuestDef& Def, const FReflectionsQuestState& State, FName Person) const;
     /** Marks the current step's objectives that only this (dead) person could fulfil as done (main quest). */

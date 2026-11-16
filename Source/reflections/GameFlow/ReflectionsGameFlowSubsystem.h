@@ -172,6 +172,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Game Flow|Save")
     bool SaveToSlot(int32 Slot);
 
+    /** Queues disk I/O and reports its result on the game thread. */
+    bool SaveToSlotAsync(int32 Slot, TFunction<void(bool)> OnSaved);
+
     /** Loads a slot: the saved state becomes the checkpoint, and its map reloads with everything put back. */
     UFUNCTION(BlueprintCallable, Category = "Game Flow|Save")
     bool LoadFromSlot(int32 Slot);
@@ -318,9 +321,12 @@ private:
     UReflectionsGameFlowWorldSubsystem* GetWorldFlow() const;
     void BroadcastInfection();
     void CheckInfectionCap();
-    /** Writes the autosave slot (queued on a background pipe; bSync waits for the disk). */
-    void WriteSave(bool bSync = false);
-    /** Shows the loading screen, then opens the map a few frames later (the screen is on screen before the load blocks). */
+    bool CaptureCheckpoint(const FString& Reason);
+    void RecordCheckpoint(const FReflectionsCheckpoint& InCheckpoint);
+    bool SaveSlot(int32 Slot, bool bWait, TFunction<void(bool)> OnSaved);
+    bool WriteSave(int32 Slot = INDEX_NONE, bool bWait = false, TFunction<void(bool)> OnSaved = {});
+    void ResumeSavedCheckpoint();
+    /** Shows the loading screen before opening the map. */
     void OpenMap(const FString& MapPath);
     /** Core ticker: runs the deferred map open or quit once the loading screen has been presented. */
     bool TickDeferred(float DeltaTime);
@@ -329,13 +335,10 @@ private:
     void SetupMoviePlayerLoadingScreen() const;
     void FinishQuit();
     FString CurrentMapPath() const;
-    /** Copies the save files other systems write on every checkpoint (quests, lives) into the checkpoint. */
-    void CaptureMirroredFiles();
-    /** Writes those copies back, so the systems read the loaded slot's state when its map starts. */
-    void RestoreMirroredFiles(const FReflectionsCheckpoint& From) const;
-    void InvalidateSlotCache() { SlotCache.Reset(); }
 
     mutable TMap<int32, FReflectionsSaveSlotInfo> SlotCache;
+    /** Reusable content held only during a same-map reload, while the old actors are destroyed. */
+    UPROPERTY(Transient) TSet<TObjectPtr<UObject>> TravelAssets;
     bool bBroadcastingCheckpoint = false;
 
     bool bLoadingScreen = false;

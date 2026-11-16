@@ -32,6 +32,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "PhysicsEngine/BodyInstance.h"
 #include "PhysicsEngine/PhysicsAsset.h"
+#include "TimerManager.h"
 #include "UObject/SoftObjectPath.h"
 
 namespace
@@ -356,7 +357,7 @@ bool UReflectionsNpcReactionComponent::BeginScene(UAnimSequenceBase* Loop, bool 
     // Only the calm and free: nothing that is reacting, taken, down, shocked, frozen or alight sits down.
     if (!Anim || !Mesh->GetSkeletalMeshAsset() || Reaction != EReflectionsNpcReaction::Calm || Infection != EReflectionsNpcInfection::None ||
         UReflectionsNpcArchetype::IsHostileDisposition(Disposition) || WalkerDown != EWalkerDown::None || bWalkerJolting || bShocked ||
-        FrozenRemaining > 0.0f || BurningRemaining > 0.0f) return false;
+        bFrozen || BurningRemaining > 0.0f) return false;
     if (Loop && Loop->GetSkeleton() != Mesh->GetSkeletalMeshAsset()->GetSkeleton()) return false;
     BlendIn = FMath::Clamp(BlendIn, 0.0f, 2.0f);
     // Taken over from another scene: its clips go, without the ended event (the NPC never left a scene).
@@ -656,22 +657,41 @@ void UReflectionsNpcReactionComponent::EndBurning()
 
 void UReflectionsNpcReactionComponent::StartFreeze(float Seconds)
 {
-    // Frozen: held where it stands with its motion all but stopped. The walker's own clock is slowed, so its
-    // movement and its animation (which the visible body follows) both hold; nothing about the body is changed.
-    FrozenRemaining = FMath::Max(FrozenRemaining, Seconds);
+    UWorld* World = GetWorld();
+    if (!World) return;
+    FTimerManager& Timers = World->GetTimerManager();
+    const float Duration = FMath::Max(Timers.GetTimerRemaining(FreezeTimer), Seconds);
+    // Expire on the world clock even while the walker's animation and motion are slowed.
+    bFrozen = true;
     if (ACharacter* Mover = GetMovementCharacter())
     {
         Mover->GetCharacterMovement()->StopMovementImmediately();
-        if (Mover != GetOwner() && WalkerDown == EWalkerDown::None) Mover->CustomTimeDilation = 0.05f;
+        if (Mover != GetOwner() && WalkerDown == EWalkerDown::None && !FrozenMover.IsValid())
+        {
+            FrozenMover = Mover;
+            TimeDilationBeforeFreeze = Mover->CustomTimeDilation;
+            Mover->CustomTimeDilation = 0.05f;
+        }
     }
+    Timers.SetTimer(FreezeTimer, this, &UReflectionsNpcReactionComponent::OnFreezeExpired, Duration);
 }
 
 void UReflectionsNpcReactionComponent::EndFreeze()
 {
-    FrozenRemaining = 0.0f;
+    if (UWorld* World = GetWorld()) World->GetTimerManager().ClearTimer(FreezeTimer);
+    bFrozen = false;
     bMagicFrozen = false;
-    if (ACharacter* Mover = GetMovementCharacter())
-        if (Mover != GetOwner()) Mover->CustomTimeDilation = 1.0f;
+    if (ACharacter* Mover = FrozenMover.Get(); Mover && FMath::IsNearlyEqual(Mover->CustomTimeDilation, 0.05f))
+    {
+        Mover->CustomTimeDilation = TimeDilationBeforeFreeze;
+    }
+    FrozenMover.Reset();
+}
+
+void UReflectionsNpcReactionComponent::OnFreezeExpired()
+{
+    EndFreeze();
+    if (WalkerDown == EWalkerDown::None && !IsIncapacitated()) ShatterIce(FrozenAlong, 0.5f);
 }
 
 void UReflectionsNpcReactionComponent::ShatterIce(const FVector& Along, float Strength)
@@ -721,7 +741,7 @@ bool UReflectionsNpcReactionComponent::ReactToSpell(const FReflectionsSpellHitDa
     };
     // Struck while frozen: the ice breaks first, so that what the hit does happens at full speed (the frozen
     // walker's clock is slowed, and a throw at that clock would crawl).
-    if (FrozenRemaining > 0.0f && bFirst && Hit.Reaction != EReflectionsSpellReaction::Freeze)
+    if (bFrozen && bFirst && Hit.Reaction != EReflectionsSpellReaction::Freeze)
     {
         EndFreeze();
         ShatterIce(Along, FMath::Max(Strength, 0.6f));
@@ -2047,7 +2067,7 @@ void UReflectionsNpcReactionComponent::OnOwnerDied(AActor* Source)
     }
     EndShock(true);
     EndBurning();
-    if (FrozenRemaining > 0.0f && Subsystem.IsValid())
+    if (bFrozen && Subsystem.IsValid())
         if (USoundBase* Crack = Subsystem->FindJamCue(TEXT("Cues/SCue_Ice_Impact")))
             UGameplayStatics::PlaySoundAtLocation(this, Crack, Owner->GetActorLocation() + FVector(0.0, 0.0, 90.0));
     EndFreeze();
@@ -2239,7 +2259,7 @@ void UReflectionsNpcReactionComponent::TickStance(float DeltaTime)
         StanceMontage = nullptr;
         if (Anim->IsAnyMontagePlaying()) return;
     }
-    const bool bOn = CVarNpcArmedStance.GetValueOnGameThread() != 0 && !bShocked && FrozenRemaining <= 0.0f &&
+    const bool bOn = CVarNpcArmedStance.GetValueOnGameThread() != 0 && !bShocked && !bFrozen &&
         CastWindupRemaining <= 0.0f && !bHiddenUntilPosed;
     // Standing still: the guard stance, a whole-body clip posed for it (over a walk it would stop the legs).
     // Moving: the additive hold, which lies over whatever the legs do. (The hold alone, used standing too, left
@@ -2517,10 +2537,9 @@ void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick
         EndCastTelegraph();
         CancelTarnishCast();
         TickWalkerKnockdown(DeltaTime);
-        if (bMagicFrozen && (FrozenRemaining -= DeltaTime) <= 0.0f) EndFreeze();
         return;
     }
-    if (bShocked || FrozenRemaining > 0.0f)
+    if (bShocked || bFrozen)
     {
         // Shocked or frozen: no thinking, no moving, no fighting until it is over.
         if (ACharacter* Mover = GetMovementCharacter()) Mover->GetCharacterMovement()->StopMovementImmediately();
@@ -2528,15 +2547,6 @@ void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick
         CastWindupRemaining = 0.0f;
         EndCastTelegraph();
         CancelTarnishCast();
-        if (FrozenRemaining > 0.0f)
-        {
-            FrozenRemaining -= DeltaTime;
-            if (FrozenRemaining <= 0.0f)
-            {
-                EndFreeze();
-                ShatterIce(FrozenAlong, 0.5f);
-            }
-        }
         if (bShocked)
         {
             // It flickers and the current keeps hurting it. If that kills it, the ordinary death takes over
