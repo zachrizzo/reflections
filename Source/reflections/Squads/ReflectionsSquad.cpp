@@ -953,7 +953,9 @@ void AReflectionsSquad::TickFormation(float DeltaSeconds, bool bReforming)
             SampleTrail(Rank * RankSpacing, Unused, SlotDirection);
         }
         SteerTo(Member, Goal, SlotDirection * AnchorSpeed, MaxSpeed, DeltaSeconds);
-        if (AnchorSpeed < 5.0f && Member.SlotError < 40.0f && Driver->GetVelocity().SizeSquared2D() < 25.0f)
+        // A soldier the player is talking with (NPC_Talking) turns to face them instead (the voice system turns it).
+        if (AnchorSpeed < 5.0f && Member.SlotError < 40.0f && Driver->GetVelocity().SizeSquared2D() < 25.0f
+            && !(Member.Actor && Member.Actor->ActorHasTag(TEXT("NPC_Talking"))))
         {
             FaceYaw(Driver, SlotDirection.Rotation().Yaw, DeltaSeconds);
         }

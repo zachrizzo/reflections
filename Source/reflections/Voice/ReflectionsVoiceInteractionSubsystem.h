@@ -45,6 +45,17 @@ public:
     // ---- Read-outs for tests and tools ----
     UFUNCTION(BlueprintPure, Category="NPC Dialogue")
     FString DescribeStatus() const;
+
+    /** Tests: the same as pressing (true) or letting go of (false) the talk key, E / D-pad Down. */
+    UFUNCTION(BlueprintCallable, Category="NPC Dialogue")
+    void PressTalkKey(bool bDown);
+    /** The talk prompt the player sees: the quest system's for a person with quest business, else ours. */
+    UFUNCTION(BlueprintPure, Category="NPC Dialogue")
+    FString GetTalkPromptText() const;
+    UFUNCTION(BlueprintPure, Category="NPC Dialogue")
+    bool IsListeningShown() const;
+    UFUNCTION(BlueprintPure, Category="NPC Dialogue")
+    bool IsThinkingShown() const;
     UFUNCTION(BlueprintPure, Category="NPC Dialogue")
     EReflectionsReplySource GetLastReplySource() const { return Voice ? Voice->GetLastReplySource() : EReflectionsReplySource::None; }
     UFUNCTION(BlueprintPure, Category="NPC Dialogue")
@@ -69,7 +80,6 @@ private:
     void OnTalkReleased();
     void OnTypePressed();
     void FinishTyping();
-    void ShowNoticeOnce();
     bool IsInEarshot(const AActor* Npc) const;
 
     // ---- NPC actions (the second check: the relay only offers and forwards what this reports possible) ----
@@ -98,5 +108,9 @@ private:
     float FarTime = 0.0f;
     float LastPlayerHealth = -1.0f;  // a drop closes the typing box (UI-only input would leave the player stuck)
     bool bHeld = false;
-    bool bNoticeShown = false;
+    /** This press of the talk key opened (or belongs to) the quest dialogue: its release is not a voice turn. */
+    bool bPressWentToQuest = false;
+    /** The NPC we tagged NPC_Talking (crowd spots let go of it) for the conversation; NPC_NoStroll too if we added it. */
+    TWeakObjectPtr<AActor> TalkTagNpc;
+    bool bAddedNoStroll = false;
 };

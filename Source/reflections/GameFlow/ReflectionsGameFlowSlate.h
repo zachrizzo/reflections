@@ -56,6 +56,26 @@ private:
     TWeakObjectPtr<UReflectionsGameFlowWorldSubsystem> Owner;
 };
 
+/**
+ * Full-screen loading / saving screen: dark, the title and theme line, a spinner and one status line. Safe to paint
+ * on the movie player's loading thread while a map loads: it touches no UObjects (the text is fixed when it is
+ * built, unless the game thread binds Status for its own copy).
+ */
+class SReflectionsLoadingScreen : public SCompoundWidget
+{
+public:
+    SLATE_BEGIN_ARGS(SReflectionsLoadingScreen) {}
+        SLATE_ATTRIBUTE(FText, Status)
+        SLATE_ARGUMENT(FText, Title)
+        SLATE_ARGUMENT(FText, Line)
+    SLATE_END_ARGS()
+
+    void Construct(const FArguments& InArgs);
+
+    /** The game's loading screen (title and theme line from the String Table, copied to plain text). Game thread. */
+    static TSharedRef<SReflectionsLoadingScreen> Create(const TAttribute<FText>& Status);
+};
+
 /** Full-screen menus. Rebuilds its content per screen and keeps focus inside itself. */
 class SReflectionsFlowMenu : public SCompoundWidget
 {

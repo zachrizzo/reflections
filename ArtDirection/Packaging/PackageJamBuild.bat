@@ -6,6 +6,8 @@ rem Usage: PackageJamBuild.bat [--dry-run] [--with-npc-relay] [--allow-stale-peo
 rem   By default UAT first builds the game target (reflections Win64 Development, -build) from the current source, so the
 rem   staged exe matches the editor DLL the cook uses (B2). --no-build skips that, and is refused if reflections.exe is
 rem   older than UnrealEditor-reflections.dll. If UBT reports another instance running, wait; never kill it.
+rem   --build-editor first builds reflectionsEditor (Win64 Development) from the same source, because the cook commandlet
+rem   loads the editor modules. Only with the editor closed: the script refuses while UnrealEditor.exe runs.
 rem   --with-npc-relay  after staging, copy the NPC dialogue helper (Tools\RealtimeVoice\dist\NpcDialogueRelay, built by
 rem                     Tools\RealtimeVoice\Build-NpcDialogueHelper.ps1) as loose files to
 rem                     <stage>\reflections\Content\NpcDialogue\Relay. Off by default: shipping it is the user's decision.
@@ -16,6 +18,8 @@ set "DRYRUN="
 set "WITHRELAY="
 set "ALLOWSTALE="
 set "BUILDGAME=-build"
+set "BUILDEDITOR="
+set "EXTRASONLY="
 :args
 if "%~1"=="" goto argsdone
 if /i "%~1"=="--dry-run" set "DRYRUN=1"
@@ -23,6 +27,9 @@ if /i "%~1"=="--with-npc-relay" set "WITHRELAY=1"
 rem --allow-stale-people: measurement cooks only. Never use it for the build that gets uploaded.
 if /i "%~1"=="--allow-stale-people" set "ALLOWSTALE=1"
 if /i "%~1"=="--no-build" set "BUILDGAME="
+if /i "%~1"=="--build-editor" set "BUILDEDITOR=1"
+rem --extras-only: skip build, cook and stage; only (re)copy the notices and, with --with-npc-relay, the relay into an existing stage.
+if /i "%~1"=="--extras-only" set "EXTRASONLY=1"
 shift
 goto args
 :argsdone
@@ -68,17 +75,40 @@ rem reflections.exe, so they sit in the zip's top folder. Open [CONFIRM] items o
 set "NOTICES=%PROJ%\ArtDirection\Submission\THIRD_PARTY_NOTICES.txt"
 if not exist "%NOTICES%" echo WARNING: %NOTICES% not found; the zip will ship without third-party notices.
 if exist "%NOTICES%" findstr /l /c:"[CONFIRM" "%NOTICES%" >nul && echo WARNING: THIRD_PARTY_NOTICES.txt still has [CONFIRM] items. Ask submission prep before the final upload.
+set "BUILDBAT=C:\Program Files\Epic Games\UE_5.9\Engine\Build\BatchFiles\Build.bat"
+if defined BUILDEDITOR (
+  tasklist /FI "IMAGENAME eq UnrealEditor.exe" 2>nul | find /i "UnrealEditor.exe" >nul && (
+    echo ERROR: --build-editor needs the editor closed ^(UnrealEditor.exe is running; its DLLs are loaded^).
+    if not defined DRYRUN exit /b 1
+  )
+)
 if defined DRYRUN (
+  if defined BUILDEDITOR echo first: "%BUILDBAT%" reflectionsEditor Win64 Development -Project="%PROJ%\reflections.uproject" -WaitMutex
   echo "%UAT%" %ARGS%
   if exist "%NOTICES%" echo then: copy THIRD_PARTY_NOTICES.txt to "%STAGE%\"
   if defined WITHRELAY echo then: copy the relay allowlist ^(NpcDialogueRelay.exe, roster.json, keys.json.example, _internal\, seed\^) from "%RELAYSRC%" to "%RELAYDST%", then scan it for keys
   exit /b 0
+)
+rem Record what the package is built from: the commit, plus how many source/content/config files changed after it
+rem (the working tree is packaged as it stands, committed or not). No git status: it runs LFS filters over Content.
+if not defined EXTRASONLY powershell -NoProfile -Command "$p = '%PROJ%'; $h = (git -C $p log -1 --format='%%h %%cI %%s' 2>$null); $t = [datetime](git -C $p log -1 --format=%%cI 2>$null); $n = @(Get-ChildItem -LiteralPath (Join-Path $p 'Source'), (Join-Path $p 'Content'), (Join-Path $p 'Config') -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -gt $t }).Count; $line = '{0:yyyy-MM-dd HH:mm:ss} package from {1} plus the uncommitted working tree ({2} Source/Content/Config files newer than that commit)' -f (Get-Date), $h, $n; Add-Content -LiteralPath (Join-Path $p 'Saved\JamBuild\Logs\build_info.txt') -Value $line; $line"
+if defined BUILDEDITOR (
+  echo Building reflectionsEditor ... log: Saved\JamBuild\Logs\build_editor.log
+  call "%BUILDBAT%" reflectionsEditor Win64 Development -Project="%PROJ%\reflections.uproject" -WaitMutex > "%PROJ%\Saved\JamBuild\Logs\build_editor.log" 2>&1
+  if errorlevel 1 (echo reflectionsEditor build FAILED; see build_editor.log. Nothing was cooked. & exit /b 7)
+  echo reflectionsEditor built.
+)
+if defined EXTRASONLY (
+  if not exist "%STAGE%\reflections.exe" (echo --extras-only: no staged build at %STAGE%. Run without it first. & exit /b 1)
+  echo --extras-only: no build or cook; refreshing the notices and, with --with-npc-relay, the relay in %STAGE%
+  goto extras
 )
 echo Packaging %PROJ% ... log: Saved\JamBuild\Logs\uat_package.log
 call "%UAT%" %ARGS% > "%PROJ%\Saved\JamBuild\Logs\uat_package.log" 2>&1
 set RC=%ERRORLEVEL%
 echo UAT exit code %RC% (0 = success). Output: %STAGE%
 if not "%RC%"=="0" exit /b %RC%
+:extras
 if exist "%NOTICES%" (copy /y "%NOTICES%" "%STAGE%\" >nul || (echo Copying THIRD_PARTY_NOTICES.txt failed. & exit /b 8))
 if defined WITHRELAY (
   call :stagerelay

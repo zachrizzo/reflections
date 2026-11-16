@@ -7,7 +7,10 @@
 #include "GameFlow/ReflectionsGameFlowSettings.h"
 #include "GameFlow/ReflectionsGameFlowText.h"
 #include "GameFlow/ReflectionsGameFlowWorldSubsystem.h"
+#include "HAL/PlatformTime.h"
+#include "Rendering/DrawElements.h"
 #include "Styling/CoreStyle.h"
+#include "Widgets/SLeafWidget.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Layout/SBackgroundBlur.h"
 #include "Widgets/Layout/SBorder.h"
@@ -110,28 +113,123 @@ namespace ReflectionsFlowStyle
             ];
     }
 
-    /** Three dots, one per side. */
-    static TSharedRef<SWidget> SideMarks()
-    {
-        TSharedRef<SHorizontalBox> Row = SNew(SHorizontalBox);
-        const TPair<FLinearColor, FText> Marks[] = {
-            {Gray, FLOWTEXT("World.Gray", "PEWTERSIDE")}, {Red, FLOWTEXT("World.Red", "GILTSIDE")}, {White, FLOWTEXT("World.White", "FROSTSIDE")}};
-        for (const TPair<FLinearColor, FText>& Mark : Marks)
-        {
-            Row->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 8, 0)
-            [
-                SNew(SBox).WidthOverride(10).HeightOverride(10)[SNew(SImage).Image(Rounded(5.0f)).ColorAndOpacity(Mark.Key)]
-            ];
-            Row->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 22, 0)
-            [
-                Text(Mark.Value, Font(TEXT("Bold"), 12, 300), Mark.Key)
-            ];
-        }
-        return Row;
-    }
+    // (The three side marks were removed with the one-city title: no side names on any screen now.)
 }
 
 using namespace ReflectionsFlowStyle;
+
+// ---- Spinner and loading screen ----------------------------------------------------------------------------
+
+/**
+ * A ring of gold dots, the bright one going round. Painted from the clock alone (no UObjects, no active timer), so
+ * it keeps turning on the movie player's loading thread while the game thread is busy loading a map.
+ */
+class SReflectionsSpinner : public SLeafWidget
+{
+public:
+    SLATE_BEGIN_ARGS(SReflectionsSpinner) : _Diameter(30.0f) {}
+        SLATE_ARGUMENT(float, Diameter)
+    SLATE_END_ARGS()
+
+    void Construct(const FArguments& InArgs)
+    {
+        Diameter = InArgs._Diameter;
+        Dot = Rounded(4.0f);  // brushes are made here, on the game thread
+        SetCanTick(false);
+        ForceVolatile(true);  // repaint every frame
+    }
+
+    virtual FVector2D ComputeDesiredSize(float) const override
+    {
+        return FVector2D(Diameter, Diameter);
+    }
+
+    virtual int32 OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
+        FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const override
+    {
+        constexpr int32 Dots = 8;
+        const float DotSize = FMath::Max(3.0f, Diameter * 0.2f);
+        const FVector2f Size = AllottedGeometry.GetLocalSize();
+        const FVector2f Center = Size * 0.5f;
+        const float Radius = FMath::Max(1.0f, FMath::Min(Size.X, Size.Y) * 0.5f - DotSize * 0.5f);
+        const double Steps = FPlatformTime::Seconds() * 11.0;
+        const int32 Lead = static_cast<int32>(FMath::Fmod(Steps, static_cast<double>(Dots)));
+        const FLinearColor Tint = InWidgetStyle.GetColorAndOpacityTint();
+        for (int32 Index = 0; Index < Dots; ++Index)
+        {
+            const float Angle = static_cast<float>(UE_TWO_PI * Index / Dots - UE_HALF_PI);
+            const FVector2f Position = Center + FVector2f(FMath::Cos(Angle), FMath::Sin(Angle)) * Radius - FVector2f(DotSize * 0.5f);
+            const int32 Behind = (Lead - Index + Dots) % Dots;
+            FLinearColor Color = Gold * Tint;
+            Color.A *= FMath::Lerp(1.0f, 0.15f, static_cast<float>(Behind) / (Dots - 1));
+            FSlateDrawElement::MakeBox(OutDrawElements, LayerId,
+                AllottedGeometry.ToPaintGeometry(FVector2f(DotSize, DotSize), FSlateLayoutTransform(Position)),
+                Dot, ESlateDrawEffect::None, Color);
+        }
+        return LayerId + 1;
+    }
+
+private:
+    float Diameter = 30.0f;
+    const FSlateBrush* Dot = nullptr;
+};
+
+void SReflectionsLoadingScreen::Construct(const FArguments& InArgs)
+{
+    ChildSlot
+    [
+        SNew(SBorder)
+        .BorderImage(Solid())
+        .BorderBackgroundColor(Ink)
+        .Padding(FMargin(0))
+        [
+            SNew(SOverlay)
+            + SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Center)
+            [
+                SNew(SVerticalBox)
+                + SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center)
+                [
+                    Text(InArgs._Title, Font(TEXT("Bold"), 54, 220), Paper, ETextJustify::Center)
+                ]
+                + SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center).Padding(0, 10, 0, 0)
+                [
+                    Rule(Red, 120.0f, 3.0f)
+                ]
+                + SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Center).Padding(0, 22, 0, 0)
+                [
+                    SNew(SBox).WidthOverride(640)
+                    [
+                        Text(InArgs._Line, Font(TEXT("Italic"), 16), PaperDim, ETextJustify::Center, true)
+                    ]
+                ]
+            ]
+            + SOverlay::Slot().HAlign(HAlign_Right).VAlign(VAlign_Bottom).Padding(FMargin(0, 0, 60, 52))
+            [
+                SNew(SHorizontalBox)
+                + SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 14, 0)
+                [
+                    SNew(SReflectionsSpinner).Diameter(30.0f)
+                ]
+                + SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+                [
+                    SNew(STextBlock)
+                    .Text(InArgs._Status)
+                    .Font(Font(TEXT("Bold"), 15, 200))
+                    .ColorAndOpacity(FSlateColor(Paper))
+                ]
+            ]
+        ]
+    ];
+}
+
+TSharedRef<SReflectionsLoadingScreen> SReflectionsLoadingScreen::Create(const TAttribute<FText>& Status)
+{
+    // Plain-text copies: a String Table text would resolve through its table when painted, off the game thread.
+    const FText Title = FText::FromString(FLOWTEXT("Game.Title", "REFLECTIONS").ToString());
+    const FText Line = FText::FromString(FLOWTEXT("Game.Opening",
+        "The Tarnish is spreading through Lanthorne. It takes hold of its people and fills them with dark magic.").ToString());
+    return SNew(SReflectionsLoadingScreen).Status(Status).Title(Title).Line(Line);
+}
 
 // ---- Button ------------------------------------------------------------------------------------------------
 
@@ -259,6 +357,33 @@ void SReflectionsFlowHud::Construct(const FArguments& InArgs)
 
     ChildSlot
     [
+        SNew(SOverlay)
+        // "Saving..." with a spinner, bottom right, while a save is written (autosaves, quick and manual saves).
+        + SOverlay::Slot().HAlign(HAlign_Right).VAlign(VAlign_Bottom).Padding(FMargin(0, 0, 40, 36))
+        [
+            SNew(SHorizontalBox)
+            .Visibility_Lambda([Weak, FlowOf]()
+            {
+                const UReflectionsGameFlowWorldSubsystem* Self = Weak.Get();
+                const UReflectionsGameFlowSubsystem* Flow = FlowOf();
+                return Self && Flow && Self->IsPlaying() && Flow->IsSaveIndicatorOn() && !Flow->IsLoadingScreenActive()
+                    ? EVisibility::HitTestInvisible : EVisibility::Collapsed;
+            })
+            + SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 10, 0)
+            [
+                SNew(SReflectionsSpinner).Diameter(20.0f)
+            ]
+            + SHorizontalBox::Slot().AutoWidth().VAlign(VAlign_Center)
+            [
+                SNew(STextBlock)
+                .Text(LOCTEXT("SavingIndicator", "Saving..."))
+                .Font(Font(TEXT("Bold"), 13, 200))
+                .ShadowOffset(FVector2D(1.0, 1.0))
+                .ColorAndOpacity(FSlateColor(Paper))
+            ]
+        ]
+        + SOverlay::Slot()
+        [
         SNew(SOverlay)
         .Visibility_Lambda([Weak]()
         {
@@ -443,6 +568,7 @@ void SReflectionsFlowHud::Construct(const FArguments& InArgs)
                     ]
                 ]
             ]
+        ]
         ]
     ];
 }
@@ -780,7 +906,7 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildTitle()
     const bool bCanContinue = NewestSlot != INDEX_NONE;
 
     TSharedRef<SVerticalBox> Column = SNew(SVerticalBox);
-    Column->AddSlot().AutoHeight()[SideMarks()];
+    // No side marks on the title: the game is one city now (the side names live on the victory screen only).
     Column->AddSlot().AutoHeight().Padding(0, 14, 0, 0)
     [
         Text(FLOWTEXT("Game.Title", "REFLECTIONS"), Font(TEXT("Bold"), 80, 220), Paper)
@@ -790,7 +916,8 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildTitle()
     [
         SNew(SBox).WidthOverride(560)
         [
-            Text(FLOWTEXT("Game.Theme", "Lanthorne was cut into three reflections, and only one is the version its maker meant. The Tarnish wants the final cut."),
+            // New key (not Game.Theme): the String Table asset still holds the old Game.Theme text, and asset rows win.
+            Text(FLOWTEXT("Game.Opening", "The Tarnish is spreading through Lanthorne. It takes hold of its people and fills them with dark magic."),
                 Font(TEXT("Italic"), 19), Paper, ETextJustify::Left, true)
         ]
     ];
@@ -798,7 +925,7 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildTitle()
     [
         SNew(SBox).WidthOverride(560)
         [
-            Text(FLOWTEXT("Game.Tagline", "Three reflections of one city, and a Tarnish creeping through all of them. Step through the reflections, find the three mirror pages, and cast the spell that burns it out."),
+            Text(FLOWTEXT("Game.Summary", "Wren Hale, the Silverer, is the only one who can burn the Tarnish out of Lanthorne."),
                 Font(TEXT("Regular"), 14), PaperDim, ETextJustify::Left, true)
         ]
     ];
@@ -844,10 +971,6 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildTitle()
         + SOverlay::Slot().HAlign(HAlign_Left).VAlign(VAlign_Bottom).Padding(FMargin(110, 0, 0, 40))
         [
             BuildFooter()
-        ]
-        + SOverlay::Slot().HAlign(HAlign_Right).VAlign(VAlign_Bottom).Padding(FMargin(0, 0, 40, 40))
-        [
-            Text(FLOWTEXT("Game.JamLine", "Epic AI MegaJam 2026"), Font(TEXT("Regular"), 12, 200), PaperDim)
         ];
 }
 
@@ -871,6 +994,8 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildPause()
     Column->AddSlot().AutoHeight().HAlign(HAlign_Center)[MakeButton(FLOWTEXT("Settings.Button", "Settings"), EReflectionsFlowAction::Settings)];
     Column->AddSlot().AutoHeight().HAlign(HAlign_Center)[MakeButton(LOCTEXT("Restart", "Restart from checkpoint"), EReflectionsFlowAction::Restart)];
     Column->AddSlot().AutoHeight().HAlign(HAlign_Center)[MakeButton(LOCTEXT("QuitToTitle", "Quit to title"), EReflectionsFlowAction::QuitToTitle)];
+    // Straight out, without the title's map reload first (it asks first: anything since the last save is lost).
+    Column->AddSlot().AutoHeight().HAlign(HAlign_Center)[MakeButton(LOCTEXT("QuitToDesktop", "Quit to desktop"), EReflectionsFlowAction::QuitGame)];
     if (Flow)
     {
         Column->AddSlot().AutoHeight().HAlign(HAlign_Center).Padding(0, 18, 0, 0)
@@ -894,12 +1019,9 @@ namespace
 {
     FText SideText(EReflectionsWorld World)
     {
-        switch (World)
-        {
-        case EReflectionsWorld::Gray: return FLOWTEXT("Save.Side.Gray", "Pewterside");
-        case EReflectionsWorld::White: return FLOWTEXT("Save.Side.White", "Frostside");
-        default: return FLOWTEXT("Save.Side.Red", "Giltside");
-        }
+        // One city now: the save slots name the place, not a side (the map is one city, no stepping through).
+        (void)World;
+        return FLOWTEXT("Save.Place", "Lanthorne");
     }
 
     FText SlotDetail(const FReflectionsSaveSlotInfo& Info)
@@ -974,7 +1096,7 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildLoadGame()
     Column->AddSlot().AutoHeight().Padding(0, 10, 0, 0)[BuildSaveStatus()];
     Column->AddSlot().AutoHeight().Padding(0, 6, 0, 0)
     [
-        Text(FLOWTEXT("Save.LoadNote", "The autosave follows you: it saves at every step between sides and every mirror page. Quick load: F9."),
+        Text(FLOWTEXT("Save.LoadNote2", "The autosave follows you: it saves at every checkpoint. Quick load: F9."),
             Font(TEXT("Regular"), 13), PaperDim, ETextJustify::Left, true)
     ];
     Column->AddSlot().AutoHeight().HAlign(HAlign_Left).Padding(0, 14, 0, 0)[MakeButton(LOCTEXT("Back", "Back"), EReflectionsFlowAction::Back)];
@@ -1069,8 +1191,6 @@ namespace
             {LOCTEXT("CPage", "Next / previous spell page"), LOCTEXT("KPage", "] / ["), LOCTEXT("PPage", "D-pad right / left")},
             {LOCTEXT("CCraft", "Open spell crafting"), LOCTEXT("KCraft", "K"), LOCTEXT("PCraft", "View")},
             {LOCTEXT("CCrafted", "Select crafted spell 5-8"), LOCTEXT("KCrafted", "5 6 7 8"), LOCTEXT("PCrafted", "D-pad up")},
-            {FLOWTEXT("Controls.StepUp", "Step up into the next side"), LOCTEXT("KRise", "X (hold)"), LOCTEXT("PRise", "Y (hold)")},
-            {FLOWTEXT("Controls.StepDown", "Step down into the previous side"), LOCTEXT("KSink", "Z (hold)"), LOCTEXT("PSink", "R3 (hold)")},
             {LOCTEXT("CMouse", "Free the mouse cursor (HUD buttons)"), LOCTEXT("KMouse", "Right Alt (hold)"), FText::FromString(TEXT("-"))},
             {LOCTEXT("CJournal", "Journal"), LOCTEXT("KJournal", "L"), LOCTEXT("PJournal", "Start > Journal")},
             {LOCTEXT("CSpeak", "Speak with quest people"), LOCTEXT("KSpeak", "E"), LOCTEXT("PSpeak", "D-pad down")},
@@ -1115,7 +1235,7 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildControls()
     Column->AddSlot().AutoHeight()[Table];
     Column->AddSlot().AutoHeight().Padding(0, 14, 0, 0)
     [
-        Text(FLOWTEXT("Controls.Note", "Stepping through takes a mirror shard and most of your magic. In menus: D-pad or stick to move, A to select, B to go back."),
+        Text(FLOWTEXT("Controls.Note2", "In menus: D-pad or stick to move, A to select, B to go back."),
             Font(TEXT("Regular"), 12), PaperDim, ETextJustify::Left, true)
     ];
     Column->AddSlot().AutoHeight().HAlign(HAlign_Left).Padding(0, 16, 0, 0)[MakeButton(LOCTEXT("Back", "Back"), EReflectionsFlowAction::Back, true)];
@@ -1131,64 +1251,50 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildCredits(bool bEmbedded)
         Column->AddSlot().AutoHeight()[Text(LOCTEXT("CreditsTitle", "CREDITS"), Font(TEXT("Bold"), 32, 300), Paper)];
         Column->AddSlot().AutoHeight().Padding(0, 8, 0, 18)[Rule(Red, 80.0f, 3.0f)];
     }
-    auto Heading = [&Column](const FText& InText)
+    // The lead credit first and largest; anyone else who worked on the game goes under it (Credits.Crew, one per
+    // line, empty by default). Then the licence block, small, at the end: only what the licences ask for.
+    // New keys on purpose: the old Credits.* rows in /Game/UI/ST_GameFlowText still hold the jam-era text.
+    Column->AddSlot().AutoHeight().Padding(0, 4, 0, 4)
+    [
+        Text(FLOWTEXT("Credits.LeadRole", "CREATED BY"), Font(TEXT("Bold"), 13, 300), Gold)
+    ];
+    Column->AddSlot().AutoHeight()
+    [
+        Text(FLOWTEXT("Credits.Lead", "Jah Markabowi"), Font(TEXT("Bold"), bEmbedded ? 30 : 38, 60), Paper)
+    ];
+    const TArray<FText> Crew = ReflectionsFlowText::GetLines(TEXT("Credits.Crew"), FText::GetEmpty());
+    if (Crew.Num() > 0)
     {
-        Column->AddSlot().AutoHeight().Padding(0, 10, 0, 6)[Text(InText, Font(TEXT("Bold"), 13, 300), Gold)];
-    };
-    auto Line = [&Column](const FText& InText)
-    {
-        Column->AddSlot().AutoHeight().Padding(0, 2)[Text(InText, Font(TEXT("Regular"), 15), Paper, ETextJustify::Left, true)];
-    };
-    Column->AddSlot().AutoHeight()[Text(FLOWTEXT("Credits.Game", "REFLECTIONS  -  a 2026 Epic AI MegaJam entry"), Font(TEXT("Bold"), 17), Paper)];
-    Heading(LOCTEXT("CreditsTeamHead", "TEAM"));
-    for (const FText& Entry : ReflectionsFlowText::GetLines(TEXT("Credits.Team"), LOCTEXT("Credits.Team", "Team names to come")))
-    {
-        Line(Entry);
-    }
-    Heading(LOCTEXT("CreditsAIHead", "BUILT WITH AI AGENTS"));
-    // Word for word from ArtDirection/Submission/ai-declaration.md "Credits block" (licence attributions).
-    for (const FText& Entry : ReflectionsFlowText::GetLines(TEXT("Credits.Tools"), LOCTEXT("Credits.Tools",
-        "Code: Claude Code (Anthropic), OpenAI Codex\n"
-        "Wardrobe textures and references: OpenAI image generation\n"
-        "3D garments: Tencent Hunyuan3D-2 (Powered by Tencent Hunyuan)\n"
-        "Spell animations: NVIDIA Kimodo text-to-motion (Kimodo-SOMA-RP-v1.1, licensed by NVIDIA Corporation under the NVIDIA Open Model License)\n"
-        "Characters: Epic MetaHuman Creator\n"
-        "Character voices: AI-generated with Google Gemini (designed voices, Gemini 3.8 Flash TTS) and OpenAI (gpt-realtime-2.1, gpt-4o-mini-tts), not human actors\n"
-        "Live NPC replies: Google Gemini (gemini-3.5-transcribe-live, gemini-3.5-flash-lite, gemini-3.8-flash-tts). What you say to NPCs is sent to Google.\n"
-        "Music: Eleven Music by ElevenLabs (elevenlabs.io)\n"
-        "Fire and water spell sounds: ElevenLabs (elevenlabs.io); all other sounds procedurally synthesized")))
-    {
-        Line(Entry);
-    }
-    Heading(LOCTEXT("CreditsThanksHead", "BUILT ON"));
-    const TArray<FText> BuiltOn = ReflectionsFlowText::GetLines(TEXT("Credits.Thanks"), LOCTEXT("Credits.Thanks",
-        "Epic's Game Animation Sample and Third Person template\n"
-        "Made with Unreal Engine 5.9"));
-    // The map's licence credits (OpenStreetMap's ODbL and the CC BY models and scan need them on screen), word for word
-    // from ai-declaration.md "Credits block". They go just before the last BUILT ON line, the engine line.
-    const TArray<FText> MapCredits = ReflectionsFlowText::GetLines(TEXT("Credits.Map"), LOCTEXT("Credits.Map",
-        "Map data \u00A9 OpenStreetMap contributors, ODbL (openstreetmap.org/copyright)\n"
-        "Landmark models adapted from Codriver 3D (3d-assets.codriver.io), CC BY 4.0\n"
-        "Albert Memorial scan by artfletch (Zenodo), CC BY 4.0 \u00B7 Street props by Minimaliano (Fab), CC BY 4.0\n"
-        "Textures and props: Poly Haven (CC0) \u00B7 Trees: Cosmo Tree Gen by FrogCosmonaut (MIT) \u00B7 Signs set in Noto Serif (SIL OFL 1.1)\n"
-        "Full licence notices: THIRD_PARTY_NOTICES.txt"));
-    for (int32 Index = 0; Index < BuiltOn.Num(); ++Index)
-    {
-        if (Index == BuiltOn.Num() - 1)
+        Column->AddSlot().AutoHeight().Padding(0, 14, 0, 0)[SNew(SSpacer)];
+        for (const FText& Entry : Crew)
         {
-            for (const FText& Entry : MapCredits)
-            {
-                Line(Entry);
-            }
+            Column->AddSlot().AutoHeight().Padding(0, 2)[Text(Entry, Font(TEXT("Regular"), 16), Paper, ETextJustify::Left, true)];
         }
-        Line(BuiltOn[Index]);
     }
-    if (BuiltOn.Num() == 0)
+    Column->AddSlot().AutoHeight().Padding(0, bEmbedded ? 18 : 26, 0, 8)
+    [
+        Text(FLOWTEXT("Credits.NoticesHead", "LICENSES AND THIRD-PARTY NOTICES"), Font(TEXT("Bold"), 11, 250), PaperDim)
+    ];
+    // From ArtDirection/Submission/THIRD_PARTY_NOTICES.txt (what ships with the MedievalLondon map), plus the
+    // Unreal Engine notice from Epic's EULA and the voice disclosure OpenAI's usage policies ask for.
+    const TArray<FText> Notices = ReflectionsFlowText::GetLines(TEXT("Credits.Notices"), LOCTEXT("Credits.Notices",
+        "Reflections uses the Unreal® Engine. Unreal® is a trademark or registered trademark of Epic Games, Inc. in the United States of America and elsewhere.\n"
+        "Unreal® Engine, Copyright 1998–2026, Epic Games, Inc. All rights reserved.\n"
+        "Includes content from Epic Games' Game Animation Sample and Third Person template. Characters made with MetaHuman.\n"
+        "Map data © OpenStreetMap contributors, available under the Open Database License (ODbL): openstreetmap.org/copyright\n"
+        "Spell animations: NVIDIA Kimodo (Kimodo-SOMA-RP-v1.1), licensed by NVIDIA Corporation under the NVIDIA Open Model License.\n"
+        "3D garments: Tencent Hunyuan3D-2. Powered by Tencent Hunyuan.\n"
+        "Music: Eleven Music by ElevenLabs (elevenlabs.io). Fire and water spell sounds: ElevenLabs (elevenlabs.io).\n"
+        "Character voices are synthesized with Google Gemini and OpenAI text-to-speech; they are not human actors.\n"
+        "Market well modelled with TripoSR (MIT License). Cobblestone and grass textures: Poly Haven (CC0).\n"
+        "Portions of this software are copyright © The FreeType Project (www.freetype.org). All rights reserved.\n"
+        "Full licence texts: THIRD_PARTY_NOTICES.txt"));
+    for (const FText& Entry : Notices)
     {
-        for (const FText& Entry : MapCredits)
-        {
-            Line(Entry);
-        }
+        Column->AddSlot().AutoHeight().Padding(0, 1)
+        [
+            Text(Entry, Font(TEXT("Regular"), bEmbedded ? 11 : 12), PaperDim, ETextJustify::Left, true)
+        ];
     }
     if (!bEmbedded)
     {
@@ -1259,6 +1365,15 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildSettings()
                 Font(TEXT("Regular"), 13), PaperDim, ETextJustify::Left, true)
         ]
     ];
+    // Privacy: live voice talk with townsfolk sends the player's speech to Google (only with the player's own key).
+    Column->AddSlot().AutoHeight().Padding(0, 0, 0, 8)
+    [
+        SNew(SBox).WidthOverride(640)
+        [
+            Text(FLOWTEXT("Settings.VoicePrivacy", "Voice chat sends what you say to Google to generate replies. It stays off unless you add your own Google API key."),
+                Font(TEXT("Regular"), 12), PaperDim, ETextJustify::Left, true)
+        ]
+    ];
     Column->AddSlot().AutoHeight()[MakeButton(FLOWTEXT("Settings.Apply", "Apply"), EReflectionsFlowAction::SettingsApply, true)];
     Column->AddSlot().AutoHeight()[MakeButton(FLOWTEXT("Settings.AutoDetect", "Auto-detect"), EReflectionsFlowAction::SettingsDefaults)];
     Column->AddSlot().AutoHeight()[MakeButton(LOCTEXT("Back", "Back"), EReflectionsFlowAction::Back)];
@@ -1326,6 +1441,20 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildConfirm()
         Box->AddSlot().AutoHeight().Padding(0, 12, 0, 0)[BuildFooter()];
         return MakePanel(Box, 600.0f);
     }
+    if (Self && Self->GetConfirmAction() == EReflectionsFlowAction::QuitGame)
+    {
+        TSharedRef<SVerticalBox> Box = SNew(SVerticalBox);
+        Box->AddSlot().AutoHeight()[Text(LOCTEXT("ConfirmDesktopTitle", "Quit to desktop?"), Font(TEXT("Bold"), 24), Paper, ETextJustify::Left, true)];
+        Box->AddSlot().AutoHeight().Padding(0, 12, 0, 22)
+        [
+            Text(LOCTEXT("ConfirmDesktopBody", "Your saves and last checkpoint are kept. Anything since then is lost."),
+                Font(TEXT("Regular"), 15), PaperDim, ETextJustify::Left, true)
+        ];
+        Box->AddSlot().AutoHeight()[MakeButton(LOCTEXT("ConfirmDesktop", "Quit"), EReflectionsFlowAction::ConfirmYes, true)];
+        Box->AddSlot().AutoHeight()[MakeButton(LOCTEXT("Cancel", "Cancel"), EReflectionsFlowAction::Back)];
+        Box->AddSlot().AutoHeight().Padding(0, 12, 0, 0)[BuildFooter()];
+        return MakePanel(Box, 600.0f);
+    }
     const bool bRestart = !Self || Self->GetConfirmAction() == EReflectionsFlowAction::Restart;
     TSharedRef<SVerticalBox> Column = SNew(SVerticalBox);
     Column->AddSlot().AutoHeight()
@@ -1360,7 +1489,7 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildLose()
     [
         SNew(SBox).WidthOverride(620)
         [
-            Text(FText::Format(FLOWTEXT("Lose.Body", "The Tarnish reached {0} of {1}. Its hold on Lanthorne is complete, and the reflections go dark one by one."), Count, Cap),
+            Text(FText::Format(FLOWTEXT("Lose.Body2", "The Tarnish reached {0} of {1}. Its hold on Lanthorne is complete."), Count, Cap),
                 Font(TEXT("Regular"), 17), Paper, ETextJustify::Center, true)
         ]
     ];
@@ -1377,7 +1506,6 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildLose()
 TSharedRef<SWidget> SReflectionsFlowMenu::BuildVictory()
 {
     TSharedRef<SVerticalBox> Left = SNew(SVerticalBox);
-    Left->AddSlot().AutoHeight()[SideMarks()];
     Left->AddSlot().AutoHeight().Padding(0, 14, 0, 0)
     [
         Text(FLOWTEXT("Victory.Title", "THE TARNISH\nIS BURNED OUT"), Font(TEXT("Bold"), 50, 160), Gold)
@@ -1387,7 +1515,7 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildVictory()
     [
         SNew(SBox).WidthOverride(520)
         [
-            Text(FLOWTEXT("Victory.Body", "The three mirror pages became one spell, and the Tarnish burned away in Frostside's tower. The tarnished wake, the rifts close, and every side of Lanthorne goes back to being itself."),
+            Text(FLOWTEXT("Victory.Body2", "The Final Spell burned the Tarnish out of its last face. The tarnished wake, and Lanthorne is itself again."),
                 Font(TEXT("Regular"), 17), Paper, ETextJustify::Left, true)
         ]
     ];

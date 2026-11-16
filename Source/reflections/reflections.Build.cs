@@ -32,6 +32,8 @@ public class reflections : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] { "MassCommon", "MassMovement", "MassNavigation", "MassZoneGraphNavigation", "MassRepresentation", "MassLOD", "MassSignals", "MassCrowd", "ZoneGraph", "ZoneGraphAnnotations", "MassAIBehavior" });
 		// Cutscene player (Cinematics/*): Level Sequences with runtime bindings and a transform origin.
 		PrivateDependencyModuleNames.AddRange(new string[] { "LevelSequence", "MovieScene", "MovieSceneTracks" });
+		// Game flow (GameFlow/*): the loading screen painted by the movie player while a map loads (packaged builds).
+		PrivateDependencyModuleNames.Add("MoviePlayer");
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.AddRange(new string[] {

@@ -13,6 +13,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "NPC/ReflectionsNpcReactionComponent.h"
 #include "NPC/ReflectionsNpcSubsystem.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Quests/ReflectionsQuestWorldSubsystem.h"
+#include "Squads/ReflectionsSquad.h"
+#include "Squads/ReflectionsSquadSubsystem.h"
 #include "Voice/ReflectionsNpcDialogueOverlay.h"
 #include "Voice/ReflectionsAmbientTalk.h"
 #include "Worlds/ReflectionsSealedDoor.h"
@@ -32,7 +36,6 @@ namespace
 {
     constexpr float PreconnectDelay = 0.35f;
     constexpr float ConversationSeconds = 5.0f;
-    constexpr float FacingYawSpeed = 300.0f;
 
     UReflectionsNpcReactionComponent* NpcOf(AActor* Actor)
     {
@@ -100,7 +103,9 @@ void UReflectionsVoiceInteractionSubsystem::EnsureSetup()
     };
     Input = NewObject<UInputComponent>(PC);
     Input->RegisterComponent();
-    for (const FKey& Key : {EKeys::T, EKeys::Gamepad_DPad_Down})
+    // One talk key: E on the keyboard (T still works), D-pad Down on a pad. OnTalkPressed decides: a person with quest
+    // business gets the quest dialogue, anyone else live voice. The quest system binds neither while this exists.
+    for (const FKey& Key : {EKeys::E, EKeys::T, EKeys::Gamepad_DPad_Down})
     {
         Input->BindKey(Key, IE_Pressed, this, &UReflectionsVoiceInteractionSubsystem::OnTalkPressed).bConsumeInput = false;
         Input->BindKey(Key, IE_Released, this, &UReflectionsVoiceInteractionSubsystem::OnTalkReleased).bConsumeInput = false;
@@ -194,14 +199,19 @@ void UReflectionsVoiceInteractionSubsystem::Tick(float DeltaTime)
     if (Overlay)
     {
         const bool bTyping = Overlay->IsTyping();
-        Overlay->SetPrompt(Next && !Voice->IsListening() && !bTyping
-            ? LOCTEXT("Prompt", "Hold T or D-pad Down to talk   ·   Enter to type") : FText::GetEmpty());
-        switch (Voice->GetState())
-        {
-        case EReflectionsDialogueState::Listening: Overlay->SetStatus(LOCTEXT("Listening", "● Listening")); break;
-        case EReflectionsDialogueState::Thinking: Overlay->SetStatus(LOCTEXT("Thinking", "…")); break;
-        default: Overlay->SetStatus(FText::GetEmpty()); break;
-        }
+        // The quest system shows "E  Talk to <name>" for a person with quest business; then E is the quest's.
+        const UReflectionsQuestWorldSubsystem* Quests = UReflectionsQuestWorldSubsystem::Get(this);
+        const bool bQuestPrompt = Quests && Quests->GetPromptTarget() && !Quests->GetPromptText().IsEmpty();
+        const bool bQuestBusy = Quests && (Quests->IsTalkOpen() || Quests->IsJournalOpen());
+        const bool bPad = Quests && Quests->IsUsingGamepad();
+        Overlay->SetPrompt(Next && !Voice->IsListening() && !bTyping && !bQuestPrompt && !bQuestBusy
+            ? (bPad ? LOCTEXT("PromptPad", "Hold D-pad Down to speak") : LOCTEXT("Prompt", "Hold E to speak   ·   Enter to type"))
+            : FText::GetEmpty());
+        Overlay->SetStatus(FText::GetEmpty());
+        // A clear listening display while the mic is open, then a thinking beat until the NPC answers.
+        Overlay->SetListening(Voice->IsListening(), Voice->GetMicLevel());
+        Overlay->SetThinking(Voice->GetState() == EReflectionsDialogueState::Thinking
+            ? FText::FromString(Voice->GetSpeakerName()) : FText::GetEmpty());
         if (Voice->IsSpeaking() || Voice->IsBusy())
         {
             // Walk away mid-reply: the voice fades with distance and the subtitle goes once out of earshot.
@@ -227,30 +237,31 @@ void UReflectionsVoiceInteractionSubsystem::Tick(float DeltaTime)
     }
 }
 
-void UReflectionsVoiceInteractionSubsystem::ShowNoticeOnce()
-{
-    if (bNoticeShown || !Overlay || !Voice || !Voice->IsRelayAvailable()) return;
-    bNoticeShown = true;
-    Overlay->ShowNotice(LOCTEXT("AiNotice", "NPC voices are AI-generated (Google Gemini). What you say to them is sent to Google to make their reply."), 8.0);
-}
-
 void UReflectionsVoiceInteractionSubsystem::OnTalkPressed()
 {
     bHeld = true;
+    bPressWentToQuest = false;
     if (!Voice || (Overlay && Overlay->IsTyping())) return;
+    // Exactly one system acts on each press. The quest dialogue first: while it (or the journal) is open the key is
+    // its own; and a person with quest business (the quest system's "E  Talk to <name>") opens it.
+    if (UReflectionsQuestWorldSubsystem* Quests = UReflectionsQuestWorldSubsystem::Get(this))
+    {
+        if (Quests->IsTalkOpen() || Quests->IsJournalOpen()) { bPressWentToQuest = true; return; }
+        AActor* QuestNpc = Quests->GetPromptTarget();
+        if (QuestNpc && !Quests->GetPromptText().IsEmpty() && Quests->OpenTalk(QuestNpc, true)) { bPressWentToQuest = true; return; }
+    }
     AActor* Npc = Target.Get();
     if (!Npc) return;
-    // Without live voice, a person with quest business opens the quest talk card instead (baked lines, buttons).
-    if (!Voice->IsRelayAvailable() && UReflectionsRealtimeVoiceComponent::HandleQuestTalkPressed(Npc)) return;
+    // Anyone else: hold to speak, let go to send.
     Voice->ConnectToNpc(Npc);
     Partner = Npc;
-    ShowNoticeOnce();
     Voice->BeginPushToTalk();
 }
 
 void UReflectionsVoiceInteractionSubsystem::OnTalkReleased()
 {
     bHeld = false;
+    if (bPressWentToQuest) { bPressWentToQuest = false; return; }
     if (Voice) Voice->EndPushToTalk();
 }
 
@@ -261,7 +272,6 @@ void UReflectionsVoiceInteractionSubsystem::OnTypePressed()
     if (!Voice || !Overlay || !PC || !Npc || Overlay->IsTyping() || Voice->IsListening()) return;
     Voice->ConnectToNpc(Npc);
     Partner = Npc;
-    ShowNoticeOnce();
     Overlay->OpenTyping(FText::Format(LOCTEXT("TypeHint", "Say something to the {0}...  (Enter to send, Esc to cancel)"),
         FText::FromString(Voice->GetSpeakerName().ToLower())));
     FInputModeUIOnly Mode;
@@ -287,7 +297,6 @@ bool UReflectionsVoiceInteractionSubsystem::SayToNpc(AActor* Npc, const FString&
     Voice->ConnectToNpc(Npc);
     Partner = Npc;
     Target = Npc;
-    ShowNoticeOnce();
     return Voice->SendTypedLine(Text);
 }
 
@@ -312,6 +321,29 @@ bool UReflectionsVoiceInteractionSubsystem::IsInEarshot(const AActor* Npc) const
     return FVector::Dist(Npc->GetActorLocation(), Pawn->GetActorLocation()) <= GetDefault<UReflectionsNpcDialogueSettings>()->SubtitleRadius;
 }
 
+namespace
+{
+    const FName NoStrollTag(TEXT("NPC_NoStroll"));
+    /** In a conversation with the player: crowd spots let go of it, a halted squad stops turning it to its slot. */
+    const FName TalkingTag(TEXT("NPC_Talking"));
+
+    /** A soldier whose squad stands still (not marching, fighting or reforming): it may turn in place to talk. */
+    bool IsInIdleSquad(const AActor* Npc)
+    {
+        const UWorld* World = Npc ? Npc->GetWorld() : nullptr;
+        const UReflectionsSquadSubsystem* Squads = World ? World->GetSubsystem<UReflectionsSquadSubsystem>() : nullptr;
+        if (!Squads) return false;
+        for (const AReflectionsSquad* Squad : Squads->GetSquads())
+        {
+            if (Squad && Squad->IsMember(Npc))
+            {
+                return Squad->State == EReflectionsSquadState::Halted || Squad->State == EReflectionsSquadState::Inactive;
+            }
+        }
+        return false;
+    }
+}
+
 void UReflectionsVoiceInteractionSubsystem::UpdateFacing(float DeltaTime)
 {
     AActor* Npc = Partner.Get();
@@ -323,25 +355,40 @@ void UReflectionsVoiceInteractionSubsystem::UpdateFacing(float DeltaTime)
     const bool bCanTurn = Mood == EReflectionsNpcReaction::Calm || Mood == EReflectionsNpcReaction::Alert ||
         Mood == EReflectionsNpcReaction::Investigating;
     if (!bCanTurn || Reaction->GetEngagedTarget()) { ReleaseFacing(); return; }
-    if (SteeredNpc.Get() != Npc)
+    // A different NPC than last tick: hand the old one back to its routine first.
+    if (TalkTagNpc.IsValid() && TalkTagNpc.Get() != Npc) ReleaseFacing();
+    // Tagged for the conversation (every tick: a crowd spot that lets go removes the NPC_NoStroll it added):
+    // crowd strolling lets go of NPC_NoStroll, crowd spots of NPC_Talking.
+    TalkTagNpc = Npc;
+    Npc->Tags.AddUnique(TalkingTag);
+    if (!Npc->ActorHasTag(NoStrollTag))
     {
-        ReleaseFacing();
-        // A squad or set piece is moving it: leave it alone. The lives system's schedules (Lives_Steered) hand the
-        // body over while the player is near, and take it back the tick after we release it.
-        if (Reaction->IsExternallySteered() && !Npc->ActorHasTag(TEXT("Lives_Steered"))) return;
-        Reaction->SetExternallySteered(true);
-        SteeredNpc = Npc;
+        Npc->Tags.Add(NoStrollTag);
+        bAddedNoStroll = true;
     }
-    AActor* Body = Reaction->GetMovementCharacter();
-    if (!Body) Body = Npc;
     // While pointing the way, face the target instead of the player.
     const bool bPointing = LookTargetNpc.Get() == Npc && FPlatformTime::Seconds() < LookUntil;
-    const FVector ToPlayer = (bPointing ? LookTarget : Pawn->GetActorLocation()) - Body->GetActorLocation();
-    if (ToPlayer.SizeSquared2D() < 1.0) return;
-    const float Desired = ToPlayer.Rotation().Yaw;
-    const FRotator Current = Body->GetActorRotation();
-    const float Yaw = FMath::FixedTurn(Current.Yaw, Desired, FacingYawSpeed * DeltaTime);
-    Body->SetActorRotation(FRotator(0.0f, Yaw, 0.0f));
+    const FVector Point = bPointing ? LookTarget : Pawn->GetActorLocation();
+    UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(this);
+    if (SteeredNpc.Get() != Npc)
+    {
+        // Someone else still moves it. A crowd stroll or spot lets go within a tick or two. A squad keeps its
+        // soldiers: one whose squad stands idle turns in place (yaw only), never while marching or fighting.
+        // The lives system's schedules (Lives_Steered) hand the body over while the player is near.
+        if (Reaction->IsExternallySteered() && !Npc->ActorHasTag(TEXT("Lives_Steered")))
+        {
+            if (Npcs && IsInIdleSquad(Npc)) Npcs->TurnNpcTowards(Npc, Point, DeltaTime);
+            return;
+        }
+        Reaction->SetExternallySteered(true);
+        SteeredNpc = Npc;
+        // It stops walking for the conversation.
+        if (ACharacter* Mover = Reaction->GetMovementCharacter())
+        {
+            if (UCharacterMovementComponent* Movement = Mover->GetCharacterMovement()) Movement->StopMovementImmediately();
+        }
+    }
+    if (Npcs) Npcs->TurnNpcTowards(Npc, Point, DeltaTime);
 }
 
 void UReflectionsVoiceInteractionSubsystem::ReleaseFacing()
@@ -351,6 +398,14 @@ void UReflectionsVoiceInteractionSubsystem::ReleaseFacing()
         if (UReflectionsNpcReactionComponent* Reaction = NpcOf(Npc)) Reaction->SetExternallySteered(false);
     }
     SteeredNpc.Reset();
+    // Back to its routine: crowd strolling and spots may take it again.
+    if (AActor* Npc = TalkTagNpc.Get())
+    {
+        Npc->Tags.Remove(TalkingTag);
+        if (bAddedNoStroll) Npc->Tags.Remove(NoStrollTag);
+    }
+    TalkTagNpc.Reset();
+    bAddedNoStroll = false;
 }
 
 namespace
@@ -505,6 +560,34 @@ bool UReflectionsVoiceInteractionSubsystem::ExecuteAction(AActor* Npc, const FSt
     }
     OutReason = TEXT("unknown action");
     return false;
+}
+
+void UReflectionsVoiceInteractionSubsystem::PressTalkKey(bool bDown)
+{
+    EnsureSetup();
+    if (bDown) OnTalkPressed();
+    else OnTalkReleased();
+}
+
+FString UReflectionsVoiceInteractionSubsystem::GetTalkPromptText() const
+{
+    const UReflectionsQuestWorldSubsystem* Quests = UReflectionsQuestWorldSubsystem::Get(this);
+    if (Quests && Quests->GetPromptTarget())
+    {
+        const FText QuestPrompt = Quests->GetPromptText();
+        if (!QuestPrompt.IsEmpty()) return QuestPrompt.ToString();
+    }
+    return Overlay ? Overlay->GetPrompt().ToString() : FString();
+}
+
+bool UReflectionsVoiceInteractionSubsystem::IsListeningShown() const
+{
+    return Overlay && Overlay->IsShowingListening();
+}
+
+bool UReflectionsVoiceInteractionSubsystem::IsThinkingShown() const
+{
+    return Overlay && Overlay->IsShowingThinking();
 }
 
 FString UReflectionsVoiceInteractionSubsystem::DescribeStatus() const

@@ -185,6 +185,54 @@ Cause: `%APPDATA%\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml` (dated 2
 
 ## Sunday plan
 
+**FINAL REPACK runbook, ~17:20 Sun** (orchestrator, 16:4x). It replaces the 15:47 zip. The trigger is "packaging your turn" in `Saved/PIE_QUEUE.md`, with the editor closed, after train #28 and two PIE checks.
+1. **Pre-check:**
+   - no `UnrealEditor.exe` or UBT running;
+   - `UnrealEditor-reflections.dll` is from train #28;
+   - free commit and disk space are fine.
+
+   Then post the freeze in `SAVE-FREEZE-STATUS.md`.
+2. **Package:** `ArtDirection\Packaging\PackageJamBuild.bat`.
+   - Add `--with-npc-relay` **only if the user says yes** (relayed by the orchestrator).
+   - The bat builds the game target, cooks the working tree as it stands, stages, and copies the current `ArtDirection/Submission/THIRD_PARTY_NOTICES.txt` over the stale copy in the stage.
+   - **New:** it appends "package from `<commit>` plus the uncommitted working tree (N Source/Content/Config files newer than that commit)" to `Saved/JamBuild/Logs/build_info.txt`. At 16:45 that read 0ead99e1 + 105 files.
+3. **Before zipping:**
+   - If line 23 of the notices still has `[CONFIRM]`, **tell the orchestrator and wait**.
+   - Run `MeasureJamBuild.ps1` and the Geodata check: Gray London should be around 13 MB, with no tiles, external actors or cells.
+4. **Zip:** `ZipJamBuild.ps1` to `Saved/JamBuild/Zips/Reflections_<commit>_<HHMM>.zip`. Don't rename to the team name or upload; that's the user's step.
+5. **Smoke test, while the editor is still closed** (memory): `powershell -ExecutionPolicy Bypass -File ArtDirection\Packaging\SmokeTestJamBuild.ps1`. About 2 min, synthetic input, so hands off the keyboard and mouse.
+   - **Sequence:** title, New Game (Enter), skip the intro (Esc), town loads, a CSV-profiler frame-time sample at spawn, then `EnableCheats` + `BugItGo 852 -471 150` to the market (the crowd-spot centroid), a second frame-time sample, the E talk prompt, and the pause menu opened and closed with P.
+   - **Results:** screenshots `Saved/JamBuild/Logs/smoke_1..7_*.png`, the log's errors, whether the map loaded, whether a crash folder exists, and median/p95 frame time at both spots.
+   - Look at the screenshots by eye for the talk hint and the pause menu.
+6. **Finish:**
+   - write "packaging DONE HH:MM: …" in `PIE_QUEUE.md`;
+   - end the freeze;
+   - report the zip size, the frame times, the smoke result and any warnings.
+- **NPC relay, for the user's decision:**
+  - `--with-npc-relay` stages the helper: the exe is from Sat 19:10 and is newer than all of its non-test sources. It goes where the game looks, `Content/NpcDialogue/Relay`, and `bLaunchLocalRelay` defaults to true.
+  - **But live voice talk still won't work out of the box.** `ReflectionsNpcRelayHost.cpp:55` only starts the helper if a `keys.json` is next to it, and by design the package never ships keys. Each player would have to add their own Gemini key file; otherwise NPCs use baked lines.
+  - The cost is +13.5 MB zipped and a PyInstaller exe that antivirus may flag.
+
+**JAM PACKAGE BUILT, Sun 15:34–15:47: `Saved/JamBuild/Zips/Reflections_MedievalLondon_0ead99e1.zip`, 1,213.8 MB** (1,272,790,787 bytes).
+- **Source and binaries:**
+  - Built from `0ead99e1` (main = origin/main), with train #25's editor (15:33).
+  - The game target was built in the window: 117 actions, 343 s, exit 0, `reflections.exe` 15:40. It's staged.
+- **Cook and stage:** 9,882 packages in 84 s, **0 errors**, 6 warnings (the old `SetControlRigClass` deprecations). Stage and pak took 69 s.
+- **Container, 1,019.9 MB compressed:**
+  - assets 890.4 MB, shader code 129.5 MB;
+  - top folders: Lanthorne 332.6, RedLondon 206.2, Audio/Jam 113.7, WhiteLondon 63.5;
+  - Gray London 13.1 MB (MedievalOpening 10.3 plus the CC0 leafy-grass textures).
+  - **Geodata check passed:** no tiles, external actors or World Partition cells.
+  - Crowd spots: 3 JSON files in the pak.
+- **Staged:** 1,559 MB, with `THIRD_PARTY_NOTICES.txt` next to the exe.
+- **Matched the estimate** (~1.25 GB).
+- **Jam rules** (orchestrator read the official PDF): no size limit, so it ships as is, uploaded with butler, since itch's web upload stops at 1 GB.
+- **Open:**
+  - the notices' one `[CONFIRM]` (the ODbL public link) before upload;
+  - rename to `<TeamName>_Reflections.zip` at upload;
+  - **not smoke-tested yet**, because the editor was open and memory tight.
+- The editor was relaunched mid-run at the user's request. Free commit fell to 2.8 GB, but nothing failed.
+
 **Jam package, planned for ~15:45 Sun** (orchestrator, 15:0x). The orchestrator writes "packaging your turn" in `Saved/PIE_QUEUE.md` and closes the editor.
 - **Map is now `/Game/GrayLondon/Maps/MedievalLondon`** (Codex). It's set in `GameDefaultMap`, `EditorStartupMap`, `NewGameMap` and `MapsToCook`.
   - It's an ordinary level, not World Partition: one `.umap` (2.2 MB at 12:20), no external actors.
@@ -199,7 +247,7 @@ Cause: `%APPDATA%\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml` (dated 2
 - **Checks:**
   - `DefaultEngine.ini:124` `SecurityToken=` is still blank.
   - `Crowd/Spots` (UFS) covers the new `MedievalLondon.json` (209 KB).
-  - **`DA_PeopleBook` is still stale** (19:45 vs `people.json` 19:57), so the final run stops at the gate until lives re-imports it. `--allow-stale-people` is only for measuring.
+  - `DA_PeopleBook` was re-imported at 15:17 (newer than `people.json`, 19:57 Sat), so the gate passes.
   - `THIRD_PARTY_NOTICES.txt` still describes Gray London's assets (Codriver landmarks, the Albert scan, Minimaliano props), most of which no longer ship. The ODbL credit still applies, because MedievalOpening's ground and buildings are built from the OSM tiles. Submission prep should trim the notices to what ships.
 - **Size estimate: about 1.25 GB zipped.** Method: today's cook roots (always-cook folders, `[AlwaysCookMaps]`, the map), walked through source name tables and priced at the 01:10 build's compressed sizes. 165 new packages are priced by their folder's ratio.
 
@@ -212,8 +260,13 @@ Cause: `%APPDATA%\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml` (dated 2
   | **Zip** | **≈ 1,250** |
 
   Still about 250 MB over 1 GB. Getting under needs the user's calls: Character cap 1024 (~−100), drop SM5 (~−68), voice at 12 kHz (~−51) or 16 kHz (~−34), and the Common dedupe (~−56, in `redlondon-untangle-plan.md`). Or upload with butler, if the jam allows over 1 GB.
+- **Game-target pre-build, Sun 15:28:** aborted by the memory watchdog, exit 30. It started at 7.1 GB free commit, but free commit fell to 2.5 GB within 19 s, before any of the 117 actions finished. Nothing changed. It's built in the window instead, with the editor closed.
+- **Merge 0ead99e1** (Jah's fixes plus Codex's medieval work, 15:28) changed C++ in Hero, Quests, NPC combat/reaction, SpellVFX and CombatEnemy. The running editor is still train #24, so the cook needs a fresh reflectionsEditor.
+  - New flag **`--build-editor`**: it builds `reflectionsEditor Win64 Development` (log `build_editor.log`) before UAT. It refuses while `UnrealEditor.exe` runs, and exits 7 without cooking if the build fails.
+  - **Window command:** `PackageJamBuild.bat --build-editor`. That builds the editor, then the game (the default `-build`), then cooks, stages and paks, all from the same source. Tested with a dry run.
 - **Timing:**
-  - Game-target build: ~5–20 min, unless it's built ahead now that the code is frozen.
+  - Editor build: ~5–15 min.
+  - Game-target build: ~5–10 min.
   - Cook: ~8 min with a warm DDC.
   - Stage and pak: ~3 min.
   - Zip: ~2 min.

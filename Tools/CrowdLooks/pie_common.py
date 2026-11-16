@@ -75,7 +75,7 @@ async def capture(world, path, cam_loc, look_at, fov=40.0, w=640, h=640):
                           camera={'location': {'x': cam_loc.x, 'y': cam_loc.y, 'z': cam_loc.z},
                                   'rotation': {'pitch': rot.pitch, 'yaw': rot.yaw, 'roll': 0.0},
                                   'projectionMode': 'Perspective', 'fOV': fov},
-                          mode='Lit', options={'width': w, 'height': h, 'screenPercentage': 1.0})
+                          mode=globals().get('CAPTURE_MODE', 'Lit'), options={'width': w, 'height': h, 'screenPercentage': 1.0})
     return _save_image(res, path)
 
 

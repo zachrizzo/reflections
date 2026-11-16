@@ -81,6 +81,30 @@ def load_instances(args):
 
 
 NARROW = ROOT / 'Saved' / 'MedievalLondon_Narrow_streets.json'
+# Landmarks placed outside the town's street data (x0, y0, x1, y1 in cm). The walk-in bell tower in the market
+# square (2026-11-15 evening). The streets JSON may also list them itself under "landmark_boxes"/"obstacle_boxes".
+EXTRA_OBSTACLES = {'tower': [(-600.0, -950.0, 600.0, 250.0)]}   # fable-streets' reserved bell-tower box (16:17)
+
+
+def landmark_boxes(d):
+    """Landmark / reserved boxes listed in the streets JSON: "obstacles" [{box}], "reserved_boxes", "landmark_boxes"..."""
+    out = []
+    for key in ('obstacles', 'reserved_boxes', 'landmark_boxes', 'obstacle_boxes'):
+        for b in d.get(key, []) or []:
+            box = b.get('box') if isinstance(b, dict) else b
+            if isinstance(box, (list, tuple)) and len(box) >= 4:
+                out.append(tuple(float(v) for v in box[:4]))
+    return out
+
+
+def street_centres(d):
+    """Every list of {"centre": [[x, y], ...]} in the streets JSON: east-west streets, cross alleys, back lanes..."""
+    out = []
+    for key in ['east_west_streets', 'cross_alleys'] + sorted(k for k in d if k not in ('east_west_streets', 'cross_alleys')):
+        v = d.get(key)
+        if isinstance(v, list) and v and all(isinstance(s, dict) and isinstance(s.get('centre'), list) and len(s['centre']) >= 2 for s in v):
+            out.extend((key, s['centre']) for s in v)
+    return out
 
 
 def load_narrow(path, measure_path):
@@ -101,6 +125,9 @@ def load_narrow(path, measure_path):
             boxes.setdefault('crates' if key == 'crates' else 'cask', []).append((p[0] - half, p[1] - half, p[0] + half, p[1] + half))
     for x, y in d.get('lantern_mouths', []):
         boxes.setdefault('wall', []).append((x - 80.0, y - 80.0, x + 80.0, y + 80.0))
+    for key, rows in EXTRA_OBSTACLES.items():
+        boxes.setdefault(key, []).extend(rows)
+    boxes.setdefault('tower', []).extend(landmark_boxes(d))
     for mesh, rows in m['ism'].items():
         key = MESH_KEYS.get(mesh)
         if key in ('wall', 'gate'):
@@ -109,7 +136,7 @@ def load_narrow(path, measure_path):
     for a in m.get('actors', []):
         if a[1] in ('ReflectionsStoryMarker', 'PlayerStart'): story.append((a[2], a[3], a[0]))
         if 'Well masonry collision' in a[0]: well = (a[2], a[3], 100.0 * max(a[6], a[7]))
-    streets = [s['centre'] for s in d.get('east_west_streets', [])] + [s['centre'] for s in d.get('cross_alleys', [])]
+    streets = [c for _, c in street_centres(d)]
     market = d.get('market_square')
     return boxes, stalls, story, well, str(path.relative_to(ROOT)) + ' (' + d.get('status', '') + ')', streets, market
 
@@ -367,7 +394,10 @@ def load_lives_points():
 LIVES_CLEARANCE = 250.0
 
 
-def build_spots(stalls, obs, nodes, edges, story, well, lives=()):
+LANDMARK_SPOT_CLEARANCE = 150.0   # standing people keep the 1.5 m round a landmark (the bell tower) free, as the town does
+
+
+def build_spots(stalls, obs, nodes, edges, story, well, lives=(), landmarks=None):
     spots = []
     taken = []
 
@@ -392,6 +422,8 @@ def build_spots(stalls, obs, nodes, edges, story, well, lives=()):
 
     def add(name, kind, p, yaw, slots, place, pinned=None, search_m=None, spacing=350.0, clear=SPOT_CLEAR_OF_ROUTE, room=40.0):
         if obs.blocked([p], room)[0] or not far_from_story(p) or not far_from_spots(p, spacing) or not far_from_lives(p, kind):
+            return False
+        if landmarks is not None and landmarks.blocked([p], LANDMARK_SPOT_CLEARANCE)[0]:
             return False
         if route_distance(nodes, edges, [p])[0] < clear:
             return False
@@ -527,7 +559,8 @@ def draw_plan(path, boxes_by_key, nodes, edges, spots, story, crop=None, scale=N
         return ((x - x0) * s, (y1 - y) * s)
 
     colours = {'merchants': (120, 110, 100), 'workshop': (140, 128, 112), 'compound': (100, 92, 84), 'wall': (60, 60, 60),
-               'gate': (40, 40, 40), 'stall': (214, 140, 50), 'crates': (150, 100, 60), 'cask': (130, 80, 50)}
+               'gate': (40, 40, 40), 'stall': (214, 140, 50), 'crates': (150, 100, 60), 'cask': (130, 80, 50),
+               'tower': (160, 30, 30)}
     for key, boxes in boxes_by_key.items():
         for b in boxes:
             (ax, ay), (bx, by) = P(b[0], b[3]), P(b[2], b[1])
@@ -576,7 +609,8 @@ def main():
     obs = Obstacles(boxes)
 
     nodes, edges = build_routes(obs, well, streets, market)
-    spots = build_spots(stalls, obs, nodes, edges, story, well, lives)
+    landmarks = Obstacles(boxes_by_key['tower']) if boxes_by_key.get('tower') else None
+    spots = build_spots(stalls, obs, nodes, edges, story, well, lives, landmarks)
 
     # Checks: every route edge clear of every obstacle; every spot off the walking band and not inside anything.
     bad_edges = sum(1 for a, b in edges if not obs.segment_clear(nodes[a], nodes[b], WALKER - 10.0))

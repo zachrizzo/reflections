@@ -1,6 +1,6 @@
 # NPC talk-back
 
-Players can talk to the people of Lanthorne. Walk up to anyone, **hold T** (gamepad: **hold D-pad Down**) and speak, or press **Enter** and type. The NPC turns to face you and answers in **its own voice**, in character, in one or two short sentences, with subtitles. It can also **do** a few safe things you ask for: point the way, tell you what it knows, call the watch, or end the conversation. Each reply is either newly generated or a saved reply in the same voice that the reply model judged a genuine fit. New generations always outnumber reused ones.
+Players can talk to the people of Lanthorne. Walk up to anyone, **hold E** (gamepad: **hold D-pad Down**) and speak, or press **Enter** and type. A person with quest business gets the quest dialogue on the same key instead. The NPC stops walking, turns to face you and answers in **its own voice**, in character, in one or two short sentences, with subtitles. It can also **do** a few safe things you ask for: point the way, tell you what it knows, call the watch, or end the conversation. Each reply is either newly generated or a saved reply in the same voice that the reply model judged a genuine fit. New generations always outnumber reused ones.
 
 The game never contains an API key. It talks over a local WebSocket to a **dialogue relay**:
 - in a packaged build, a small helper (`NpcDialogueRelay.exe`) that the game starts and stops;
@@ -27,11 +27,11 @@ The game never contains an API key. It talks over a local WebSocket to a **dialo
 
 | Action | Keyboard | Gamepad |
 |---|---|---|
-| Talk (hold, speak, release) | **T** | **D-pad Down** |
+| Talk (hold, speak, release); quest dialogue for a person with quest business | **E** (T also works) | **D-pad Down** |
 | Type a line | **Enter**, type, Enter to send, Esc to cancel | none |
 | Interrupt the NPC | start talking again | start talking again |
 
-The prompt "Hold T or D-pad Down to talk · Enter to type" appears when an NPC is within 4.5 m. Among nearby NPCs, the one the camera faces wins.
+One talk key, routed per press: if the quest system shows "E   Talk to <name>" (a quest giver or target with business), E opens the quest dialogue; anyone else gets "Hold E to speak · Enter to type" (gamepad: "Hold D-pad Down to speak") and live voice. Only one system acts on each press. The prompt appears when an NPC is within 4.5 m; among nearby NPCs, the one the camera faces wins. While the mic is open the screen shows a pulsing ring and a level meter driven by the microphone, "Listening... say anything" and "Let go to send"; then "<name> is thinking..." until the NPC speaks. NPCs in either kind of conversation stop walking and turn to face you through the NPC system's TurnNpcTowards, then go back to their routine. While talking they carry NPC_Talking (crowd spots let go of them; a seated person stands up) and NPC_NoStroll (crowd strolling lets go). A squad soldier turns in place only while its squad is halted or inactive, never while it marches or fights.
 
 ## How a turn works
 
@@ -68,7 +68,7 @@ The shipped mode is **pipeline** (Gemini only):
   - A reused reply starts in about **0.85 s**.
   - A milder retry after a filtered draft adds about 0.9 s.
   - The overlay shows a "…" thinking indicator meanwhile. The relay session opens as soon as you stand near an NPC; the hearing stream opens on the key press and buffers audio until it is ready, so there is no connection wait.
-- **Subtitles:** "You: …" (the transcript or the typed line), then "Lamplighter: …". They sit above the spell bar, fade a few seconds after the NPC stops, and show only while the speaker is within 15 m. AI replies carry a small "AI VOICE" tag.
+- **Subtitles:** "You: …" (the transcript or the typed line), then "Lamplighter: …". They sit above the spell bar, fade a few seconds after the NPC stops, and show only while the speaker is within 15 m. The HUD never mentions AI or Gemini.
 - **Positional voice:** every reply (live, saved or baked) plays from an audio component on the NPC's `head` bone (else 1.6 m above its root), spatialized with the audio session's `/Game/Audio/Jam/Mix/ATT_Jam_NPCVoice` (full volume within 3 m, silent by about 28 m). Walk away mid-reply and it fades.
 - **Interrupting:** talking again (or sending a line) stops the NPC's audio and the relay stops streaming.
 - **Facing:** a calm, alert or curious NPC turns toward the player while you talk, using the unified NPC system's `SetExternallySteered`, and only if nobody else steers it. A fleeing or fighting NPC keeps doing that and answers breathlessly. Squad soldiers and NPCs in a scripted hold (`IsScripted`) are left alone; the latter can't be talked to.
@@ -256,8 +256,7 @@ So a player who says 20 lines costs about **$0.04**, and 100 players about **$4*
 
 ## Privacy and AI disclosure
 
-- The first time a player talks, the game shows "NPC voices are AI-generated (Google Gemini). What you say to them is sent to Google to make their reply." (changed from OpenAI for train #11). The itch page and the AI declaration need the same change; the submission session has the text.
-- Every AI reply carries an "AI VOICE" tag.
+- The disclosure lives in the credits (GameFlow/ReflectionsGameFlowSlate.cpp), the itch page and the AI declaration: NPC voices are AI-generated (Google Gemini), and what the player says is sent to Google to make the reply. The on-screen notice and the "AI VOICE" tag were removed on the user's request (15 Nov).
 - Sent to Google: the player's speech (live, while the talk key is held) or typed line, the NPC's facts and recent conversation, and the reply text for speech and moderation.
 - Stored on the player's machine: generated replies with the text of the line that prompted them, for reuse. Player audio is not stored.
 - The key is read only inside the relay process, sent only in the `x-goog-api-key` header (never in a URL), and never written to logs.
@@ -318,10 +317,10 @@ Details and sources: [proposal-gemini-and-actions.md](proposal-gemini-and-action
 
 | Path | What |
 |---|---|
-| `Source/reflections/Voice/ReflectionsVoiceInteractionSubsystem.*` | input (T, D-pad Down, Enter), talk target, overlay, facing, **action executor**, console commands |
+| `Source/reflections/Voice/ReflectionsVoiceInteractionSubsystem.*` | input (E routed to quest or voice, T alias, D-pad Down, Enter), talk target, overlay, facing, **action executor**, console commands, test hooks (PressTalkKey, GetTalkPromptText) |
 | `Source/reflections/Voice/ReflectionsRealtimeVoiceComponent.*` | relay session, microphone, playback on the NPC's head, interrupt, subtitles, NPC facts, barks |
 | `Source/reflections/Voice/ReflectionsNpcRelayHost.*` | starts and stops the helper exe |
-| `Source/reflections/Voice/ReflectionsNpcDialogueOverlay.*` | Slate subtitles, prompt, status, typing box, AI notice, direction hint |
+| `Source/reflections/Voice/ReflectionsNpcDialogueOverlay.*` | Slate subtitles, prompt, listening meter and thinking beat, typing box, direction hint |
 | `Source/reflections/Voice/ReflectionsNpcDialogueSettings.*` | config: relay URLs, helper, timeouts, radii, attenuation, fallback cues |
 | `Tools/RealtimeVoice/relay.py`, `pipeline.py` | the relay and the shipped Gemini pipeline |
 | `Tools/RealtimeVoice/gemini.py`, `composing.py`, `tts.py` | Gemini hearing, reply call and moderation; the reply schema; Gemini speech |

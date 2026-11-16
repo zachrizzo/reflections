@@ -63,6 +63,8 @@ public:
     bool IsVoiceReady() const { return bReady; }
     bool IsConnecting() const { return Socket.IsValid() && !bReady; }
     bool IsListening() const { return bRecording.Load(); }
+    /** How loud the microphone is right now (0..1, the last chunk's peak), for the listening meter; 0 when not listening. */
+    float GetMicLevel() const { return bRecording.Load() ? MicLevelMilli.Load() / 1000.0f : 0.0f; }
     bool IsSpeaking() const;
     /** True while a reply is being prepared or played (between the end of the player's turn and the NPC finishing). */
     bool IsBusy() const { return bAwaitingReply || IsSpeaking(); }
@@ -146,6 +148,7 @@ private:
     TQueue<TArray<uint8>, EQueueMode::Mpsc> PendingAudio;
     TAtomic<int32> QueuedChunks{0};
     TAtomic<bool> bRecording{false};
+    TAtomic<int32> MicLevelMilli{0};
     double ResamplePosition = 0;
     bool bReady = false;
     bool bOffline = false;

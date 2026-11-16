@@ -47,6 +47,10 @@ static TAutoConsoleVariable<int32> CVarGameFlowTips(
     TEXT("GameFlow.Tips"), 1,
     TEXT("0 hides the one-time tutorial tips."));
 
+static TAutoConsoleVariable<int32> CVarGameFlowHoldLoading(
+    TEXT("GameFlow.HoldLoadingScreen"), 0,
+    TEXT("Debug: 1 shows the loading screen and keeps it up (screenshots); 0 lets it end and fade."));
+
 static TAutoConsoleVariable<int32> CVarGameFlowDeathScreen(
     TEXT("GameFlow.DeathScreen"), 1,
     TEXT("1 shows the death screen (respawn / load) when the hero falls; 0 lets the driver respawn on its timer."));
@@ -266,6 +270,7 @@ void UReflectionsGameFlowWorldSubsystem::Tick(float DeltaTime)
         }
         BeginPlaying();
     }
+    TickLoadingScreen();
 
     if (UObject* Crafting = FindPawnComponent(TEXT("ReflectionsSpellCraftingComponent")))
     {
@@ -437,6 +442,23 @@ void UReflectionsGameFlowWorldSubsystem::BuildWidgets()
     // crafting and world-jump 30, villain HUD 35. The meter layer sits above those; the menus above everything.
     Viewport->AddViewportWidgetContent(Hud.ToSharedRef(), 40);
     Viewport->AddViewportWidgetContent(Menu.ToSharedRef(), 1000);
+    // The loading screen sits over everything (cutscene and dialogue layers too). It is up from the first frame
+    // of a map opened from a menu, until TickLoadingScreen ends it.
+    TWeakObjectPtr<UReflectionsGameFlowWorldSubsystem> WeakSelf(this);
+    Loading = SReflectionsLoadingScreen::Create(TAttribute<FText>::CreateLambda([WeakSelf]()
+    {
+        const UReflectionsGameFlowSubsystem* Flow = WeakSelf.IsValid() ? UReflectionsGameFlowSubsystem::Get(WeakSelf.Get()) : nullptr;
+        return Flow ? Flow->GetLoadingStatus() : FText::GetEmpty();
+    }));
+    Loading->SetVisibility(TAttribute<EVisibility>::CreateLambda([WeakSelf]()
+    {
+        return WeakSelf.IsValid() && WeakSelf->GetLoadingAlpha() > 0.001f ? EVisibility::Visible : EVisibility::Collapsed;
+    }));
+    Loading->SetColorAndOpacity(TAttribute<FLinearColor>::CreateLambda([WeakSelf]()
+    {
+        return FLinearColor(1.0f, 1.0f, 1.0f, WeakSelf.IsValid() ? WeakSelf->GetLoadingAlpha() : 0.0f);
+    }));
+    Viewport->AddViewportWidgetContent(Loading.ToSharedRef(), 5000);
     WidgetPlayer = Player;
     Menu->SetScreen(Screen);
     // Load the UI cues now so the first button press does not hitch.
@@ -464,9 +486,14 @@ void UReflectionsGameFlowWorldSubsystem::RemoveWidgets()
         {
             Viewport->RemoveViewportWidgetContent(Menu.ToSharedRef());
         }
+        if (Loading.IsValid())
+        {
+            Viewport->RemoveViewportWidgetContent(Loading.ToSharedRef());
+        }
     }
     Hud.Reset();
     Menu.Reset();
+    Loading.Reset();
     WidgetPlayer.Reset();
 }
 
@@ -507,7 +534,7 @@ void UReflectionsGameFlowWorldSubsystem::OnPadStartReleased()
 
 void UReflectionsGameFlowWorldSubsystem::OnQuickSaveKey()
 {
-    if (bPlaying && !IsMenuOpen())
+    if (bPlaying && !IsMenuOpen() && !IsLoadingBlockingInput())
     {
         RequestQuickSave();
     }
@@ -515,7 +542,7 @@ void UReflectionsGameFlowWorldSubsystem::OnQuickSaveKey()
 
 void UReflectionsGameFlowWorldSubsystem::OnQuickLoadKey()
 {
-    if (bPlaying && !IsMenuOpen())
+    if (bPlaying && !IsMenuOpen() && !IsLoadingBlockingInput())
     {
         RequestQuickLoad();
     }
@@ -690,7 +717,77 @@ void UReflectionsGameFlowWorldSubsystem::OnPausePressed()
 bool UReflectionsGameFlowWorldSubsystem::CanOpenPause() const
 {
     const UReflectionsGameFlowSubsystem* Flow = UReflectionsGameFlowSubsystem::Get(this);
-    return bPlaying && !IsMenuOpen() && !bCraftingOpen && !(Flow && Flow->IsGameOver()) && !IsCutscenePlaying();
+    return bPlaying && !IsMenuOpen() && !bCraftingOpen && !(Flow && Flow->IsGameOver()) && !IsCutscenePlaying()
+        && !IsLoadingBlockingInput();
+}
+
+bool UReflectionsGameFlowWorldSubsystem::IsLoadingBlockingInput() const
+{
+    const UReflectionsGameFlowSubsystem* Flow = UReflectionsGameFlowSubsystem::Get(this);
+    return Flow && (Flow->IsLoadingScreenActive() || Flow->IsQuitPending());
+}
+
+float UReflectionsGameFlowWorldSubsystem::GetLoadingAlpha() const
+{
+    const UReflectionsGameFlowSubsystem* Flow = UReflectionsGameFlowSubsystem::Get(this);
+    if (Flow && Flow->IsLoadingScreenActive())
+    {
+        return 1.0f;
+    }
+    const float Age = Clock - LoadingEndedAt;
+    return Age >= 0.0f && Age < 0.35f ? 1.0f - Age / 0.35f : 0.0f;
+}
+
+void UReflectionsGameFlowWorldSubsystem::TickLoadingScreen()
+{
+    UReflectionsGameFlowSubsystem* Flow = UReflectionsGameFlowSubsystem::Get(this);
+    if (Flow && CVarGameFlowHoldLoading.GetValueOnGameThread() != 0)
+    {
+        if (!Flow->IsLoadingScreenActive())
+        {
+            Flow->BeginLoadingScreen(LOCTEXT("LoadingStatus", "Loading..."));
+        }
+        LoadingReadyAt = -1.0f;
+        return;
+    }
+    if (!Flow || !Flow->IsLoadingScreenActive())
+    {
+        LoadingSeenAt = -1.0f;
+        LoadingReadyAt = -1.0f;
+        return;
+    }
+    if (LoadingSeenAt < 0.0f)
+    {
+        LoadingSeenAt = Clock;
+    }
+    if (Flow->IsQuitPending())
+    {
+        return;
+    }
+    // Up for 30 s without this map getting ready (a travel that failed): give the player the screen back.
+    const bool bStuck = Clock - LoadingSeenAt > 30.0f;
+    if (Flow->bTravelPending && !bStuck)
+    {
+        return;  // this is the map being left; the next one ends the screen
+    }
+    const bool bReady = bStartHandled && !bRestorePending && Pawn.IsValid() && (bPlaying || IsMenuOpen());
+    if (bReady && LoadingReadyAt < 0.0f)
+    {
+        LoadingReadyAt = Clock;
+    }
+    // A moment more after ready, so the first frames' streaming and shader hitches stay behind the screen.
+    if ((LoadingReadyAt >= 0.0f && Clock - LoadingReadyAt >= 0.6f) || bStuck)
+    {
+        Flow->EndLoadingScreen();
+        if (bStuck)
+        {
+            Flow->bTravelPending = false;
+            UE_LOG(LogReflectionsGameFlowWorld, Warning, TEXT("Loading screen timed out in %s."), *ReflectionsFlow::MapPathOf(GetWorld()));
+        }
+        LoadingEndedAt = Clock;
+        LoadingSeenAt = -1.0f;
+        LoadingReadyAt = -1.0f;
+    }
 }
 
 UObject* UReflectionsGameFlowWorldSubsystem::FindPawnComponent(const TCHAR* ClassName) const
@@ -1004,6 +1101,10 @@ void UReflectionsGameFlowWorldSubsystem::EnterGameMode()
 void UReflectionsGameFlowWorldSubsystem::HandleAction(EReflectionsFlowAction Action)
 {
     UReflectionsGameFlowSubsystem* Flow = UReflectionsGameFlowSubsystem::Get(this);
+    if (IsLoadingBlockingInput())
+    {
+        return;  // a map is opening (or the game is quitting) behind the loading screen
+    }
     switch (Action)
     {
     case EReflectionsFlowAction::Start:
@@ -1043,6 +1144,13 @@ void UReflectionsGameFlowWorldSubsystem::HandleAction(EReflectionsFlowAction Act
         break;
     case EReflectionsFlowAction::QuitGame:
         PlayUiSound(TEXT("UI_Click"));
+        if (Screen == EReflectionsFlowScreen::Pause)
+        {
+            // From play, ask first (Pause > Quit to desktop): anything since the last save is lost.
+            ConfirmAction = Action;
+            PushScreen(EReflectionsFlowScreen::Confirm);
+            break;
+        }
         if (Flow)
         {
             Flow->QuitGame();
@@ -1081,6 +1189,14 @@ void UReflectionsGameFlowWorldSubsystem::HandleAction(EReflectionsFlowAction Act
             if (Flow)
             {
                 Flow->StartNewGame();
+            }
+            break;
+        }
+        if (ConfirmAction == EReflectionsFlowAction::QuitGame)
+        {
+            if (Flow)
+            {
+                Flow->QuitGame();
             }
             break;
         }
@@ -1311,7 +1427,7 @@ FText UReflectionsGameFlowWorldSubsystem::GetTipText(EReflectionsTip Tip) const
         return bPad ? FLOWTEXT("Tip.Cast.Pad", "RT casts the selected spell (hold to repeat). RB / LB switch spells.")
                     : FLOWTEXT("Tip.Cast.Keys", "Left Mouse or Q casts the selected spell. Tab switches spells, 1-4 picks one.");
     case EReflectionsTip::Coin:
-        return FLOWTEXT("Tip.Shard", "Mirror shards let you step through. Stepping through also takes most of your magic.");
+        return FLOWTEXT("Tip.Shard2", "Mirror shards are rare. Each one is worth finding.");
     case EReflectionsTip::CrossWorlds:
         return bPad ? FLOWTEXT("Tip.Step.Pad", "You can step through now. Hold Y to step up into the next side, R3 to step down. It takes a mirror shard and most of your magic.")
                     : FLOWTEXT("Tip.Step.Keys", "You can step through now. Hold X to step up into the next side, Z to step down. It takes a mirror shard and most of your magic.");
@@ -1446,18 +1562,25 @@ void UReflectionsGameFlowWorldSubsystem::TickTips(float DeltaTime)
                 || Jump->CanJump(EReflectionsJumpDirection::Down, Reason, Destination);
         }
     }
-    if (bCoinNearby)
+    // Mirror shards and stepping through exist only where world jump is set up (the MockCity maps). On MedievalLondon
+    // neither tip shows, so the game never promises a side it cannot take the player to.
+    const UReflectionsWorldJumpWorldSubsystem* WorldJump = UReflectionsWorldJumpWorldSubsystem::Get(this);
+    const bool bWorldJump = WorldJump && WorldJump->IsWorldJumpActive();
+    if (bWorldJump && bCoinNearby)
     {
         Want(EReflectionsTip::Coin);
     }
-    else if (const UReflectionsWorldJumpSubsystem* Progress = UReflectionsWorldJumpSubsystem::Get(this))
+    else if (bWorldJump)
     {
-        if (Progress->GetCoins(EReflectionsWorld::Gray) + Progress->GetCoins(EReflectionsWorld::Red) + Progress->GetCoins(EReflectionsWorld::White) > 0)
+        if (const UReflectionsWorldJumpSubsystem* Progress = UReflectionsWorldJumpSubsystem::Get(this))
         {
-            Want(EReflectionsTip::Coin);
+            if (Progress->GetCoins(EReflectionsWorld::Gray) + Progress->GetCoins(EReflectionsWorld::Red) + Progress->GetCoins(EReflectionsWorld::White) > 0)
+            {
+                Want(EReflectionsTip::Coin);
+            }
         }
     }
-    if (bCanCrossWorlds)
+    if (bWorldJump && bCanCrossWorlds)
     {
         Want(EReflectionsTip::CrossWorlds);
     }

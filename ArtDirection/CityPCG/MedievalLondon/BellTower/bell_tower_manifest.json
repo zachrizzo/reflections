@@ -1,0 +1,92 @@
+{
+  "units": "cm, Unreal axes after import: X same, Y flipped",
+  "belfry_floor_cm": 2360.0,
+  "hang_point_cm": 2800.0,
+  "flights": 9,
+  "risers_per_flight": 13,
+  "riser_cm": 20.0,
+  "tread_cm": 30.0,
+  "stair_width_cm": 130.0,
+  "inner_clear_cm": 620.0,
+  "door_cm": {
+    "width": 160,
+    "clear_height_to_spring": 260,
+    "crown_above_floor": 340
+  },
+  "meshes": {
+    "SM_BellTower_Shell": {
+      "fbx": "SM_BellTower_Shell.fbx",
+      "min_cm": [
+        -450.0,
+        -450.0,
+        -60.0
+      ],
+      "max_cm": [
+        450.0,
+        450.0,
+        3860.0
+      ],
+      "triangles": 2934,
+      "materials": [
+        "GuildAshlar",
+        "GuildDressed",
+        "Fieldstone",
+        "ClayTile",
+        "Oak",
+        "WeatheredOak",
+        "Lead"
+      ]
+    },
+    "SM_BellTower_Stairs": {
+      "fbx": "SM_BellTower_Stairs.fbx",
+      "min_cm": [
+        -310.0,
+        -310.0,
+        20.0
+      ],
+      "max_cm": [
+        310.0,
+        310.0,
+        2340.0
+      ],
+      "triangles": 996,
+      "materials": [
+        "GuildDressed"
+      ]
+    },
+    "SM_BellTower_Rails": {
+      "fbx": "SM_BellTower_Rails.fbx",
+      "min_cm": [
+        -310.0,
+        -180.0,
+        20.0
+      ],
+      "max_cm": [
+        180.0,
+        180.0,
+        2485.0
+      ],
+      "triangles": 228,
+      "materials": [
+        "GuildDressed"
+      ]
+    },
+    "SM_BellTower_Bell": {
+      "fbx": "SM_BellTower_Bell.fbx",
+      "min_cm": [
+        -89.0,
+        -89.0,
+        -170.0
+      ],
+      "max_cm": [
+        89.0,
+        89.0,
+        0.0
+      ],
+      "triangles": 1548,
+      "materials": [
+        "Bronze"
+      ]
+    }
+  }
+}

@@ -20,6 +20,7 @@ public:
     virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 
     void SetPrompt(const FText& InPrompt) { Prompt = InPrompt; }
+    const FText& GetPrompt() const { return Prompt; }
     void SetStatus(const FText& InStatus) { StatusText = InStatus; }
     /** bAi adds the "AI voice" tag next to the speaker. KeepLines holds the subtitles on screen. */
     void ShowLine(const FString& Speaker, const FString& Text, bool bPlayer, bool bAi);
@@ -28,6 +29,13 @@ public:
     void ShowNotice(const FText& InNotice, double Seconds);
     /** A short gold line above the subtitles, e.g. where an NPC pointed. */
     void ShowHint(const FText& InHint, double Seconds) { HintLine = InHint; HintUntil = FPlatformTime::Seconds() + Seconds; }
+    /** The microphone is open: a pulsing ring and a meter driven by Level (0..1), and "Listening... say anything". */
+    void SetListening(bool bInListening, float Level) { bListening = bInListening; TargetMicLevel = bInListening ? Level : 0.0f; }
+    /** Waiting for the reply: "<Who> is thinking" with moving dots. Empty Who: off. */
+    void SetThinking(const FText& Who) { ThinkingWho = Who; }
+    bool IsShowingListening() const { return bListening; }
+    float GetSmoothedMicLevel() const { return MicLevel; }
+    bool IsShowingThinking() const { return !ThinkingWho.IsEmpty(); }
 
     void OpenTyping(const FText& Hint);
     void CloseTyping();
@@ -58,5 +66,9 @@ private:
     double NoticeUntil = 0.0;
     TSharedPtr<SEditableTextBox> TypingBox;
     float PanelTopFromBottom = 0.0f;
+    bool bListening = false;
+    float TargetMicLevel = 0.0f;
+    float MicLevel = 0.0f;
+    FText ThinkingWho;
     static constexpr float BottomMargin = 215.0f;  // above the spell bar (health, mana, spell slots)
 };

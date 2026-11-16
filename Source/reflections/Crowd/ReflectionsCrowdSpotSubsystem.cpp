@@ -50,6 +50,8 @@ namespace
     const FName NoStrollTag(TEXT("NPC_NoStroll"));
     const FName SpotTag(TEXT("Crowd_Spot"));
     const FName CarryTag(TEXT("Crowd_Carry"));
+    /** Set by the player's conversations (voice talk, quest talk): the spot lets the person go to face the player. */
+    const FName TalkingTag(TEXT("NPC_Talking"));
     constexpr double TickPeriod = 0.25;
     constexpr float ArriveRadius = 35.0f;
 
@@ -546,6 +548,30 @@ void UReflectionsCrowdSpotSubsystem::TickSlot(FSpot& Spot, FSlot& Slot, double N
     {
         // Standing up; the scene ends with the clip (HandleSceneEnded), or give up after 4 s.
         if (!Actor || !Npcs || !Npcs->IsNpcInScene(Actor) || Now - Slot.PhaseSince > 4.0) FinishRelease(Slot, Now, true);
+        return;
+    }
+    // The player is talking with this person: let go (a seated one stands up first) so it can turn to face them.
+    if (Actor && Actor->ActorHasTag(TalkingTag))
+    {
+        if (!Slot.bSpawned)
+        {
+            Release(Spot, Slot, Now, false, true);
+            return;
+        }
+        // Someone this spot spawned stays the spot's: releasing it would leave a frozen copy (it keeps NPC_NoStroll)
+        // and the slot would spawn a second person. So free its body for the talk without letting go of it: end the
+        // scene and the steering, and wait here (Claiming, kept fresh) until the talk ends; then it is taken back and
+        // settles into its place again (Claiming -> Approaching -> Settle). A seated one simply talks sitting down.
+        if (Spot.Kind == EKind::Bench) return;
+        if (Slot.Phase != EPhase::Claiming)
+        {
+            Slot.Phase = EPhase::Claiming;
+            RestoreCollision(Slot);
+            if (Npcs && Npcs->IsNpcInScene(Actor)) Npcs->EndNpcScene(Actor, 0.25f);
+            if (Brain && Slot.bSteered && Brain->IsExternallySteered()) Brain->SetExternallySteered(false);
+            Slot.bSteered = false;
+        }
+        Slot.PhaseSince = Now;
         return;
     }
     // Any reaction, death, conversion or removal ends the scene at once: the NPC system has the body.

@@ -30,6 +30,7 @@ PICTURE = PROJECT / 'Saved' / 'Lives' / 'places_MedievalLondon.png'
 STALL_BOUNDS = ((-68.8, -120.0), (76.3, 120.0))   # SM_GL1450_MarketStall local XY bounds (FableStreets_measure_before.json)
 WELL = (-3100.0, 780.0)                             # Tools/CityPCG/place_medieval_london_well.py CENTER
 CISTERN = (400.0, 800.0)                            # story places Fountain / Square_Cistern
+BELL_TOWER = (-600.0, -950.0, 600.0, 250.0)         # market bell tower box reserved by fable-streets (authoritative, 16:16); door faces west
 DOOR_OUT_CM = 120.0
 VENDOR_BACK_CM = 90.0
 MARGIN_CM = 40.0                                    # a body's width beside the strip
@@ -48,13 +49,18 @@ def main():
     src = Path(sys.argv[1]) if len(sys.argv) > 1 else STREETS
     s = json.loads(src.read_text(encoding='utf-8-sig'))
     strip = float(s.get('walk_strip_half_width', 125.0))
-    lines = [st['centre'] for st in s['east_west_streets']] + [al['centre'] for al in s['cross_alleys']]
+    # Every list of streets in the file (east-west streets, cross alleys, and any back lanes added later).
+    lines = [st['centre'] for key, v in s.items() if isinstance(v, list)
+             for st in v if isinstance(st, dict) and isinstance(st.get('centre'), list) and len(st['centre']) >= 2]
     segments = [(line[i], line[i + 1]) for line in lines for i in range(len(line) - 1)]
 
     def street_dist(p):
         return min(seg_dist(p, a, b) for a, b in segments)
 
-    houses = [tuple(b) for b in s['house_boxes']]
+    # The tower and any other reserved box or obstacle in the file count as buildings: nothing inside them, no doors.
+    blocked = [BELL_TOWER] + [tuple(b) for b in s.get('reserved_boxes', [])] + [tuple(o['box']) for o in s.get('obstacles', []) if 'box' in o]
+    blocked = list(dict.fromkeys(tuple(float(v) for v in b) for b in blocked))
+    houses = [tuple(b) for b in s['house_boxes']] + blocked
     (lx, ly), (hx, hy) = STALL_BOUNDS
     stalls = []
     for x, y, yaw in s['stalls']:
@@ -87,6 +93,8 @@ def main():
 
     homes, skipped = [], {'home': 0, 'work': 0, 'gather': 0}
     for box in houses:
+        if box in blocked:
+            continue
         placed = False
         for d0, (fx, fy), (dx, dy) in toward_street(box)[:2]:
             out = min(DOOR_OUT_CM, max(30.0, d0 - strip - MARGIN_CM))
@@ -95,6 +103,19 @@ def main():
                 homes.append({'x': round(p[0], 1), 'y': round(p[1], 1), 'z': 0.0, 'kind': 'door', 'radius': 150})
                 placed = True
                 break
+        if not placed:
+            # A house inside a block: its door opens on a back lane or yard (open ground at least 1.5 m out and
+            # 1.8 m wide), whichever side has one, nearest a street first.
+            cx, cy = (box[0] + box[2]) * .5, (box[1] + box[3]) * .5
+            faces = [((cx, box[1]), (0, -1)), ((cx, box[3]), (0, 1)), ((box[0], cy), (-1, 0)), ((box[2], cy), (1, 0))]
+            faces.sort(key=lambda f: street_dist((f[0][0] + f[1][0] * 300, f[0][1] + f[1][1] * 300)))
+            for (fx, fy), (dx, dy) in faces:
+                p = (fx + dx * 80, fy + dy * 80)
+                probes = [p, (fx + dx * 150, fy + dy * 150), (p[0] + dy * 90, p[1] + dx * 90), (p[0] - dy * 90, p[1] - dx * 90)]
+                if all(ok(q) for q in probes):
+                    homes.append({'x': round(p[0], 1), 'y': round(p[1], 1), 'z': 0.0, 'kind': 'back_door', 'radius': 120})
+                    placed = True
+                    break
         skipped['home'] += 0 if placed else 1
 
     work = []
@@ -122,6 +143,9 @@ def main():
         for i in range(6):
             a = math.radians(30 + 60 * i)
             cands.append(((cx + r * math.cos(a), cy + r * math.sin(a)), kind, 220))
+    for tower in (BELL_TOWER,):                         # by the bell tower's west door
+        for oy in (-260.0, 0.0, 260.0):
+            cands.append(((tower[0] - 250.0, (tower[1] + tower[3]) * .5 + oy), 'tower', 220))
     for mx, my in s.get('lantern_mouths', []):
         for ox, oy in ((1, 1), (-1, 1), (1, -1), (-1, -1)):
             off = strip + MARGIN_CM + 60
@@ -150,7 +174,7 @@ def main():
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, indent=1), encoding='utf-8')
-    summary = {'source': src.name, 'status': s.get('status'), 'houses': len(houses), 'stalls': len(stalls), 'homes': len(homes),
+    summary = {'source': src.name, 'status': s.get('status'), 'houses': len(houses) - len(blocked), 'stalls': len(stalls), 'homes': len(homes),
                'work': len(work), 'gather': len(gather), 'skipped': skipped, 'out': str(OUT)}
     try:
         picture(segments, strip, houses, stall_boxes, homes, work, gather)

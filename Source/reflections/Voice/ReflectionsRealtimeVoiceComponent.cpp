@@ -1028,17 +1028,20 @@ void UReflectionsRealtimeVoiceComponent::BeginPushToTalk()
             TArray<uint8> Data;
             Data.Reserve(Frames);
             const double Step = static_cast<double>(Rate) / 24000.0;
+            float Peak = 0.0f;
             while (ResamplePosition < Frames)
             {
                 const int32 Frame = static_cast<int32>(ResamplePosition);
                 float Mono = 0;
                 for (int32 Channel = 0; Channel < Channels; ++Channel) Mono += Input[Frame * Channels + Channel];
                 Mono = FMath::Clamp(Mono / Channels, -1.0f, 1.0f);
+                Peak = FMath::Max(Peak, FMath::Abs(Mono));
                 const int16 Sample = static_cast<int16>(Mono * 32767.0f);
                 Data.Add(static_cast<uint8>(Sample & 255)); Data.Add(static_cast<uint8>((Sample >> 8) & 255));
                 ResamplePosition += Step;
             }
             ResamplePosition -= Frames;
+            MicLevelMilli.Store(static_cast<int32>(Peak * 1000.0f));  // the listening meter on screen
             if (Data.Num()) { ++QueuedChunks; PendingAudio.Enqueue(MoveTemp(Data)); }
         }, 1024);
     if (!bOpened || !Capture->StartStream())
@@ -1073,6 +1076,7 @@ void UReflectionsRealtimeVoiceComponent::FlushCaptured()
 void UReflectionsRealtimeVoiceComponent::StopCapture()
 {
     bRecording.Store(false);
+    MicLevelMilli.Store(0);
     if (Capture) { if (Capture->IsStreamOpen()) Capture->AbortStream(); Capture.Reset(); }
 }
 

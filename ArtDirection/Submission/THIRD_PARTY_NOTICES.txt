@@ -1,12 +1,8 @@
 REFLECTIONS - THIRD-PARTY NOTICES
 =================================
 
-This file lists the third-party content in Reflections and the notices its
-licences require. Packaging: copy this file to the root of the game zip.
-
-Revised 2026-11-15 15:20 MST for the shipped map,
-/Game/GrayLondon/Maps/MedievalLondon. One item, marked [CONFIRM], is still
-open.
+This file lists third-party material included in Reflections and the notices
+that its licences require. The same notices appear on the game's Credits screen.
 
 
 1. MAP DATA - OpenStreetMap
@@ -17,9 +13,9 @@ Available under the Open Database License (ODbL) 1.0:
   https://opendatacommons.org/licenses/odbl/1-0/
 Source extracts: Geofabrik, Greater London.
 
-The medieval town's street layout, ground and building frontage plans were
-derived from OpenStreetMap tile exports. Under ODbL section 4.6, the derived
-data and the method used to make it are offered under the ODbL at:
+The town's street layout, ground and building frontage plans were derived from
+OpenStreetMap data. Under ODbL section 4.6, the derived data and the method used
+to make it are offered under the ODbL at:
   [CONFIRM: public link to the generator scripts and tile/plan data]
 
 
@@ -30,33 +26,40 @@ Cobblestone Floor 04, Mossy Cobblestone and Leafy Grass from Poly Haven
 required; they are credited with thanks.
 
 
-3. IMAGE-TO-3D - TripoSR (MIT)
-------------------------------
-The market well mesh was made with TripoSR (Stability AI and Tripo AI,
-https://github.com/VAST-AI-Research/TripoSR), MIT License, from an AI-generated
-reference image. The model's MIT licence covers the TripoSR software. The
-software is not distributed with the game.
-
-
-4. AI TOOLS AND OTHER ATTRIBUTION
+3. MODELS MADE WITH TRIPOSR (MIT)
 ---------------------------------
+The market well, and other market props modelled the same way, were made with
+TripoSR (Stability AI and Tripo AI, https://github.com/VAST-AI-Research/TripoSR),
+MIT License. The TripoSR software is not distributed with the game.
+
+
+4. THIRD-PARTY TOOLS, MODELS AND SERVICES
+-----------------------------------------
 Music: Eleven Music by ElevenLabs (elevenlabs.io).
 Fire and water spell sounds: ElevenLabs (elevenlabs.io).
 Spell animations: NVIDIA Kimodo (Kimodo-SOMA-RP-v1.1), licensed by NVIDIA
   Corporation under the NVIDIA Open Model License.
 3D garments: Tencent Hunyuan3D-2. Powered by Tencent Hunyuan.
-Built on Epic Games' Game Animation Sample and Third Person template.
-Made with Unreal Engine 5.9. Unreal(R) is a trademark or registered
-  trademark of Epic Games, Inc. in the United States and elsewhere.
-The full credits are on the game's Credits screen.
+Character voices are synthesized with Google Gemini and OpenAI text-to-speech;
+  they are not human actors.
+Includes content from Epic Games' Game Animation Sample and Third Person
+  template. Characters made with MetaHuman.
 
-Everything else in the town (buildings, market stalls, crates, casks, gates,
-palisades and their textures) is original work, made during the jam with
-scripts and Blender.
+
+5. ENGINE AND LIBRARY NOTICES
+-----------------------------
+Reflections uses the Unreal(R) Engine. Unreal(R) is a trademark or registered
+trademark of Epic Games, Inc. in the United States of America and elsewhere.
+Unreal(R) Engine, Copyright 1998-2026, Epic Games, Inc. All rights reserved.
+Portions of this software are copyright (c) The FreeType Project
+(www.freetype.org). All rights reserved.
+
+The rest of the town (buildings, market stalls, crates, casks, gates, palisades
+and their textures) is original work, made with scripts and Blender.
 
 
 DISCLAIMER
 ----------
-Third-party material is provided by its licensors "as is", without
-warranties of any kind. See each licence for details. Reflections is not
-affiliated with or endorsed by any of the rights holders above.
+Third-party material is provided by its licensors "as is", without warranties of
+any kind. See each licence for details. Reflections is not affiliated with or
+endorsed by any of the rights holders above.

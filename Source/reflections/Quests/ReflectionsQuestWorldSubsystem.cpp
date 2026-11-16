@@ -302,12 +302,13 @@ void UReflectionsQuestWorldSubsystem::BindInput(APlayerController* PC)
     Input = NewObject<UInputComponent>(PC, TEXT("QuestInput"));
     Input->Priority = 15;
     Input->BindKey(EKeys::L, IE_Pressed, this, &UReflectionsQuestWorldSubsystem::OnJournalPressed).bConsumeInput = false;
-    Input->BindKey(EKeys::E, IE_Pressed, this, &UReflectionsQuestWorldSubsystem::OnTalkPressed).bConsumeInput = false;
-    // D-pad Down is the voice talk button; with voice on, the voice system asks us first (HandleTalkPressed).
+    // One talk key. With the voice system on, it owns E and D-pad Down and routes each press: a person with quest
+    // business gets this dialogue (OpenTalk), anyone else live voice. Without it, both keys are ours.
     UClass* VoiceClass = FindObject<UClass>(nullptr, TEXT("/Script/reflections.ReflectionsVoiceInteractionSubsystem"));
     const bool bVoice = VoiceClass && GetWorld()->GetSubsystemBase(VoiceClass) != nullptr;
     if (!bVoice)
     {
+        Input->BindKey(EKeys::E, IE_Pressed, this, &UReflectionsQuestWorldSubsystem::OnTalkPressed).bConsumeInput = false;
         Input->BindKey(EKeys::Gamepad_DPad_Down, IE_Pressed, this, &UReflectionsQuestWorldSubsystem::OnTalkPressed).bConsumeInput = false;
         bInputBoundToPadTalk = true;
     }
@@ -594,6 +595,10 @@ bool UReflectionsQuestWorldSubsystem::OpenTalk(AActor* Npc, bool bOnlyIfBusiness
         // The person stops for the conversation (released in CloseTalk; the hold also times out by itself).
         Npcs->HoldNpc(Npc, 120.0f);
         bTalkHeld = true;
+        // Crowd strolling (NPC_NoStroll) and crowd spots (NPC_Talking) let go of it for the conversation; removed in
+        // CloseTalk (NPC_NoStroll only if we added it).
+        Npc->Tags.AddUnique(TEXT("NPC_Talking"));
+        if (!Npc->ActorHasTag(TEXT("NPC_NoStroll"))) { Npc->Tags.Add(TEXT("NPC_NoStroll")); Npc->Tags.Add(TEXT("QuestTalk_NoStroll")); }
     }
     if (const APawn* Hero = GetHero())
     {
@@ -902,6 +907,11 @@ void UReflectionsQuestWorldSubsystem::CloseTalk()
     {
         if (UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(this)) Npcs->ReleaseNpc(TalkNpc.Get());
     }
+    if (AActor* Npc = TalkNpc.Get())
+    {
+        Npc->Tags.Remove(TEXT("NPC_Talking"));
+        if (Npc->Tags.Remove(TEXT("QuestTalk_NoStroll")) > 0) Npc->Tags.Remove(TEXT("NPC_NoStroll"));
+    }
     bTalkHeld = false;
     TalkHeroHealth = -1.0f;
     TalkNpc.Reset();
@@ -952,14 +962,10 @@ void UReflectionsQuestWorldSubsystem::TickTalk(float DeltaTime)
     if (!Npc) return;
     // Walked off (5 m), or the person is gone.
     if (!IsValid(Npc) || FVector::Dist2D(Npc->GetActorLocation(), Hero->GetActorLocation()) > 500.0f) { CloseTalk(); return; }
-    // The person turns to face the hero.
-    const FVector To = Hero->GetActorLocation() - Npc->GetActorLocation();
-    if (To.SizeSquared2D() > 1.0f)
-    {
-        const FRotator Want(0.0f, To.Rotation().Yaw, 0.0f);
-        const FRotator Now = Npc->GetActorRotation();
-        Npc->SetActorRotation(FMath::RInterpTo(FRotator(0.0f, Now.Yaw, 0.0f), Want, DeltaTime, 6.0f));
-    }
+    // A crowd spot that let go of it took its NPC_NoStroll along: keep strolling off it until the talk ends.
+    if (!Npc->ActorHasTag(TEXT("NPC_NoStroll"))) { Npc->Tags.Add(TEXT("NPC_NoStroll")); Npc->Tags.AddUnique(TEXT("QuestTalk_NoStroll")); }
+    // The person turns to face the hero (a walker turns by its hidden walker; the body follows).
+    if (UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(this)) Npcs->TurnNpcTowards(Npc, Hero->GetActorLocation(), DeltaTime);
 }
 
 void UReflectionsQuestWorldSubsystem::Tick(float DeltaTime)
@@ -2265,13 +2271,10 @@ FText UReflectionsQuestWorldSubsystem::GetPromptText() const
     const FText Name = Quests->GetPersonName(UReflectionsQuestSubsystem::GetPersonId(Target));
     TCHAR Glyph;
     const bool bBusiness = HasBusiness(Target, Glyph);
-    if (IsUsingGamepad())
-    {
-        // Without quest business the pad button goes to live voice, so only offer the card when there is business.
-        if (!bBusiness && !bInputBoundToPadTalk) return FText::GetEmpty();
-        return FText::Format(LOCTEXT("PromptPad", "D-pad ↓   Speak with {0}"), Name);
-    }
-    return FText::Format(LOCTEXT("PromptKey", "E   Speak with {0}"), Name);
+    // Without quest business the talk key goes to live voice (the voice system shows "Hold E to speak").
+    if (!bBusiness && !bInputBoundToPadTalk) return FText::GetEmpty();
+    if (IsUsingGamepad()) return FText::Format(LOCTEXT("PromptPadTalk", "D-pad ↓   Talk to {0}"), Name);
+    return FText::Format(LOCTEXT("PromptKeyTalk", "E   Talk to {0}"), Name);
 }
 
 bool UReflectionsQuestWorldSubsystem::GetBanner(FText& OutKicker, FText& OutTitle, FText& OutDetail, FLinearColor& OutColor, float& OutAlpha) const

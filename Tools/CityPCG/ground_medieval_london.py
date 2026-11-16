@@ -199,3 +199,27 @@ def run(rebuild=False):
     if not unreal.EditorLoadingAndSavingUtils.save_packages(packages, only_dirty=False):
         raise RuntimeError('Could not save the town ground packages.')
     return {'saved': names, 'ground': ground.get_actor_label(), 'map_saved': False}
+
+
+def reimport_mask():
+    """Replace the street mask after the layout changes (rerun make_mask.py first) and save it."""
+    import unreal
+
+    require_town_editor(unreal)
+    name = 'T_GL1450_TownStreetMask'
+    saved = Path(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_saved_dir())) / SOURCE_DIR
+    source = saved / SOURCES[name][0]
+    if not source.is_file():
+        raise RuntimeError(f'Missing ground source file: {source}')
+    task = unreal.AssetImportTask()
+    task.set_editor_properties({'filename': str(source), 'destination_path': FOLDER, 'destination_name': name,
+                                'automated': True, 'save': False, 'replace_existing': True})
+    unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+    texture = unreal.EditorAssetLibrary.load_asset(f'{FOLDER}/{name}')
+    if not isinstance(texture, unreal.Texture2D):
+        raise RuntimeError('Could not re-import the street mask.')
+    texture.set_editor_properties({'compression_settings': unreal.TextureCompressionSettings.TC_GRAYSCALE,
+                                   'srgb': False})
+    if not unreal.EditorLoadingAndSavingUtils.save_packages([texture.get_package()], only_dirty=False):
+        raise RuntimeError('Could not save the street mask.')
+    return texture.get_package().get_name()

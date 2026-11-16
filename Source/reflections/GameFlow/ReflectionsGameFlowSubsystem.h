@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Containers/Ticker.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "GameFlow/ReflectionsGameFlowTypes.h"
 #include "ReflectionsGameFlowSubsystem.generated.h"
@@ -214,6 +215,26 @@ public:
     /** A map change is under way (set by OpenMap, cleared when the next map begins play): no checkpoint saves. */
     bool bTravelPending = false;
 
+    // ---- Loading screen and save indicator ---------------------------------------------------------------
+
+    /**
+     * The full-screen loading screen is up: from the menu click that opens a map until the new map is ready (the
+     * restore applied, or the title shown), across the map change. Menus take no input while it is up.
+     */
+    UFUNCTION(BlueprintPure, Category = "Game Flow|Loading")
+    bool IsLoadingScreenActive() const { return bLoadingScreen; }
+    FText GetLoadingStatus() const { return LoadingStatus; }
+    /** Shows the loading screen (also for an in-place restore, so the first streaming frames stay hidden). */
+    void BeginLoadingScreen(const FText& Status);
+    /** Called by the world subsystem once its map is ready to show. */
+    void EndLoadingScreen() { bLoadingScreen = false; }
+    /** Quit was chosen: the screen is up and the game exits in a frame or two. */
+    bool IsQuitPending() const { return bQuitPending; }
+    /** A save was just made (autosave, quick or manual): the HUD shows "Saving..." for a moment. */
+    bool IsSaveIndicatorOn() const;
+    /** Waits for every queued save file write to reach the disk. */
+    static void FlushSaveWrites();
+
     // ---- Flow ------------------------------------------------------------------------------------------
 
     /** Reloads the checkpoint's map and puts the hero back at the checkpoint (fresh start if there is none). */
@@ -297,9 +318,16 @@ private:
     UReflectionsGameFlowWorldSubsystem* GetWorldFlow() const;
     void BroadcastInfection();
     void CheckInfectionCap();
-    /** Writes the autosave slot (async; bSync before quitting or loading, so nothing is left half-written). */
+    /** Writes the autosave slot (queued on a background pipe; bSync waits for the disk). */
     void WriteSave(bool bSync = false);
+    /** Shows the loading screen, then opens the map a few frames later (the screen is on screen before the load blocks). */
     void OpenMap(const FString& MapPath);
+    /** Core ticker: runs the deferred map open or quit once the loading screen has been presented. */
+    bool TickDeferred(float DeltaTime);
+    void StartDeferredTicker();
+    /** Packaged builds: hands the movie player a copy of the loading screen, so it animates while LoadMap blocks. */
+    void SetupMoviePlayerLoadingScreen() const;
+    void FinishQuit();
     FString CurrentMapPath() const;
     /** Copies the save files other systems write on every checkpoint (quests, lives) into the checkpoint. */
     void CaptureMirroredFiles();
@@ -309,6 +337,15 @@ private:
 
     mutable TMap<int32, FReflectionsSaveSlotInfo> SlotCache;
     bool bBroadcastingCheckpoint = false;
+
+    bool bLoadingScreen = false;
+    FText LoadingStatus;
+    FString DeferredMap;
+    bool bQuitPending = false;
+    int32 DeferredFrames = 0;
+    double DeferredSince = 0.0;
+    FTSTicker::FDelegateHandle DeferredTicker;
+    double SaveIndicatorUntil = 0.0;
 
     /** Hosts currently infected; a destroyed host stays counted until ReportCured. */
     TSet<TWeakObjectPtr<AActor>> InfectedHosts;

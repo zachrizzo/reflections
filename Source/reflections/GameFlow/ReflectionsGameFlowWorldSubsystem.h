@@ -11,6 +11,7 @@ class APlayerController;
 class AReflectionsWorldPickup;
 class SReflectionsFlowHud;
 class SReflectionsFlowMenu;
+class SReflectionsLoadingScreen;
 class SWidget;
 class UInputComponent;
 class USoundBase;
@@ -135,6 +136,8 @@ public:
     /** The HUD hides while the spell-crafting screen is up. */
     bool IsCraftingOpen() const { return bCraftingOpen; }
     bool IsPlaying() const { return bPlaying; }
+    /** 1 while the loading screen is up, fading to 0 once this map is ready. */
+    float GetLoadingAlpha() const;
 
     // ---- Checkpoints -----------------------------------------------------------------------------------
 
@@ -215,6 +218,9 @@ private:
     void PushRespawnPoint();
     bool CanOpenPause() const;
     UObject* FindPawnComponent(const TCHAR* ClassName) const;
+    /** Ends the loading screen once this map is ready (restore applied, play begun or a menu shown) and settled. */
+    void TickLoadingScreen();
+    bool IsLoadingBlockingInput() const;
 
     UFUNCTION() void HandleWorldChanged(EReflectionsWorld From, EReflectionsWorld To);
     UFUNCTION() void HandlePagesChanged(int32 Pages, int32 PagesForBook);
@@ -223,6 +229,11 @@ private:
 
     TSharedPtr<SReflectionsFlowHud> Hud;
     TSharedPtr<SReflectionsFlowMenu> Menu;
+    TSharedPtr<SReflectionsLoadingScreen> Loading;
+    /** Real-time clock values: when this map first saw the loading screen up, when it was ready, when it ended. */
+    float LoadingSeenAt = -1.0f;
+    float LoadingReadyAt = -1.0f;
+    float LoadingEndedAt = -100.0f;
     TSharedPtr<SWidget> HudRoot;
     TSharedPtr<SWidget> MenuRoot;
 

@@ -1,0 +1,234 @@
+{
+ "errors": [],
+ "npcs": [
+  {
+   "kind": "lives",
+   "class": "BP_Look_GiltHaruto_C",
+   "dist_m": 3.2,
+   "grooms": {
+    "Hair": {
+     "asset": "Hair_S_CurlyFade",
+     "visible": true,
+     "sim_enabled": [
+      false
+     ]
+    },
+    "Eyebrows": {
+     "asset": "Eyebrows_M_Wide",
+     "visible": true,
+     "sim_enabled": [
+      false
+     ]
+    },
+    "Mustache": {
+     "asset": "Mustache_S_Curly",
+     "visible": true,
+     "sim_enabled": [
+      false
+     ]
+    },
+    "Beard": {
+     "asset": "Goatee_S_ChinStrap",
+     "visible": true,
+     "sim_enabled": [
+      false
+     ]
+    },
+    "_lodsync": [
+     -1,
+     1
+    ]
+   },
+   "shots": {
+    "face": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/grooms\\after_lives_BP_Look_GiltHaruto_face.png"
+   }
+  },
+  {
+   "kind": "quest_giver",
+   "class": "BP_Look_FrostHyeon_C",
+   "dist_m": 27.3,
+   "grooms": {
+    "Hair": {
+     "asset": "Hair_S_LowPonytail",
+     "visible": true,
+     "sim_enabled": [
+      false,
+      true
+     ]
+    },
+    "Eyebrows": {
+     "asset": "Eyebrows_S_FlatThin",
+     "visible": true,
+     "sim_enabled": [
+      false
+     ]
+    },
+    "_lodsync": [
+     -1,
+     1
+    ]
+   },
+   "shots": {
+    "face": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/grooms\\after_quest_giver_BP_Look_FrostHyeon_face.png"
+   }
+  },
+  {
+   "kind": "lives_more",
+   "class": "BP_Look_GiltBridgeGuard_C",
+   "dist_m": 4.4,
+   "grooms": {
+    "Hair": {
+     "asset": "Hair_S_UpdoBraids",
+     "visible": true,
+     "sim_enabled": [
+      false,
+      true,
+      false
+     ]
+    },
+    "Eyebrows": {
+     "asset": "Eyebrows_M_SlightArch",
+     "visible": true,
+     "sim_enabled": [
+      false
+     ]
+    },
+    "_lodsync": [
+     -1,
+     1
+    ]
+   },
+   "shots": {
+    "face": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/grooms\\after_lives_more_BP_Look_GiltBridgeGuard_face.png"
+   }
+  },
+  {
+   "kind": "lives_more",
+   "class": "BP_Look_GiltRowena_C",
+   "dist_m": 5.8,
+   "grooms": {
+    "Hair": {
+     "asset": "Hair_S_BobLayered",
+     "visible": true,
+     "sim_enabled": [
+      true
+     ]
+    },
+    "Eyebrows": {
+     "asset": "Eyebrows_M_SlightArch",
+     "visible": true,
+     "sim_enabled": [
+      false
+     ]
+    },
+    "_lodsync": [
+     -1,
+     1
+    ]
+   },
+   "shots": {
+    "face": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/grooms\\after_lives_more_BP_Look_GiltRowena_face.png"
+   }
+  },
+  {
+   "kind": "lives_more",
+   "class": "BP_Look_GiltArchivist_C",
+   "dist_m": 9.2,
+   "grooms": {
+    "Hair": {
+     "asset": "Hair_M_SideSweptFringe",
+     "visible": true,
+     "sim_enabled": [
+      true
+     ]
+    },
+    "Eyebrows": {
+     "asset": "Eyebrows_M_Thick",
+     "visible": true,
+     "sim_enabled": [
+      false
+     ]
+    },
+    "_lodsync": [
+     -1,
+     1
+    ]
+   },
+   "shots": {
+    "face": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/grooms\\after_lives_more_BP_Look_GiltArchivist_face.png"
+   }
+  },
+  {
+   "kind": "lives_more",
+   "class": "BP_Look_GiltGlassman_C",
+   "dist_m": 10.1,
+   "grooms": {
+    "Hair": {
+     "asset": "Hair_S_Messy",
+     "visible": true,
+     "sim_enabled": [
+      false
+     ]
+    },
+    "Eyebrows": {
+     "asset": "Eyebrows_M_Wide",
+     "visible": true,
+     "sim_enabled": [
+      false
+     ]
+    },
+    "Beard": {
+     "asset": "Beard_S_Full",
+     "visible": true,
+     "sim_enabled": [
+      false
+     ]
+    },
+    "_lodsync": [
+     -1,
+     1
+    ]
+   },
+   "shots": {
+    "face": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/grooms\\after_lives_more_BP_Look_GiltGlassman_face.png"
+   }
+  }
+ ],
+ "counts": {
+  "lives": 26,
+  "quest_giver": 2
+ },
+ "map": "MedievalLondon",
+ "viewport": "C:/Users/zachc/Documents/Unreal Projects/reflections/ArtDirection/CrowdLooks/grooms\\after_game_view.png",
+ "sample_tags": {
+  "lives": [
+   "NPC_Voice_M",
+   "Look_Age_Young",
+   "Look_Side_Giltside",
+   "Look_Role_Civilian",
+   "Look_Id_GiltHaruto",
+   "NPC_HitProxy",
+   "NPC_SampleLocomotion",
+   "Crowd_Ring",
+   "Crowd_LaneWalker",
+   "Friendly",
+   "NoVillain",
+   "Lives_Person_gen_1e8bf0e7"
+  ],
+  "quest_giver": [
+   "NPC_Voice_F",
+   "Look_Age_Old",
+   "Look_Side_Frostside",
+   "Look_Role_Civilian",
+   "Look_Id_FrostHyeon",
+   "NPC_HitProxy",
+   "NPC_SampleLocomotion",
+   "Lives_Person_sorrel_vey",
+   "Person_sorrel_vey",
+   "NPC_NoStroll",
+   "Lives_Steered",
+   "QuestSpawned"
+  ]
+ },
+ "seconds": 12.7
+}

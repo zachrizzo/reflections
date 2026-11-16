@@ -121,6 +121,10 @@ The game map is `/Game/GrayLondon/Maps/MedievalLondon`, a 500 m PCG town. Nothin
   - Without the narrow file it uses the measured instances (`--measure PATH`), or with `--layout` the town script's own `layout()`.
   - Re-run it whenever the town is repacked.
   - On the narrowed town the routes follow those centre lines, resampled every 3 m. Where something stands on a line (a lantern post), the route steps sideways round it in a straight run.
+- **Back lanes and the bell tower (16:17 town).**
+  - Every list of `{"centre": [...]}` in the streets JSON is walked, including its 39 `back_lanes`, so the town has 9.2 km of routes.
+  - Landmark boxes (`obstacles`, `reserved_boxes`, or the bell tower box built into the generator) are obstacles for routes. Spots keep 1.5 m from them.
+  - `Tools/Crowd/check_medieval_crowd.py` counts route segments and spots inside houses or landmark boxes. On 16:23 it found 0 of each, also with 30–35 cm clearance.
 - **Editor check (no PIE, read-only).** `Saved/CrowdReactions/verify_medieval_routes_editor.py` sweeps a walker capsule along every route edge and tests every spot against the town's real collision. Output: `medieval_routes_editor_check.json`.
 - **Routes** (`"routes": {"nodes", "edges", "offset_cm"}`): a walking graph along the clear middle of every street, built from the town's street lines (the curved main street, the east-west streets, the cross streets).
   - At every 3 m it finds the free span between houses, stalls, crates, casks, walls and the well, with 45 cm walker clearance. On a narrow street it takes the middle; on open ground it keeps to the street's own line.
@@ -146,6 +150,10 @@ The game map is `/Game/GrayLondon/Maps/MedievalLondon`, a 500 m PCG town. Nothin
     - LOD: full rate within 12 m, 20 Hz to 28 m, 10 Hz beyond, 4 Hz when not seen.
   - **Budget:** about 28 people near the player instead of 18. Most are past 12 m or out of sight in the narrow streets, at reduced animation rates.
   - **PIE check:** `Saved/CrowdReactions/verify_medieval_crowd.py` applies these lines at runtime, so it shows the tuning without an editor restart. It also takes a "busy lane" picture.
+- **Talking to a spot person (train #28).** npc-dialogue tags the player's conversation partner `NPC_Talking`.
+  - A borrowed walker is released and strolls on afterwards.
+  - Someone a pinned spot spawned stays the spot's. Its scene and steering stop for the talk, so it can turn to the player. Afterwards it steps back into its place and the loop restarts: no frozen copy and no second spawn.
+  - A seated one talks sitting down.
 - **Only when the hero is near:**
   - Spots activate within 60 m (`Crowd.Spots.ActivateDistance`). Pinned occupants are capped at 6 (`Crowd.Spots.MaxPinned`).
   - The chat director starts a conversation only near the hero, and fades it out when the hero walks away. npc-dialogue's 12:40 hooks in `ReflectionsCrowdChatSubsystem.cpp` (CanStart, Tick, PlayLine) start it within 13 m, end it past 18 m, and play at most 3 ambient lines at once. Keep those hooks when editing that file.

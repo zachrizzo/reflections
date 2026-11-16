@@ -15,7 +15,7 @@ from pathlib import Path
 import random
 import time
 
-from apply_facade_pcg import cell_transform, make_point, populate_point_mesh_graph
+from apply_facade_pcg import cell_transform, configure_spawner, make_point, populate_point_mesh_graph
 
 MAP = '/Game/GrayLondon/Maps/MedievalLondon'
 ROOT = '/Game/GrayLondon/MedievalOpening'
@@ -65,7 +65,8 @@ YARD_BOX_CM = (14000, 1300, 15800, 3500)
 # so the long alley rows are nearly all workshops to hold the triangle count.
 HOUSE_WEIGHTS = {'street': {'merchants': 2, 'workshop': 9, 'compound': 1},
                  'market': {'merchants': 3, 'workshop': 5, 'compound': 2},
-                 'alley': {'merchants': 1, 'workshop': 11, 'compound': 0}}
+                 'alley': {'merchants': 1, 'workshop': 11, 'compound': 0},
+                 'back': {'merchants': 0, 'workshop': 1, 'compound': 0}}
 FRONT_WIDTH_CM = {'merchants': (980, 1270), 'workshop': (640, 1010), 'compound': (1010, 1270)}
 # Depth as a fraction of the mesh. The merchants' mesh is L-shaped with its door
 # in a forecourt; a shallow scale keeps that court under 3.4 m deep.
@@ -77,6 +78,33 @@ MERCHANTS_FLUSH_SHARE = .65
 HOUSE_GAP_CM = (2, 10)            # houses stand shoulder to shoulder
 ALLEY_PLOT_STRETCH = 1.25         # wider plots along the cross alleys: fewer, broader houses
 MIN_FRONT_CM = 450
+# --- Back lanes ---------------------------------------------------------------
+# One narrow lane through the middle of every block, entered from the cross
+# alley at each end, with deep houses along both sides. It turns the open grass
+# inside the blocks into built-up courts with thin private yards behind.
+# The pass only adds to the town: it uses its own random stream and runs last,
+# so every street house, stall and barrel keeps its exact position. The two
+# exceptions: the alley house at each lane mouth is narrowed by the lane's
+# width, and an infill house standing in a lane's path is removed.
+BACK_LANES = True
+BACK_HALF_WIDTH_CM = (120, 145)   # 2.4-2.9 m wall to wall, a little more where a lane slants
+BACK_DEPTH_SCALE = (.95, 1.25)    # workshops 9-12 m deep
+BACK_WANDER_CM = 70               # sideways bow of a back lane between its two mouths
+# --- Plants -------------------------------------------------------------------
+# Every static mesh found under PLANT_FOLDER (see import_medieval_london_plants.py)
+# is scattered as a 'plant_<mesh name>' group: weeds at the foot of house walls
+# and clumps on the open ground inside the palisade. With no plant meshes
+# imported the town is generated without them. Plants never block anything.
+PLANT_FOLDER = f'{ROOT}/Plants'
+PLANT_SPREAD_CM = (50, 120)       # width each plant is grown or shrunk to (the scans are 6-100 cm)
+PLANT_SCALE_LIMITS = (.8, 4.0)
+PLANT_WALL_SHARE = .4             # chance of each of two weeds at the foot of a house front
+PLANT_RING_CLUMPS = 150           # clumps between the outermost houses and the palisade
+# --- City fence ---------------------------------------------------------------
+# True closes the palisade completely: corner pieces, the short gaps beside each
+# gatehouse, and a run of palisade across each gateway just behind its arch, so
+# nobody can walk out of the town. False leaves the two gateways open.
+FENCE_CLOSED = True
 # Forecourt of SM_GLMedieval_MarkLaneMerchantsHouses in mesh space (X depth,
 # Y width), measured from its ground-floor vertices on 2026-11-15.
 MERCHANTS_FORECOURT_LOCAL_CM = (1329, -2364, 1952, -620)
@@ -94,6 +122,13 @@ CROSS_PAVING_SCALE_Y = .8         # 9.7 m
 # Separately saved landmarks that dressing must not touch: the market well and
 # the Guildhall portal (measured actor bounds plus a small margin).
 LANDMARK_BOXES_CM = ((-3250, 630, -2950, 930), (2400, 2880, 2550, 3380))
+# Ground kept free of stalls, goods and plants for landmarks that other
+# sessions place in the map themselves. Houses never stand in the market anyway.
+# First box: the walk-in bell tower (bell-tower session): 9 m plinth centred on
+# (0, -350) plus 1.5 m, door facing west. It stands on the main street's centre
+# line, so through the market the walking route bends north of it; nothing the
+# generator places is near it.
+RESERVED_BOXES_CM = ((-600, -950, 600, 250),)
 # Filled by layout() for tools that plot or audit the plan outside the editor.
 LAST_LAYOUT = {}
 
@@ -233,6 +268,9 @@ def layout(bounds, existing_house_boxes=None):
     no_build = (market_box, YARD_BOX_CM)
     skipped = Counter()
     placed = Counter()
+    registry = []   # (box, mesh key, index in its group, row label) of every house
+    prop_registry = []   # (box, mesh key, index in its group) of every stall, crate pile and cask
+    fronts = []     # (axis, side, left, right, wall line, (mesh key, index)) of every row house
 
     def place(key, center, yaw=0, scale=(1, 1, 1)):
         low, high = bounds[key]
@@ -268,9 +306,10 @@ def layout(bounds, existing_house_boxes=None):
         while end - u >= MIN_FRONT_CM:
             weights = HOUSE_WEIGHTS[label]
             key = randomizer.choices(tuple(weights), tuple(weights.values()))[0]
-            left, right = u, u + plot_width(key, end - u, ALLEY_PLOT_STRETCH if label == 'alley' else 1.0)
+            left, right = u, u + plot_width(key, end - u, ALLEY_PLOT_STRETCH if label in ('alley', 'back') else 1.0)
             low, high = bounds[key]
-            depth = min((high[0] - low[0]) * randomizer.uniform(*DEPTH_SCALE[key]), 2010)
+            depth_scale = BACK_DEPTH_SCALE if label == 'back' else DEPTH_SCALE[key]
+            depth = min((high[0] - low[0]) * randomizer.uniform(*depth_scale), 2010)
             height = randomizer.uniform(.78, 1.10)
             inside = frontage(left, right)
             # End a plot just before a marker when a useful-sized frontage fits
@@ -318,6 +357,8 @@ def layout(bounds, existing_house_boxes=None):
                 placed[label, option] += 1
                 flush = option == 'merchants' and randomizer.random() < MERCHANTS_FLUSH_SHARE
                 pivot = place(option, center, yaw + 180 if flush else yaw, scale)
+                registry.append((actual, option, len(groups[option]) - 1, label))
+                fronts.append((axis, side, left, right, wall, (option, len(groups[option]) - 1)))
                 if option == 'merchants' and not flush:
                     forecourts.append((pivot, yaw, scale))
                 u = right + randomizer.uniform(*HOUSE_GAP_CM)
@@ -436,6 +477,7 @@ def layout(bounds, existing_house_boxes=None):
                 continue
             prop_boxes.append(box)
             place(key, center, yaw)
+            prop_registry.append((box, key, len(groups[key]) - 1))
             return True
         return False
 
@@ -488,6 +530,7 @@ def layout(bounds, existing_house_boxes=None):
                 continue
             prop_boxes.append(box)
             place(key, center, yaw)
+            prop_registry.append((box, key, len(groups[key]) - 1))
 
     # A second defended yard is visible at the far end of the market route.
     place('gate', (14900, 2400, 0), 0, (1.1, 1.2, 1.1))
@@ -536,11 +579,164 @@ def layout(bounds, existing_house_boxes=None):
             houses.append(box)
             placed['infill', 'workshop'] += 1
             place('workshop', (x, y, 0), -side * 90, scale)
+            registry.append((box, 'workshop', len(groups['workshop']) - 1, 'infill'))
+
+    # Everything below uses its own random stream, so it cannot move anything above.
+    randomizer = random.Random(1451)
+
+    # 4. Close the city fence (see FENCE_CLOSED above).
+    if FENCE_CLOSED:
+        for x in (-24200, 24200):
+            for y in (-24200, 24200):
+                place('wall', (x, y, 0), 0, (1, 1.33, 1.45))          # corner posts
+            for y in (-690, 690):
+                place('wall', (x, y, 0), 0, (1, 1.33, 1.45))          # beside the gatehouse
+            behind = x - 70 if x < 0 else x + 70
+            for y in range(-605, 606, 242):
+                place('wall', (behind, y, 0), 0, (1, 1.33, 1.45))     # across the gateway
+
+    # 5. Back lanes through the block interiors (see BACK_LANES above).
+    back_lanes, removed, removed_boxes = [], set(), []
+    first_added = len(registry)
+    # Clear the reserved landmark ground. Dropping goods here, after everything
+    # is placed, leaves all the other stalls and goods exactly where they were.
+    for box, key, index in prop_registry:
+        if any(boxes_overlap(box, area) for area in RESERVED_BOXES_CM):
+            removed.add((key, index))
+            prop_boxes.remove(box)
+    if BACK_LANES:
+        def drop(entry):
+            removed.add((entry[1], entry[2]))
+            removed_boxes.append(entry[0])
+            if entry[0] in houses:
+                houses.remove(entry[0])
+
+        def mouth(road, side, target, south, north):
+            """Narrow one alley workshop by the lane's width; return the lane's Y and half-width there."""
+            edge = road + side * CROSS_HALF_WIDTH_CM
+            half = randomizer.uniform(*BACK_HALF_WIDTH_CM)
+            candidates = []
+            for entry in registry:
+                box, key, index, label = entry
+                wall = box[0] if side > 0 else box[2]
+                if (label == 'alley' and key == 'workshop' and (key, index) not in removed and
+                        abs(wall - edge) < 75 and south + 900 < (box[1] + box[3]) * .5 < north - 900 and
+                        box[3] - box[1] >= MIN_FRONT_CM + 2 * half):
+                    candidates.append((abs((box[1] + box[3]) * .5 - target), entry))
+            if not candidates:
+                return None
+            entry = min(candidates)[1]
+            box, key, index, _ = entry
+            _, yaw, scale, _ = groups[key][index]
+            cut_north = target >= (box[1] + box[3]) * .5
+            kept = ((box[0], box[1], box[2], box[3] - 2 * half) if cut_north
+                    else (box[0], box[1] + 2 * half, box[2], box[3]))
+            lane_y = box[3] - half if cut_north else box[1] + half
+            new_scale = (scale[0], scale[1] * (kept[3] - kept[1]) / (box[3] - box[1]), scale[2])
+            drop(entry)
+            houses.append(kept)
+            place(key, ((kept[0] + kept[2]) * .5, (kept[1] + kept[3]) * .5, 0), yaw, new_scale)
+            registry.append((kept, key, len(groups[key]) - 1, 'mouth'))
+            return lane_y, half
+
+        columns = [TOWN_X[0], *CROSS_STREETS, TOWN_X[1]]
+        for column in range(len(columns) - 1):
+            west_road = CROSS_STREETS[column - 1] if column > 0 else None
+            east_road = CROSS_STREETS[column] if column < len(CROSS_STREETS) else None
+            x_w = west_road + CROSS_HALF_WIDTH_CM if west_road is not None else TOWN_X[0]
+            x_e = east_road - CROSS_HALF_WIDTH_CM if east_road is not None else TOWN_X[1]
+            for south, north in zip(STREET_AXES, STREET_AXES[1:]):
+                if any(boxes_overlap((x_w, south, x_e, north), area) for area in no_build):
+                    continue
+                target = (south + north) * .5 + randomizer.uniform(-250, 250)
+                west = mouth(west_road, 1, target, south, north) if west_road is not None else None
+                east = (mouth(east_road, -1, west[0] if west else target, south, north)
+                        if east_road is not None else None)
+                if not west and not east:
+                    continue
+                y_w, half_w = west or east
+                y_e, half_e = east or west
+                half = max(half_w, half_e)
+                bow = randomizer.choice((-1, 1)) * BACK_WANDER_CM
+
+                def lane_y(x, x_w=x_w, x_e=x_e, y_w=y_w, y_e=y_e, bow=bow):
+                    t = (x - x_w) / (x_e - x_w)
+                    return y_w + (y_e - y_w) * t + bow * math.sin(math.pi * t)
+
+                def lane_bounds(left, right, lane_y=lane_y):
+                    values = [lane_y(left + (right - left) * i / 6) for i in range(7)]
+                    return min(values) - 3, max(values) + 3
+
+                for entry in list(registry):
+                    box = entry[0]
+                    if (entry[3] == 'infill' and (entry[1], entry[2]) not in removed and
+                            box[0] < x_e and box[2] > x_w):
+                        low_y, high_y = lane_bounds(max(box[0], x_w), min(box[2], x_e))
+                        if box[1] < high_y + half + 25 and box[3] > low_y - half - 25:
+                            drop(entry)
+                for side in (-1, 1):
+                    blocked = []
+                    for box in houses:
+                        if box[0] < x_e and box[2] > x_w:
+                            low_y, high_y = lane_bounds(max(box[0], x_w), min(box[2], x_e))
+                            band = (low_y, high_y + half + 350) if side > 0 else (low_y - half - 350, high_y)
+                            if box[1] < band[1] and box[3] > band[0]:
+                                blocked.append((box[0] - 3, box[2] + 3))
+
+                    def back_wall(left, right, side=side, half=half, lane_bounds=lane_bounds):
+                        low_y, high_y = lane_bounds(left, right)
+                        return (high_y if side > 0 else low_y) + side * (half + randomizer.uniform(0, 20))
+                    for left, right in free_intervals(x_w, x_e, blocked):
+                        house_row('x', side, left, right, back_wall, 'back')
+                back_lanes.append({'half_width': round(half, 1),
+                                   'centre': [[x, round(lane_y(x), 1)] for x in range(int(x_w), int(x_e) + 1, 100)]})
+    # 6. Plants (see PLANT_FOLDER above), again on their own random stream.
+    plant_keys = sorted(key for key in bounds if key.startswith('plant_'))
+    if plant_keys:
+        randomizer = random.Random(1452)
+
+        def plant(x, y):
+            if (any(abs(x - mx) < 130 and abs(y - my) < 130 for mx, my, _ in keepouts) or
+                    any(area[0] < x < area[2] and area[1] < y < area[3] for area in RESERVED_BOXES_CM)):
+                return
+            key = randomizer.choice(plant_keys)
+            low, high = bounds[key]
+            spread = max(high[0] - low[0], high[1] - low[1], 1)
+            size = min(PLANT_SCALE_LIMITS[1], max(PLANT_SCALE_LIMITS[0], randomizer.uniform(*PLANT_SPREAD_CM) / spread))
+            # The ground block's surface is 5 cm below the house floors.
+            place(key, (x, y, -5), randomizer.uniform(0, 360), (size, size, size))
+
+        for axis, side, left, right, wall, ident in fronts:
+            if ident in removed or right - left < 200:
+                continue
+            for _ in range(2):
+                if randomizer.random() < PLANT_WALL_SHARE:
+                    along = randomizer.uniform(left + 50, right - 50)
+                    across = wall - side * randomizer.uniform(12, 30)
+                    plant(*((along, across) if axis == 'x' else (across, along)))
+        clumps = 0
+        for _ in range(PLANT_RING_CLUMPS * 40):
+            if clumps >= PLANT_RING_CLUMPS:
+                break
+            x, y = randomizer.uniform(-24000, 24000), randomizer.uniform(-24000, 24000)
+            if (not (abs(x) > 23300 or abs(y) > 21750) or
+                    any(abs(y - lane_center(lane, x)) < 450 for lane in STREET_AXES) or
+                    any(abs(x - road) < 330 for road in CROSS_STREETS) or
+                    any(box[0] - 150 < x < box[2] + 150 and box[1] - 150 < y < box[3] + 150 for box in houses)):
+                continue
+            clumps += 1
+            for _ in range(randomizer.randrange(3, 7)):
+                plant(x + randomizer.uniform(-130, 130), y + randomizer.uniform(-130, 130))
+
+    for key in {key for key, _ in removed}:
+        groups[key] = [row for index, row in enumerate(groups[key]) if (key, index) not in removed]
 
     check_layout(houses, prop_boxes, keepouts)
     LAST_LAYOUT.clear()
     LAST_LAYOUT.update(houses=list(houses), props=list(prop_boxes), skipped=dict(skipped),
-                       placed={f'{label} {key}': count for (label, key), count in sorted(placed.items())})
+                       placed={f'{label} {key}': count for (label, key), count in sorted(placed.items())},
+                       back_lanes=back_lanes, removed_boxes=removed_boxes,
+                       added_boxes=[entry[0] for entry in registry[first_added:]])
     return dict(groups)
 
 
@@ -584,6 +780,11 @@ def load_layout(unreal):
     meshes = {key: unreal.EditorAssetLibrary.load_asset(path) for key, path in ASSETS.items()}
     if any(not isinstance(mesh, unreal.StaticMesh) for mesh in meshes.values()):
         raise RuntimeError('A required existing London static mesh is missing.')
+    if unreal.EditorAssetLibrary.does_directory_exist(PLANT_FOLDER):
+        for path in sorted(unreal.EditorAssetLibrary.list_assets(PLANT_FOLDER, recursive=True, include_folder=False)):
+            asset = unreal.EditorAssetLibrary.load_asset(path)
+            if isinstance(asset, unreal.StaticMesh):
+                meshes[f'plant_{asset.get_name()}'] = asset
     bounds = {}
     for key, mesh in meshes.items():
         box = mesh.get_bounding_box()
@@ -659,7 +860,8 @@ async def repack(save=True):
     sources = {str(node.get_editor_property('node_title')).removeprefix('Points '): node.get_settings()
                for node in graph.get_editor_property('nodes')
                if isinstance(node.get_settings(), unreal.PCGCreatePointsSettings)}
-    if set(sources) != set(groups):
+    new_keys = sorted(set(groups) - set(sources))
+    if any(not key.startswith('plant_') for key in new_keys) or any(key not in sources for key in ASSETS):
         raise RuntimeError('The saved town graph no longer matches the placement groups.')
     pcg = unreal.get_editor_subsystem(unreal.PCGEditorSubsystem)
     was_paused = pcg.is_graph_automatic_regeneration_paused(graph)
@@ -668,7 +870,26 @@ async def repack(save=True):
         graph.modify()
         for key, settings in sources.items():
             settings.modify()
-            settings.set_editor_property('points_to_create', [make_point(unreal, row) for row in groups[key]])
+            # A plant branch whose mesh is gone simply gets no points.
+            settings.set_editor_property('points_to_create', [make_point(unreal, row) for row in groups.get(key, ())])
+        output = graph.get_output_node()
+        for offset, key in enumerate(new_keys):
+            # A new plant mesh gets its own Create Points -> Static Mesh Spawner branch.
+            source, settings = graph.add_node_of_type(unreal.PCGCreatePointsSettings)
+            settings.set_editor_properties({
+                'coordinate_space': unreal.PCGCoordinateSpace.WORLD,
+                'cull_points_outside_volume': False,
+                'points_to_create': [make_point(unreal, row) for row in groups[key]],
+            })
+            source.set_editor_property('node_title', f'Points {key}')
+            source.set_node_position(0, (len(sources) + offset) * 180)
+            spawner, spawn_settings = graph.add_node_of_type(unreal.PCGStaticMeshSpawnerSettings)
+            configure_spawner(unreal, spawn_settings, meshes[key], solid=False)
+            spawner.set_editor_property('node_title', key)
+            spawner.set_node_position(360, (len(sources) + offset) * 180)
+            if (not pcg.try_add_edge(source, 'Out', spawner, 'In') or
+                    not pcg.try_add_edge(spawner, 'Out', output, 'Out')):
+                raise RuntimeError(f'Could not connect the PCG branch for {key}.')
     finally:
         pcg.set_graph_automatic_regeneration_paused(graph, was_paused)
     start, = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.PlayerStart)
@@ -719,7 +940,7 @@ async def generate_and_save(unreal, editor, world, pcg, graph, volume, meshes, g
         if key in SOLID and str(ism.get_collision_profile_name()) != 'BlockAll':
             raise RuntimeError(f'Generated {key} has no blocking collision.')
         counts[key] += ism.get_instance_count()
-    if counts != {key: len(points) for key, points in groups.items()}:
+    if {key: count for key, count in counts.items() if count} != {key: len(points) for key, points in groups.items()}:
         raise RuntimeError(f'Town PCG instances did not match the plan: {dict(counts)}')
 
     editor.set_level_viewport_camera_info(unreal.Vector(-23700, 0, 210), unreal.Rotator(0, -2, 0))

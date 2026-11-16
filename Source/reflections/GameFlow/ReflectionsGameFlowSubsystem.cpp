@@ -1,6 +1,9 @@
 #include "GameFlow/ReflectionsGameFlowSubsystem.h"
 
+#include "AudioDevice.h"
+#include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
+#include "Engine/GameViewportClient.h"
 #include "Engine/World.h"
 #include "Framework/Application/IInputProcessor.h"
 #include "Framework/Application/SlateApplication.h"
@@ -15,7 +18,12 @@
 #include "Lives/ReflectionsLivesMemory.h"
 #include "Quests/ReflectionsQuestSubsystem.h"
 #include "Misc/PackageName.h"
+#include "MoviePlayer.h"
+#include "PlatformFeatures.h"
+#include "SaveGameSystem.h"
+#include "Tasks/Pipe.h"
 #include "UObject/Package.h"
+#include "Widgets/SWindow.h"
 #include "Worlds/ReflectionsWorldJumpSubsystem.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogReflectionsGameFlow, Log, All);
@@ -47,6 +55,35 @@ namespace
         FReflectionsSaveBlob& Added = Blobs.AddDefaulted_GetRef();
         Added.System = System;
         Added.Data = Data;
+    }
+
+    /**
+     * Save files are written on one background pipe, in order. The game thread only serializes (a few KB), so a save
+     * never waits on the disk or a virus scanner. Reading a slot, opening a map and quitting call FlushSaveWrites.
+     */
+    UE::Tasks::FPipe& SaveWritePipe()
+    {
+        static UE::Tasks::FPipe Pipe(TEXT("ReflectionsSaveWrites"));
+        return Pipe;
+    }
+    UE::Tasks::FTask GLastSaveWrite;
+
+    bool QueueSaveObject(USaveGame* Save, const FString& File)
+    {
+        ISaveGameSystem* System = IPlatformFeaturesModule::Get().GetSaveGameSystem();
+        TArray<uint8> Bytes;
+        if (!System || !Save || File.IsEmpty() || !UGameplayStatics::SaveGameToMemory(Save, Bytes) || Bytes.Num() == 0)
+        {
+            return false;
+        }
+        GLastSaveWrite = SaveWritePipe().Launch(TEXT("ReflectionsSaveWrite"), [System, File, Bytes = MoveTemp(Bytes)]()
+        {
+            if (!System->SaveGame(false, *File, 0, Bytes))
+            {
+                UE_LOG(LogReflectionsGameFlow, Warning, TEXT("Writing save %s failed."), *File);
+            }
+        });
+        return true;
     }
 
     FReflectionsSaveSlotInfo MakeSlotInfo(int32 Slot, const FReflectionsCheckpoint& Checkpoint)
@@ -134,6 +171,20 @@ void UReflectionsGameFlowSubsystem::Initialize(FSubsystemCollectionBase& Collect
         }
     }
 
+    // Read every slot's header now, behind the startup screen, so the title and the save menus never touch the disk.
+    for (int32 Slot = ReflectionsSaveSlots::Quick; Slot < ReflectionsSaveSlots::Count; ++Slot)
+    {
+        GetSaveSlotInfo(Slot);
+    }
+
+    if (!GIsEditor)
+    {
+        // Packaged and -game: the first map load shows the loading screen too, and it fades into the title. (Not in
+        // PIE, where other sessions' tests expect play at once.)
+        BeginLoadingScreen(LOCTEXT("LoadingStatus", "Loading..."));
+        SetupMoviePlayerLoadingScreen();
+    }
+
     if (FSlateApplication::IsInitialized())
     {
         InputTracker = MakeShared<FReflectionsFlowInputTracker>();
@@ -143,6 +194,12 @@ void UReflectionsGameFlowSubsystem::Initialize(FSubsystemCollectionBase& Collect
 
 void UReflectionsGameFlowSubsystem::Deinitialize()
 {
+    if (DeferredTicker.IsValid())
+    {
+        FTSTicker::GetCoreTicker().RemoveTicker(DeferredTicker);
+        DeferredTicker.Reset();
+    }
+    FlushSaveWrites();
     if (InputTracker.IsValid() && FSlateApplication::IsInitialized())
     {
         FSlateApplication::Get().UnregisterInputPreProcessor(InputTracker);
@@ -360,7 +417,8 @@ void UReflectionsGameFlowSubsystem::SetCheckpoint(const FReflectionsCheckpoint& 
     }
     CaptureMirroredFiles();
     WriteSave();
-    InvalidateSlotCache();
+    // The autosave's slot info is read from Checkpoint itself; the other slots did not change.
+    SaveIndicatorUntil = FPlatformTime::Seconds() + 1.1;
     if (UReflectionsGameFlowWorldSubsystem* Flow = GetWorldFlow())
     {
         Flow->NotifyCheckpointSaved();
@@ -371,7 +429,6 @@ void UReflectionsGameFlowSubsystem::ClearCheckpoint()
 {
     Checkpoint = FReflectionsCheckpoint();
     WriteSave();
-    InvalidateSlotCache();
 }
 
 // ---- Save slots --------------------------------------------------------------------------------------------
@@ -423,9 +480,13 @@ bool UReflectionsGameFlowSubsystem::SaveToSlot(int32 Slot)
     Save->Version = UReflectionsGameFlowSave::CurrentVersion;
     Save->Checkpoint = Checkpoint;
     Save->SeenTips = SeenTips;
-    const bool bOk = UGameplayStatics::SaveGameToSlot(Save, SaveSlotFileName(Slot), 0);
-    InvalidateSlotCache();
-    UE_LOG(LogReflectionsGameFlow, Log, TEXT("Saved to %s: %s (%d system blobs)."), *SaveSlotFileName(Slot), bOk ? TEXT("ok") : TEXT("FAILED"), Checkpoint.SystemData.Num());
+    // Serialized now, written to disk in the background; the menus read the slot from the cache.
+    const bool bOk = QueueSaveObject(Save, SaveSlotFileName(Slot));
+    if (bOk)
+    {
+        SlotCache.Add(Slot, MakeSlotInfo(Slot, Checkpoint));
+    }
+    UE_LOG(LogReflectionsGameFlow, Log, TEXT("Saved to %s: %s (%d system blobs)."), *SaveSlotFileName(Slot), bOk ? TEXT("queued") : TEXT("FAILED"), Checkpoint.SystemData.Num());
     return bOk;
 }
 
@@ -435,6 +496,11 @@ bool UReflectionsGameFlowSubsystem::LoadFromSlot(int32 Slot)
     {
         return false;
     }
+    if (bTravelPending || bQuitPending)
+    {
+        return false;  // a load, restart or quit is already under way
+    }
+    FlushSaveWrites();  // a save of this slot may still be on its way to the disk
     FReflectionsCheckpoint Loaded;
     if (Slot == ReflectionsSaveSlots::Autosave && Checkpoint.bValid)
     {
@@ -464,7 +530,10 @@ bool UReflectionsGameFlowSubsystem::LoadFromSlot(int32 Slot)
             Stamped->Version = UReflectionsGameFlowSave::CurrentVersion;
             Stamped->Checkpoint = Loaded;
             Stamped->SeenTips = SeenTips;
-            UGameplayStatics::SaveGameToSlot(Stamped, SaveSlotFileName(Slot), 0);
+            if (QueueSaveObject(Stamped, SaveSlotFileName(Slot)))
+            {
+                SlotCache.Add(Slot, MakeSlotInfo(Slot, Loaded));
+            }
         }
     }
     UE_LOG(LogReflectionsGameFlow, Log, TEXT("Loading %s (%s, %s)."), *SaveSlotFileName(Slot), *Loaded.Reason, *Loaded.SavedAt.ToString());
@@ -472,8 +541,7 @@ bool UReflectionsGameFlowSubsystem::LoadFromSlot(int32 Slot)
     // go back on disk before the map reload makes them read them.
     RestoreMirroredFiles(Loaded);
     Checkpoint = Loaded;
-    WriteSave(true);
-    InvalidateSlotCache();
+    WriteSave();  // OpenMap flushes the writes before the map opens
     bRestoreVitals = true;
     ResetInfection();
     ClearGameOver();
@@ -507,6 +575,7 @@ FReflectionsSaveSlotInfo UReflectionsGameFlowSubsystem::GetSaveSlotInfo(int32 Sl
     if (Slot > ReflectionsSaveSlots::Autosave && Slot < ReflectionsSaveSlots::Count)
     {
         const FString File = SaveSlotFileName(Slot);
+        FlushSaveWrites();
         if (UGameplayStatics::DoesSaveGameExist(File, 0))
         {
             if (const UReflectionsGameFlowSave* Save = Cast<UReflectionsGameFlowSave>(UGameplayStatics::LoadGameFromSlot(File, 0)))
@@ -612,14 +681,31 @@ void UReflectionsGameFlowSubsystem::WriteSave(bool bSync)
     Save->Version = UReflectionsGameFlowSave::CurrentVersion;
     Save->Checkpoint = Checkpoint;
     Save->SeenTips = SeenTips;
+    QueueSaveObject(Save, SlotName());
     if (bSync)
     {
-        UGameplayStatics::SaveGameToSlot(Save, SlotName(), 0);
+        FlushSaveWrites();
     }
-    else
+}
+
+void UReflectionsGameFlowSubsystem::FlushSaveWrites()
+{
+    if (GLastSaveWrite.IsValid())
     {
-        UGameplayStatics::AsyncSaveGameToSlot(Save, SlotName(), 0);
+        GLastSaveWrite.Wait();
+        GLastSaveWrite = UE::Tasks::FTask();
     }
+}
+
+bool UReflectionsGameFlowSubsystem::IsSaveIndicatorOn() const
+{
+    return FPlatformTime::Seconds() < SaveIndicatorUntil;
+}
+
+void UReflectionsGameFlowSubsystem::BeginLoadingScreen(const FText& Status)
+{
+    bLoadingScreen = true;
+    LoadingStatus = Status;
 }
 
 // ---- Flow --------------------------------------------------------------------------------------------------
@@ -647,10 +733,80 @@ void UReflectionsGameFlowSubsystem::OpenMap(const FString& MapPath)
         UE_LOG(LogReflectionsGameFlow, Error, TEXT("Map %s does not exist in this build; reloading %s instead."), *Target, *CurrentMapPath());
         Target = CurrentMapPath();
     }
-    UGameplayStatics::SetGamePaused(World, false);
     bTravelPending = true;
+    // The click or key that got here runs before this frame's paint. Show the loading screen now and open the map a
+    // few frames later, once that screen is on the monitor: LoadMap blocks the game thread for seconds, and the
+    // screen used to freeze on the menu for the whole load.
+    BeginLoadingScreen(LOCTEXT("LoadingStatus", "Loading..."));
+    DeferredMap = Target;
+    DeferredFrames = 3;
+    DeferredSince = FPlatformTime::Seconds();
+    StartDeferredTicker();
+}
+
+void UReflectionsGameFlowSubsystem::StartDeferredTicker()
+{
+    if (!DeferredTicker.IsValid())
+    {
+        DeferredTicker = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UReflectionsGameFlowSubsystem::TickDeferred));
+    }
+}
+
+bool UReflectionsGameFlowSubsystem::TickDeferred(float DeltaTime)
+{
+    if (DeferredMap.IsEmpty() && !bQuitPending)
+    {
+        DeferredTicker.Reset();
+        return false;
+    }
+    // Two frames presented (the render thread runs a frame behind) and a moment: then the load may block.
+    if (--DeferredFrames > 0 || FPlatformTime::Seconds() - DeferredSince < 0.06)
+    {
+        return true;
+    }
+    DeferredTicker.Reset();
+    if (bQuitPending)
+    {
+        FinishQuit();
+        return false;
+    }
+    const FString Target = DeferredMap;
+    DeferredMap.Reset();
+    UGameInstance* GameInstance = GetGameInstance();
+    UWorld* World = GameInstance ? GameInstance->GetWorld() : nullptr;
+    if (!World)
+    {
+        bTravelPending = false;
+        EndLoadingScreen();
+        return false;
+    }
+    FlushSaveWrites();  // the new map's systems read what these wrote
+    SetupMoviePlayerLoadingScreen();
+    UGameplayStatics::SetGamePaused(World, false);
     UE_LOG(LogReflectionsGameFlow, Log, TEXT("Opening %s."), *Target);
     UGameplayStatics::OpenLevel(World, FName(*Target));
+    return false;
+}
+
+void UReflectionsGameFlowSubsystem::SetupMoviePlayerLoadingScreen() const
+{
+    // The movie player paints its own copy of the loading screen on the loading thread while LoadMap blocks, so the
+    // spinner keeps turning. It is off in the editor: there the in-game copy is what stays on screen.
+    if (GIsEditor || !IsMoviePlayerEnabled())
+    {
+        return;
+    }
+    IGameMoviePlayer* MoviePlayer = GetMoviePlayer();
+    if (!MoviePlayer || !MoviePlayer->IsInitialized())
+    {
+        return;
+    }
+    FLoadingScreenAttributes Attributes;
+    Attributes.bAutoCompleteWhenLoadingCompletes = true;
+    Attributes.bMoviesAreSkippable = false;
+    Attributes.bWaitForManualStop = false;
+    Attributes.WidgetLoadingScreen = SReflectionsLoadingScreen::Create(FText::FromString(LoadingStatus.ToString()));
+    MoviePlayer->SetupLoadingScreen(Attributes);
 }
 
 void UReflectionsGameFlowSubsystem::RestartFromCheckpoint()
@@ -749,6 +905,8 @@ void UReflectionsGameFlowSubsystem::ContinueFromCheckpoint()
     UReflectionsGameFlowWorldSubsystem* Flow = GetWorldFlow();
     if (Flow && Checkpoint.MapPath == CurrentMapPath() && Flow->IsMapFresh())
     {
+        // In place, no reload: the loading screen still covers the jump and the first frames of streaming there.
+        BeginLoadingScreen(LOCTEXT("LoadingStatus", "Loading..."));
         Flow->ApplyCheckpoint(Checkpoint);
         Flow->BeginPlaying();
     }
@@ -761,15 +919,60 @@ void UReflectionsGameFlowSubsystem::ContinueFromCheckpoint()
 
 void UReflectionsGameFlowSubsystem::QuitGame()
 {
-    UGameInstance* GameInstance = GetGameInstance();
-    UWorld* World = GameInstance ? GameInstance->GetWorld() : nullptr;
+    if (bQuitPending)
+    {
+        return;
+    }
+    bQuitPending = true;
     if (Checkpoint.bValid)
     {
-        WriteSave(true);  // an async write still in flight at quit could leave a half-written file
+        WriteSave();  // FinishQuit waits for it: nothing is left half-written
     }
+    // The screen goes up this frame; the exit follows once it is presented.
+    BeginLoadingScreen(Checkpoint.bValid ? LOCTEXT("SavingStatus", "Saving...") : FText::GetEmpty());
+    DeferredFrames = 2;
+    DeferredSince = FPlatformTime::Seconds();
+    StartDeferredTicker();
+}
+
+void UReflectionsGameFlowSubsystem::FinishQuit()
+{
+    UGameInstance* GameInstance = GetGameInstance();
+    UWorld* World = GameInstance ? GameInstance->GetWorld() : nullptr;
+    FlushSaveWrites();
+    if (GIsEditor)
+    {
+        // Never 'quit' or RequestExit in the editor: the quit exec and the exit request both end the process, and
+        // that closes the shared editor. The screen is dropped and play goes on; the editor's Stop button ends PIE.
+        UE_LOG(LogReflectionsGameFlow, Warning, TEXT("Quit to desktop in the editor: the editor stays open; stop PIE to end the session."));
+        bQuitPending = false;
+        EndLoadingScreen();
+        return;
+    }
+    if (!GIsEditor)
+    {
+        // The engine's teardown of a big map takes seconds. Let the sound and the window go now, so quitting feels
+        // instant; the process finishes shutting down out of sight.
+        if (FAudioDevice* Audio = World ? World->GetAudioDeviceRaw() : nullptr)
+        {
+            Audio->SetTransientPrimaryVolume(0.0f);
+        }
+        if (GEngine && GEngine->GameViewport)
+        {
+            if (TSharedPtr<SWindow> Window = GEngine->GameViewport->GetWindow())
+            {
+                Window->HideWindow();
+            }
+        }
+    }
+    UE_LOG(LogReflectionsGameFlow, Log, TEXT("Quitting."));
     if (World)
     {
         UKismetSystemLibrary::QuitGame(World, World->GetFirstPlayerController(), EQuitPreference::Quit, false);
+    }
+    else
+    {
+        FPlatformMisc::RequestExit(false);
     }
 }
 

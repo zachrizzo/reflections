@@ -76,6 +76,16 @@ Layers (all viewport content, the same layer `AddToViewport` uses):
 
 PIE note: so the title doesn't freeze other sessions' automated PIE tests, it shows in PIE only after `GameFlow.TitleInPIE 1`, or on demand with `GameFlow.Title`. Everything else runs in PIE. Esc stops PIE in the editor, so use P or Start there to pause.
 
+## Loading screen, saves and quitting (11-15, menus-polish)
+
+- **Loading screen:** a full-screen dark screen with the title, the theme line, a gold spinner and "Loading..." (`SReflectionsLoadingScreen`). Load, Continue, New Game, Restart, Try again and Quit to title used to open the map on the same frame as the click. The screen froze on the menu for the whole MedievalLondon load (7.2 s in PIE). Now `OpenMap` shows the screen and opens the map 3 frames later. The new map keeps the screen up until it is ready, holds it 0.6 s more, then fades it out in 0.35 s. It times out after 30 s.
+  - **Packaged builds:** the movie player paints a copy while `LoadMap` blocks, so the spinner keeps turning. This needs the `MoviePlayer` module, added in `reflections.Build.cs`. The first load at launch shows it too.
+  - **PIE:** the movie player is off in the editor, so the in-game copy stays on screen during the load (the spinner stops). Menus take no input while the screen is up.
+- **Saves are async.** Every save file this code writes (the autosave and the quick and manual slots) is serialized on the game thread, a few KB, and written on one background pipe, in order. `FlushSaveWrites()` runs before a slot is read, before a map opens and before quitting. The slot list is cached: it is read once at startup, and each save or load updates its own entry. The title, pause and save menus never touch the disk.
+  - Quests and Lives still write their own files synchronously in their `OnCheckpointSaved` handlers, which game flow then mirrors. They are under 13 KB.
+- **"Saving..." indicator:** a small spinner and "Saving..." at the bottom right for about 1 s after each checkpoint, quick or manual save.
+- **Quit:** Pause > **Quit to desktop** is new. It asks first, then quits without the title's map reload. Quit (title, victory, and Pause after the confirm) shows the screen, waits for the save writes, then quits. Packaged builds also mute the sound and hide the window, so the engine's teardown happens out of sight.
+
 ## Renaming things: the String Table
 
 All names and story text are entries in `/Game/UI/ST_GameFlowText`.
@@ -85,16 +95,36 @@ All names and story text are entries in `/Game/UI/ST_GameFlowText`.
 
 | Key | Used for |
 |---|---|
-| `Game.Title`, `Game.Theme`, `Game.Tagline`, `Game.JamLine` | Title screen |
+| `Game.Title`, `Game.Opening`, `Game.Summary` | Title screen (and the loading screen: title and the opening line). `Game.Opening` is the opening card (11-15 16:45): the Tarnish spreads through Lanthorne and fills people with dark magic. It is a new key on purpose: the old `Game.Theme` / `Game.Tagline` rows still in the asset (with the "three reflections" text) are no longer read. The title no longer shows the three side names. |
 | `World.Gray`, `World.Red`, `World.White` | The three side marks (title, victory) |
 | `Meter.Label`, `Meter.None`, `Meter.Some`, `Meter.Danger`, `Pause.Count` | Tarnish meter and the pause-screen count |
 | `Lose.Title`, `Lose.Body` (`{0}` count, `{1}` cap), `Victory.Title`, `Victory.Body` | Lose and victory screens |
 | `Tip.<Aim,Cast,Craft>.<Title,Keys,Pad>`, `Tip.Shard(.Title)`, `Tip.Step.<Title,Keys,Pad>` | Tutorial tips (`Keys` = keyboard wording, `Pad` = controller wording) |
 | `Controls.StepUp`, `Controls.StepDown`, `Controls.Note` | Controls screen |
 | `Title.Saved` | "Last checkpoint: ..." under the title buttons |
-| `Credits.Game`, `Credits.Team`, `Credits.Tools`, `Credits.Thanks`, `Credits.Map` | Credits. All but the first are multi-line: one line per credit. `Credits.Map` (the map's licence lines) is drawn just before the last `Credits.Thanks` line, the engine line. |
+| `Credits.LeadRole`, `Credits.Lead` | The lead credit, first and largest: "CREATED BY" / "Jah Markabowi" |
+| `Credits.Crew` | Anyone else, one per line under the lead (empty: not in the table) |
+| `Credits.NoticesHead`, `Credits.Notices` | The small licence block at the end (multi-line, one notice per line) |
+| `Settings.VoicePrivacy` | The privacy line on the Settings screen (voice chat sends speech to Google) |
 
-`Credits.Team` reads "Team names to come" until the team sends names and roles; filling them in is a table edit. `Credits.Tools` follows the submission kit's AI declaration (`ArtDirection/Submission/ai-declaration.md`, "Credits block") word for word.
+**11-15 16:46 (menus-polish): one city, no stepping through here.** The game plays one map, MedievalLondon. Checked in the level data: no world anchors, no mirror shard or page pickups, and `DA_WorldJumpConfig` lists only the MockCity maps. So stepping through into another side is not possible on this map, and the text no longer promises it.
+- The title has no side marks. The tagline reads "Wren Hale, the Silverer, is the only one who can burn the Tarnish out of Lanthorne." (`Game.Summary`).
+- Save slots name the place, "Lanthorne", not a side (`Save.Place`). The Death and Save names use the same text.
+- The lose and victory screens lost their side and reflection wording (`Lose.Body2`, `Victory.Body2`). The victory screen has no side marks.
+- The Controls table no longer lists the step-up and step-down keys, and its note no longer mentions stepping (`Controls.Note2`). The Save note says "at every checkpoint" (`Save.LoadNote2`).
+- The mirror shard tip uses `Tip.Shard2`. The coin and stepping-through tips (`GameFlow` tips) only fire when `UReflectionsWorldJumpWorldSubsystem::IsWorldJumpActive()`, which is false here, so they never show on this map. Their texts stay in code for a world-jump build.
+- `Narrator_Tip_StepThrough` is not re-voiced: its tip can't fire on this map, so no audio plays for it. The old clip stays unused.
+
+**11-15 16:20 (menus-polish): commercial credits.** The game reads as a normal commercial release: no jam or AI-made wording on the title, credits or loading screen. The credits moved to **new keys** on purpose. The old rows (`Game.JamLine`, `Credits.Game`, `Credits.Team`, `Credits.Tools`, `Credits.Thanks`, `Credits.Map`) still sit in the `.uasset` with the jam-era text, but no code reads them any more. They can be deleted from the asset at any time. The CSV no longer lists them.
+
+The licence block keeps only what licences and terms ask for, from `ArtDirection/Submission/THIRD_PARTY_NOTICES.txt` (what ships with MedievalLondon):
+- the Unreal Engine notice (Epic's EULA);
+- OpenStreetMap's ODbL attribution;
+- Kimodo's NVIDIA Open Model License line, "Powered by Tencent Hunyuan", and the ElevenLabs attribution;
+- TripoSR (MIT), Poly Haven (CC0), and FreeType;
+- one neutral line saying the character voices are synthesized, not human actors. OpenAI's usage policies require that disclosure for its TTS voices, and the in-game dialogue no longer shows one.
+
+The Gray London map credits (Codriver, the Albert scan, Minimaliano, Cosmo Tree Gen, Noto Serif) are gone: they don't ship with MedievalLondon. Add a line to `Credits.Notices` if a new third-party asset ships.
 
 - **11-14 18:25:** the table and `ST_GameFlowText.csv` hold the 9-line Gemini version, which names Google Gemini first in the voice line and adds the "Live NPC replies" line.
 - The C++ fallback in `ReflectionsGameFlowSlate.cpp` (used only if the table fails to load) has the same 9 lines from train #11, so `make_string_table_csv.py` regenerates them.
