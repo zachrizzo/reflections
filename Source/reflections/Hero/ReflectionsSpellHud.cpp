@@ -52,14 +52,10 @@ void UReflectionsSpellHudWidget::NativeOnInitialized()
     PanelSlot->SetPosition(FVector2D(0, -28));
     PanelSlot->SetAutoSize(true);
 
-    // Health and mana sit in the top-left corner, under the world-jump panel (which holds 20, 18 on the canvas).
     UHorizontalBox* Vitals = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
-    Vitals->SetVisibility(ESlateVisibility::HitTestInvisible);
-    UCanvasPanelSlot* VitalsSlot = Root->AddChildToCanvas(Vitals);
-    VitalsSlot->SetAnchors(FAnchors(0.0f, 0.0f));
-    VitalsSlot->SetAlignment(FVector2D(0.0f, 0.0f));
-    VitalsSlot->SetPosition(FVector2D(20.0f, 244.0f));
-    VitalsSlot->SetAutoSize(true);
+    UVerticalBoxSlot* VitalsSlot = Panel->AddChildToVerticalBox(Vitals);
+    VitalsSlot->SetHorizontalAlignment(HAlign_Center);
+    VitalsSlot->SetPadding(FMargin(0, 0, 0, 6));
     auto AddVital = [this, Vitals](UTextBlock*& Label, UProgressBar*& Bar, const FLinearColor& Color)
     {
         UVerticalBox* Column = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());

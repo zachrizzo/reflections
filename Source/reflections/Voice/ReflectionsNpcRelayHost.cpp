@@ -1,6 +1,10 @@
 #include "Voice/ReflectionsNpcRelayHost.h"
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
 #include "HAL/PlatformMisc.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
@@ -16,6 +20,10 @@ namespace
     FProcHandle GProcess;
     int32 GReadyPort = 0;
     bool GReportedExit = false;
+    int32 GLaunchGeneration = 0;
+    // HasGeminiKey is asked every frame (the talk prompt, the Settings status): read the file at most every 2 s.
+    bool GHasKeyCached = false;
+    double GHasKeyCheckedAt = -1.0e9;
 
     FString RelayFolder()
     {
@@ -27,16 +35,83 @@ namespace
 void UReflectionsNpcRelayHost::Initialize(FSubsystemCollectionBase& Collection)
 {
     Super::Initialize(Collection);
+    if (WantsHelper()) Launch();
+}
+
+bool UReflectionsNpcRelayHost::WantsHelper()
+{
     const UReflectionsNpcDialogueSettings* Settings = GetDefault<UReflectionsNpcDialogueSettings>();
 #if WITH_EDITOR
     const bool bWanted = Settings->bLaunchLocalRelay && Settings->bLaunchLocalRelayInEditor;
 #else
     const bool bWanted = Settings->bLaunchLocalRelay;
 #endif
-    if (bWanted && !FParse::Param(FCommandLine::Get(), TEXT("NoNpcRelay")))
+    return bWanted && !FParse::Param(FCommandLine::Get(), TEXT("NoNpcRelay"));
+}
+
+FString UReflectionsNpcRelayHost::GetKeysPath()
+{
+#if WITH_EDITOR
+    // Never inside Content/ in the editor (it could be committed): Saved/ is git-ignored.
+    return FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("NpcDialogue"), TEXT("keys.json")));
+#else
+    return FPaths::Combine(RelayFolder(), TEXT("keys.json"));
+#endif
+}
+
+bool UReflectionsNpcRelayHost::HasGeminiKey()
+{
+    const double Now = FPlatformTime::Seconds();
+    if (Now - GHasKeyCheckedAt < 2.0) return GHasKeyCached;
+    GHasKeyCheckedAt = Now;
+    GHasKeyCached = false;
+    FString Text;
+    if (!FFileHelper::LoadFileToString(Text, *GetKeysPath())) return false;
+    TSharedPtr<FJsonObject> Json;
+    if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Json) || !Json.IsValid()) return false;
+    FString Key;
+    if (!Json->TryGetStringField(TEXT("gemini_api_key"), Key)) return false;
+    Key.TrimStartAndEndInline();
+    // keys.json.example's placeholder has spaces in it; a real key has none.
+    GHasKeyCached = Key.Len() >= 20 && !Key.Contains(TEXT(" "));
+    return GHasKeyCached;
+}
+
+bool UReflectionsNpcRelayHost::SaveGeminiKey(const FString& InKey)
+{
+    const FString Key = InKey.TrimStartAndEnd();
+    const FString Path = GetKeysPath();
+    bool bOk = true;
+    if (Key.IsEmpty())
     {
+        IFileManager::Get().Delete(*Path, false, true, true);
+        bOk = !FPaths::FileExists(Path);
+    }
+    else
+    {
+        IFileManager::Get().MakeDirectory(*FPaths::GetPath(Path), true);
+        TSharedRef<FJsonObject> Json = MakeShared<FJsonObject>();
+        Json->SetStringField(TEXT("gemini_api_key"), Key);
+        FString Text;
+        const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Text);
+        FJsonSerializer::Serialize(Json, Writer);
+        bOk = FFileHelper::SaveStringToFile(Text, *Path, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
+    }
+    GHasKeyCheckedAt = -1.0e9;  // the Settings status and the talk prompt see it at once
+    // Never the key itself.
+    UE_LOG(LogReflectionsNpcDialogue, Log, TEXT("NPC dialogue key %s."), !bOk ? TEXT("could not be saved") : Key.IsEmpty() ? TEXT("removed") : TEXT("saved"));
+    if (bOk && WantsHelper())
+    {
+        StopHelper();
         Launch();
     }
+    ++GLaunchGeneration;
+    return bOk;
+}
+
+int32 UReflectionsNpcRelayHost::GetLaunchGeneration()
+{
+    return GLaunchGeneration;
 }
 
 bool UReflectionsNpcRelayHost::Launch()
@@ -45,7 +120,7 @@ bool UReflectionsNpcRelayHost::Launch()
     const UReflectionsNpcDialogueSettings* Settings = GetDefault<UReflectionsNpcDialogueSettings>();
     const FString Folder = RelayFolder();
     const FString Exe = FPaths::Combine(Folder, TEXT("NpcDialogueRelay.exe"));
-    const FString Keys = FPaths::Combine(Folder, TEXT("keys.json"));
+    const FString Keys = GetKeysPath();
     if (!FPaths::FileExists(Exe))
     {
         UE_LOG(LogReflectionsNpcDialogue, Log, TEXT("No NPC dialogue helper at %s; NPCs use baked lines."), *Exe);
@@ -53,7 +128,7 @@ bool UReflectionsNpcRelayHost::Launch()
     }
     if (!FPaths::FileExists(Keys))
     {
-        UE_LOG(LogReflectionsNpcDialogue, Log, TEXT("No keys.json next to the NPC dialogue helper; NPCs use baked lines."));
+        UE_LOG(LogReflectionsNpcDialogue, Log, TEXT("No keys.json for the NPC dialogue helper (add a Gemini API key in Settings); NPCs use baked lines."));
         return false;
     }
     // A fresh token per run, handed to the helper through the environment it inherits; the voice component reads it too.
@@ -116,6 +191,12 @@ bool UReflectionsNpcRelayHost::IsLaunchedRelayReady()
 
 void UReflectionsNpcRelayHost::Deinitialize()
 {
+    StopHelper();
+    Super::Deinitialize();
+}
+
+void UReflectionsNpcRelayHost::StopHelper()
+{
     if (GProcess.IsValid())
     {
         if (FPlatformProcess::IsProcRunning(GProcess)) FPlatformProcess::TerminateProc(GProcess, true);
@@ -130,5 +211,4 @@ void UReflectionsNpcRelayHost::Deinitialize()
         UReflectionsNpcDialogueSettings::SetLaunchedRelayUrl(FString());
         IFileManager::Get().Delete(*GLaunchedTokenFile, false, true, true);
     }
-    Super::Deinitialize();
 }

@@ -19,7 +19,11 @@ LOCATIONS = {
     'VaneAtelier': (-5400, -530), 'WickStreet': (11300, -5900), 'Furnace': (11300, -12200),
     'CoalLaneLaundry': (18900, -12600), 'CoalLaneStop': (18900, -8600),
     'BarracksEast': (18900, 3200), 'BarracksWest': (11300, 4700), 'MusterYard': (14800, 2400),
-    'TowerFoot': (19300, 340), 'TowerPlaza': (19900, -400), 'IceWall': (22600, 500),
+    # TowerFoot is the market bell tower's west door (tower centre (0, -350)), not the east end
+    # (19300, 340): its cutscenes and quest markers moved there 2026-11-15. The exact saved spots,
+    # incl. the belfry ones (Tower_Frostside, CutsceneAnchor_Ending) and the villain arena, are in
+    # ArtDirection/CityPCG/MedievalLondon/BellTower/move_tower_beat.py.
+    'TowerFoot': (-700, -350), 'TowerPlaza': (19900, -400), 'IceWall': (22600, 500),
     'HesterDoorstep': (3600, -5700), 'FishSteps': (-3700, -18800),
     'Shed': (-10900, -18100), 'Yard': (11400, 1100),
 }

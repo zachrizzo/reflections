@@ -15,8 +15,8 @@ Source extracts: Geofabrik, Greater London.
 
 The town's street layout, ground and building frontage plans were derived from
 OpenStreetMap data. Under ODbL section 4.6, the derived data and the method used
-to make it are offered under the ODbL at:
-  [CONFIRM: public link to the generator scripts and tile/plan data]
+to make it (the generator scripts and the tile/plan data) are available under
+the ODbL on request: contact the team through the game's itch.io page.
 
 
 2. TEXTURES - Poly Haven (CC0)

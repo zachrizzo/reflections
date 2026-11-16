@@ -102,7 +102,7 @@ All names and story text are entries in `/Game/UI/ST_GameFlowText`.
 | `Tip.<Aim,Cast,Craft>.<Title,Keys,Pad>`, `Tip.Shard(.Title)`, `Tip.Step.<Title,Keys,Pad>` | Tutorial tips (`Keys` = keyboard wording, `Pad` = controller wording) |
 | `Controls.StepUp`, `Controls.StepDown`, `Controls.Note` | Controls screen |
 | `Title.Saved` | "Last checkpoint: ..." under the title buttons |
-| `Credits.LeadRole`, `Credits.Lead` | The lead credit, first and largest: "CREATED BY" / "Jah Markabowi" |
+| `Credits.LeadRole`, `Credits.Lead` | The lead credit, first and largest: "CREATED BY" / "Jah Markabawi" |
 | `Credits.Crew` | Anyone else, one per line under the lead (empty: not in the table) |
 | `Credits.NoticesHead`, `Credits.Notices` | The small licence block at the end (multi-line, one notice per line) |
 | `Settings.VoicePrivacy` | The privacy line on the Settings screen (voice chat sends speech to Google) |

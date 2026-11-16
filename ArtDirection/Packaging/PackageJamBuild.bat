@@ -114,6 +114,8 @@ if defined WITHRELAY (
   call :stagerelay
   if errorlevel 9 exit /b 9
   if errorlevel 8 exit /b 8
+  rem Player setup for live voice (their own key file, microphone), next to reflections.exe.
+  if exist "%PROJ%\ArtDirection\NpcDialogue\LIVE_VOICE_SETUP.md" (copy /y "%PROJ%\ArtDirection\NpcDialogue\LIVE_VOICE_SETUP.md" "%STAGE%\LIVE_VOICE.txt" >nul && echo LIVE_VOICE.txt copied next to reflections.exe.)
 )
 exit /b 0
 

@@ -185,6 +185,14 @@ Cause: `%APPDATA%\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml` (dated 2
 
 ## Sunday plan
 
+**SAFETY ZIP, Sun 17:47–17:53: `Saved/JamBuild/Zips/Reflections_9cb0ba39_safety_1752.zip`, 1,243.0 MB.**
+- **Source:** 9cb0ba39 plus the SpellHud revert.
+- **Contents:** includes `--with-npc-relay`, checked for no `keys.json` and no key-shaped strings, plus `LIVE_VOICE.txt` and the notices, whose line 23 is now "available on request" (orchestrator's default).
+- **Cook:** 0 errors. The Geodata check passed; Gray London is 24.9 MB.
+- **Not smoke-tested:** the user tests.
+- **Delayed start:** a Codex `action_fighting_UE59` Shipping BuildCookRun held the engine's single UAT slot from 16:56 to ~17:45.
+- **Final package:** ~18:12, as `PackageJamBuild.bat --build-editor --with-npc-relay` with the editor closed. The bat now copies `LIVE_VOICE.txt` itself with `--with-npc-relay`. `--extras-only` re-stages the notices, relay and setup doc without cooking.
+
 **FINAL REPACK runbook, ~17:20 Sun** (orchestrator, 16:4x). It replaces the 15:47 zip. The trigger is "packaging your turn" in `Saved/PIE_QUEUE.md`, with the editor closed, after train #28 and two PIE checks.
 1. **Pre-check:**
    - no `UnrealEditor.exe` or UBT running;

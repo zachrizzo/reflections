@@ -19,6 +19,9 @@
 #include "Widgets/SOverlay.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SEditableTextBox.h"
+#include "Voice/ReflectionsNpcRelayHost.h"
 
 #define LOCTEXT_NAMESPACE "ReflectionsGameFlow"
 
@@ -1260,7 +1263,7 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildCredits(bool bEmbedded)
     ];
     Column->AddSlot().AutoHeight()
     [
-        Text(FLOWTEXT("Credits.Lead", "Jah Markabowi"), Font(TEXT("Bold"), bEmbedded ? 30 : 38, 60), Paper)
+        Text(FLOWTEXT("Credits.Lead", "Jah Markabawi"), Font(TEXT("Bold"), bEmbedded ? 30 : 38, 60), Paper)
     ];
     const TArray<FText> Crew = ReflectionsFlowText::GetLines(TEXT("Credits.Crew"), FText::GetEmpty());
     if (Crew.Num() > 0)
@@ -1374,6 +1377,45 @@ TSharedRef<SWidget> SReflectionsFlowMenu::BuildSettings()
                 Font(TEXT("Regular"), 12), PaperDim, ETextJustify::Left, true)
         ]
     ];
+    // The player's own Gemini API key for live talk: written to keys.json next to the voice helper, never shown again,
+    // never logged. Saving restarts the helper, so talk goes live without restarting the game.
+    {
+        TSharedPtr<SEditableTextBox> KeyBox;
+        TSharedRef<SHorizontalBox> KeyRow = SNew(SHorizontalBox);
+        KeyRow->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 12, 0)
+            [Text(FLOWTEXT("Settings.GeminiKey", "Gemini API key"), Font(TEXT("Bold"), 15), Paper)];
+        KeyRow->AddSlot().FillWidth(1.0f).VAlign(VAlign_Center).Padding(0, 0, 10, 0)
+        [
+            SAssignNew(KeyBox, SEditableTextBox)
+            .IsPassword(true)
+            .Font(Font(TEXT("Regular"), 14))
+            .HintText(FLOWTEXT("Settings.GeminiKeyHint", "Paste your key"))
+        ];
+        KeyRow->AddSlot().AutoWidth().VAlign(VAlign_Center).Padding(0, 0, 12, 0)
+        [
+            SNew(SButton)
+            .OnClicked_Lambda([KeyBox]()
+            {
+                if (KeyBox.IsValid())
+                {
+                    UReflectionsNpcRelayHost::SaveGeminiKey(KeyBox->GetText().ToString());
+                    KeyBox->SetText(FText::GetEmpty());
+                }
+                return FReply::Handled();
+            })
+            [
+                Text(FLOWTEXT("Settings.GeminiKeySave", "Save"), Font(TEXT("Bold"), 14), Paper)
+            ]
+        ];
+        KeyRow->AddSlot().AutoWidth().VAlign(VAlign_Center)
+        [
+            SNew(STextBlock)
+            .Font(Font(TEXT("Regular"), 14))
+            .Text_Lambda([]() { return UReflectionsNpcRelayHost::HasGeminiKey() ? FLOWTEXT("Settings.GeminiKeySaved", "Saved") : FLOWTEXT("Settings.GeminiKeyNone", "No key"); })
+            .ColorAndOpacity_Lambda([]() { return FSlateColor(UReflectionsNpcRelayHost::HasGeminiKey() ? Paper : PaperDim); })
+        ];
+        Column->AddSlot().AutoHeight().Padding(0, 0, 0, 12)[SNew(SBox).WidthOverride(640)[KeyRow]];
+    }
     Column->AddSlot().AutoHeight()[MakeButton(FLOWTEXT("Settings.Apply", "Apply"), EReflectionsFlowAction::SettingsApply, true)];
     Column->AddSlot().AutoHeight()[MakeButton(FLOWTEXT("Settings.AutoDetect", "Auto-detect"), EReflectionsFlowAction::SettingsDefaults)];
     Column->AddSlot().AutoHeight()[MakeButton(LOCTEXT("Back", "Back"), EReflectionsFlowAction::Back)];

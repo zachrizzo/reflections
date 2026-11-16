@@ -78,6 +78,10 @@ protected:
 private:
     void TickManifest(float DeltaSeconds);
     void TickFight(float DeltaSeconds);
+    /** He comes after a player who leaves the arena: along the navmesh, as far as Villain.Boss.Leash. */
+    void TickPursuit(float DeltaSeconds);
+    /** The floor his ground attacks are drawn on: the arena's while he is in it, the ground under him once he has left. */
+    float FloorZ() const { return FVector::DistSquared2D(Station, ArenaCenter) > FMath::Square(ArenaRadius) ? Station.Z : ArenaCenter.Z; }
     void TickDying(float DeltaSeconds);
     void Hover(float DeltaSeconds, float ExtraHeight);
     void FacePlayer(float DeltaSeconds);
@@ -129,6 +133,12 @@ private:
     bool bPhaseTwo = false;
     bool bHazardsSpawned = false;
     bool bBlinkFirst = false;
+    // Pursuit (TickPursuit).
+    TArray<FVector> PursuitPath;
+    int32 PursuitIndex = 0;
+    float PursuitRepath = 0.0f;
+    /** Seconds the player has been far ahead of him: long enough and he blinks after them. */
+    float FarFor = 0.0f;
 };
 
 /** One of his shadow orbs. Flies straight; hurts the player on contact. */

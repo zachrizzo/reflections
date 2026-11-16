@@ -63,6 +63,8 @@ public:
     bool IsVoiceReady() const { return bReady; }
     bool IsConnecting() const { return Socket.IsValid() && !bReady; }
     bool IsListening() const { return bRecording.Load(); }
+    /** The helper was (re)started (a key was saved): try it again now rather than after the retry wait. */
+    void ClearRelayDown() { RelayDownUntil = 0.0; }
     /** How loud the microphone is right now (0..1, the last chunk's peak), for the listening meter; 0 when not listening. */
     float GetMicLevel() const { return bRecording.Load() ? MicLevelMilli.Load() / 1000.0f : 0.0f; }
     bool IsSpeaking() const;

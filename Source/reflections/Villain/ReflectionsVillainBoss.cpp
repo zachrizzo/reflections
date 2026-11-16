@@ -22,6 +22,8 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "NavigationPath.h"
+#include "NavigationSystem.h"
 #include "NiagaraComponent.h"
 #include "Sound/SoundBase.h"
 
@@ -33,6 +35,17 @@ namespace
     constexpr float HoverHeight = 40.0f;
     constexpr float ManifestTime = 4.2f;
     constexpr float DeathTime = 3.4f;
+    // Pursuit: he stops this far from the player (he is a caster), and blinks after one who stays this far ahead.
+    constexpr float PursuitKeepDistance = 900.0f;
+    constexpr float PursuitFarDistance = 2500.0f;
+    constexpr float PursuitFarSeconds = 2.5f;
+    // Wherever he has followed to, he attacks a player this close to him (the reach he had from a 14 m arena).
+    constexpr float PursuitAttackReach = 3900.0f;
+
+    TAutoConsoleVariable<float> CVarBossLeash(TEXT("Villain.Boss.Leash"), 15000.0f,
+        TEXT("How far (cm) from the middle of his arena the true form follows a player who runs from the fight; he waits at that line. 0: he never leaves the arena (the old behaviour)."));
+    TAutoConsoleVariable<float> CVarBossChaseSpeed(TEXT("Villain.Boss.ChaseSpeed"), 520.0f,
+        TEXT("How fast (cm/s) the true form follows a player who has left the arena; a quarter faster in his second phase."));
 
     float Ease(float T)
     {
@@ -315,11 +328,15 @@ void AReflectionsVillainBoss::FacePlayer(float DeltaSeconds)
 void AReflectionsVillainBoss::TickFight(float DeltaSeconds)
 {
     const bool bRising = Attack == EReflectionsVillainAttack::Wave && AttackClock < Telegraph;
+    TickPursuit(DeltaSeconds);
     Hover(DeltaSeconds, bRising ? 150.0f : 0.0f);
     FacePlayer(DeltaSeconds);
     const APawn* Player = GetPlayer();
+    // Near the arena as before, or near him wherever he has followed the player to.
     const bool bEngaged = Player && ReflectionsVillainFx::IsAlive(Player)
-        && FVector::Dist2D(Player->GetActorLocation(), ArenaCenter) < ArenaRadius + 2500.0f;
+        && (FVector::Dist2D(Player->GetActorLocation(), ArenaCenter) < ArenaRadius + 2500.0f
+            || (CVarBossLeash.GetValueOnGameThread() > 0.0f
+                && FVector::Dist2D(Player->GetActorLocation(), GetActorLocation()) < PursuitAttackReach));
     if (Attack != EReflectionsVillainAttack::None)
     {
         TickAttack(DeltaSeconds);
@@ -351,6 +368,78 @@ void AReflectionsVillainBoss::TickFight(float DeltaSeconds)
         NextTaunt = StateClock + FMath::FRandRange(9.0f, 15.0f);
         ReflectionsVillainFx::VoiceOn(ReflectionsVillainAssets::VoTaunt(), Look->GetBody(), TEXT("head"), 1.0f);
     }
+}
+
+void AReflectionsVillainBoss::TickPursuit(float DeltaSeconds)
+{
+    // The user's ask (2026-11-15): "when you run away from the boss fight, it has to actually chase you too." Until
+    // now he only ever stood at spots inside his arena. While the player is in the arena nothing here moves him.
+    const float Leash = CVarBossLeash.GetValueOnGameThread();
+    UWorld* World = GetWorld();
+    const APawn* Player = GetPlayer();
+    if (Leash <= 0.0f || !World || !Player || !ReflectionsVillainFx::IsAlive(Player))
+    {
+        FarFor = 0.0f;
+        return;
+    }
+    const FVector PlayerAt = Player->GetActorLocation();
+    const bool bPlayerLeft = FVector::DistSquared2D(PlayerAt, ArenaCenter) > FMath::Square(ArenaRadius + 300.0f);
+    const bool bHeLeft = FVector::DistSquared2D(Station, ArenaCenter) > FMath::Square(ArenaRadius);
+    if (!bPlayerLeft && !bHeLeft)
+    {
+        FarFor = 0.0f;
+        PursuitPath.Reset();
+        return;
+    }
+    const float Gap = FVector::Dist2D(Station, PlayerAt);
+    FarFor = Gap > PursuitFarDistance ? FarFor + DeltaSeconds : 0.0f;
+    // Outrun, or no way through on foot: his blink takes him after the player (it does nothing when it finds no spot).
+    if (FarFor >= PursuitFarSeconds && Attack == EReflectionsVillainAttack::None)
+    {
+        FarFor = 0.0f;
+        PursuitPath.Reset();
+        PursuitRepath = 0.0f;
+        Blink();
+        return;
+    }
+    // Close enough to cast from; and a Wave is drawn on the ground where he stands, so he holds still for it.
+    if (Gap <= PursuitKeepDistance || Attack == EReflectionsVillainAttack::Wave)
+    {
+        return;
+    }
+    PursuitRepath -= DeltaSeconds;
+    if (PursuitRepath <= 0.0f)
+    {
+        PursuitRepath = 0.5f;
+        PursuitPath.Reset();
+        PursuitIndex = 0;
+        // Along the navmesh only: his body passes through walls, so a straight line would take him through houses.
+        const FVector Goal = ReflectionsVillainFx::Ground(World, PlayerAt, Player);
+        if (const UNavigationPath* Path = UNavigationSystemV1::FindPathToLocationSynchronously(World, Station, Goal))
+        {
+            if (Path->IsValid() && !Path->IsPartial())
+            {
+                PursuitPath = Path->PathPoints;
+            }
+        }
+    }
+    while (PursuitIndex < PursuitPath.Num() && FVector::DistSquared2D(Station, PursuitPath[PursuitIndex]) < FMath::Square(60.0f))
+    {
+        ++PursuitIndex;
+    }
+    if (PursuitIndex >= PursuitPath.Num())
+    {
+        return;
+    }
+    const FVector To = PursuitPath[PursuitIndex] - Station;
+    const float Step = CVarBossChaseSpeed.GetValueOnGameThread() * (bPhaseTwo ? 1.25f : 1.0f) * DeltaSeconds;
+    const FVector Next = To.Size() <= Step ? PursuitPath[PursuitIndex] : Station + To.GetSafeNormal() * Step;
+    // The leash: he waits at the line and attacks whoever is still in reach.
+    if (FVector::DistSquared2D(Next, ArenaCenter) > FMath::Square(Leash))
+    {
+        return;
+    }
+    Station = Next;
 }
 
 void AReflectionsVillainBoss::ChooseAttack()
@@ -436,7 +525,7 @@ void AReflectionsVillainBoss::StartAttack(EReflectionsVillainAttack NewAttack)
         Telegraph = TelegraphTime(1.35f);
         FActorSpawnParameters Params;
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        const FVector Ground(GetActorLocation().X, GetActorLocation().Y, ArenaCenter.Z + 3.0f);
+        const FVector Ground(GetActorLocation().X, GetActorLocation().Y, FloorZ() + 3.0f);
         if (AReflectionsVillainHazard* Ring = World->SpawnActor<AReflectionsVillainHazard>(AReflectionsVillainHazard::StaticClass(), Ground,
             FRotator::ZeroRotator, Params))
         {
@@ -602,7 +691,7 @@ void AReflectionsVillainBoss::SpawnWave()
     {
         return;
     }
-    const FVector Ground(GetActorLocation().X, GetActorLocation().Y, ArenaCenter.Z + 2.0f);
+    const FVector Ground(GetActorLocation().X, GetActorLocation().Y, FloorZ() + 2.0f);
     FActorSpawnParameters Params;
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     if (AReflectionsVillainWave* Wave = World->SpawnActor<AReflectionsVillainWave>(AReflectionsVillainWave::StaticClass(), Ground,
@@ -624,20 +713,60 @@ void AReflectionsVillainBoss::Blink()
         return;
     }
     const FVector From = GetActorLocation();
-    ReflectionsVillainFx::Impact(World, From, ReflectionsVillainColors::Violet, ReflectionsVillainColors::Lilac, 1.8f, 3.0f);
-    ReflectionsVillainFx::Sound(World, ReflectionsVillainAssets::HopSound(), From);
     const APawn* Player = GetPlayer();
     FVector Pick = ArenaCenter;
-    for (int32 Try = 0; Try < 8; ++Try)
+    const float Leash = CVarBossLeash.GetValueOnGameThread();
+    if (Leash > 0.0f && Player && FVector::DistSquared2D(Player->GetActorLocation(), ArenaCenter) > FMath::Square(ArenaRadius + 300.0f))
     {
-        const float Angle = FMath::FRandRange(0.0f, 2.0f * PI);
-        const FVector Candidate = ArenaCenter + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0.0f) * FMath::FRandRange(250.0f, ArenaRadius * 0.55f);
-        if (!Player || FVector::Dist2D(Candidate, Player->GetActorLocation()) > 500.0f)
+        // The player has left the arena: he blinks after them. A spot 7 to 11 m from the player, on the navmesh (so
+        // never inside a house), inside his leash, and best with a clear line to the player. No spot: no blink.
+        const UNavigationSystemV1* Nav = FNavigationSystem::GetCurrent<UNavigationSystemV1>(World);
+        const FVector Feet = ReflectionsVillainFx::Ground(World, Player->GetActorLocation(), Player);
+        FCollisionQueryParams Sight(SCENE_QUERY_STAT(VillainBlink), false, this);
+        Sight.AddIgnoredActor(Player);
+        bool bFound = false;
+        for (int32 Try = 0; Nav && Try < 12; ++Try)
         {
-            Pick = Candidate;
-            break;
+            const float Angle = FMath::FRandRange(0.0f, 2.0f * PI);
+            const FVector Candidate = Feet + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0.0f) * FMath::FRandRange(700.0f, 1100.0f);
+            FNavLocation OnNav;
+            if (FVector::DistSquared2D(Candidate, ArenaCenter) > FMath::Square(Leash)
+                || !Nav->ProjectPointToNavigation(Candidate, OnNav, FVector(120.0f, 120.0f, 300.0f)))
+            {
+                continue;
+            }
+            const bool bClear = !World->LineTraceTestByChannel(OnNav.Location + FVector(0.0f, 0.0f, 150.0f),
+                Player->GetActorLocation(), ECC_Visibility, Sight);
+            if (!bFound || bClear)
+            {
+                bFound = true;
+                Pick = OnNav.Location;
+            }
+            if (bClear)
+            {
+                break;
+            }
+        }
+        if (!bFound)
+        {
+            return;
         }
     }
+    else
+    {
+        for (int32 Try = 0; Try < 8; ++Try)
+        {
+            const float Angle = FMath::FRandRange(0.0f, 2.0f * PI);
+            const FVector Candidate = ArenaCenter + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0.0f) * FMath::FRandRange(250.0f, ArenaRadius * 0.55f);
+            if (!Player || FVector::Dist2D(Candidate, Player->GetActorLocation()) > 500.0f)
+            {
+                Pick = Candidate;
+                break;
+            }
+        }
+    }
+    ReflectionsVillainFx::Impact(World, From, ReflectionsVillainColors::Violet, ReflectionsVillainColors::Lilac, 1.8f, 3.0f);
+    ReflectionsVillainFx::Sound(World, ReflectionsVillainAssets::HopSound(), From);
     Station = ReflectionsVillainFx::Ground(World, Pick, this, 400.0f, 1500.0f);
     SetActorLocation(Station + FVector(0.0f, 0.0f, HalfHeight + HoverHeight), false, nullptr, ETeleportType::TeleportPhysics);
     ReflectionsVillainFx::Impact(World, GetActorLocation(), ReflectionsVillainColors::Violet, ReflectionsVillainColors::Lilac, 1.8f, 3.0f);

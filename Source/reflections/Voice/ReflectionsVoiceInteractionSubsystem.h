@@ -113,4 +113,6 @@ private:
     /** The NPC we tagged NPC_Talking (crowd spots let go of it) for the conversation; NPC_NoStroll too if we added it. */
     TWeakObjectPtr<AActor> TalkTagNpc;
     bool bAddedNoStroll = false;
+    /** UReflectionsNpcRelayHost::GetLaunchGeneration last seen: a new helper (a key saved in Settings) means reconnect. */
+    int32 SeenRelayGeneration = 0;
 };

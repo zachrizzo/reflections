@@ -19,6 +19,7 @@
 #include "Squads/ReflectionsSquadSubsystem.h"
 #include "Voice/ReflectionsNpcDialogueOverlay.h"
 #include "Voice/ReflectionsAmbientTalk.h"
+#include "Voice/ReflectionsNpcRelayHost.h"
 #include "Worlds/ReflectionsSealedDoor.h"
 #include "Worlds/ReflectionsWorldPickups.h"
 #include "Voice/ReflectionsNpcDialogueSettings.h"
@@ -204,12 +205,24 @@ void UReflectionsVoiceInteractionSubsystem::Tick(float DeltaTime)
         const bool bQuestPrompt = Quests && Quests->GetPromptTarget() && !Quests->GetPromptText().IsEmpty();
         const bool bQuestBusy = Quests && (Quests->IsTalkOpen() || Quests->IsJournalOpen());
         const bool bPad = Quests && Quests->IsUsingGamepad();
-        Overlay->SetPrompt(Next && !Voice->IsListening() && !bTyping && !bQuestPrompt && !bQuestBusy
-            ? (bPad ? LOCTEXT("PromptPad", "Hold D-pad Down to speak") : LOCTEXT("Prompt", "Hold E to speak   ·   Enter to type"))
-            : FText::GetEmpty());
+        // A key saved in Settings restarted the helper: reconnect to it now.
+        if (SeenRelayGeneration != UReflectionsNpcRelayHost::GetLaunchGeneration())
+        {
+            SeenRelayGeneration = UReflectionsNpcRelayHost::GetLaunchGeneration();
+            if (!Voice->IsBusy() && !Voice->IsListening()) Voice->DisconnectVoice();
+            Voice->ClearRelayDown();
+        }
+        // Live talk needs the player's own key; without it E gets a recorded line and the prompt says how to go live.
+        const bool bLiveVoice = Voice->IsRelayAvailable();
+        FText TalkPrompt;
+        if (bLiveVoice) TalkPrompt = bPad ? LOCTEXT("PromptPad", "Hold D-pad Down to speak") : LOCTEXT("Prompt", "Hold E to speak   ·   Enter to type");
+        else if (!UReflectionsNpcRelayHost::HasGeminiKey()) TalkPrompt = LOCTEXT("PromptNoKey", "Add your Gemini API key in Settings to talk with characters in real time.");
+        else TalkPrompt = bPad ? LOCTEXT("PromptPadOffline", "D-pad Down   Talk") : LOCTEXT("PromptOffline", "E   Talk");
+        // Without live talk the hint stays up while E is held (the NPC answers with a recorded line on release).
+        Overlay->SetPrompt(Next && (!Voice->IsListening() || !bLiveVoice) && !bTyping && !bQuestPrompt && !bQuestBusy ? TalkPrompt : FText::GetEmpty());
         Overlay->SetStatus(FText::GetEmpty());
-        // A clear listening display while the mic is open, then a thinking beat until the NPC answers.
-        Overlay->SetListening(Voice->IsListening(), Voice->GetMicLevel());
+        // A clear listening display only while the mic is really open, then a thinking beat until the NPC answers.
+        Overlay->SetListening(bLiveVoice && Voice->IsListening(), Voice->GetMicLevel());
         Overlay->SetThinking(Voice->GetState() == EReflectionsDialogueState::Thinking
             ? FText::FromString(Voice->GetSpeakerName()) : FText::GetEmpty());
         if (Voice->IsSpeaking() || Voice->IsBusy())

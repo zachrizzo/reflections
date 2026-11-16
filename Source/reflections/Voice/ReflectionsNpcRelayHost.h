@@ -24,6 +24,17 @@ public:
     /** True while a helper was started by this game and is still starting or running. */
     static bool IsLaunchedRelayRunning();
 
+    /** keys.json: next to the helper in a packaged game; Saved/NpcDialogue in the editor (never Content/: git). */
+    static FString GetKeysPath();
+    /** keys.json holds a gemini_api_key that looks real (the key itself is never logged or shown). */
+    static bool HasGeminiKey();
+    /** Writes keys.json with the player's key (empty: removes it) and restarts the helper: live talk, no game restart. */
+    static bool SaveGeminiKey(const FString& Key);
+    /** Goes up each time the helper is (re)started, so the voice system reconnects to it. */
+    static int32 GetLaunchGeneration();
+
 private:
-    bool Launch();
+    static bool Launch();
+    static bool WantsHelper();
+    static void StopHelper();
 };
