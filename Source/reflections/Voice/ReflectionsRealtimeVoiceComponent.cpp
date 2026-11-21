@@ -34,8 +34,6 @@
 #include "Voice/ReflectionsNpcDialogueSettings.h"
 #include "Voice/ReflectionsNpcRelayHost.h"
 #include "WebSocketsModule.h"
-#include "Worlds/ReflectionsWorldJumpSubsystem.h"
-#include "Worlds/ReflectionsWorldTypes.h"
 
 DEFINE_LOG_CATEGORY(LogReflectionsNpcDialogue);
 
@@ -86,76 +84,6 @@ namespace
         if (const FIntProperty* AsInt = CastField<FIntProperty>(Property)) { Out = FString::FromInt(AsInt->GetPropertyValue(Value)); return true; }
         if (const FTextProperty* AsText = CastField<FTextProperty>(Property)) { Out = AsText->GetPropertyValue(Value).ToString(); return true; }
         return false;
-    }
-
-    /** The lives system (people, schedules, memory), found by name so there is no header dependency. */
-    UObject* FindLivesSubsystem(const UObject* Context)
-    {
-        UClass* LivesClass = FindObject<UClass>(nullptr, TEXT("/Script/reflections.ReflectionsLivesSubsystem"));
-        UWorld* World = Context ? Context->GetWorld() : nullptr;
-        if (!LivesClass || !World || !LivesClass->IsChildOf(UWorldSubsystem::StaticClass())) return nullptr;
-        return World->GetSubsystemBase(LivesClass);
-    }
-
-    /** The quest system (a game-instance subsystem), found by name. */
-    UObject* FindQuestSubsystem(const UObject* Context)
-    {
-        UClass* QuestClass = FindObject<UClass>(nullptr, TEXT("/Script/reflections.ReflectionsQuestSubsystem"));
-        UWorld* World = Context ? Context->GetWorld() : nullptr;
-        UGameInstance* Instance = World ? World->GetGameInstance() : nullptr;
-        if (!QuestClass || !Instance || !QuestClass->IsChildOf(UGameInstanceSubsystem::StaticClass())) return nullptr;
-        return Instance->GetSubsystemBase(QuestClass);
-    }
-
-    /** Calls Target->Function(AActor*) with no other inputs; returns the parameter block (null if the shape differs). */
-    TUniquePtr<FStructOnScope> CallWithActor(UObject* Target, FName FunctionName, AActor* Actor)
-    {
-        UFunction* Function = Target ? Target->FindFunction(FunctionName) : nullptr;
-        if (!Function || !Actor) return nullptr;
-        TUniquePtr<FStructOnScope> Params = MakeUnique<FStructOnScope>(Function);
-        bool bActorSet = false;
-        for (TFieldIterator<FProperty> It(Function); It && It->HasAnyPropertyFlags(CPF_Parm); ++It)
-        {
-            if (It->HasAnyPropertyFlags(CPF_ReturnParm | CPF_OutParm) && !It->HasAnyPropertyFlags(CPF_ReferenceParm | CPF_ConstParm)) continue;
-            const FObjectPropertyBase* Arg = CastField<FObjectPropertyBase>(*It);
-            if (!Arg || bActorSet) return nullptr;
-            Arg->SetObjectPropertyValue_InContainer(Params->GetStructMemory(), Actor);
-            bActorSet = true;
-        }
-        if (!bActorSet) return nullptr;
-        Target->ProcessEvent(Function, Params->GetStructMemory());
-        return Params;
-    }
-
-    /** Calls Lives->Function(const AActor*) and returns its result as text (or one field of a returned struct). */
-    FString CallLivesText(UObject* Lives, FName FunctionName, const AActor* Actor, FName StructField = NAME_None)
-    {
-        UFunction* Function = Lives ? Lives->FindFunction(FunctionName) : nullptr;
-        if (!Function || !Actor) return FString();
-        FStructOnScope Params(Function);
-        uint8* Data = Params.GetStructMemory();
-        bool bActorSet = false;
-        for (TFieldIterator<FProperty> It(Function); It && It->HasAnyPropertyFlags(CPF_Parm); ++It)
-        {
-            if (It->HasAnyPropertyFlags(CPF_ReturnParm)) continue;
-            const FObjectPropertyBase* Arg = CastField<FObjectPropertyBase>(*It);
-            if (!Arg || bActorSet) return FString();  // not the (const AActor*) signature we expect
-            Arg->SetObjectPropertyValue_InContainer(Data, const_cast<AActor*>(Actor));
-            bActorSet = true;
-        }
-        if (!bActorSet) return FString();
-        Lives->ProcessEvent(Function, Data);
-        const FProperty* Result = Function->GetReturnProperty();
-        FString Out;
-        if (const FStructProperty* AsStruct = CastField<FStructProperty>(Result))
-        {
-            if (!StructField.IsNone()) ReadPropertyText(AsStruct->Struct, AsStruct->ContainerPtrToValuePtr<void>(Data), StructField, Out);
-        }
-        else if (Result)
-        {
-            ReadPropertyText(Function, Data, Result->GetFName(), Out);
-        }
-        return Out == TEXT("None") ? FString() : Out;
     }
 
     /** The NPC system's voice profile, read by reflection: struct VoiceProfile {Slot, Sex}, or VoiceSlot / VoiceSex. */
@@ -240,112 +168,6 @@ FName UReflectionsRealtimeVoiceComponent::PersonaGroup(AActor* Npc)
     }
 }
 
-TArray<FString> UReflectionsRealtimeVoiceComponent::GetQuestActions(AActor* Npc)
-{
-    TArray<FString> Actions;
-    UObject* Quests = FindQuestSubsystem(Npc);
-    TUniquePtr<FStructOnScope> Params = CallWithActor(Quests, TEXT("GetQuestActions"), Npc);
-    const UFunction* Function = Params ? Cast<UFunction>(Params->GetStruct()) : nullptr;
-    const FArrayProperty* Result = Function ? CastField<FArrayProperty>(Function->GetReturnProperty()) : nullptr;
-    const FStrProperty* Inner = Result ? CastField<FStrProperty>(Result->Inner) : nullptr;
-    if (!Inner) return Actions;
-    FScriptArrayHelper Array(Result, Result->ContainerPtrToValuePtr<void>(Params->GetStructMemory()));
-    for (int32 Index = 0; Index < Array.Num() && Actions.Num() < 16; ++Index)
-    {
-        Actions.Add(Inner->GetPropertyValue(Array.GetRawPtr(Index)).Left(80));
-    }
-    return Actions;
-}
-
-FString UReflectionsRealtimeVoiceComponent::GetQuestContext(AActor* Npc)
-{
-    TUniquePtr<FStructOnScope> Params = CallWithActor(FindQuestSubsystem(Npc), TEXT("GetQuestContext"), Npc);
-    const UFunction* Function = Params ? Cast<UFunction>(Params->GetStruct()) : nullptr;
-    const FStrProperty* Result = Function ? CastField<FStrProperty>(Function->GetReturnProperty()) : nullptr;
-    return Result ? Result->GetPropertyValue_InContainer(Params->GetStructMemory()).Left(4000) : FString();
-}
-
-bool UReflectionsRealtimeVoiceComponent::HandleQuestTalkPressed(AActor* Npc)
-{
-    TUniquePtr<FStructOnScope> Params = CallWithActor(FindQuestSubsystem(Npc), TEXT("HandleTalkPressed"), Npc);
-    const UFunction* Function = Params ? Cast<UFunction>(Params->GetStruct()) : nullptr;
-    const FBoolProperty* Result = Function ? CastField<FBoolProperty>(Function->GetReturnProperty()) : nullptr;
-    return Result && Result->GetPropertyValue_InContainer(Params->GetStructMemory());
-}
-
-void UReflectionsRealtimeVoiceComponent::NotifyQuestTalkedTo(AActor* Npc)
-{
-    CallWithActor(FindQuestSubsystem(Npc), TEXT("NotifyTalkedTo"), Npc);
-}
-
-bool UReflectionsRealtimeVoiceComponent::ExecuteQuestAction(AActor* Npc, const FString& Action, FString& OutReason, FString& OutSay)
-{
-    UObject* Quests = FindQuestSubsystem(Npc);
-    UFunction* Function = Quests ? Quests->FindFunction(TEXT("ExecuteQuestAction")) : nullptr;
-    if (!Function || !IsValid(Npc)) { OutReason = TEXT("no quest system"); return false; }
-    FStructOnScope Params(Function);
-    uint8* Data = Params.GetStructMemory();
-    const FStrProperty* ReasonOut = nullptr;
-    const FStrProperty* SayOut = nullptr;
-    bool bActor = false, bAction = false;
-    for (TFieldIterator<FProperty> It(Function); It && It->HasAnyPropertyFlags(CPF_Parm); ++It)
-    {
-        if (It->HasAnyPropertyFlags(CPF_ReturnParm)) continue;
-        if (const FObjectPropertyBase* AsObject = CastField<FObjectPropertyBase>(*It)) { AsObject->SetObjectPropertyValue_InContainer(Data, Npc); bActor = true; }
-        else if (const FStrProperty* AsString = CastField<FStrProperty>(*It))
-        {
-            const bool bOut = It->HasAnyPropertyFlags(CPF_OutParm) && !It->HasAnyPropertyFlags(CPF_ConstParm);
-            if (!bOut && !bAction) { AsString->SetPropertyValue_InContainer(Data, Action); bAction = true; }
-            else if (bOut && It->GetName().Contains(TEXT("Say"))) SayOut = AsString;
-            else if (bOut) ReasonOut = AsString;
-        }
-    }
-    if (!bActor || !bAction) { OutReason = TEXT("unexpected quest call"); return false; }
-    Quests->ProcessEvent(Function, Data);
-    if (ReasonOut) OutReason = ReasonOut->GetPropertyValue_InContainer(Data).Left(120);
-    if (SayOut) OutSay = SayOut->GetPropertyValue_InContainer(Data).Left(300);
-    const FBoolProperty* Result = CastField<FBoolProperty>(Function->GetReturnProperty());
-    return Result && Result->GetPropertyValue_InContainer(Data);
-}
-
-FString UReflectionsRealtimeVoiceComponent::GetPersonName(AActor* Npc)
-{
-    return CallLivesText(FindLivesSubsystem(Npc), TEXT("GetPersonaFacts"), Npc, TEXT("Name")).Left(40);
-}
-
-void UReflectionsRealtimeVoiceComponent::RememberTalk(AActor* Npc)
-{
-    UObject* Lives = FindLivesSubsystem(Npc);
-    UFunction* Function = Lives ? Lives->FindFunction(TEXT("RememberPlayer")) : nullptr;
-    if (!Function || !IsValid(Npc)) return;
-    FStructOnScope Params(Function);
-    uint8* Data = Params.GetStructMemory();
-    bool bActor = false, bDeed = false;
-    for (TFieldIterator<FProperty> It(Function); It && It->HasAnyPropertyFlags(CPF_Parm); ++It)
-    {
-        if (It->HasAnyPropertyFlags(CPF_ReturnParm)) continue;
-        if (const FObjectPropertyBase* AsObject = CastField<FObjectPropertyBase>(*It)) { AsObject->SetObjectPropertyValue_InContainer(Data, Npc); bActor = true; }
-        else if (const FEnumProperty* AsEnum = CastField<FEnumProperty>(*It))
-        {
-            const int64 Talked = AsEnum->GetEnum()->GetValueByNameString(TEXT("Talked"));
-            if (Talked == INDEX_NONE) return;
-            AsEnum->GetUnderlyingProperty()->SetIntPropertyValue(AsEnum->ContainerPtrToValuePtr<void>(Data), Talked);
-            bDeed = true;
-        }
-        else if (const FByteProperty* AsByte = CastField<FByteProperty>(*It))
-        {
-            const int64 Talked = AsByte->Enum ? AsByte->Enum->GetValueByNameString(TEXT("Talked")) : INDEX_NONE;
-            if (Talked == INDEX_NONE) return;
-            AsByte->SetPropertyValue_InContainer(Data, static_cast<uint8>(Talked));
-            bDeed = true;
-        }
-        else if (const FFloatProperty* AsFloat = CastField<FFloatProperty>(*It)) AsFloat->SetPropertyValue_InContainer(Data, 1.0f);
-        else if (const FDoubleProperty* AsDouble = CastField<FDoubleProperty>(*It)) AsDouble->SetPropertyValue_InContainer(Data, 1.0);
-        else if (const FIntProperty* AsInt = CastField<FIntProperty>(*It)) AsInt->SetPropertyValue_InContainer(Data, 1);
-    }
-    if (bActor && bDeed) Lives->ProcessEvent(Function, Data);
-}
-
 FString UReflectionsRealtimeVoiceComponent::GetVoiceId(AActor* Npc)
 {
     if (!IsValid(Npc)) return FString();
@@ -372,19 +194,6 @@ TSharedRef<FJsonObject> UReflectionsRealtimeVoiceComponent::BuildNpcContext(AAct
     TSharedRef<FJsonObject> Context = MakeShared<FJsonObject>();
     if (!IsValid(Npc)) return Context;
     Context->SetStringField(TEXT("npc_id"), Npc->GetName().Left(64));
-    // The lives system's person: a stable id across runs (the reply cache keys a person's own lines by it), their
-    // name, and a whitelisted character sheet (job, traits, speech style, what they remember of the player).
-    if (UObject* Lives = FindLivesSubsystem(Npc))
-    {
-        const FString PersonId = CallLivesText(Lives, TEXT("GetPersonId"), Npc);
-        if (!PersonId.IsEmpty()) Context->SetStringField(TEXT("npc_id"), (TEXT("person_") + PersonId).Left(64));
-        const FString Sheet = CallLivesText(Lives, TEXT("GetPersonaText"), Npc);
-        if (!Sheet.IsEmpty()) Context->SetStringField(TEXT("persona_text"), Sheet.Left(1500));
-        const FString Name = CallLivesText(Lives, TEXT("GetPersonaFacts"), Npc, TEXT("Name"));
-        if (!Name.IsEmpty()) Context->SetStringField(TEXT("name"), Name.Left(40));
-    }
-    const FString QuestNotes = GetQuestContext(Npc);
-    if (!QuestNotes.IsEmpty()) Context->SetStringField(TEXT("quests"), QuestNotes);
     UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(Npc);
     const UReflectionsNpcReactionComponent* Reaction = Npcs ? Npcs->FindNpc(Npc) : nullptr;
     if (!Reaction) Reaction = Npc->FindComponentByClass<UReflectionsNpcReactionComponent>();
@@ -399,18 +208,9 @@ TSharedRef<FJsonObject> UReflectionsRealtimeVoiceComponent::BuildNpcContext(AAct
         Context->SetNumberField(TEXT("fear"), FMath::RoundToDouble(Reaction->Fear * 100.0) / 100.0);
         Context->SetNumberField(TEXT("hostility"), FMath::RoundToDouble(Reaction->Hostility * 100.0) / 100.0);
     }
-    // Side: the anchor box the NPC stands in, else this map's side, else the world-jump config's DefaultWorld
-    // (one map with no world jump, as on Gray London). Never the hero's never-set CurrentWorld (Gray by default).
-    EReflectionsWorld Side = EReflectionsWorld::Red;
-    if (const UReflectionsWorldJumpWorldSubsystem* Worlds = UReflectionsWorldJumpWorldSubsystem::Get(Npc))
-    {
-        Side = Worlds->GetWorldAtLocation(Npc->GetActorLocation());
-    }
-    else if (const UReflectionsWorldJumpSubsystem* Jump = UReflectionsWorldJumpSubsystem::Get(Npc))
-    {
-        Side = Jump->GetCurrentWorld();
-    }
-    Context->SetStringField(TEXT("side"), EnumName(Side));
+    if (Npc->ActorHasTag(TEXT("Look_Side_Pewterside"))) Context->SetStringField(TEXT("side"), TEXT("Gray"));
+    else if (Npc->ActorHasTag(TEXT("Look_Side_Giltside"))) Context->SetStringField(TEXT("side"), TEXT("Red"));
+    else if (Npc->ActorHasTag(TEXT("Look_Side_Frostside"))) Context->SetStringField(TEXT("side"), TEXT("White"));
     FString Slot, Sex;
     GetVoiceProfile(Npc, Slot, Sex);
     if (!Slot.IsEmpty()) Context->SetStringField(TEXT("voice_slot"), Slot);
@@ -493,8 +293,7 @@ USoundAttenuation* UReflectionsRealtimeVoiceComponent::GetVoiceAttenuation()
 FString UReflectionsRealtimeVoiceComponent::GetSpeakerName() const
 {
     if (!Speaker.IsEmpty()) return Speaker;
-    const FString Person = GetPersonName(VoiceNpc.Get());
-    return Person.IsEmpty() ? LocalSpeakerName(PersonaGroup(VoiceNpc.Get())) : Person;
+    return LocalSpeakerName(PersonaGroup(VoiceNpc.Get()));
 }
 
 // ---- Connection ----------------------------------------------------------------------------------------

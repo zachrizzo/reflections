@@ -1,4 +1,0 @@
-*.png -text
-*.json text eol=lf
-*.yaml text eol=lf
-*.md text eol=lf

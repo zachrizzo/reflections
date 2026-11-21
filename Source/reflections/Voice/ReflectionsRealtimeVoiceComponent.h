@@ -90,21 +90,13 @@ public:
     /** The NPC's roster voice (a designed Gemini voice) from the NPC system's voice profile, if it has one. */
     static FString GetVoiceId(AActor* Npc);
     /** The lives system's name for this person ("Mara Vell"), if it has one. */
-    static FString GetPersonName(AActor* Npc);
-    /** Tells the lives system the player talked to this person (RememberPlayer ..., Talked, 1). */
-    static void RememberTalk(AActor* Npc);
 
     // ---- Quest system (UReflectionsQuestSubsystem, called by name: no header dependency) ----
     /** Quest actions possible with this NPC now ("offer_quest:lost_ring", "turn_in:lost_ring", ...). */
-    static TArray<FString> GetQuestActions(AActor* Npc);
     /** Performs a quest action after the quest system's own re-check. OutSay: a line to show (hint, pitch, thanks). */
-    static bool ExecuteQuestAction(AActor* Npc, const FString& Action, FString& OutReason, FString& OutSay);
     /** The quest system's notes about this person (JSON), sent to the relay as "quests". */
-    static FString GetQuestContext(AActor* Npc);
     /** Opens the quest talk card if this person has quest business (the non-voice path). True if it opened. */
-    static bool HandleQuestTalkPressed(AActor* Npc);
     /** Counts a finished voice exchange for "talk to X" objectives. */
-    static void NotifyQuestTalkedTo(AActor* Npc);
 
     /** Set by the interaction subsystem: the actions possible for an NPC right now ("point_the_way:gilt_tower"). */
     TFunction<TArray<FString>(AActor*)> ActionsProvider;

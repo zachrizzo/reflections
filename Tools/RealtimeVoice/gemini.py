@@ -27,10 +27,7 @@ HARM_CATEGORIES = ("HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH", "HAR
                    "HARM_CATEGORY_DANGEROUS_CONTENT")
 THRESHOLDS = ("BLOCK_LOW_AND_ABOVE", "BLOCK_MEDIUM_AND_ABOVE", "BLOCK_ONLY_HIGH")
 BLOCK_FINISH = {"SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST", "SPII", "RECITATION", "IMAGE_SAFETY"}
-# Words of the world the recogniser would otherwise mishear ("Guild Tower" for Gilt Tower, measured).
-VOCABULARY = ("Lanthorne", "Lanthorne Glass", "Pewterside", "Giltside", "Frostside", "Gilt Tower", "Frost Tower",
-              "Old Weigh-House", "Tarnish", "tarnished", "Silverer", "Silverers", "Wren", "Wren Hale",
-              "mirror page", "mirror shard", "shards", "Lantern Law", "drifter", "drifters", "Final Spell")
+VOCABULARY = ("Wren", "Wren Hale", "fireball", "levitation", "arcane bolt")
 
 
 def safety_settings(threshold):

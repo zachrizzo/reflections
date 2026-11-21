@@ -85,12 +85,6 @@ private:
     // ---- NPC actions (the second check: the relay only offers and forwards what this reports possible) ----
     TArray<FString> GetAvailableActions(AActor* Npc) const;
     bool ExecuteAction(AActor* Npc, const FString& Name, const FString& TargetName, FString& OutReason);
-    AActor* FindTarget(const FString& TargetName, const FVector& From) const;
-    TMap<TWeakObjectPtr<AActor>, double> PointedAt;
-    double GuardsWarnedAt = -1.0e9;
-    TWeakObjectPtr<AActor> LookTargetNpc;
-    FVector LookTarget = FVector::ZeroVector;
-    double LookUntil = 0.0;
     void UpdateFacing(float DeltaTime);
     void ReleaseFacing();
     UFUNCTION() void OnLine(const FString& Speaker, const FString& Text, bool bPlayer, bool bFinal);
@@ -108,8 +102,6 @@ private:
     float FarTime = 0.0f;
     float LastPlayerHealth = -1.0f;  // a drop closes the typing box (UI-only input would leave the player stuck)
     bool bHeld = false;
-    /** This press of the talk key opened (or belongs to) the quest dialogue: its release is not a voice turn. */
-    bool bPressWentToQuest = false;
     /** The NPC we tagged NPC_Talking (crowd spots let go of it) for the conversation; NPC_NoStroll too if we added it. */
     TWeakObjectPtr<AActor> TalkTagNpc;
     bool bAddedNoStroll = false;

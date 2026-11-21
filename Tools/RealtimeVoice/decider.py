@@ -18,7 +18,7 @@ SYSTEM = (
     "line it answered. Choose a candidate only if playing its reply right now would sound like a natural, "
     "direct answer to what the player just said, in this exact situation. Reject a candidate if it answers a "
     "different question, names a different place or job than the current NPC's, contradicts the NPC's "
-    "current mood (calm versus fleeing, friendly versus hostile) or the Silverer's standing, or refers to "
+    "current mood (calm versus fleeing, friendly versus hostile) or the player's standing, or refers to "
     "something that is not in the player's line. When in doubt choose \"none\": a fresh reply is always "
     "acceptable, a wrong one is not. Also label the intent of the player's line."
 )

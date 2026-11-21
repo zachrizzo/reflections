@@ -1,8 +1,6 @@
 #include "Hero/ReflectionsSampleGameMode.h"
 
-#include "EngineUtils.h"
 #include "GameFramework/Character.h"
-#include "GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerController.h"
 #include "UObject/SoftObjectPath.h"
 
@@ -21,20 +19,4 @@ void AReflectionsSampleGameMode::InitGame(const FString& MapName, const FString&
 	{
 		PlayerControllerClass = Controller;
 	}
-}
-
-AActor* AReflectionsSampleGameMode::ChoosePlayerStart_Implementation(AController* Player)
-{
-	if (UWorld* World = GetWorld())
-	{
-		const FName LanthorneTag(TEXT("Lanthorne"));
-		for (TActorIterator<APlayerStart> It(World); It; ++It)
-		{
-			if (It->PlayerStartTag == LanthorneTag)
-			{
-				return *It;
-			}
-		}
-	}
-	return Super::ChoosePlayerStart_Implementation(Player);
 }

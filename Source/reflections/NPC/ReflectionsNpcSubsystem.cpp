@@ -4,7 +4,6 @@
 #include "NPC/ReflectionsNpcReactionComponent.h"
 #include "NPC/ReflectionsReputationSubsystem.h"
 #include "Hero/ReflectionsSpellCombat.h"
-#include "Worlds/ReflectionsWorldLibrary.h"
 #include "Voice/ReflectionsAmbientTalk.h"
 #include "AssetRegistry/AssetData.h"
 #include "AssetRegistry/IAssetRegistry.h"
@@ -264,7 +263,6 @@ UReflectionsNpcReactionComponent* UReflectionsNpcSubsystem::EnrollActor(AActor* 
     else if (Wanted->bCountsOnInfectionMeter)
     {
         Brain->bOnInfectionMeter = true;
-        ReportToInfectionMeter(Actor, true);
     }
     return Brain;
 }
@@ -289,85 +287,9 @@ void UReflectionsNpcSubsystem::RegisterNpc(UReflectionsNpcReactionComponent* Npc
 
 // ---- Spawning ----------------------------------------------------------------------------------------------
 
-const TArray<TSoftClassPtr<AActor>>& UReflectionsNpcSubsystem::TeamLooks()
-{
-    // The finished cast first (the same list the archetypes' pools are cut from), counting the Blueprints that
-    // are in the project when this is first asked. With fewer than two of them: the older looks below.
-    static const TArray<TSoftClassPtr<AActor>> Finished = []
-    {
-        static const TCHAR* Cast[] = { TEXT("FrostHyeon"), TEXT("FrostSilas"), TEXT("GiltCoinClerk"), TEXT("GiltArchivist"), TEXT("GiltMaren"),
-            TEXT("GiltBarnaby"), TEXT("GiltDrummer"), TEXT("GiltFerryman"), TEXT("GiltPriya"), TEXT("GiltRamon"), TEXT("GiltGlassman"),
-            TEXT("GiltHaruto"), TEXT("GiltBridgeGuard"), TEXT("GiltRowena"), TEXT("FrostIven"), TEXT("FrostSaran"), TEXT("FrostNia"),
-            TEXT("FrostAmara"), TEXT("FrostTobias"), TEXT("FrostWen") };
-        TArray<TSoftClassPtr<AActor>> Found;
-        for (const TCHAR* LookId : Cast)
-        {
-            const FString Package = FString::Printf(TEXT("/Game/Characters/Lanthorne/Looks/BP_Look_%s"), LookId);
-            if (FPackageName::DoesPackageExist(Package))
-                Found.Add(TSoftClassPtr<AActor>(FSoftObjectPath(FString::Printf(TEXT("%s.BP_Look_%s_C"), *Package, LookId))));
-        }
-        return Found;
-    }();
-    if (Finished.Num() >= 2) return Finished;
-    static const TArray<TSoftClassPtr<AActor>> Looks = {
-        TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Characters/CrowdMotion/SimpleRed/CoinClerk/BP_CoinClerk_SimpleRed.BP_CoinClerk_SimpleRed_C"))),
-        TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Characters/CrowdMotion/SimpleRed/ArchiveApprentice/BP_ArchiveApprentice_SimpleRed.BP_ArchiveApprentice_SimpleRed_C"))),
-        TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Characters/CrowdMotion/SimpleRed/FestivalDrummer/BP_FestivalDrummer_SimpleRed.BP_FestivalDrummer_SimpleRed_C"))),
-        TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Characters/CrowdMotion/SimpleRed/BridgeGuard/BP_BridgeGuard_SimpleRed.BP_BridgeGuard_SimpleRed_C"))),
-        TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_01_Plain.BP_WhiteLook_01_Plain_C"))),
-        TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_02_Cap.BP_WhiteLook_02_Cap_C"))),
-        TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_03_Mantle.BP_WhiteLook_03_Mantle_C"))),
-        TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_04_CapMantle.BP_WhiteLook_04_CapMantle_C"))),
-        TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_05_GuardRags.BP_WhiteLook_05_GuardRags_C"))),
-        TSoftClassPtr<AActor>(FSoftObjectPath(TEXT("/Game/Characters/WhiteLondon/CrowdPreview/BP_WhiteLook_06_GuardBoldRunes.BP_WhiteLook_06_GuardBoldRunes_C"))),
-    };
-    return Looks;
-}
-
-namespace
-{
-    const FName GiltsideName(TEXT("Giltside"));
-    const FName FrostsideName(TEXT("Frostside"));
-    const FName PewtersideName(TEXT("Pewterside"));
-
-    // The side a look belongs to, read from its Blueprint's path so that nothing has to be loaded: the finished
-    // cast is named BP_Look_Gilt..., BP_Look_Frost..., BP_Look_Pewter...; the older sets are SimpleRed (Giltside)
-    // and WhiteLook (Frostside). None: a look nobody has placed, which suits any side.
-    FName SideOfLook(const TSoftClassPtr<AActor>& Look)
-    {
-        const FString Path = Look.ToSoftObjectPath().ToString();
-        // Pewterside's looks are grey copies of Giltside outfits in their own folder (PewLook_<X>): asked first.
-        if (Path.Contains(TEXT("/Pewterside/")) || Path.Contains(TEXT("PewLook_"))) return PewtersideName;
-        // (The dressed soldier looks are named GiltSoldier_<X> and FrostSoldier_<X>, in Looks/Soldiers.)
-        if (Path.Contains(TEXT("Look_Gilt")) || Path.Contains(TEXT("GiltSoldier_")) || Path.Contains(TEXT("SimpleRed")) || Path.Contains(TEXT("RedLondon"))) return GiltsideName;
-        if (Path.Contains(TEXT("Look_Frost")) || Path.Contains(TEXT("FrostSoldier_")) || Path.Contains(TEXT("WhiteLook")) || Path.Contains(TEXT("WhiteLondon"))) return FrostsideName;
-        if (Path.Contains(TEXT("Look_Pewter")) || Path.Contains(TEXT("GrayLondon")) || Path.Contains(TEXT("GreyLondon"))) return PewtersideName;
-        return NAME_None;
-    }
-
-    // Whose looks an archetype may borrow on its own side when it has none there, nearest role first.
-    TArray<FName> LookRoles(FName ArchetypeId)
-    {
-        static const FName Civilian(TEXT("Civilian")), Guard(TEXT("Guard")), Soldier(TEXT("Soldier")), Caster(TEXT("SoldierCaster")),
-            Enemy(TEXT("Enemy")), Hostile(TEXT("Hostile")), Allied(TEXT("AlliedSoldier")), AlliedCaster(TEXT("AlliedSoldierCaster"));
-        if (ArchetypeId == AlliedCaster) return { AlliedCaster, Allied, Guard, Caster, Civilian };
-        if (ArchetypeId == Guard) return { Guard, Allied, Soldier, Enemy, Civilian };
-        if (ArchetypeId == Allied) return { Allied, Guard, Soldier, Civilian };
-        if (ArchetypeId == Soldier) return { Soldier, Guard, Enemy, Caster, Civilian };
-        if (ArchetypeId == Caster) return { Caster, Soldier, Guard, Civilian };
-        if (ArchetypeId == Enemy || ArchetypeId == Hostile) return { ArchetypeId, Soldier, Guard, Civilian };
-        return { ArchetypeId, Civilian };
-    }
-}
-
 FName UReflectionsNpcSubsystem::GetSideAt(FVector Location) const
 {
-    switch (UReflectionsWorldLibrary::GetWorldAtLocation(this, Location))
-    {
-    case EReflectionsWorld::Red: return GiltsideName;
-    case EReflectionsWorld::White: return FrostsideName;
-    default: return PewtersideName;
-    }
+    return NAME_None;
 }
 
 TArray<TSoftClassPtr<AActor>> UReflectionsNpcSubsystem::GetLooksAt(FName ArchetypeId, FVector Location)
@@ -377,37 +299,8 @@ TArray<TSoftClassPtr<AActor>> UReflectionsNpcSubsystem::GetLooksAt(FName Archety
 
 TArray<TSoftClassPtr<AActor>> UReflectionsNpcSubsystem::GetLooksForSide(FName ArchetypeId, FName Side)
 {
-    TArray<TSoftClassPtr<AActor>> Found;
-    const auto Collect = [&Found, Side](const TArray<TSoftClassPtr<AActor>>& Looks)
-    {
-        for (const TSoftClassPtr<AActor>& Look : Looks)
-        {
-            const FName LookSide = SideOfLook(Look);
-            if (!Look.IsNull() && (LookSide.IsNone() || LookSide == Side)) Found.AddUnique(Look);
-        }
-    };
-    // Its own role on this side, else this side's nearest role: a side's guards may wear its soldiers' looks,
-    // never the other side's guards'.
-    for (const FName Role : LookRoles(ArchetypeId))
-    {
-        if (const UReflectionsNpcArchetype* Archetype = FindArchetype(Role)) Collect(Archetype->Looks);
-        if (Found.Num() > 0) return Found;
-    }
-    Collect(TeamLooks());
-    if (Found.Num() > 0) return Found;
-    // Nobody at all lives on this side yet. Pewterside borrows Giltside's people until it has its own.
-    if (Side == PewtersideName)
-    {
-        static bool bLogged = false;
-        if (!bLogged)
-        {
-            bLogged = true;
-            UE_LOG(LogReflectionsNpc, Display, TEXT("NPC looks: Pewterside has no looks of its own yet; its NPCs wear Giltside's."));
-        }
-        return GetLooksForSide(ArchetypeId, GiltsideName);
-    }
-    UE_LOG(LogReflectionsNpc, Warning, TEXT("NPC looks: no look of side %s for archetype %s."), *Side.ToString(), *ArchetypeId.ToString());
-    return Found;
+    const UReflectionsNpcArchetype* Archetype = FindArchetype(ArchetypeId);
+    return Archetype ? Archetype->Looks : TArray<TSoftClassPtr<AActor>>();
 }
 
 int32 UReflectionsNpcSubsystem::GetLookUseCount(TSoftClassPtr<AActor> Look) const
@@ -434,10 +327,7 @@ AActor* UReflectionsNpcSubsystem::SpawnNpc(FName ArchetypeId, FVector Location, 
         return nullptr;
     }
     UClass* LookClass = Look.Get();
-    // Only the people of the side this place is in (rags stay in Frostside, red in Giltside); the archetype's
-    // whole list only if the side-aware pick comes back empty.
-    TArray<TSoftClassPtr<AActor>> Choices = GetLooksAt(ArchetypeId, Location);
-    if (Choices.Num() == 0) Choices = Archetype->Looks.Num() > 0 ? Archetype->Looks : TeamLooks();
+    const TArray<TSoftClassPtr<AActor>>& Choices = Archetype->Looks;
     // The look the fewest living NPCs wear comes first; the running counter says where the search starts, so an
     // empty street still gets a mix and equally worn looks take turns.
     int32 First = 0;
@@ -580,24 +470,15 @@ void UReflectionsNpcSubsystem::AssignVoice(UReflectionsNpcReactionComponent* Npc
     if (!VoiceRoster) return;
     const UReflectionsNpcArchetype* Kind = Npc->Archetype ? Npc->Archetype.Get() : ResolveArchetype(Owner);
     const FName Character = Kind ? Kind->VoiceCharacter : NAME_None;
-    EReflectionsWorld Home = EReflectionsWorld::Gray;
-    switch (Kind ? Kind->HomeWorld : EReflectionsNpcHomeWorld::FromSpawnLocation)
-    {
-    case EReflectionsNpcHomeWorld::Gray: Home = EReflectionsWorld::Gray; break;
-    case EReflectionsNpcHomeWorld::Red: Home = EReflectionsWorld::Red; break;
-    case EReflectionsNpcHomeWorld::White: Home = EReflectionsWorld::White; break;
-    default: Home = UReflectionsWorldLibrary::GetWorldAtLocation(this, Owner->GetActorLocation()); break;
-    }
-    // A finished look says where its person is from and how old they are (the crowd-looks session's tags on
-    // the look Blueprint); that beats where the NPC happens to stand.
-    if (Owner->ActorHasTag(TEXT("Look_Side_Pewterside"))) Home = EReflectionsWorld::Gray;
-    else if (Owner->ActorHasTag(TEXT("Look_Side_Giltside"))) Home = EReflectionsWorld::Red;
-    else if (Owner->ActorHasTag(TEXT("Look_Side_Frostside"))) Home = EReflectionsWorld::White;
+    EReflectionsNpcHomeWorld Home = Kind ? Kind->HomeWorld : EReflectionsNpcHomeWorld::FromSpawnLocation;
+    if (Owner->ActorHasTag(TEXT("Look_Side_Pewterside"))) Home = EReflectionsNpcHomeWorld::Gray;
+    else if (Owner->ActorHasTag(TEXT("Look_Side_Giltside"))) Home = EReflectionsNpcHomeWorld::Red;
+    else if (Owner->ActorHasTag(TEXT("Look_Side_Frostside"))) Home = EReflectionsNpcHomeWorld::White;
     const int32 LookAge = Owner->ActorHasTag(TEXT("Look_Age_Young")) ? 1 : Owner->ActorHasTag(TEXT("Look_Age_Adult")) ? 2
         : Owner->ActorHasTag(TEXT("Look_Age_Old")) ? 3 : 0;
     // The table may name a side either way: as the player knows it or as the code does.
-    const FName SideName = Home == EReflectionsWorld::Gray ? TEXT("Pewterside") : Home == EReflectionsWorld::Red ? TEXT("Giltside") : TEXT("Frostside");
-    const FName SideCode = Home == EReflectionsWorld::Gray ? TEXT("Gray") : Home == EReflectionsWorld::Red ? TEXT("Red") : TEXT("White");
+    const FName SideName = Home == EReflectionsNpcHomeWorld::Gray ? FName(TEXT("Pewterside")) : Home == EReflectionsNpcHomeWorld::Red ? FName(TEXT("Giltside")) : Home == EReflectionsNpcHomeWorld::White ? FName(TEXT("Frostside")) : NAME_None;
+    const FName SideCode = Home == EReflectionsNpcHomeWorld::Gray ? FName(TEXT("Gray")) : Home == EReflectionsNpcHomeWorld::Red ? FName(TEXT("Red")) : Home == EReflectionsNpcHomeWorld::White ? FName(TEXT("White")) : NAME_None;
     struct FChoice
     {
         FName Id;
@@ -1056,7 +937,6 @@ void UReflectionsNpcSubsystem::ReportAnonymousDeath(FVector Location, FName Arch
         if (IsPlayer(Killer) && !FMath::IsNearlyZero(Archetype->ReputationOnPlayerKill))
             if (UReflectionsReputationSubsystem* Reputation = GetWorld()->GetSubsystem<UReflectionsReputationSubsystem>())
                 Reputation->AdjustReputation(Killer, Archetype->ReputationOnPlayerKill);
-        RewardCoin(*Archetype, Location, Location, nullptr);
     }
     FReflectionsNpcStimulus Stimulus;
     Stimulus.Kind = EReflectionsNpcStimulusKind::Death;
@@ -1164,14 +1044,9 @@ void UReflectionsNpcSubsystem::NotifyDied(UReflectionsNpcReactionComponent* Npc,
     if (IsPlayer(Killer) && !UReflectionsNpcArchetype::IsHostileDisposition(Archetype->Disposition))
         ReportPlayerCrime(Owner, TEXT("Murder"), Owner->GetActorLocation());
 
-    // An actor that already carries world jump's own native component pays its coin itself.
-    if (!Owner->FindComponentByClass<UReflectionsWorldNativeComponent>())
-        RewardCoin(*Archetype, Npc->GetHomeLocation(), Owner->GetActorLocation(), Owner);
-
     if (Npc->bOnInfectionMeter && Archetype->bCuredOnDeath)
     {
         Npc->bOnInfectionMeter = false;
-        ReportToInfectionMeter(Owner, false);
     }
 
     FReflectionsNpcStimulus Stimulus;
@@ -1180,39 +1055,6 @@ void UReflectionsNpcSubsystem::NotifyDied(UReflectionsNpcReactionComponent* Npc,
     Stimulus.Instigator = Killer;
     ReportStimulus(Stimulus);
     OnNpcDied.Broadcast(Owner, Killer);
-}
-
-void UReflectionsNpcSubsystem::RewardCoin(const UReflectionsNpcArchetype& Archetype, const FVector& HomeLocation, const FVector& DeathLocation, AActor* Owner)
-{
-    if (Archetype.CoinReward == EReflectionsNpcCoinReward::None) return;
-    EReflectionsWorld Home = EReflectionsWorld::Gray;
-    switch (Archetype.HomeWorld)
-    {
-    case EReflectionsNpcHomeWorld::Gray: Home = EReflectionsWorld::Gray; break;
-    case EReflectionsNpcHomeWorld::Red: Home = EReflectionsWorld::Red; break;
-    case EReflectionsNpcHomeWorld::White: Home = EReflectionsWorld::White; break;
-    default: Home = UReflectionsWorldLibrary::GetWorldAtLocation(this, HomeLocation); break;
-    }
-    if (Archetype.CoinReward == EReflectionsNpcCoinReward::Pickup) UReflectionsWorldLibrary::DropCoin(this, Home, DeathLocation);
-    else UReflectionsWorldLibrary::AwardCoin(this, Home, 1);
-    UE_LOG(LogReflectionsNpc, Log, TEXT("NPC %s paid one %s coin."), Owner ? *Owner->GetName() : TEXT("(crowd)"),
-        *StaticEnum<EReflectionsWorld>()->GetNameStringByValue(static_cast<int64>(Home)));
-}
-
-// ---- Infection ---------------------------------------------------------------------------------------------
-
-void UReflectionsNpcSubsystem::ReportToInfectionMeter(AActor* Host, bool bInfected) const
-{
-    // Game flow is called by name, as its header offers, so NPC code does not depend on its headers.
-    const UWorld* World = GetWorld();
-    UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
-    UClass* FlowClass = FindObject<UClass>(nullptr, TEXT("/Script/reflections.ReflectionsGameFlowSubsystem"));
-    if (!GameInstance || !FlowClass || !FlowClass->IsChildOf(UGameInstanceSubsystem::StaticClass())) return;
-    UGameInstanceSubsystem* Flow = GameInstance->GetSubsystemBase(FlowClass);
-    UFunction* Function = Flow ? Flow->FindFunction(bInfected ? TEXT("ReportInfected") : TEXT("ReportCured")) : nullptr;
-    if (!Function || Function->ParmsSize != static_cast<int32>(sizeof(AActor*))) return;
-    struct { AActor* Host; } Params{ Host };
-    Flow->ProcessEvent(Function, &Params);
 }
 
 bool UReflectionsNpcSubsystem::SetInfection(AActor* Actor, EReflectionsNpcInfection State, AActor* Source)
@@ -1236,7 +1078,6 @@ bool UReflectionsNpcSubsystem::SetInfection(AActor* Actor, EReflectionsNpcInfect
     if (bCount != Npc->bOnInfectionMeter)
     {
         Npc->bOnInfectionMeter = bCount;
-        ReportToInfectionMeter(NpcActor, bCount);
     }
     if (Taken)
     {
@@ -1263,38 +1104,6 @@ void UReflectionsNpcSubsystem::ReleaseNpc(AActor* Actor)
 void UReflectionsNpcSubsystem::TurnNpcTowards(AActor* Actor, FVector Point, float DeltaTime)
 {
     if (UReflectionsNpcReactionComponent* Npc = FindNpc(Actor)) Npc->FacePoint(Point, DeltaTime);
-}
-
-bool UReflectionsNpcSubsystem::TryBeginConversion(UReflectionsNpcReactionComponent* Attacker, AActor* Victim)
-{
-    UReflectionsNpcReactionComponent* VictimNpc = FindNpc(Victim);
-    UWorld* World = GetWorld();
-    if (!World || !Attacker || !VictimNpc || VictimNpc == Attacker || VictimNpc->IsIncapacitated() || VictimNpc->IsScripted()) return false;
-    // The villain system is called by name (its header keeps changing): float BeginConversion(AActor* Attacker, AActor* Victim).
-    UClass* VillainClass = FindObject<UClass>(nullptr, TEXT("/Script/reflections.ReflectionsVillainSubsystem"));
-    if (!VillainClass || !VillainClass->IsChildOf(UWorldSubsystem::StaticClass())) return false;
-    UWorldSubsystem* Villain = World->GetSubsystemBase(VillainClass);
-    UFunction* Function = Villain ? Villain->FindFunction(TEXT("BeginConversion")) : nullptr;
-    struct FConversionParams
-    {
-        AActor* Attacker = nullptr;
-        AActor* Victim = nullptr;
-        float ReturnValue = 0.0f;
-    };
-    // Two actors in, a float out. The reflected size is unpadded (20 bytes), so it only has to fit the struct.
-    if (!Function || Function->NumParms != 3 || Function->ParmsSize > static_cast<int32>(sizeof(FConversionParams)) ||
-        !CastField<FFloatProperty>(Function->GetReturnProperty())) return false;
-    FConversionParams Params;
-    Params.Attacker = Attacker->GetOwner();
-    Params.Victim = VictimNpc->GetOwner();
-    Villain->ProcessEvent(Function, &Params);
-    if (Params.ReturnValue <= 0.0f) return false;
-    // Both are the villain's for the length of the sequence, with a second of slack as a safety timeout.
-    VictimNpc->EndScene(true);
-    Attacker->BeginScriptedHold(Params.ReturnValue + 1.0f);
-    VictimNpc->BeginScriptedHold(Params.ReturnValue + 1.0f);
-    UE_LOG(LogReflectionsNpc, Log, TEXT("Conversion: %s on %s, held for %.1f s."), *GetNameSafe(Params.Attacker), *GetNameSafe(Params.Victim), Params.ReturnValue);
-    return true;
 }
 
 EReflectionsNpcInfection UReflectionsNpcSubsystem::GetInfection(const AActor* Actor) const

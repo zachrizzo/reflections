@@ -1,8 +1,0 @@
-# smoke: driver test, title bypass, start area idle
-15 stat unit
-16 stat gpu
-20 shot
-25 Crafting.Dummies 6 900 mixed
-32 shot
-36 csvprofile stop
-40 quit

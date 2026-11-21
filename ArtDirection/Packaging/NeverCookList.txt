@@ -1,8 +1,0 @@
-# Jam packaging: folders the cooker must skip, passed with -NeverCookListFile (see PackageJamBuild.bat).
-# One local filesystem path per line; '#' starts a comment.
-#
-# NNEDenoiser is editor-only in reflections.uproject ("TargetAllowList": ["Editor"]), but the plugin's own
-# Config/Game.ini always-cooks /NNEDenoiser. Its assets then fail to cook (their module isn't in the game).
-# Listing it under DirectoriesToNeverCook in DefaultGame.ini trips an AssetReferenceRestrictions ensure
-# (plugin root path), so it is excluded here instead. Saves ~100 MB.
-C:/Program Files/Epic Games/UE_5.9/Engine/Plugins/NNE/NNEDenoiser/Content

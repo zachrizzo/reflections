@@ -88,7 +88,6 @@ public:
     AActor* SpawnNpc(FName ArchetypeId, FVector Location, float FacingYaw = 0.0f, TSubclassOf<AActor> Look = nullptr);
 
     /** Every team MetaHuman look SpawnNpc may use. */
-    static const TArray<TSoftClassPtr<AActor>>& TeamLooks();
 
     /**
      * The looks an NPC of this archetype may wear on a side ("Giltside", "Frostside", "Pewterside"): only that
@@ -208,7 +207,6 @@ public:
      * for its length. False (nothing held) when there is no villain system, it refuses, or the victim is no NPC.
      * Called by the NPC component; the villain ends it with SetInfection(Victim, Infected, Attacker).
      */
-    bool TryBeginConversion(UReflectionsNpcReactionComponent* Attacker, AActor* Victim);
 
     /**
      * Plays the NPC's Remark line (FindVoiceCue) from its head if no other remark is playing anywhere and audio
@@ -339,8 +337,6 @@ private:
     class USoundBase* FindBarkCue(const FString& Name);
     UPROPERTY(Transient) TMap<FString, TObjectPtr<class USoundBase>> BarkCues;
     int32 NextLookIndex = 0;
-    void ReportToInfectionMeter(AActor* Host, bool bInfected) const;
-    void RewardCoin(const UReflectionsNpcArchetype& Archetype, const FVector& HomeLocation, const FVector& DeathLocation, AActor* Owner);
 
     UPROPERTY(Transient) TMap<FName, TObjectPtr<UReflectionsNpcArchetype>> Archetypes;
     TArray<TWeakObjectPtr<UReflectionsNpcReactionComponent>> Npcs;

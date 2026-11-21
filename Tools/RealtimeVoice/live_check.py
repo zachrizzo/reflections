@@ -118,7 +118,7 @@ async def main(args):
     report = []
     try:
         if not args.guardrails_only:
-            spoken = await player_speech(key, "Excuse me, which way is the Gilt Tower from here?")
+            spoken = await player_speech(key, "Excuse me, do you know how to use magic?")
             ws = await session(url, NPCS["civilian"])
             report.append(("civilian", await turn(ws, relay, "Hello there! What's going on around here today?")))
             report.append(("civilian (voice)", await turn(ws, relay, pcm=spoken)))

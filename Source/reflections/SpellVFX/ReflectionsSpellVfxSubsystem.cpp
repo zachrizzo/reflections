@@ -2,7 +2,6 @@
 #include "Hero/ReflectionsSpellAim.h"
 #include "Hero/ReflectionsSpellCatalog.h"
 #include "Hero/ReflectionsSpellCombat.h"
-#include "AssetRegistry/AssetRegistryModule.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/DecalComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -287,22 +286,9 @@ void UReflectionsSpellVfxSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 void UReflectionsSpellVfxSubsystem::WarmUpSpellEffects(UWorld& InWorld)
 {
-    // Perf (ArtDirection/Perf/README.md row 6): the first use of each spell system and its materials compiled PSOs
-    // in the middle of combat (470-535 misses in the first 12 s, 50 ms+ frames on the first casts). Registering a
-    // component precaches its renderers' PSOs, so spawn each system once far below the map and stop it shortly after.
+    // Precache the core spell effects by registering their Niagara components out of view.
     TArray<UNiagaraSystem*> Systems{ProjectileSystem.Get(), ImpactSystem.Get(), HealSystem.Get(), WardSystem.Get(),
         TarnishSystem.Get(), TarnishBurstSystem.Get(), ShockSystem.Get(), BodyFxSystem.Get()};
-    // Crafted-spell systems (owned by the spell-crafting session) live in an always-cooked folder; warm them too.
-    TArray<FAssetData> Crafted;
-    FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get().GetAssetsByPath(
-        FName(TEXT("/Game/SpellCrafting/VFX")), Crafted, true);
-    for (const FAssetData& Asset : Crafted)
-    {
-        if (Asset.AssetClassPath == UNiagaraSystem::StaticClass()->GetClassPathName())
-        {
-            if (UNiagaraSystem* System = Cast<UNiagaraSystem>(Asset.GetAsset())) Systems.Add(System);
-        }
-    }
     const FVector OutOfView(0.0f, 0.0f, -200000.0f);
     TArray<TWeakObjectPtr<UNiagaraComponent>> Warm;
     for (UNiagaraSystem* System : Systems)

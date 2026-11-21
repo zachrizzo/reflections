@@ -2609,19 +2609,6 @@ void UReflectionsNpcReactionComponent::TickComponent(float DeltaTime, ELevelTick
     }
     if (!UpdateEngagement()) UpdateHunt();
 
-    // Reached an NPC it converts: hand both over to the villain's sequence; refused, it just attacks.
-    if (Active->Combat.bConvertsNpcs && Reaction == EReflectionsNpcReaction::Attacking && Subsystem.IsValid() && IsPrey(Focus.Get()))
-    {
-        const UWorld* World = GetWorld();
-        const float Now = World ? World->GetTimeSeconds() : 0.0f;
-        if (Now >= ConversionRetryTime &&
-            FVector::DistSquared2D(Owner->GetActorLocation(), Focus->GetActorLocation()) <= FMath::Square(Active->Combat.ConversionRange))
-        {
-            ConversionRetryTime = Now + 2.0f;
-            if (Subsystem->TryBeginConversion(this, Focus.Get())) return;
-        }
-    }
-
     // Those who cast at the player stop at range and throw spells; while they do, nothing else moves the body.
     const bool bCasting = TickSpellcasting(DeltaTime);
 

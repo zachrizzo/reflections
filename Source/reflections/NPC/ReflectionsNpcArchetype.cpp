@@ -112,10 +112,6 @@ bool UReflectionsNpcArchetype::ApplyBuiltIn(FName Id)
     A->Looks = Defaults->Looks;
     A->HiddenLookParts = Defaults->HiddenLookParts;
     A->bCuredOnDeath = Defaults->bCuredOnDeath;
-    // The strike clip retargeted for the dressed guard (Tools/NpcCombat/setup_enemy.py makes it). Every crowd
-    // body shares that MetaHuman skeleton. Where the clip is not in the project the strike is timed without it.
-    if (FPackageName::DoesPackageExist(TEXT("/Game/Characters/CrowdMotion/Combat/AS_GuardPunch")))
-        A->Combat.AttackAnimation = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/Characters/CrowdMotion/Combat/AS_GuardPunch.AS_GuardPunch")));
     // The team's melee set, /Game/Combat/Melee/AS_Melee_<Move>_<Body>: every move exists once per body skeleton
     // in use, and the motor plays the one that fits. Those trained to fight get the full set of strikes, the
     // tarnished two wild swings. The blow lands at 47 % of these clips.
@@ -169,20 +165,10 @@ bool UReflectionsNpcArchetype::ApplyBuiltIn(FName Id)
     else if (Id == TEXT("SoldierCaster") || Id == TEXT("AlliedSoldierCaster"))
         // Casters are soldiers too: the same sword (they cast from the sword hand), no wand.
         A->Combat.WeaponProp = Prop(TEXT("/Game/LanthorneAssets/Frostside/Props/SM_Frostside_MirrorSword"), TEXT("SM_Frostside_MirrorSword"));
-    // Every soldier carries a shield on the left arm and wears no armour over the gambeson. A look that already
-    // wears a shield keeps its own. Frostside has no shield mesh yet: its soldiers carry the same round shield in
-    // plain wood instead of Giltside's red.
-    const bool bGiltFighter = Id == TEXT("Guard") || Id == TEXT("AlliedSoldier") || Id == TEXT("AlliedSoldierCaster");
-    const bool bFrostFighter = Id == TEXT("Soldier") || Id == TEXT("SoldierCaster") || Id == TEXT("Enemy") || Id == TEXT("Hostile");
-    if (bGiltFighter || bFrostFighter)
+    const bool bGuardLike = Id == TEXT("Guard") || Id == TEXT("AlliedSoldier") || Id == TEXT("AlliedSoldierCaster");
+    const bool bEnemyFighter = Id == TEXT("Soldier") || Id == TEXT("SoldierCaster") || Id == TEXT("Enemy") || Id == TEXT("Hostile");
+    if (bGuardLike || bEnemyFighter)
     {
-        A->Combat.ShieldProp = Prop(TEXT("/Game/LanthorneAssets/Giltside/Props/SM_Giltside_PatrolShield"), TEXT("SM_Giltside_PatrolShield"));
-        if (bFrostFighter && FPackageName::DoesPackageExist(TEXT("/Game/LanthorneAssets/Frostside/Props/Materials/M_Frostside_ProvisionCrate")))
-            A->Combat.ShieldMaterial = TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(
-                TEXT("/Game/LanthorneAssets/Frostside/Props/Materials/M_Frostside_ProvisionCrate.M_Frostside_ProvisionCrate")));
-        // No plate, and not the shield some looks carry as a part of the outfit (it hangs from the hand): every
-        // soldier's shield is the one this system straps to the forearm.
-        A->HiddenLookParts = { FName(TEXT("Armor")), FName(TEXT("Shield")) };
         if (FPackageName::DoesPackageExist(TEXT("/Game/NPC/Anim/AS_Npc_ArmedHold_Add_Walker")))
             A->Combat.WalkerArmedHold = TSoftObjectPtr<UAnimSequence>(FSoftObjectPath(TEXT("/Game/NPC/Anim/AS_Npc_ArmedHold_Add_Walker.AS_Npc_ArmedHold_Add_Walker")));
         // Sword and shield held at the ready: listed only when the clips are in the project.
@@ -212,24 +198,15 @@ bool UReflectionsNpcArchetype::ApplyBuiltIn(FName Id)
     // Health is counted in the player's spells (Fire Bolt 14, Fireball 20): a fireball kills a townsperson and a
     // bolt nearly does; a guard takes three bolts, a soldier four, the dedicated opponent five. Nobody is a sponge.
 
-    const auto Look = [](const TCHAR* Path) { return TSoftClassPtr<AActor>(FSoftObjectPath(Path)); };
-    const TCHAR* RedLooks = TEXT("/Game/Characters/CrowdMotion/SimpleRed/");
-    const TCHAR* WhiteLooks = TEXT("/Game/Characters/WhiteLondon/CrowdPreview/");
     if (Id == TEXT("Civilian") || Id == TEXT("Timid") || Id == TEXT("Brave"))
     {
         A->BarkOnFear = TEXT("Civilian_Fear");
-        A->Looks = { Look(*FString::Printf(TEXT("%sCoinClerk/BP_CoinClerk_SimpleRed.BP_CoinClerk_SimpleRed_C"), RedLooks)),
-            Look(*FString::Printf(TEXT("%sArchiveApprentice/BP_ArchiveApprentice_SimpleRed.BP_ArchiveApprentice_SimpleRed_C"), RedLooks)),
-            Look(*FString::Printf(TEXT("%sFestivalDrummer/BP_FestivalDrummer_SimpleRed.BP_FestivalDrummer_SimpleRed_C"), RedLooks)),
-            Look(*FString::Printf(TEXT("%sBP_WhiteLook_01_Plain.BP_WhiteLook_01_Plain_C"), WhiteLooks)),
-            Look(*FString::Printf(TEXT("%sBP_WhiteLook_02_Cap.BP_WhiteLook_02_Cap_C"), WhiteLooks)) };
     }
     else if (Id == TEXT("Guard") || Id == TEXT("AlliedSoldier") || Id == TEXT("AlliedSoldierCaster"))
     {
         A->VoiceCharacter = Id == TEXT("Guard") ? TEXT("Guard") : TEXT("Soldier");
         A->BarkOnAlert = TEXT("Guard_Alert");
         A->BarkOnAttack = TEXT("Guard_Attack");
-        A->Looks = { Look(*FString::Printf(TEXT("%sBridgeGuard/BP_BridgeGuard_SimpleRed.BP_BridgeGuard_SimpleRed_C"), RedLooks)) };
     }
     else if (Id == TEXT("Infected") || Id == TEXT("VillainHost"))
     {
@@ -238,74 +215,9 @@ bool UReflectionsNpcArchetype::ApplyBuiltIn(FName Id)
     }
     else
     {
-        // Enemy, Hostile and the soldiers. Soldiers' commands are spoken by the squad layer.
         A->VoiceCharacter = TEXT("Soldier");
-        const bool bCasterLook = Id == TEXT("SoldierCaster");
-        A->Looks = bCasterLook
-            ? TArray<TSoftClassPtr<AActor>>{ Look(*FString::Printf(TEXT("%sBP_WhiteLook_04_CapMantle.BP_WhiteLook_04_CapMantle_C"), WhiteLooks)),
-                Look(*FString::Printf(TEXT("%sBP_WhiteLook_03_Mantle.BP_WhiteLook_03_Mantle_C"), WhiteLooks)) }
-            : TArray<TSoftClassPtr<AActor>>{ Look(*FString::Printf(TEXT("%sBP_WhiteLook_06_GuardBoldRunes.BP_WhiteLook_06_GuardBoldRunes_C"), WhiteLooks)),
-                Look(*FString::Printf(TEXT("%sBP_WhiteLook_05_GuardRags.BP_WhiteLook_05_GuardRags_C"), WhiteLooks)) };
     }
 
-    // The finished cast (the crowd-looks session's list, /Game/Characters/Lanthorne/Looks/BP_Look_<Id>, in that
-    // session's order: civilians alternate side and sex so neighbours differ). Only Blueprints that are in the
-    // project right now count, so Reset To Built In picks up looks finished since. A pool with fewer than two
-    // finished looks keeps the older looks set above, so nobody ends up as copies of one person.
-    {
-        TArray<const TCHAR*> Cast;
-        if (Id == TEXT("Civilian") || Id == TEXT("Timid") || Id == TEXT("Brave"))
-            Cast = { TEXT("FrostHyeon"), TEXT("FrostSilas"), TEXT("GiltCoinClerk"), TEXT("GiltArchivist"), TEXT("GiltMaren"), TEXT("GiltBarnaby"),
-                TEXT("GiltDrummer"), TEXT("GiltFerryman"), TEXT("GiltPriya"), TEXT("GiltRamon"), TEXT("GiltGlassman"), TEXT("GiltHaruto") };
-        else if (Id == TEXT("Guard") || Id == TEXT("AlliedSoldier") || Id == TEXT("AlliedSoldierCaster"))
-            Cast = { TEXT("GiltBridgeGuard"), TEXT("GiltRowena") };
-        else if (Id == TEXT("Soldier"))
-            Cast = { TEXT("FrostIven"), TEXT("FrostSaran"), TEXT("FrostNia"), TEXT("FrostAmara") };
-        else if (Id == TEXT("SoldierCaster"))
-            Cast = { TEXT("FrostTobias"), TEXT("FrostWen") };
-        else if (Id == TEXT("Enemy") || Id == TEXT("Hostile"))
-            Cast = { TEXT("FrostIven"), TEXT("FrostSaran"), TEXT("FrostNia"), TEXT("FrostAmara"), TEXT("FrostTobias"), TEXT("FrostWen") };
-        TArray<TSoftClassPtr<AActor>> Finished;
-        // Those who carry sword and shield wear the dressed soldier looks (no armour, plain fitted clothes:
-        // /Game/Characters/Lanthorne/Looks/Soldiers/<Name>). The casters keep their own two. With fewer than two
-        // dressed looks in the project, the older ones named above are used instead.
-        TArray<const TCHAR*> Dressed;
-        if (Id == TEXT("Guard") || Id == TEXT("AlliedSoldier") || Id == TEXT("AlliedSoldierCaster"))
-            Dressed = { TEXT("GiltSoldier_BridgeGuard"), TEXT("GiltSoldier_Rowena"), TEXT("GiltSoldier_Archivist") };
-        else if (Id == TEXT("Soldier") || Id == TEXT("Enemy") || Id == TEXT("Hostile"))
-            Dressed = { TEXT("FrostSoldier_Amara"), TEXT("FrostSoldier_Nia"), TEXT("FrostSoldier_Saran"), TEXT("FrostSoldier_Iven") };
-        for (const TCHAR* LookId : Dressed)
-        {
-            const FString Package = FString::Printf(TEXT("/Game/Characters/Lanthorne/Looks/Soldiers/%s"), LookId);
-            if (FPackageName::DoesPackageExist(Package))
-                Finished.Add(Look(*FString::Printf(TEXT("%s.%s_C"), *Package, LookId)));
-        }
-        if (Finished.Num() < 2)
-        {
-            Finished.Reset();
-            for (const TCHAR* LookId : Cast)
-            {
-                const FString Package = FString::Printf(TEXT("/Game/Characters/Lanthorne/Looks/BP_Look_%s"), LookId);
-                if (FPackageName::DoesPackageExist(Package))
-                    Finished.Add(Look(*FString::Printf(TEXT("%s.BP_Look_%s_C"), *Package, LookId)));
-            }
-        }
-        // Pewterside's own people (the crowd-looks session's /Game/Characters/Lanthorne/Looks/Pewterside/PewLook_<X>):
-        // townspeople and guards. The side-aware pick keeps them in Pewterside.
-        TArray<const TCHAR*> Pewter;
-        if (Id == TEXT("Civilian") || Id == TEXT("Timid") || Id == TEXT("Brave"))
-            Pewter = { TEXT("CoinClerk"), TEXT("Archivist"), TEXT("Maren"), TEXT("Barnaby"), TEXT("Drummer"), TEXT("Ferryman"),
-                TEXT("Priya"), TEXT("Ramon"), TEXT("Glassman"), TEXT("Haruto") };
-        else if (Id == TEXT("Guard") || Id == TEXT("AlliedSoldier") || Id == TEXT("AlliedSoldierCaster"))
-            Pewter = { TEXT("BridgeGuard"), TEXT("Rowena") };
-        for (const TCHAR* LookId : Pewter)
-        {
-            const FString Package = FString::Printf(TEXT("/Game/Characters/Lanthorne/Looks/Pewterside/PewLook_%s"), LookId);
-            if (FPackageName::DoesPackageExist(Package))
-                Finished.Add(Look(*FString::Printf(TEXT("%s.PewLook_%s_C"), *Package, LookId)));
-        }
-        if (Finished.Num() >= 2) A->Looks = MoveTemp(Finished);
-    }
 
     if (Id == TEXT("Civilian"))
     {

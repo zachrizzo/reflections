@@ -1,5 +1,9 @@
 # Reflections
 
+Reflections starts in Test Town, the project's only saved level. The small blockout has a market square, a side lane, and a conversation NPC. The existing hero spawns on the south road. Use the square to check movement and spells, and use the NPC by the stalls to check dialogue. The project also retains reusable melee assets and the NPC voice library.
+
+The [NPC conversation setup](ArtDirection/NpcDialogue/README.md) covers baked replies and the optional local relay.
+
 ## Set up a team workspace
 
 The owner grants teammates access to the [private GitHub repository](https://github.com/zachrizzo/reflections). On each teammate's machine, install Git and Git LFS, then clone into a separate working directory.

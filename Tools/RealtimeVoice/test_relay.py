@@ -912,7 +912,7 @@ class GeminiClientTests(unittest.IsolatedAsyncioTestCase):
         setup = self.live.messages[0]["setup"]
         self.assertEqual(setup["model"], "models/gemini-3.5-transcribe-live")
         self.assertTrue(setup["realtimeInputConfig"]["automaticActivityDetection"]["disabled"])
-        self.assertIn("Gilt Tower", setup["inputAudioTranscription"]["customVocabulary"])
+        self.assertIn("Wren Hale", setup["inputAudioTranscription"]["customVocabulary"])
         self.assertIn("Nell Bramley", setup["inputAudioTranscription"]["customVocabulary"])
         kinds = [next(iter(m["realtimeInput"])) for m in self.live.messages[1:]]
         self.assertEqual(kinds, ["activityStart", "audio", "audio", "audio", "activityEnd"])

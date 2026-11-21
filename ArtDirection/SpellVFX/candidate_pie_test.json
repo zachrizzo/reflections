@@ -1,9 +1,0 @@
-{
-  "mode": "Play-in-Editor; calls real combat component",
-  "pawn": "BP_HeroSampleCleanTest_C",
-  "completed": true,
-  "niagara_systems_seen": [
-    "/Game/Characters/Hero/SpellVFX/NS_HealingBurst.NS_HealingBurst",
-    "/Game/Characters/Hero/SpellVFX/NS_WaterImpact.NS_WaterImpact"
-  ]
-}
