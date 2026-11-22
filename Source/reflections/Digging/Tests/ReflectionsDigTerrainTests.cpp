@@ -9,6 +9,7 @@
 #include "Digging/ReflectionsDigPieces.h"
 #include "Digging/ReflectionsDigSubsystem.h"
 #include "Digging/ReflectionsDigTypes.h"
+#include "Digging/Tests/ReflectionsDigTestTraces.h"
 #include "Digging/Tests/ReflectionsDigTestWorld.h"
 #include "DynamicMesh/DynamicMesh3.h"
 #include "Engine/HitResult.h"
@@ -79,12 +80,7 @@ namespace
     /** The first hit of a downward visibility trace at (X, Y) from StartZ to TraceEndZ, whatever it hit. */
     TOptional<FHitResult> TraceDown(UWorld* World, double X, double Y, double StartZ = TraceStartZ)
     {
-        FHitResult Hit;
-        if (World->LineTraceSingleByChannel(Hit, FVector(X, Y, StartZ), FVector(X, Y, TraceEndZ), ECC_Visibility))
-        {
-            return Hit;
-        }
-        return TOptional<FHitResult>();
+        return FReflectionsDigTestTraces::TraceDown(World, X, Y, StartZ, TraceEndZ);
     }
 
     /**
@@ -93,12 +89,7 @@ namespace
      */
     TOptional<double> TraceDownZ(UWorld* World, double X, double Y, double StartZ = TraceStartZ)
     {
-        const TOptional<FHitResult> Hit = TraceDown(World, X, Y, StartZ);
-        if (Hit.IsSet() && Cast<UReflectionsDigChunkComponent>(Hit->GetComponent()) != nullptr)
-        {
-            return Hit->ImpactPoint.Z;
-        }
-        return TOptional<double>();
+        return FReflectionsDigTestTraces::TraceDownToChunkZ(World, X, Y, StartZ, TraceEndZ);
     }
 
     /** One plain world tick: commits and cooks started in it have not had a chance to finish. */

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Digging/ReflectionsDigTypes.h"
 #include "ReflectionsDigComponent.generated.h"
 
 class AController;
@@ -15,8 +16,10 @@ struct FHitResult;
 struct FInputActionValue;
 
 /**
- * Lets its pawn dig: TryDig traces from the view point and digs the AReflectionsDigSpot it hits within reach, saving
- * the spot's new stage. For a locally controlled player pawn it also binds G (IA_Dig in IMC_Digging, built in code).
+ * Lets its pawn dig: TryDig traces from the view point and digs what it hits within reach. A chunk piece of the dig
+ * terrain loses a 100 cm sphere; an AReflectionsDigSpot digs one stage deeper and its new stage is saved. TryFill
+ * fills a 100 cm sphere of terrain back in. For a locally controlled player pawn it also binds G to TryDig and H to
+ * TryFill (IA_Dig and IA_Fill in IMC_Digging, built in code).
  */
 UCLASS(ClassGroup = (Digging), meta = (BlueprintSpawnableComponent))
 class REFLECTIONS_API UReflectionsDigComponent : public UActorComponent
@@ -30,9 +33,16 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Digging", meta = (ClampMin = "0", Units = "cm"))
     float ReachCm = 250.0f;
 
-    /** Digs the spot in front of the pawn once. Returns true if a spot within reach dug one stage deeper. */
+    /**
+     * Digs what is in front of the pawn once. Returns true if terrain within reach lost ground or a spot within reach
+     * dug one stage deeper. A hit on the terrain's safety floor digs nothing.
+     */
     UFUNCTION(BlueprintCallable, Category = "Digging")
     bool TryDig();
+
+    /** Fills the terrain in front of the pawn once. Returns true if terrain within reach gained ground. */
+    UFUNCTION(BlueprintCallable, Category = "Digging")
+    bool TryFill();
 
     /** Returns the pawn's dig component, adding and registering one if it has none. Null pawn gives null. */
     static UReflectionsDigComponent* EnsureOnPawn(APawn* Pawn);
@@ -52,9 +62,13 @@ private:
     /** Traces the ComputeReachTrace ray; true with OutHit filled when something is hit within ReachCm of the pawn. */
     bool TraceReach(FHitResult& OutHit) const;
 
+    /** Digs (Remove) or fills (Add) a 100 cm sphere at a terrain hit; false unless the hit is a chunk piece and the grid changed. */
+    bool StampTerrain(const FHitResult& Hit, EReflectionsDigMode Mode) const;
+
     void BindControls();
     void UnbindControls();
     void OnDigAction(const FInputActionValue& Value);
+    void OnFillAction(const FInputActionValue& Value);
 
     UFUNCTION()
     void HandleControllerChanged(APawn* Pawn, AController* OldController, AController* NewController);
@@ -64,6 +78,9 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UInputAction> DigAction;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UInputAction> FillAction;
 
     UPROPERTY(Transient)
     TObjectPtr<UEnhancedInputComponent> DigInput;

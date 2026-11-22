@@ -2,6 +2,8 @@
 
 #include "CollisionQueryParams.h"
 #include "Digging/ReflectionsDigSpot.h"
+#include "Digging/ReflectionsDigSubsystem.h"
+#include "Digging/ReflectionsDigTerrain.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/HitResult.h"
 #include "Engine/LocalPlayer.h"
@@ -17,6 +19,12 @@
 #include "InputMappingContext.h"
 #include "Save/ReflectionsSaveGame.h"
 #include "UObject/UObjectGlobals.h"
+
+namespace
+{
+    /** The sphere one dig or fill of the terrain removes or adds. */
+    constexpr float TerrainStampRadiusCm = 100.0f;
+}
 
 UReflectionsDigComponent::UReflectionsDigComponent()
 {
@@ -56,6 +64,10 @@ bool UReflectionsDigComponent::TryDig()
     {
         return false;
     }
+    if (Cast<AReflectionsDigTerrain>(Hit.GetActor()) != nullptr)
+    {
+        return StampTerrain(Hit, EReflectionsDigMode::Remove);
+    }
     AReflectionsDigSpot* Spot = Cast<AReflectionsDigSpot>(Hit.GetActor());
     if (Spot == nullptr || !Spot->DigOnce())
     {
@@ -69,6 +81,24 @@ bool UReflectionsDigComponent::TryDig()
         ReflectionsSave::Update([Id, Stage](UReflectionsSaveGame& Save) { Save.DigSpotStages.Add(Id, Stage); });
     }
     return true;
+}
+
+bool UReflectionsDigComponent::TryFill()
+{
+    FHitResult Hit;
+    return TraceReach(Hit) && Cast<AReflectionsDigTerrain>(Hit.GetActor()) != nullptr && StampTerrain(Hit, EReflectionsDigMode::Add);
+}
+
+bool UReflectionsDigComponent::StampTerrain(const FHitResult& Hit, EReflectionsDigMode Mode) const
+{
+    // Only a chunk piece is ground: the terrain's safety floor under the grid is not.
+    if (Cast<UReflectionsDigChunkComponent>(Hit.GetComponent()) == nullptr)
+    {
+        return false;
+    }
+    UWorld* World = GetWorld();
+    UReflectionsDigSubsystem* Subsystem = World != nullptr ? World->GetSubsystem<UReflectionsDigSubsystem>() : nullptr;
+    return Subsystem != nullptr && Subsystem->Dig(Hit.ImpactPoint, TerrainStampRadiusCm, Mode);
 }
 
 bool UReflectionsDigComponent::TraceReach(FHitResult& OutHit) const
@@ -156,13 +186,18 @@ void UReflectionsDigComponent::BindControls()
         DigAction = NewObject<UInputAction>(this, TEXT("IA_Dig"));
         DigAction->ValueType = EInputActionValueType::Boolean;
         DigAction->bConsumeInput = true;
+        FillAction = NewObject<UInputAction>(this, TEXT("IA_Fill"));
+        FillAction->ValueType = EInputActionValueType::Boolean;
+        FillAction->bConsumeInput = true;
         DigContext = NewObject<UInputMappingContext>(this, TEXT("IMC_Digging"));
         DigContext->MapKey(DigAction, EKeys::G);
+        DigContext->MapKey(FillAction, EKeys::H);
     }
 
     DigInput = NewObject<UEnhancedInputComponent>(PC, MakeUniqueObjectName(PC, UEnhancedInputComponent::StaticClass(), TEXT("DigInput")));
     DigInput->RegisterComponent();
     DigInput->BindAction(DigAction, ETriggerEvent::Started, this, &UReflectionsDigComponent::OnDigAction);
+    DigInput->BindAction(FillAction, ETriggerEvent::Started, this, &UReflectionsDigComponent::OnFillAction);
     PC->PushInputComponent(DigInput);
     Subsystem->AddMappingContext(DigContext, 1);
     BoundController = PC;
@@ -198,4 +233,9 @@ void UReflectionsDigComponent::UnbindControls()
 void UReflectionsDigComponent::OnDigAction(const FInputActionValue& Value)
 {
     TryDig();
+}
+
+void UReflectionsDigComponent::OnFillAction(const FInputActionValue& Value)
+{
+    TryFill();
 }

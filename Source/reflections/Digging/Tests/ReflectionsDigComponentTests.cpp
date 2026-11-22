@@ -2,6 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "Digging/ReflectionsDigSpot.h"
+#include "Digging/ReflectionsDigSubsystem.h"
+#include "Digging/ReflectionsDigTerrain.h"
+#include "Digging/Tests/ReflectionsDigTestTraces.h"
 #include "Digging/Tests/ReflectionsDigTestWorld.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -102,6 +105,59 @@ namespace
         }
         TestWorld.Tick();
         return true;
+    }
+
+    /** Where the terrain tests' pawn hovers: 150 cm above the ground (Z 0) of a terrain at the origin. */
+    const FVector TerrainPawnLocation(2400.0, 2400.0, 150.0);
+    constexpr double TerrainIdleTimeoutSeconds = 10.0;
+
+    /** A terrain at the origin (ground at Z 0, default size, no focus so every chunk is meshed) and a pawn looking straight down at it. */
+    struct FTerrainDigScene
+    {
+        UReflectionsDigSubsystem* Subsystem = nullptr;
+        ADefaultPawn* Pawn = nullptr;
+        UReflectionsDigComponent* Dig = nullptr;
+    };
+
+    bool WaitForTerrainIdle(FAutomationTestBase& Test, FReflectionsDigTestWorld& TestWorld, const FTerrainDigScene& Scene, const FString& Label)
+    {
+        UReflectionsDigSubsystem* Subsystem = Scene.Subsystem;
+        return Test.TestTrue(Label, TestWorld.TickUntil([Subsystem]() { return Subsystem->IsIdle(); }, TerrainIdleTimeoutSeconds));
+    }
+
+    /** Builds the scene and waits until the terrain is meshed; returns false (after reporting why) if any part is missing. */
+    bool MakeTerrainScene(FAutomationTestBase& Test, FReflectionsDigTestWorld& TestWorld, FTerrainDigScene& Out)
+    {
+        if (!Test.TestNotNull(TEXT("Test world"), TestWorld.World))
+        {
+            return false;
+        }
+        Out.Subsystem = TestWorld.World->GetSubsystem<UReflectionsDigSubsystem>();
+        if (!Test.TestNotNull(TEXT("Dig subsystem"), Out.Subsystem)
+            || !Test.TestNotNull(TEXT("Terrain"), TestWorld.Spawn<AReflectionsDigTerrain>(FVector::ZeroVector)))
+        {
+            return false;
+        }
+        // Eye height 0: the view point is the actor location, and pitch -90 looks straight down.
+        Out.Pawn = TestWorld.Spawn<ADefaultPawn>(TerrainPawnLocation, FRotator(-90.0, 0.0, 0.0));
+        if (!Test.TestNotNull(TEXT("Pawn"), Out.Pawn))
+        {
+            return false;
+        }
+        Out.Pawn->BaseEyeHeight = 0.0f;
+        Out.Dig = UReflectionsDigComponent::EnsureOnPawn(Out.Pawn);
+        if (!Test.TestNotNull(TEXT("Dig component"), Out.Dig))
+        {
+            return false;
+        }
+        return WaitForTerrainIdle(Test, TestWorld, Out, TEXT("Idle after the terrain begins play"));
+    }
+
+    /** Z of the ground under the pawn, from a downward trace that counts only a chunk piece of the terrain. */
+    TOptional<double> TraceGroundUnderPawn(const FReflectionsDigTestWorld& TestWorld, const FTerrainDigScene& Scene)
+    {
+        return FReflectionsDigTestTraces::TraceDownToChunkZ(TestWorld.World, TerrainPawnLocation.X, TerrainPawnLocation.Y,
+            1000.0, -3100.0, Scene.Pawn);
     }
 }
 
@@ -335,6 +391,86 @@ bool FReflectionsDigInputIgnoresActorsAttachedToThePawnTest::RunTest(const FStri
                 TestTrue(TEXT("TryDig reaches past the carried cube"), Scene.Dig->TryDig());
                 TestEqual(TEXT("Spot stage"), Scene.Spot->GetStage(), 1);
             }
+        }
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigInputDigsTerrainInReachTest, "Reflections.DigInput.DigsTerrainInReach", DigInputTestFlags)
+bool FReflectionsDigInputDigsTerrainInReachTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    {
+        FReflectionsDigTestWorld TestWorld;
+        FTerrainDigScene Scene;
+        if (MakeTerrainScene(*this, TestWorld, Scene))
+        {
+            const TOptional<double> Before = TraceGroundUnderPawn(TestWorld, Scene);
+            if (TestTrue(TEXT("The trace hits the terrain before the dig"), Before.IsSet()))
+            {
+                TestTrue(TEXT("TryDig succeeds"), Scene.Dig->TryDig());
+                WaitForTerrainIdle(*this, TestWorld, Scene, TEXT("Idle after the dig"));
+                const TOptional<double> After = TraceGroundUnderPawn(TestWorld, Scene);
+                if (TestTrue(TEXT("The trace hits the terrain after the dig"), After.IsSet()))
+                {
+                    TestTrue(FString::Printf(TEXT("The ground is at least 50 cm lower (%.1f before, %.1f after)"), *Before, *After),
+                        *After < *Before - 50.0);
+                }
+            }
+        }
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigInputFillRestoresTerrainTest, "Reflections.DigInput.FillRestoresTerrain", DigInputTestFlags)
+bool FReflectionsDigInputFillRestoresTerrainTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    {
+        FReflectionsDigTestWorld TestWorld;
+        FTerrainDigScene Scene;
+        if (MakeTerrainScene(*this, TestWorld, Scene))
+        {
+            // The pawn keeps 150 cm above the ground under it, as a player standing in the pit would: a pit floor
+            // more than 100 cm down would otherwise be out of reach of a pawn hovering over the original ground.
+            auto StandOnGround = [&TestWorld, &Scene](const TOptional<double>& Ground)
+            {
+                if (Ground.IsSet())
+                {
+                    Scene.Pawn->SetActorLocation(FVector(TerrainPawnLocation.X, TerrainPawnLocation.Y, *Ground + 150.0));
+                }
+            };
+            TOptional<double> Ground = TraceGroundUnderPawn(TestWorld, Scene);
+            for (int32 Dig = 0; Dig < 3; ++Dig)
+            {
+                StandOnGround(Ground);
+                TestTrue(FString::Printf(TEXT("TryDig %d succeeds"), Dig + 1), Scene.Dig->TryDig());
+                WaitForTerrainIdle(*this, TestWorld, Scene, TEXT("Idle after a dig"));
+                Ground = TraceGroundUnderPawn(TestWorld, Scene);
+            }
+            if (TestTrue(TEXT("The trace hits the terrain after the digs"), Ground.IsSet()))
+            {
+                TestTrue(FString::Printf(TEXT("The digs leave a pit at least 250 cm deep (ground at %.1f)"), *Ground), *Ground < -250.0);
+            }
+
+            int32 Fills = 0;
+            int32 SuccessfulFills = 0;
+            while (Fills < 10 && !(Ground.IsSet() && FMath::Abs(*Ground) <= 60.0))
+            {
+                StandOnGround(Ground);
+                SuccessfulFills += Scene.Dig->TryFill() ? 1 : 0;
+                ++Fills;
+                WaitForTerrainIdle(*this, TestWorld, Scene, TEXT("Idle after a fill"));
+                Ground = TraceGroundUnderPawn(TestWorld, Scene);
+            }
+            TestTrue(FString::Printf(TEXT("TryFill succeeds (%d of %d calls)"), SuccessfulFills, Fills), SuccessfulFills > 0);
+            TestTrue(FString::Printf(TEXT("After %d fills the ground is within 60 cm of Z 0 (at %s)"), Fills,
+                Ground.IsSet() ? *FString::SanitizeFloat(*Ground) : TEXT("no terrain hit")),
+                Ground.IsSet() && FMath::Abs(*Ground) <= 60.0);
         }
     }
     DeleteTestSlot();

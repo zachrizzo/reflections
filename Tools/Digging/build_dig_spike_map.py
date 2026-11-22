@@ -14,6 +14,15 @@ STAGE_MESH_PATHS = (
     "/Engine/BasicShapes/Cone.Cone",
     "/Engine/BasicShapes/Cylinder.Cylinder",
 )
+# Movable point lights over the patch's middle, 250 cm above the ground.
+CAVE_LIGHT_LOCATIONS = (
+    (2800.0, -600.0, 250.0),
+    (2800.0, 600.0, 250.0),
+    (4000.0, -600.0, 250.0),
+    (4000.0, 600.0, 250.0),
+)
+CAVE_LIGHT_INTENSITY = 5000.0
+CAVE_LIGHT_ATTENUATION_RADIUS = 1500.0
 
 
 def fail(message):
@@ -61,17 +70,33 @@ def spawn_dig_spot(label, spot_id, location, meshes):
     return spot
 
 
+def spawn_cave_light(label, location):
+    light = spawn(unreal.PointLight, label, location)
+    component = light.get_component_by_class(unreal.PointLightComponent)
+    make_movable(component, label)
+    component.set_editor_property("intensity_units", unreal.LightUnits.UNITLESS)
+    component.set_editor_property("intensity", CAVE_LIGHT_INTENSITY)
+    component.set_editor_property("attenuation_radius", CAVE_LIGHT_ATTENUATION_RADIUS)
+    return light
+
+
 def build():
     world = unreal.EditorLoadingAndSavingUtils.new_blank_map(False)
     if world is None:
         fail("new_blank_map returned no world")
 
-    cube = load_mesh(STAGE_MESH_PATHS[0])
+    # The cube is also the stage-0 mesh, so it is loaded once with the others.
     stage_meshes = [load_mesh(path) for path in STAGE_MESH_PATHS]
+    cube = stage_meshes[0]
 
-    ground = spawn(unreal.StaticMeshActor, "DigSpike_Ground", (0.0, 0.0, -50.0), scale=(100.0, 100.0, 1.0))
+    # The cube ground ends at X = 1000, flush against the dig terrain's patch.
+    ground = spawn(unreal.StaticMeshActor, "DigSpike_Ground", (-2000.0, 0.0, -50.0), scale=(60.0, 100.0, 1.0))
     if not ground.static_mesh_component.set_static_mesh(cube):
         fail("could not set the ground mesh")
+
+    # The patch covers X 1000 to 5800 and Y -2400 to 2400, its ground at Z 0 (default size: 3 x 3 x 2 chunks).
+    terrain = spawn(unreal.ReflectionsDigTerrain, "DigSpike_Terrain", (1000.0, -2400.0, 0.0))
+    terrain.set_editor_property("ground_height_cm", 0.0)
 
     sun = spawn(unreal.DirectionalLight, "DigSpike_Sun", rotation=unreal.Rotator(roll=0.0, pitch=-45.0, yaw=30.0))
     make_movable(sun.root_component, "DigSpike_Sun")
@@ -83,19 +108,26 @@ def build():
     make_movable(sky_light_component, "DigSpike_SkyLight")
     sky_light_component.set_editor_property("real_time_capture", True)
 
-    # Yaw 0 faces +X.
-    spawn(unreal.PlayerStart, "DigSpike_Start", (-600.0, 0.0, 100.0))
+    for index, location in enumerate(CAVE_LIGHT_LOCATIONS):
+        spawn_cave_light("DigSpike_CaveLight" + str(index + 1), location)
+
+    # Yaw 0 faces +X, towards the patch.
+    spawn(unreal.PlayerStart, "DigSpike_Start", (400.0, 0.0, 100.0))
 
     spawn_dig_spot("DigSpike_SpotA", "DigSpike_A", (0.0, -300.0, 50.0), stage_meshes)
     spawn_dig_spot("DigSpike_SpotB", "DigSpike_B", (0.0, 300.0, 50.0), stage_meshes)
 
-    map_file = os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_content_dir()),
-                            "Maps", "DigSpike", "L_DigSpike.umap")
+    map_file = os.path.normpath(os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_content_dir()),
+                                             "Maps", "DigSpike", "L_DigSpike.umap"))
     os.makedirs(os.path.dirname(map_file), exist_ok=True)
+    # On a re-run the file already exists, so only a newer modification time proves this save wrote it.
+    old_mtime = os.path.getmtime(map_file) if os.path.isfile(map_file) else None
     if not unreal.EditorLoadingAndSavingUtils.save_map(world, MAP_PACKAGE):
         fail("save_map reported failure for " + MAP_PACKAGE)
     if not os.path.isfile(map_file):
         fail("save_map succeeded but " + map_file + " is missing")
+    if old_mtime is not None and os.path.getmtime(map_file) <= old_mtime:
+        fail("save_map succeeded but " + map_file + " was not rewritten")
     print("saved " + map_file)
 
 
