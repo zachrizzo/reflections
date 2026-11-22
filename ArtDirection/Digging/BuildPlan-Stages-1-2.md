@@ -292,21 +292,23 @@ The map uses the project's default game mode; it sets no override.
 - Positions are in cm relative to the grid origin (`Samples.LocalOriginCm` plus the local position).
 - A chunk owns the lattice edges that start at local cells 0 to 31 on every axis and run one cell along +X, +Y or +Z. For each owned edge whose ends differ in solidity it emits one quad (two triangles) joining the four cubes around that edge. So it needs vertices for cubes -1 to 31, and every quad in the grid is emitted by exactly one chunk.
 - Winding: for every triangle (A, B, C), `UE::Geometry::VectorUtil::Normal(A, B, C)` points from solid toward air.
-- Normals: the central-difference density gradient at each of the cube's eight corners, trilinearly interpolated at the vertex position, negated and normalised. This is why the border is two cells.
+- Diagonal: each quad is split along the diagonal that makes both of its triangles face air, judged by the sign of each triangle normal's component along the edge's direction from solid to air. If both diagonals qualify, use the shorter one; on an exact tie, the diagonal through the edge's own cube. The quad's four vertices lie strictly inside four different cubes around the edge, so at least one diagonal always qualifies. (A fixed diagonal folds a triangle over when one vertex sits close to the edge.)
+- Normals: the central-difference density gradient at each of the cube's eight corners, trilinearly interpolated at the vertex position, negated and normalised. This is why the border is two cells. If that gradient has near-zero length, the normal is the normalised sum, over the cube's sign-changing edges, of the unit direction from the solid corner to the non-solid corner; if that sum vanishes too, +Z. Every case uses only the cube's own samples, so two chunks give the same cube the same normal.
 - Materials: the material of the cube's solid corner with the highest density; ties go to the lowest corner index.
 - `Out` is reset first. A chunk with no surface gives an empty `Out`.
 - No triangle has zero area. The tests assert, on every mesh they build, that each triangle's area is above 0.01 cm² and that its `VectorUtil::Normal` agrees in direction with the stored normals of its three vertices.
 
-- [ ] **Step 1: Write six failing tests** (grid 3 x 3 x 2 chunks, origin (0, 0, 0), ground height 2800 unless stated):
+- [ ] **Step 1: Write the failing tests** (seven after review) (grid 3 x 3 x 2 chunks, origin (0, 0, 0), ground height 2800 unless stated):
   - `Reflections.Digging.Mesher.UniformChunkIsEmpty`: chunk (1, 1, 0), all solid, gives no triangles; a sample block filled with -127 gives none.
   - `Reflections.Digging.Mesher.FlatGroundIsFlat`: chunk (1, 1, 1). Every vertex Z is within 1 cm of 2800; every normal is within 1 degree of +Z; every triangle's `VectorUtil::Normal` is within 1 degree of +Z; there are exactly 2048 triangles.
-  - `Reflections.Digging.Mesher.NeighboursShareBorderVertices`: Remove at (1600, 2400, 2600), radius 200, then mesh chunks (0, 1, 1) and (1, 1, 1). Every vertex of either chunk with X between 1550 and 1600 has a twin in the other chunk within 0.01 cm, and their normals agree within 0.1 degree.
+  - `Reflections.Digging.Mesher.NeighboursShareBorderVertices`: Remove at (1600, 2400, 2600), radius 200, then mesh chunks (0, 1, 1) and (1, 1, 1). Pair vertices by cube (a cube has at most one vertex; a vertex's cube is the floor of its position divided by 50). At least 8 cubes with X index 31 have a vertex in both chunks, and in every such pair the positions agree within 0.01 cm and the normals within 0.1 degree. (A border cube used only by edges the first chunk owns has no twin, and that is correct.)
   - `Reflections.Digging.Mesher.QuadsAreNotDuplicatedAcrossChunks`: for the same two meshes, no triangle (as a set of three positions, within 0.01 cm) appears in both.
   - `Reflections.Digging.Mesher.CellCentredDigsMakeNoDegenerateTriangles` (added when the 0-level bug was found): Remove stamps of radius 100 centred exactly on cells, underground, inside chunk (1, 1, 1) and across its border into (0, 1, 1); both meshes hold no triangle under the area threshold.
+  - `Reflections.Digging.Mesher.DenseDigFieldsKeepEveryTriangleFacingAir` (added in review): radius-100 Remove stamps on 150, 200 and 250 cm lattices, with centres on cells and 17 cm off cells, buried (ground height 6400) and at the surface (ground height 2800). For each of the twelve fields, mesh chunks (1, 1, 1) and (0, 1, 1): every triangle passes the area and facing checks, every normal is unit length, and vertices paired by cube across the border agree.
   - `Reflections.Digging.Mesher.BuriedSphereIsClosed`: on a grid with ground height 6400 (all solid), Remove at (2400, 2400, 2400), radius 200, then mesh chunk (1, 1, 1). There is at least one triangle, every edge is used by exactly two triangles, and every vertex normal points toward the sphere centre.
 - [ ] **Step 2: Build and run** `test.ps1 -Filter Reflections.Digging.Mesher`. Record RED.
 - [ ] **Step 3: Implement** the mesher.
-- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections.Digging`. Expected: 17 ran, 17 passed (9 grid tests, 2 grid tests added by the task 2.1 review, 6 mesher tests).
+- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections.Digging`. Expected: 18 ran, 18 passed (9 grid tests, 2 grid tests added by the task 2.1 review, 7 mesher tests).
 - [ ] **Step 5: Commit** the listed files.
 
 ---
