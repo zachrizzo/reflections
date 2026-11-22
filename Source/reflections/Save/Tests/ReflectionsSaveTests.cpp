@@ -4,6 +4,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Math/RandomStream.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/Crc.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -39,11 +40,24 @@ namespace
         return Bytes;
     }
 
-    bool WriteVersionTwo()
+    bool WriteVersion(int32 Version)
     {
         UReflectionsSaveGame* Data = NewObject<UReflectionsSaveGame>();
-        Data->SaveVersion = 2;
+        Data->SaveVersion = Version;
         return ReflectionsSave::Write(*Data, TestSlot);
+    }
+
+    bool WriteVersionTwo()
+    {
+        return WriteVersion(2);
+    }
+
+    uint32 RawUint32(const TArray<uint8>& Bytes, int32 Offset)
+    {
+        return static_cast<uint32>(Bytes[Offset + 0])
+            | (static_cast<uint32>(Bytes[Offset + 1]) << 8)
+            | (static_cast<uint32>(Bytes[Offset + 2]) << 16)
+            | (static_cast<uint32>(Bytes[Offset + 3]) << 24);
     }
 }
 
@@ -55,6 +69,18 @@ bool FReflectionsSaveRoundTripTest::RunTest(const FString& Parameters)
     UReflectionsSaveGame* Data = NewObject<UReflectionsSaveGame>();
     Data->DigSpotStages.Add(TEXT("Well"), 2);
     TestTrue(TEXT("Write succeeds"), ReflectionsSave::Write(*Data, TestSlot));
+
+    const TArray<uint8> Raw = LoadRaw();
+    if (TestTrue(TEXT("Raw file holds more than the header"), Raw.Num() > 16))
+    {
+        TestEqual(TEXT("Magic byte 0"), static_cast<int32>(Raw[0]), 0x53);
+        TestEqual(TEXT("Magic byte 1"), static_cast<int32>(Raw[1]), 0x4C);
+        TestEqual(TEXT("Magic byte 2"), static_cast<int32>(Raw[2]), 0x46);
+        TestEqual(TEXT("Magic byte 3"), static_cast<int32>(Raw[3]), 0x52);
+        TestEqual(TEXT("Header version"), RawUint32(Raw, 4), 1u);
+        TestEqual(TEXT("Header length"), RawUint32(Raw, 8), static_cast<uint32>(Raw.Num() - 16));
+        TestEqual(TEXT("Header CRC"), RawUint32(Raw, 12), FCrc::MemCrc32(Raw.GetData() + 16, Raw.Num() - 16));
+    }
 
     UReflectionsSaveGame* Loaded = nullptr;
     TestEqual(TEXT("Read result"), ReflectionsSave::Read(TestSlot, Loaded), EReflectionsLoadResult::Loaded);
@@ -104,6 +130,35 @@ bool FReflectionsSaveRefusesNewerVersionTest::RunTest(const FString& Parameters)
     TestNull(TEXT("OutData"), Loaded);
     TestTrue(TEXT("Bytes unchanged"), LoadRaw() == Before);
 
+    // The version is checked before length and CRC: a newer file with a bad CRC is still NewerVersion.
+    TArray<uint8> BadCrc = Before;
+    if (TestTrue(TEXT("Version 2 file has a payload"), BadCrc.Num() > 16))
+    {
+        BadCrc[16] ^= 0xFF;
+        TestTrue(TEXT("Store bad-CRC bytes"), UGameplayStatics::SaveDataToSlot(BadCrc, TestSlot, 0));
+        Loaded = NewObject<UReflectionsSaveGame>();
+        TestEqual(TEXT("Read result with bad CRC"), ReflectionsSave::Read(TestSlot, Loaded), EReflectionsLoadResult::NewerVersion);
+        TestNull(TEXT("OutData with bad CRC"), Loaded);
+        TestTrue(TEXT("Bad-CRC bytes unchanged"), LoadRaw() == BadCrc);
+    }
+
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsSaveVersionZeroIsCorruptTest, "Reflections.Save.VersionZeroIsCorrupt", SaveTestFlags)
+bool FReflectionsSaveVersionZeroIsCorruptTest::RunTest(const FString& Parameters)
+{
+    DeleteTestSlot();
+
+    TestTrue(TEXT("Write succeeds"), WriteVersion(0));
+    const TArray<uint8> Before = LoadRaw();
+
+    UReflectionsSaveGame* Loaded = NewObject<UReflectionsSaveGame>();
+    TestEqual(TEXT("Read result"), ReflectionsSave::Read(TestSlot, Loaded), EReflectionsLoadResult::Corrupt);
+    TestNull(TEXT("OutData"), Loaded);
+    TestTrue(TEXT("Bytes unchanged"), LoadRaw() == Before);
+
     DeleteTestSlot();
     return true;
 }
@@ -141,7 +196,7 @@ bool FReflectionsSaveTruncatedFileIsRefusedTest::RunTest(const FString& Paramete
     Raw.SetNum(Raw.Num() / 2);
     TestTrue(TEXT("Store truncated bytes"), UGameplayStatics::SaveDataToSlot(Raw, TestSlot, 0));
 
-    UReflectionsSaveGame* Loaded = nullptr;
+    UReflectionsSaveGame* Loaded = NewObject<UReflectionsSaveGame>();
     TestEqual(TEXT("Read result"), ReflectionsSave::Read(TestSlot, Loaded), EReflectionsLoadResult::Corrupt);
     TestNull(TEXT("OutData"), Loaded);
 
@@ -156,7 +211,10 @@ bool FReflectionsSaveUpdateWritesThroughActiveSlotTest::RunTest(const FString& P
 
     {
         ReflectionsSave::FScopedSlotOverride Override(TestSlot);
-        TestEqual(TEXT("ActiveSlot inside override"), ReflectionsSave::ActiveSlot(), TestSlot);
+        if (!TestEqual(TEXT("ActiveSlot inside override"), ReflectionsSave::ActiveSlot(), TestSlot))
+        {
+            return false; // Never let Update reach the real slot.
+        }
 
         TestTrue(TEXT("First update"), ReflectionsSave::Update([](UReflectionsSaveGame& Save)
         {
@@ -200,6 +258,10 @@ bool FReflectionsSaveUpdateLeavesBadFileAloneTest::RunTest(const FString& Parame
 
     {
         ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+        if (!TestEqual(TEXT("ActiveSlot inside override"), ReflectionsSave::ActiveSlot(), TestSlot))
+        {
+            return false; // Never let Update reach the real slot.
+        }
 
         const TArray<uint8> Garbage = RandomBytes();
         TestTrue(TEXT("Store garbage"), UGameplayStatics::SaveDataToSlot(Garbage, TestSlot, 0));

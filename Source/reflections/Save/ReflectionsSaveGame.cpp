@@ -77,10 +77,14 @@ namespace ReflectionsSave
             return EReflectionsLoadResult::Corrupt;
         }
 
-        const int32 Version = static_cast<int32>(GetUint32(Bytes, 4));
-        if (Version > LatestVersion)
+        const uint32 Version = GetUint32(Bytes, 4);
+        if (Version > static_cast<uint32>(LatestVersion))
         {
             return EReflectionsLoadResult::NewerVersion;
+        }
+        if (Version < 1)
+        {
+            return EReflectionsLoadResult::Corrupt;
         }
 
         const uint32 Length = GetUint32(Bytes, 8);
@@ -101,7 +105,7 @@ namespace ReflectionsSave
             return EReflectionsLoadResult::Corrupt;
         }
 
-        Data->SaveVersion = Version;
+        Data->SaveVersion = static_cast<int32>(Version);
         OutData = Data;
         return EReflectionsLoadResult::Loaded;
     }
