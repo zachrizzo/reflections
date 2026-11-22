@@ -3,21 +3,21 @@
 #include "CoreMinimal.h"
 #include "Misc/ScopeLock.h"
 
-void FReflectionsDigCommitQueue::Push(FIntVector Chunk, FReflectionsDigMeshData&& Mesh)
+void FReflectionsDigCommitQueue::Push(FIntVector Chunk, FReflectionsDigChunkResult&& Result)
 {
     FScopeLock Guard(&Lock);
     for (FEntry& Entry : Entries)
     {
         if (Entry.Chunk == Chunk)
         {
-            Entry.Mesh = MoveTemp(Mesh);
+            Entry.Result = MoveTemp(Result);
             return;
         }
     }
-    Entries.Add(FEntry{ Chunk, MoveTemp(Mesh) });
+    Entries.Add(FEntry{ Chunk, MoveTemp(Result) });
 }
 
-int32 FReflectionsDigCommitQueue::PopUpTo(int32 Max, TFunctionRef<void(FIntVector, FReflectionsDigMeshData&&)> Commit)
+int32 FReflectionsDigCommitQueue::PopUpTo(int32 Max, TFunctionRef<void(FIntVector, FReflectionsDigChunkResult&&)> Commit)
 {
     int32 Committed = 0;
     while (Committed < Max)
@@ -32,7 +32,7 @@ int32 FReflectionsDigCommitQueue::PopUpTo(int32 Max, TFunctionRef<void(FIntVecto
             Entry = MoveTemp(Entries[0]);
             Entries.RemoveAt(0);
         }
-        Commit(Entry.Chunk, MoveTemp(Entry.Mesh));
+        Commit(Entry.Chunk, MoveTemp(Entry.Result));
         ++Committed;
     }
     return Committed;

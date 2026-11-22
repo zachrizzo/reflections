@@ -2,9 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "Async/TaskGraphInterfaces.h"
+#include "Components/BoxComponent.h"
 #include "Components/DynamicMeshComponent.h"
 #include "Digging/ReflectionsDigGrid.h"
 #include "Digging/ReflectionsDigMesher.h"
+#include "Digging/ReflectionsDigPieces.h"
 #include "Digging/ReflectionsDigSubsystem.h"
 #include "Digging/ReflectionsDigTypes.h"
 #include "Digging/Tests/ReflectionsDigTestWorld.h"
@@ -71,13 +73,30 @@ namespace
         return WaitForIdle(Test, TestWorld, Out, TEXT("Idle after the terrain begins play"));
     }
 
-    /** Z of the first hit of a downward visibility trace at (X, Y) from StartZ to just under the grid floor. */
-    TOptional<double> TraceDownZ(UWorld* World, double X, double Y, double StartZ = TraceStartZ)
+    /** Where every downward trace ends: well under the grid floor and under the safety floor below it. */
+    constexpr double TraceEndZ = GridFloorZ - 300.0;
+
+    /** The first hit of a downward visibility trace at (X, Y) from StartZ to TraceEndZ, whatever it hit. */
+    TOptional<FHitResult> TraceDown(UWorld* World, double X, double Y, double StartZ = TraceStartZ)
     {
         FHitResult Hit;
-        if (World->LineTraceSingleByChannel(Hit, FVector(X, Y, StartZ), FVector(X, Y, GridFloorZ - 10.0), ECC_Visibility))
+        if (World->LineTraceSingleByChannel(Hit, FVector(X, Y, StartZ), FVector(X, Y, TraceEndZ), ECC_Visibility))
         {
-            return Hit.ImpactPoint.Z;
+            return Hit;
+        }
+        return TOptional<FHitResult>();
+    }
+
+    /**
+     * Z of the first hit of a downward visibility trace at (X, Y) from StartZ, only when that hit is a chunk
+     * piece of the terrain. Nothing, or anything else (such as the safety floor under the grid), gives no value.
+     */
+    TOptional<double> TraceDownZ(UWorld* World, double X, double Y, double StartZ = TraceStartZ)
+    {
+        const TOptional<FHitResult> Hit = TraceDown(World, X, Y, StartZ);
+        if (Hit.IsSet() && Cast<UReflectionsDigChunkComponent>(Hit->GetComponent()) != nullptr)
+        {
+            return Hit->ImpactPoint.Z;
         }
         return TOptional<double>();
     }
@@ -140,16 +159,37 @@ namespace
         FScopedMaxCommitsPerFrame& operator=(const FScopedMaxCommitsPerFrame&) = delete;
     };
 
-    /** Commits Mesh straight to the terrain and logs how long the game thread spent (headless, no renderer). */
-    void TimeCommit(AReflectionsDigTerrain& Terrain, FIntVector Chunk, FReflectionsDigMeshData&& Mesh, const TCHAR* Label)
+    /**
+     * Meshes a chunk and builds its pieces (as a worker would), then commits the pieces straight to the terrain and
+     * logs the game-thread time of the commit, with the terrain's own breakdown (headless, no renderer).
+     */
+    void TimeCommit(AReflectionsDigTerrain& Terrain, FIntVector Chunk, const TCHAR* Label)
     {
-        const int32 Vertices = Mesh.Positions.Num();
-        const int32 Triangles = Mesh.Triangles.Num() / 3;
+        FReflectionsDigMeshData Mesh;
+        ReflectionsDigMesher::BuildChunk(*Terrain.GetGrid(), Chunk, Mesh);
+        FReflectionsDigChunkResult Result;
+        ReflectionsDigPieces::Build(Mesh, Result);
+        const int32 Vertices = Result.SourceVertexCount;
+        const int32 Triangles = Result.SourceTriangleCount;
+
+        const ELogVerbosity::Type OldVerbosity = LogReflectionsDigTerrain.GetVerbosity();
+        LogReflectionsDigTerrain.SetVerbosity(ELogVerbosity::Verbose);
         const double Start = FPlatformTime::Seconds();
-        Terrain.CommitChunk(Chunk, MoveTemp(Mesh));
+        Terrain.CommitChunkPieces(Chunk, MoveTemp(Result));
         const double Milliseconds = (FPlatformTime::Seconds() - Start) * 1000.0;
-        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless CommitChunk %s: %d vertices, %d triangles, %d pieces, %.2f ms"),
+        LogReflectionsDigTerrain.SetVerbosity(OldVerbosity);
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless CommitChunkPieces %s: %d vertices, %d triangles, %d pieces, %.2f ms"),
             Label, Vertices, Triangles, Terrain.GetChunkPieceCount(Chunk), Milliseconds);
+    }
+
+    /** Waits for idle with the terrain's Verbose log on, so its swap timings are logged too. */
+    bool WaitForIdleLoggingSwaps(FAutomationTestBase& Test, FReflectionsDigTestWorld& TestWorld, const FTerrainScene& Scene, const FString& Label)
+    {
+        const ELogVerbosity::Type OldVerbosity = LogReflectionsDigTerrain.GetVerbosity();
+        LogReflectionsDigTerrain.SetVerbosity(ELogVerbosity::Verbose);
+        const bool bIdle = WaitForIdle(Test, TestWorld, Scene, Label);
+        LogReflectionsDigTerrain.SetVerbosity(OldVerbosity);
+        return bIdle;
     }
 }
 
@@ -182,11 +222,15 @@ bool FReflectionsDigTerrainMeshesAllChunksWithNoFocusTest::RunTest(const FString
         }
     }
 
-    // Informal headless timing of one flat-chunk commit (it reuses the chunk's component).
-    FReflectionsDigMeshData Flat;
-    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), FIntVector(1, 1, 1), Flat);
-    TimeCommit(*Scene.Terrain, FIntVector(1, 1, 1), MoveTemp(Flat), TEXT("flat chunk"));
-    WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the timed commit"));
+    // Informal headless timings: copying one chunk's samples, and one flat-chunk commit (it reuses the component).
+    {
+        FReflectionsDigChunkSamples Samples;
+        const double Start = FPlatformTime::Seconds();
+        Scene.Terrain->GetGrid()->CopyChunkSamples(FIntVector(1, 1, 1), Samples);
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless CopyChunkSamples: %.2f ms"), (FPlatformTime::Seconds() - Start) * 1000.0);
+    }
+    TimeCommit(*Scene.Terrain, FIntVector(1, 1, 1), TEXT("flat chunk"));
+    WaitForIdleLoggingSwaps(*this, TestWorld, Scene, TEXT("Idle after the timed commit"));
     return true;
 }
 
@@ -213,6 +257,17 @@ bool FReflectionsDigTerrainDigChangesCollisionTest::RunTest(const FString& Param
         {
             TestTrue(FString::Printf(TEXT("The pit floor is below Z -50 (hit at %.2f)"), *After), *After < -50.0);
         }
+    }
+
+    // Informal headless timing of a commit for a chunk with one 3 m pit.
+    for (double Z = 0.0; Z >= -300.0; Z -= 50.0)
+    {
+        Scene.Dig->Dig(FVector(2400.0, 2400.0, Z), 100.0f, EReflectionsDigMode::Remove);
+    }
+    if (WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after digging the 3 m pit")))
+    {
+        TimeCommit(*Scene.Terrain, FIntVector(1, 1, 1), TEXT("chunk with a 3 m pit"));
+        WaitForIdleLoggingSwaps(*this, TestWorld, Scene, TEXT("Idle after the timed commit"));
     }
     return true;
 }
@@ -260,7 +315,8 @@ bool FReflectionsDigTerrainCommitBudgetIsRespectedTest::RunTest(const FString& P
         return true;
     }
     const FScopedMaxCommitsPerFrame Budget(1);
-    if (!TestNotNull(TEXT("reflections.Dig.MaxCommitsPerFrame exists"), Budget.Variable))
+    if (!TestNotNull(TEXT("reflections.Dig.MaxCommitsPerFrame exists"), Budget.Variable)
+        || !TestEqual(TEXT("reflections.Dig.MaxCommitsPerFrame took the value 1"), Budget.Variable->GetInt(), 1))
     {
         return true;
     }
@@ -333,22 +389,271 @@ bool FReflectionsDigTerrainHeldDigStaysBoundedTest::RunTest(const FString& Param
     {
         return true;
     }
-    // The corner shared by eight chunks, so every dig there dirties all eight.
+    // The corner shared by eight chunks, so every dig there dirties all eight. Remove and Add alternate, so every
+    // call changes the grid and the held dig keeps all eight chunks busy.
     const FVector Point(1600.0, 1600.0, -1200.0);
     int32 MostTasks = 0;
     int32 MostQueued = 0;
+    int32 TotalCommits = 0;
+    int32 DigsThatChanged = 0;
     for (int32 Frame = 0; Frame < 120; ++Frame)
     {
-        Scene.Dig->Dig(Point, 100.0f, EReflectionsDigMode::Remove);
+        const EReflectionsDigMode Mode = Frame % 2 == 0 ? EReflectionsDigMode::Remove : EReflectionsDigMode::Add;
+        DigsThatChanged += Scene.Dig->Dig(Point, 100.0f, Mode) ? 1 : 0;
         MostTasks = FMath::Max(MostTasks, Scene.Dig->GetTasksInFlight());
         MostQueued = FMath::Max(MostQueued, Scene.Dig->GetQueuedCommits());
-        TestWorld.TickUntil([]() { return true; });
+        TickWithoutPumping(TestWorld);
+        TotalCommits += Scene.Dig->GetCommitsLastTick();
         MostTasks = FMath::Max(MostTasks, Scene.Dig->GetTasksInFlight());
         MostQueued = FMath::Max(MostQueued, Scene.Dig->GetQueuedCommits());
+        PumpGameThread();
     }
+    TestEqual(TEXT("Every dig changed the grid"), DigsThatChanged, 120);
     TestTrue(FString::Printf(TEXT("At most 8 tasks in flight (most: %d)"), MostTasks), MostTasks <= 8);
     TestTrue(FString::Printf(TEXT("At most 8 queued commits (most: %d)"), MostQueued), MostQueued <= 8);
+    TestTrue(FString::Printf(TEXT("Tasks in flight reached at least 2 (most: %d)"), MostTasks), MostTasks >= 2);
+    TestTrue(FString::Printf(TEXT("More than 8 commits over the 120 ticks (%d)"), TotalCommits), TotalCommits > 8);
     WaitForIdle(*this, TestWorld, Scene, TEXT("Idle within 5 seconds of the last dig"), 5.0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainSplitChunkCollisionFollowsEachCookTest, "Reflections.Digging.Terrain.SplitChunkCollisionFollowsEachCook", DigTerrainTestFlags)
+bool FReflectionsDigTerrainSplitChunkCollisionFollowsEachCookTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    const FIntVector Busy(1, 1, 0);
+    RiddleBuriedChunk(*Scene.Dig);
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after riddling the chunk")))
+    {
+        return true;
+    }
+    TestTrue(TEXT("The riddled chunk is split"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+
+    // The fill is a radius-100 Add centred on the cavity's lowest point, so it fills the cavity's lower half. The
+    // trace runs 30 cm off the centre in X and Y: the fill's top is there about 9 cm under the cavity centre, the
+    // old cavity floor about 91 cm under it.
+    const FVector FillCentre = CavityCentre - FVector(0.0, 0.0, 100.0);
+    const FVector TraceStart = CavityCentre + FVector(30.0, 30.0, 50.0);
+    const double FillTopAboveZ = CavityCentre.Z - 45.0;
+    const FVector Elsewhere(2100.0, 2100.0, -2300.0);
+    UWorld* World = TestWorld.World;
+    auto HitsFillTop = [World, TraceStart, FillTopAboveZ](double& OutZ)
+    {
+        const TOptional<double> Z = TraceDownZ(World, TraceStart.X, TraceStart.Y, TraceStart.Z);
+        OutZ = Z.Get(TraceEndZ);
+        return Z.IsSet() && *Z > FillTopAboveZ;
+    };
+
+    // Part 1, decided at commit time: commit the fill straight to the terrain, let its cook finish without ticking
+    // the world (so no swap runs in between), then commit another change. The cooked fill set is the newest real
+    // collision, so it must survive that commit; destroying it would bring the old cavity floor back.
+    {
+        TestTrue(TEXT("The fill changes the grid"), Scene.Dig->Dig(FillCentre, 100.0f, EReflectionsDigMode::Add));
+        FReflectionsDigMeshData Filled;
+        ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Filled);
+        Scene.Terrain->CommitChunk(Busy, MoveTemp(Filled));
+        double HitZ = 0.0;
+        const double Deadline = FPlatformTime::Seconds() + 5.0;
+        bool bFillCooked = HitsFillTop(HitZ);
+        while (!bFillCooked && FPlatformTime::Seconds() < Deadline)
+        {
+            PumpGameThread();
+            bFillCooked = HitsFillTop(HitZ);
+        }
+        if (TestTrue(FString::Printf(TEXT("The fill's collision cooks without a world tick (last hit %.2f)"), HitZ), bFillCooked))
+        {
+            TestTrue(TEXT("The second change changes the grid"), Scene.Dig->Dig(Elsewhere, 100.0f, EReflectionsDigMode::Add));
+            FReflectionsDigMeshData Next;
+            ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Next);
+            Scene.Terrain->CommitChunk(Busy, MoveTemp(Next));
+            const bool bStillFill = HitsFillTop(HitZ);
+            TestTrue(FString::Printf(TEXT("Right after the next commit the trace still hits the fill (hit %.2f)"), HitZ), bStillFill);
+        }
+    }
+
+    // Part 2, the held dig: after idle the trace hits the fill; then dig elsewhere in the chunk on each of 30 ticks.
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the fill")))
+    {
+        return true;
+    }
+    double HitZ = 0.0;
+    const bool bFillAfterIdle = HitsFillTop(HitZ);
+    TestTrue(FString::Printf(TEXT("After idle the trace hits the top of the fill (hit %.2f)"), HitZ), bFillAfterIdle);
+    int32 Misses = 0;
+    double LastMissZ = 0.0;
+    for (int32 Frame = 0; Frame < 30; ++Frame)
+    {
+        const EReflectionsDigMode Mode = Frame % 2 == 0 ? EReflectionsDigMode::Remove : EReflectionsDigMode::Add;
+        TestTrue(FString::Printf(TEXT("Dig on tick %d changes the grid"), Frame), Scene.Dig->Dig(Elsewhere, 100.0f, Mode));
+        TickWithoutPumping(TestWorld);
+        if (!HitsFillTop(HitZ))
+        {
+            ++Misses;
+            LastMissZ = HitZ;
+        }
+        PumpGameThread();
+        if (!HitsFillTop(HitZ))
+        {
+            ++Misses;
+            LastMissZ = HitZ;
+        }
+    }
+    TestEqual(FString::Printf(TEXT("Traces that missed the top of the fill (last miss at %.2f)"), LastMissZ), Misses, 0);
+    WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the held dig"));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainFillingAShaftNeverOpensAGapBelowTest, "Reflections.Digging.Terrain.FillingAShaftNeverOpensAGapBelow", DigTerrainTestFlags)
+bool FReflectionsDigTerrainFillingAShaftNeverOpensAGapBelowTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    // A shaft of radius-100 digs every 50 cm from the ground down to Z -1500: its floor is in the lower chunk.
+    const double X = 2400.0;
+    const double Y = 2400.0;
+    for (double Z = 0.0; Z >= -1500.0; Z -= 50.0)
+    {
+        Scene.Dig->Dig(FVector(X, Y, Z), 100.0f, EReflectionsDigMode::Remove);
+    }
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after digging the shaft")))
+    {
+        return true;
+    }
+    const TOptional<double> Floor = TraceDownZ(TestWorld.World, X, Y);
+    if (!TestTrue(TEXT("The trace hits the shaft floor"), Floor.IsSet()))
+    {
+        return true;
+    }
+    TestTrue(FString::Printf(TEXT("Premise: the shaft floor is in the lower chunk (%.2f)"), *Floor), *Floor < -1200.0);
+
+    // Fill it from the bottom up, one stamp per tick; trace from the mouth right after each tick and again after
+    // the game thread has run its finished cooks. Only a chunk piece counts as a hit.
+    int32 Misses = 0;
+    int32 Stamps = 0;
+    for (double Z = -1500.0; Z <= 0.0; Z += 50.0)
+    {
+        Stamps += Scene.Dig->Dig(FVector(X, Y, Z), 100.0f, EReflectionsDigMode::Add) ? 1 : 0;
+        TickWithoutPumping(TestWorld);
+        Misses += TraceDownZ(TestWorld.World, X, Y).IsSet() ? 0 : 1;
+        PumpGameThread();
+        Misses += TraceDownZ(TestWorld.World, X, Y).IsSet() ? 0 : 1;
+    }
+    TestEqual(TEXT("Every fill stamp changed the grid"), Stamps, 31);
+    TestEqual(TEXT("Traces from the shaft mouth that hit no terrain piece"), Misses, 0);
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the fill")))
+    {
+        return true;
+    }
+    const TOptional<double> Top = TraceDownZ(TestWorld.World, X, Y);
+    if (TestTrue(TEXT("After the fill the trace hits the terrain"), Top.IsSet()))
+    {
+        TestTrue(FString::Printf(TEXT("The filled shaft is level with the ground or above it (%.2f)"), *Top), *Top > -60.0);
+    }
+
+    // The order above depends on the workers, so also force the case it aims at: dig the shaft again, fill all of
+    // it without ticking, and commit only the lower chunk (now all solid, so its mesh is empty) straight to the
+    // terrain. The upper chunk still shows its old shaft, open into the lower chunk.
+    for (double Z = 0.0; Z >= -1500.0; Z -= 50.0)
+    {
+        Scene.Dig->Dig(FVector(X, Y, Z), 100.0f, EReflectionsDigMode::Remove);
+    }
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after digging the shaft again")))
+    {
+        return true;
+    }
+    // Radius 150 rather than 100: a cell exactly 100 cm from a dig centre has density 0 (air) after the dig and a
+    // radius-100 fill leaves it at 0, a one-cell bubble; the wider fill makes every cell of the shaft solid.
+    for (double Z = -1500.0; Z <= 0.0; Z += 50.0)
+    {
+        Scene.Dig->Dig(FVector(X, Y, Z), 150.0f, EReflectionsDigMode::Add);
+    }
+    const FIntVector Lower(1, 1, 0);
+    FReflectionsDigMeshData LowerMesh;
+    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Lower, LowerMesh);
+    TestTrue(TEXT("Premise: the filled lower chunk has no surface"), LowerMesh.IsEmpty());
+    Scene.Terrain->CommitChunk(Lower, MoveTemp(LowerMesh));
+    TestTrue(TEXT("Right after the lower chunk empties, the trace from the mouth still hits a terrain piece"),
+        TraceDownZ(TestWorld.World, X, Y).IsSet());
+    int32 LaterMisses = 0;
+    UReflectionsDigSubsystem* Dig = Scene.Dig;
+    UWorld* World = TestWorld.World;
+    const bool bIdle = TestWorld.TickUntil([Dig, World, X, Y, &LaterMisses]()
+    {
+        LaterMisses += TraceDownZ(World, X, Y).IsSet() ? 0 : 1;
+        return Dig->IsIdle();
+    }, IdleTimeoutSeconds);
+    TestTrue(TEXT("Idle after the forced fill"), bIdle);
+    TestEqual(TEXT("Traces after the forced fill that hit no terrain piece"), LaterMisses, 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainChunkLeftAgainAfterAStaleResultIsReleasedTest, "Reflections.Digging.Terrain.ChunkLeftAgainAfterAStaleResultIsReleased", DigTerrainTestFlags)
+bool FReflectionsDigTerrainChunkLeftAgainAfterAStaleResultIsReleasedTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    const FVector Near(400.0, 400.0, 0.0);
+    const FVector Far(4400.0, 4400.0, 0.0);
+    const FIntVector Chunk(0, 0, 1);
+    if (!MakeTerrainScene(*this, TestWorld, Scene, Near))
+    {
+        return true;
+    }
+    // Dig, then leave, come back and leave again while the chunk's result is still on its way.
+    TestTrue(TEXT("Dig returns true"), Scene.Dig->Dig(Near, 100.0f, EReflectionsDigMode::Remove));
+    TickWithoutPumping(TestWorld);
+    Scene.Dig->SetFocusOverride(Far);
+    TickWithoutPumping(TestWorld);
+    Scene.Dig->SetFocusOverride(Near);
+    TickWithoutPumping(TestWorld);
+    PumpGameThread();
+    TickWithoutPumping(TestWorld);
+    Scene.Dig->SetFocusOverride(Far);
+    if (WaitForIdle(*this, TestWorld, Scene, TEXT("Idle with the focus far away")))
+    {
+        TestNull(TEXT("Chunk (0, 0, 1) has no component"), Scene.Terrain->FindChunkComponent(Chunk));
+    }
+
+    // The timing above depends on the workers, so also force the state it aims at: a result committed for the chunk
+    // while it is not wanted and no mesh is being asked for (what a stale result landing then does).
+    FReflectionsDigMeshData Stale;
+    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Chunk, Stale);
+    Scene.Terrain->CommitChunk(Chunk, MoveTemp(Stale));
+    TestNotNull(TEXT("The stale commit made a component"), Scene.Terrain->FindChunkComponent(Chunk));
+    if (WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the stale commit")))
+    {
+        TestNull(TEXT("Chunk (0, 0, 1) has no component after the stale commit"), Scene.Terrain->FindChunkComponent(Chunk));
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainWorldTornDownWithTasksInFlightTest, "Reflections.Digging.Terrain.WorldTornDownWithTasksInFlight", DigTerrainTestFlags)
+bool FReflectionsDigTerrainWorldTornDownWithTasksInFlightTest::RunTest(const FString& Parameters)
+{
+    {
+        FReflectionsDigTestWorld TestWorld;
+        FTerrainScene Scene;
+        if (!MakeTerrainScene(*this, TestWorld, Scene))
+        {
+            return true;
+        }
+        TestTrue(TEXT("Dig at the eight-chunk corner returns true"), Scene.Dig->Dig(FVector(1600.0, 1600.0, -1200.0), 100.0f, EReflectionsDigMode::Remove));
+        TickWithoutPumping(TestWorld);
+        const int32 InFlight = Scene.Dig->GetTasksInFlight();
+        TestTrue(FString::Printf(TEXT("Tasks are in flight when the world goes (%d)"), InFlight), InFlight > 0);
+        // The world is destroyed here, without waiting; its destructor checks that nothing still holds the world.
+    }
+    // Let anything left over run on the game thread now that the world is gone.
+    PumpGameThread();
     return true;
 }
 
@@ -388,8 +693,8 @@ bool FReflectionsDigTerrainBusyChunkIsSplitUnderTheCollisionLimitTest::RunTest(c
     }
 
     // Informal headless timing of one busy-chunk commit (a new set of pieces).
-    TimeCommit(*Scene.Terrain, Busy, MoveTemp(Premise), TEXT("busy chunk"));
-    WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the timed commit"));
+    TimeCommit(*Scene.Terrain, Busy, TEXT("busy chunk"));
+    WaitForIdleLoggingSwaps(*this, TestWorld, Scene, TEXT("Idle after the timed commit"));
     return true;
 }
 
@@ -473,6 +778,30 @@ bool FReflectionsDigTerrainOldCollisionStaysWhileNewOneCooksTest::RunTest(const 
         TestTrue(FString::Printf(TEXT("The chunk's pieces were replaced (%d first pieces seen)"), FirstPiecesSeen.Num()), FirstPiecesSeen.Num() >= 2);
         WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the split-chunk digs"));
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainSafetyFloorLiesBelowTheGridTest, "Reflections.Digging.Terrain.SafetyFloorLiesBelowTheGrid", DigTerrainTestFlags)
+bool FReflectionsDigTerrainSafetyFloorLiesBelowTheGridTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    // Inside the solid interior of chunk (1, 1, 0) there is no mesh, so the trace falls to the safety floor.
+    const TOptional<FHitResult> Hit = TraceDown(TestWorld.World, 2400.0, 2400.0, -2000.0);
+    if (TestTrue(TEXT("The trace hits something"), Hit.IsSet()))
+    {
+        TestTrue(TEXT("It hits the terrain's safety floor"), Hit->GetComponent() != nullptr && Hit->GetComponent() == Scene.Terrain->GetSafetyFloor());
+        const double Expected = GridFloorZ - 30.0;
+        TestTrue(FString::Printf(TEXT("The safety floor's top is within 1 cm of Z %.1f (hit at %.2f)"), Expected, Hit->ImpactPoint.Z),
+            FMath::Abs(Hit->ImpactPoint.Z - Expected) <= 1.0);
+    }
+    // It spans the whole patch: a trace at a corner of the patch hits it too.
+    const TOptional<FHitResult> Corner = TraceDown(TestWorld.World, 25.0, 4775.0, -2000.0);
+    TestTrue(TEXT("The safety floor covers the patch's corner"), Corner.IsSet() && Corner->GetComponent() == Scene.Terrain->GetSafetyFloor());
     return true;
 }
 

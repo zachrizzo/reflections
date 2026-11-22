@@ -1,178 +1,51 @@
 #include "Digging/ReflectionsDigTerrain.h"
 
 #include "CoreMinimal.h"
+#include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
 #include "Digging/ReflectionsDigMesher.h"
+#include "Digging/ReflectionsDigPieces.h"
 #include "Digging/ReflectionsDigSubsystem.h"
 #include "Digging/ReflectionsDigTypes.h"
 #include "DynamicMesh/DynamicMesh3.h"
-#include "DynamicMesh/DynamicMeshAttributeSet.h"
+#include "Engine/CollisionProfile.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/World.h"
-#include "IndexTypes.h"
+#include "HAL/PlatformTime.h"
 #include "Materials/MaterialInterface.h"
 #include "PhysicsEngine/BodySetup.h"
 
-DEFINE_LOG_CATEGORY_STATIC(LogReflectionsDigTerrain, Log, All);
+DEFINE_LOG_CATEGORY(LogReflectionsDigTerrain);
 
 using UE::Geometry::FDynamicMesh3;
-using UE::Geometry::FIndex3i;
+
+/*
+ * Collision swap. Each chunk has a current set of pieces and at most one retiring set, hidden but still colliding.
+ * - A commit with one piece onto a chunk showing one piece reuses that component. With deferred, async collision the
+ *   engine keeps its body in the scene until FinishPhysicsAsyncCook swaps the new one in.
+ * - Any other commit replaces the set. Whether the current set is the newest collision that really exists is
+ *   decided at commit time from the pieces' own cook state: if every current piece has collision of its own (a
+ *   finished, successful cook; a reused piece still cooking keeps its older body), the retiring set is destroyed
+ *   and the current set retires; otherwise the current set is destroyed and the retiring set stays. With no
+ *   retiring set the current set always retires: it is the only collision there is.
+ * - A retiring set replaced by pieces goes once every piece has finished cooking successfully. A failed cook keeps
+ *   it, with one warning.
+ * - A retiring set replaced by nothing (the chunk became all solid or all air) goes only when the whole terrain is
+ *   quiet: a neighbouring chunk may still be showing the old hole into this chunk.
+ */
 
 namespace
 {
     constexpr float ChunkHeightCm = ReflectionsDig::ChunkCells * ReflectionsDig::CellSizeCm;
     /** The ground surface lies this far below the top of the grid. */
     constexpr float GroundBelowGridTopCm = 400.0f;
-    /**
-     * More slabs than any chunk needs: a slab one cube layer thick holds at most about 3 * 34 * 34 vertices,
-     * far under the limit, and 64 slabs are thinner than that. Reaching it would mean a broken mesh.
-     */
-    constexpr int32 MaxSlabs = 64;
+    /** The safety floor's top lies this far below the grid floor, and it is this thick. */
+    constexpr float SafetyFloorGapCm = 30.0f;
+    constexpr float SafetyFloorThicknessCm = 100.0f;
 
-    /** For each of NumSlabs equal-height slabs between MinZ and MaxZ, the triangles whose centroid it holds. */
-    TArray<TArray<int32>> AssignTrianglesToSlabs(const FReflectionsDigMeshData& Mesh, float MinZ, float MaxZ, int32 NumSlabs)
+    double MillisecondsSince(double StartSeconds)
     {
-        TArray<TArray<int32>> Slabs;
-        Slabs.SetNum(NumSlabs);
-        const int32 NumTriangles = Mesh.Triangles.Num() / 3;
-        const float SlabHeight = (MaxZ - MinZ) / static_cast<float>(NumSlabs);
-        for (int32 Triangle = 0; Triangle < NumTriangles; ++Triangle)
-        {
-            int32 Slab = 0;
-            if (SlabHeight > 0.0f)
-            {
-                const float CentroidZ = (Mesh.Positions[Mesh.Triangles[3 * Triangle]].Z
-                    + Mesh.Positions[Mesh.Triangles[3 * Triangle + 1]].Z
-                    + Mesh.Positions[Mesh.Triangles[3 * Triangle + 2]].Z) / 3.0f;
-                Slab = FMath::Clamp(FMath::FloorToInt32((CentroidZ - MinZ) / SlabHeight), 0, NumSlabs - 1);
-            }
-            Slabs[Slab].Add(Triangle);
-        }
-        return Slabs;
-    }
-
-    /** The most vertices any slab uses (each slab counts every vertex its triangles touch once). */
-    int32 LargestSlabVertexCount(const FReflectionsDigMeshData& Mesh, const TArray<TArray<int32>>& Slabs)
-    {
-        TArray<int32> LastSlabOfVertex;
-        LastSlabOfVertex.Init(INDEX_NONE, Mesh.Positions.Num());
-        int32 Largest = 0;
-        for (int32 Slab = 0; Slab < Slabs.Num(); ++Slab)
-        {
-            int32 Count = 0;
-            for (const int32 Triangle : Slabs[Slab])
-            {
-                for (int32 Corner = 0; Corner < 3; ++Corner)
-                {
-                    int32& Last = LastSlabOfVertex[Mesh.Triangles[3 * Triangle + Corner]];
-                    if (Last != Slab)
-                    {
-                        Last = Slab;
-                        ++Count;
-                    }
-                }
-            }
-            Largest = FMath::Max(Largest, Count);
-        }
-        return Largest;
-    }
-
-    /**
-     * One piece's dynamic mesh: its own copy of the vertices the triangles use, with the mesher's per-vertex
-     * normals in the primary normal overlay (one element per vertex, which the scene proxy renders with).
-     * FDynamicMesh3 refuses a triangle on an edge that already has two; such a triangle gets its own vertex copies.
-     */
-    FDynamicMesh3 BuildPieceMesh(const FReflectionsDigMeshData& Mesh, const TArray<int32>& Triangles)
-    {
-        FDynamicMesh3 Piece;
-        Piece.EnableAttributes();
-        UE::Geometry::FDynamicMeshNormalOverlay* Normals = Piece.Attributes()->PrimaryNormals();
-        TArray<int32> PieceVertexOf;
-        PieceVertexOf.Init(INDEX_NONE, Mesh.Positions.Num());
-
-        // Vertex and normal element IDs stay equal: each vertex appends exactly one element.
-        auto AppendVertex = [&Piece, Normals, &Mesh](int32 Source)
-        {
-            const int32 Vertex = Piece.AppendVertex(FVector3d(Mesh.Positions[Source]));
-            Normals->AppendElement(Mesh.Normals[Source]);
-            return Vertex;
-        };
-
-        for (const int32 Triangle : Triangles)
-        {
-            FIndex3i Corners;
-            for (int32 Corner = 0; Corner < 3; ++Corner)
-            {
-                const int32 Source = Mesh.Triangles[3 * Triangle + Corner];
-                int32& Vertex = PieceVertexOf[Source];
-                if (Vertex == INDEX_NONE)
-                {
-                    Vertex = AppendVertex(Source);
-                }
-                Corners[Corner] = Vertex;
-            }
-            int32 NewTriangle = Piece.AppendTriangle(Corners);
-            if (NewTriangle == FDynamicMesh3::NonManifoldID)
-            {
-                for (int32 Corner = 0; Corner < 3; ++Corner)
-                {
-                    Corners[Corner] = AppendVertex(Mesh.Triangles[3 * Triangle + Corner]);
-                }
-                NewTriangle = Piece.AppendTriangle(Corners);
-            }
-            if (NewTriangle >= 0)
-            {
-                Normals->SetTriangle(NewTriangle, Corners);
-            }
-        }
-        return Piece;
-    }
-
-    /**
-     * The chunk's pieces: one mesh at or under MaxPieceVertices, otherwise the fewest equal-height horizontal
-     * slabs (over the mesh's Z extent) in which every piece holds at most MaxPieceVertices vertices.
-     * Empty slabs make no piece.
-     */
-    TArray<FDynamicMesh3> BuildPieces(const FReflectionsDigMeshData& Mesh)
-    {
-        float MinZ = TNumericLimits<float>::Max();
-        float MaxZ = TNumericLimits<float>::Lowest();
-        for (const FVector3f& Position : Mesh.Positions)
-        {
-            MinZ = FMath::Min(MinZ, Position.Z);
-            MaxZ = FMath::Max(MaxZ, Position.Z);
-        }
-
-        TArray<FDynamicMesh3> Pieces;
-        for (int32 NumSlabs = 1; NumSlabs <= MaxSlabs; ++NumSlabs)
-        {
-            const TArray<TArray<int32>> Slabs = AssignTrianglesToSlabs(Mesh, MinZ, MaxZ, NumSlabs);
-            const bool bLastTry = NumSlabs == MaxSlabs;
-            if (!bLastTry && LargestSlabVertexCount(Mesh, Slabs) > ReflectionsDig::MaxPieceVertices)
-            {
-                continue;
-            }
-            Pieces.Reset();
-            bool bFits = true;
-            for (const TArray<int32>& Slab : Slabs)
-            {
-                if (!Slab.IsEmpty())
-                {
-                    const FDynamicMesh3& Piece = Pieces.Add_GetRef(BuildPieceMesh(Mesh, Slab));
-                    bFits &= Piece.VertexCount() <= ReflectionsDig::MaxPieceVertices;
-                }
-            }
-            if (bFits || bLastTry)
-            {
-                if (!bFits)
-                {
-                    UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("A chunk mesh of %d vertices does not fit %d slabs of %d vertices"),
-                        Mesh.Positions.Num(), MaxSlabs, ReflectionsDig::MaxPieceVertices);
-                }
-                break;
-            }
-        }
-        return Pieces;
+        return (FPlatformTime::Seconds() - StartSeconds) * 1000.0;
     }
 
     void DestroyPieces(TArray<TObjectPtr<UReflectionsDigChunkComponent>>& Pieces)
@@ -194,20 +67,51 @@ namespace
             return Piece != nullptr && Piece->IsCollisionCookPending();
         });
     }
-}
 
-void UReflectionsDigChunkComponent::SetMeshAndCook(FDynamicMesh3&& NewMesh)
-{
-    // With bDeferCollisionUpdates, SetMesh only invalidates the current body setup's cooked meshes; the body
-    // in the physics scene keeps its own reference to them and goes on colliding.
-    SetMesh(MoveTemp(NewMesh));
-    // Async path: a new body setup is cooked; FinishPhysicsAsyncCook swaps it in and recreates the physics state.
-    UpdateCollision(/*bOnlyIfPending=*/ false);
+    bool AnyCookFailed(const TArray<TObjectPtr<UReflectionsDigChunkComponent>>& Pieces)
+    {
+        return Pieces.ContainsByPredicate([](const UReflectionsDigChunkComponent* Piece)
+        {
+            return Piece != nullptr && Piece->DidLastCookFail();
+        });
+    }
+
+    bool AllHaveCollision(const TArray<TObjectPtr<UReflectionsDigChunkComponent>>& Pieces)
+    {
+        return !Pieces.ContainsByPredicate([](const UReflectionsDigChunkComponent* Piece)
+        {
+            return Piece == nullptr || !Piece->HasCollision();
+        });
+    }
+
+    /** Whether a chunk's retiring set still waits for a swap that will come (a failed cook stops the wait). */
+    bool IsSwapWaiting(const FReflectionsDigTerrainChunk& State)
+    {
+        if (State.Retiring.IsEmpty())
+        {
+            return false;
+        }
+        if (State.Pieces.IsEmpty())
+        {
+            return true;
+        }
+        return AnyCookPending(State.Pieces) || !AnyCookFailed(State.Pieces);
+    }
 }
 
 bool UReflectionsDigChunkComponent::IsCollisionCookPending() const
 {
     return PendingCook != nullptr;
+}
+
+bool UReflectionsDigChunkComponent::HasCollision() const
+{
+    return bHasCollision;
+}
+
+bool UReflectionsDigChunkComponent::DidLastCookFail() const
+{
+    return bLastCookFailed;
 }
 
 void UReflectionsDigChunkComponent::RebuildPhysicsData()
@@ -218,15 +122,24 @@ void UReflectionsDigChunkComponent::RebuildPhysicsData()
     Super::RebuildPhysicsData();
     UBodySetup* const LastAfter = AsyncBodySetupQueue.IsEmpty() ? nullptr : AsyncBodySetupQueue.Last().Get();
     PendingCook = LastAfter != LastBefore ? LastAfter : nullptr;
+    if (AsyncBodySetupQueue.IsEmpty())
+    {
+        // Cooked on the spot (a world without async cooking): the body is in place.
+        bHasCollision = true;
+        bLastCookFailed = false;
+    }
 }
 
 void UReflectionsDigChunkComponent::FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup)
 {
     Super::FinishPhysicsAsyncCook(bSuccess, FinishedBodySetup);
-    // Older cooks are aborted when a newer one starts and never report back; only the newest clears the flag.
-    if (FinishedBodySetup == PendingCook)
+    // Older cooks are aborted when a newer one starts and never report back; only the newest ends the wait.
+    if (FinishedBodySetup != nullptr && FinishedBodySetup == PendingCook)
     {
         PendingCook = nullptr;
+        // The engine swaps a finished body in only when the cook succeeded (or needed no cooking).
+        bLastCookFailed = MeshBodySetup != FinishedBodySetup;
+        bHasCollision |= !bLastCookFailed;
     }
 }
 
@@ -234,6 +147,14 @@ AReflectionsDigTerrain::AReflectionsDigTerrain()
 {
     PrimaryActorTick.bCanEverTick = false;
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+
+    SafetyFloor = CreateDefaultSubobject<UBoxComponent>(TEXT("SafetyFloor"));
+    SafetyFloor->SetupAttachment(RootComponent);
+    SafetyFloor->SetUsingAbsoluteLocation(true);
+    SafetyFloor->SetUsingAbsoluteRotation(true);
+    SafetyFloor->SetUsingAbsoluteScale(true);
+    SafetyFloor->SetCollisionProfileName(UCollisionProfile::BlockAll_ProfileName);
+    SafetyFloor->SetCanEverAffectNavigation(false);
 }
 
 void AReflectionsDigTerrain::BeginPlay()
@@ -248,6 +169,11 @@ void AReflectionsDigTerrain::BeginPlay()
     const FVector OriginCm(Location.X, Location.Y, GroundHeightCm - SizeInChunks.Z * ChunkHeightCm + GroundBelowGridTopCm);
     Grid = MakeUnique<FReflectionsDigGrid>(SizeInChunks, OriginCm, GroundHeightCm);
 
+    // The safety floor spans the whole patch, under the grid floor.
+    const FVector HalfSize(SizeInChunks.X * ChunkHeightCm * 0.5, SizeInChunks.Y * ChunkHeightCm * 0.5, SafetyFloorThicknessCm * 0.5);
+    SafetyFloor->SetBoxExtent(HalfSize);
+    SafetyFloor->SetWorldLocation(OriginCm + FVector(HalfSize.X, HalfSize.Y, -SafetyFloorGapCm - HalfSize.Z));
+
     if (UReflectionsDigSubsystem* Subsystem = GetWorld()->GetSubsystem<UReflectionsDigSubsystem>())
     {
         Subsystem->RegisterTerrain(this);
@@ -260,9 +186,9 @@ void AReflectionsDigTerrain::EndPlay(const EEndPlayReason::Type EndPlayReason)
     {
         Subsystem->UnregisterTerrain(this);
     }
-    TArray<FIntVector> Committed;
-    Chunks.GetKeys(Committed);
-    for (const FIntVector& Chunk : Committed)
+    TArray<FIntVector> Shown;
+    Chunks.GetKeys(Shown);
+    for (const FIntVector& Chunk : Shown)
     {
         ReleaseChunk(Chunk);
     }
@@ -273,30 +199,97 @@ void AReflectionsDigTerrain::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void AReflectionsDigTerrain::CommitChunk(FIntVector Chunk, FReflectionsDigMeshData&& Mesh)
 {
-    if (Mesh.IsEmpty() || Grid == nullptr)
+    FReflectionsDigChunkResult Result;
+    ReflectionsDigPieces::Build(Mesh, Result);
+    CommitChunkPieces(Chunk, MoveTemp(Result));
+}
+
+void AReflectionsDigTerrain::CommitChunkPieces(FIntVector Chunk, FReflectionsDigChunkResult&& Result)
+{
+    if (Grid == nullptr)
     {
         ReleaseChunk(Chunk);
         return;
     }
-    TArray<FDynamicMesh3> NewPieces = BuildPieces(Mesh);
-    if (NewPieces.IsEmpty())
+    if (Result.DroppedTriangles > 0)
     {
-        ReleaseChunk(Chunk);
-        return;
+        UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("Chunk %s: %d of %d triangles could not be added to its pieces"),
+            *Chunk.ToString(), Result.DroppedTriangles, Result.SourceTriangleCount);
     }
 
-    FReflectionsDigTerrainChunk& State = Chunks.FindOrAdd(Chunk);
-    if (NewPieces.Num() == 1 && State.Pieces.Num() == 1 && State.Pieces[0] != nullptr)
+    const double StartSeconds = FPlatformTime::Seconds();
+    double ComponentSeconds = 0.0;
+    double SetMeshSeconds = 0.0;
+    double CookStartSeconds = 0.0;
+    double DestroySeconds = 0.0;
+    const TCHAR* Kind = TEXT("reuse");
+
+    if (Result.Pieces.IsEmpty())
     {
-        // One piece before and after: reuse it. The engine keeps its old body until the new cook is in.
-        State.Pieces[0]->SetMeshAndCook(MoveTemp(NewPieces[0]));
-        return;
+        Kind = TEXT("retire to empty");
+        if (FReflectionsDigTerrainChunk* State = Chunks.Find(Chunk))
+        {
+            RetireCurrentSet(*State, DestroySeconds);
+            if (State->Retiring.IsEmpty())
+            {
+                Chunks.Remove(Chunk);
+            }
+        }
+    }
+    else
+    {
+        FReflectionsDigTerrainChunk& State = Chunks.FindOrAdd(Chunk);
+        State.bCookFailureReported = false;
+        TArray<UReflectionsDigChunkComponent*, TInlineAllocator<4>> Targets;
+        if (Result.Pieces.Num() == 1 && State.Pieces.Num() == 1 && State.Pieces[0] != nullptr)
+        {
+            // One piece before and after: the engine keeps the old body until the new cook is in.
+            Targets.Add(State.Pieces[0]);
+        }
+        else
+        {
+            Kind = TEXT("replace");
+            RetireCurrentSet(State, DestroySeconds);
+            const double CreateStart = FPlatformTime::Seconds();
+            for (int32 Index = 0; Index < Result.Pieces.Num(); ++Index)
+            {
+                UReflectionsDigChunkComponent* Piece = CreatePieceComponent();
+                State.Pieces.Add(Piece);
+                Targets.Add(Piece);
+            }
+            ComponentSeconds += FPlatformTime::Seconds() - CreateStart;
+        }
+        for (int32 Index = 0; Index < Targets.Num(); ++Index)
+        {
+            // With bDeferCollisionUpdates, SetMesh only invalidates the current body setup's cooked meshes; the body
+            // in the physics scene keeps its own reference to them and goes on colliding.
+            const double SetStart = FPlatformTime::Seconds();
+            Targets[Index]->SetMesh(MoveTemp(Result.Pieces[Index]));
+            SetMeshSeconds += FPlatformTime::Seconds() - SetStart;
+            // Async path: a new body setup is cooked; FinishPhysicsAsyncCook swaps it in.
+            const double CookStart = FPlatformTime::Seconds();
+            Targets[Index]->UpdateCollision(/*bOnlyIfPending=*/ false);
+            CookStartSeconds += FPlatformTime::Seconds() - CookStart;
+        }
     }
 
-    // The set of pieces changes (or is split): the slabs move, so one piece's old body may not cover what another
-    // piece's new body leaves out. Keep the previous set colliding (hidden) until every new piece has cooked.
-    if (State.Retiring.IsEmpty())
+    UE_LOG(LogReflectionsDigTerrain, Verbose,
+        TEXT("DIGSPIKE headless commit %s (%s, %d pieces, %d vertices): total %.2f ms, components %.2f, set mesh %.2f, cook start %.2f, destroy %.2f"),
+        *Chunk.ToString(), Kind, Result.Pieces.Num(), Result.SourceVertexCount, MillisecondsSince(StartSeconds),
+        ComponentSeconds * 1000.0, SetMeshSeconds * 1000.0, CookStartSeconds * 1000.0, DestroySeconds * 1000.0);
+}
+
+void AReflectionsDigTerrain::RetireCurrentSet(FReflectionsDigTerrainChunk& State, double& InOutDestroySeconds)
+{
+    if (State.Pieces.IsEmpty())
     {
+        // The chunk was emptied: its retiring set is still the last collision it had.
+        return;
+    }
+    const double DestroyStart = FPlatformTime::Seconds();
+    if (State.Retiring.IsEmpty() || AllHaveCollision(State.Pieces))
+    {
+        DestroyPieces(State.Retiring);
         State.Retiring = MoveTemp(State.Pieces);
         for (UReflectionsDigChunkComponent* Old : State.Retiring)
         {
@@ -308,16 +301,11 @@ void AReflectionsDigTerrain::CommitChunk(FIntVector Chunk, FReflectionsDigMeshDa
     }
     else
     {
-        // The retiring set is the last one that finished cooking; the current set never did, so drop it.
+        // The current set never got collision of its own; the retiring set is still the newest that collides.
         DestroyPieces(State.Pieces);
     }
     State.Pieces.Reset();
-    for (FDynamicMesh3& PieceMesh : NewPieces)
-    {
-        UReflectionsDigChunkComponent* Piece = CreatePieceComponent();
-        Piece->SetMeshAndCook(MoveTemp(PieceMesh));
-        State.Pieces.Add(Piece);
-    }
+    InOutDestroySeconds += FPlatformTime::Seconds() - DestroyStart;
 }
 
 void AReflectionsDigTerrain::ReleaseChunk(FIntVector Chunk)
@@ -352,39 +340,95 @@ int32 AReflectionsDigTerrain::GetLargestCollisionVertexCount() const
     int32 Largest = 0;
     for (const TPair<FIntVector, FReflectionsDigTerrainChunk>& Pair : Chunks)
     {
-        for (const UReflectionsDigChunkComponent* Piece : Pair.Value.Pieces)
+        for (const TArray<TObjectPtr<UReflectionsDigChunkComponent>>* Set : { &Pair.Value.Pieces, &Pair.Value.Retiring })
         {
-            if (Piece != nullptr && Piece->GetMesh() != nullptr)
+            for (const UReflectionsDigChunkComponent* Piece : *Set)
             {
-                Largest = FMath::Max(Largest, Piece->GetMesh()->VertexCount());
+                if (Piece != nullptr && Piece->GetMesh() != nullptr)
+                {
+                    Largest = FMath::Max(Largest, Piece->GetMesh()->VertexCount());
+                }
             }
         }
     }
     return Largest;
 }
 
-void AReflectionsDigTerrain::FinishCollisionSwaps()
+void AReflectionsDigTerrain::FinishCollisionSwaps(bool bTerrainQuiet)
 {
+    TArray<FIntVector, TInlineAllocator<4>> Emptied;
     for (TPair<FIntVector, FReflectionsDigTerrainChunk>& Pair : Chunks)
     {
         FReflectionsDigTerrainChunk& State = Pair.Value;
-        if (!State.Retiring.IsEmpty() && !AnyCookPending(State.Pieces))
+        if (State.Retiring.IsEmpty())
+        {
+            continue;
+        }
+        const double DestroyStart = FPlatformTime::Seconds();
+        const int32 Destroyed = State.Retiring.Num();
+        if (State.Pieces.IsEmpty())
+        {
+            if (!bTerrainQuiet)
+            {
+                continue;
+            }
+            DestroyPieces(State.Retiring);
+            Emptied.Add(Pair.Key);
+        }
+        else if (AnyCookPending(State.Pieces))
+        {
+            continue;
+        }
+        else if (AnyCookFailed(State.Pieces))
+        {
+            if (!State.bCookFailureReported)
+            {
+                State.bCookFailureReported = true;
+                UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("Chunk %s: a collision cook failed; its previous collision stays until the next commit"),
+                    *Pair.Key.ToString());
+            }
+            continue;
+        }
+        else
         {
             DestroyPieces(State.Retiring);
         }
+        UE_LOG(LogReflectionsDigTerrain, Verbose, TEXT("DIGSPIKE headless swap %s: destroyed %d retiring pieces in %.2f ms"),
+            *Pair.Key.ToString(), Destroyed, MillisecondsSince(DestroyStart));
     }
+    for (const FIntVector& Chunk : Emptied)
+    {
+        Chunks.Remove(Chunk);
+    }
+}
+
+bool AReflectionsDigTerrain::HasCookPending() const
+{
+    for (const TPair<FIntVector, FReflectionsDigTerrainChunk>& Pair : Chunks)
+    {
+        if (AnyCookPending(Pair.Value.Pieces) || AnyCookPending(Pair.Value.Retiring))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool AReflectionsDigTerrain::IsWaitingOnCollision() const
 {
     for (const TPair<FIntVector, FReflectionsDigTerrainChunk>& Pair : Chunks)
     {
-        if (!Pair.Value.Retiring.IsEmpty() || AnyCookPending(Pair.Value.Pieces))
+        if (AnyCookPending(Pair.Value.Pieces) || AnyCookPending(Pair.Value.Retiring) || IsSwapWaiting(Pair.Value))
         {
             return true;
         }
     }
     return false;
+}
+
+UBoxComponent* AReflectionsDigTerrain::GetSafetyFloor() const
+{
+    return SafetyFloor;
 }
 
 UReflectionsDigChunkComponent* AReflectionsDigTerrain::CreatePieceComponent()

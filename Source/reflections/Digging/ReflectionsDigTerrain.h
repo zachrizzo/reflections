@@ -3,16 +3,22 @@
 #include "CoreMinimal.h"
 #include "Components/DynamicMeshComponent.h"
 #include "Digging/ReflectionsDigGrid.h"
+#include "Digging/ReflectionsDigPieces.h"
 #include "GameFramework/Actor.h"
 #include "ReflectionsDigTerrain.generated.h"
 
 class UBodySetup;
+class UBoxComponent;
 class UMaterialInterface;
 struct FReflectionsDigMeshData;
 
+/** The terrain's log. Its Verbose lines time each commit and swap (tests raise it to read them). */
+DECLARE_LOG_CATEGORY_EXTERN(LogReflectionsDigTerrain, Log, All);
+
 /**
- * The mesh component of one chunk piece. It knows whether its newest async collision cook is still running:
- * the engine keeps that queue protected, so this subclass watches RebuildPhysicsData and FinishPhysicsAsyncCook.
+ * The mesh component of one chunk piece. It knows whether its newest async collision cook is still running and how
+ * its cooks ended: the engine keeps that queue protected, so this subclass watches RebuildPhysicsData and
+ * FinishPhysicsAsyncCook.
  */
 UCLASS(Transient)
 class REFLECTIONS_API UReflectionsDigChunkComponent : public UDynamicMeshComponent
@@ -20,11 +26,14 @@ class REFLECTIONS_API UReflectionsDigChunkComponent : public UDynamicMeshCompone
     GENERATED_BODY()
 
 public:
-    /** Replaces the mesh and starts its collision cook. The current collision stays until the cook has finished. */
-    void SetMeshAndCook(UE::Geometry::FDynamicMesh3&& NewMesh);
-
     /** True from the start of a collision cook until the newest one has finished. */
     bool IsCollisionCookPending() const;
+
+    /** True once a cook has succeeded: the component has collision of its own (perhaps older than its mesh). */
+    bool HasCollision() const;
+
+    /** True when the newest finished cook failed (the engine kept the previous body). */
+    bool DidLastCookFail() const;
 
 protected:
     virtual void RebuildPhysicsData() override;
@@ -34,6 +43,9 @@ private:
     /** The body setup of the newest cook still running, or null. */
     UPROPERTY(Transient)
     TObjectPtr<UBodySetup> PendingCook;
+
+    bool bHasCollision = false;
+    bool bLastCookFailed = false;
 };
 
 /** The mesh components of one chunk. */
@@ -42,19 +54,22 @@ struct FReflectionsDigTerrainChunk
 {
     GENERATED_BODY()
 
-    /** The chunk's current pieces, lowest slab first. */
+    /** The chunk's current pieces, lowest slab first. Empty after the chunk's mesh became empty. */
     UPROPERTY(Transient)
     TArray<TObjectPtr<UReflectionsDigChunkComponent>> Pieces;
 
-    /** The pieces they replaced: hidden, still colliding until every current piece has finished its cook. */
+    /** The newest set that really collided before the current one: hidden, still colliding until the swap. */
     UPROPERTY(Transient)
     TArray<TObjectPtr<UReflectionsDigChunkComponent>> Retiring;
+
+    /** A failed cook kept the retiring set; it has been reported. */
+    bool bCookFailureReported = false;
 };
 
 /**
- * A diggable patch of ground. It owns the grid and one or more mesh components per chunk; the dig subsystem
- * decides what is meshed and when. The actor must be unrotated and unscaled: its X and Y are the patch's
- * minimum corner and the ground surface lies 400 cm below the top of the grid. One terrain per world.
+ * A diggable patch of ground. It owns the grid, one or more mesh components per chunk and a safety floor under the
+ * grid; the dig subsystem decides what is meshed and when. The actor must be unrotated and unscaled: its X and Y are
+ * the patch's minimum corner and the ground surface lies 400 cm below the top of the grid. One terrain per world.
  */
 UCLASS()
 class REFLECTIONS_API AReflectionsDigTerrain : public AActor
@@ -78,14 +93,17 @@ public:
     UPROPERTY(EditAnywhere, Category = "Digging")
     TObjectPtr<UMaterialInterface> GroundMaterial;
 
-    /**
-     * Shows a chunk's new mesh (positions relative to the grid origin). An empty mesh releases the chunk.
-     * A mesh over ReflectionsDig::MaxPieceVertices vertices is split into horizontal slabs, one component each.
-     * The chunk's previous collision stays until the new collision has finished cooking.
-     */
+    /** Builds the mesh's pieces on the game thread, then commits them. For tests and tools; the subsystem builds on workers. */
     void CommitChunk(FIntVector Chunk, FReflectionsDigMeshData&& Mesh);
 
-    /** Destroys the chunk's components at once. */
+    /**
+     * Shows a chunk's new pieces (positions relative to the grid origin). No pieces retires the chunk's set.
+     * The chunk's previous collision stays until the new collision has finished cooking (see the collision swap
+     * in the class's .cpp).
+     */
+    void CommitChunkPieces(FIntVector Chunk, FReflectionsDigChunkResult&& Result);
+
+    /** Destroys the chunk's components at once, retiring ones included. */
     void ReleaseChunk(FIntVector Chunk);
 
     /** The chunk's first (lowest) current piece, or null. */
@@ -96,14 +114,23 @@ public:
     /** Null before BeginPlay and after EndPlay. */
     FReflectionsDigGrid* GetGrid() const;
 
-    /** The largest vertex count among the current pieces of every chunk; 0 with none. */
+    /** The largest vertex count among every piece that still collides, retiring ones included; 0 with none. */
     int32 GetLargestCollisionVertexCount() const;
 
-    /** Destroys each chunk's retiring pieces once all of its current pieces have finished their collision cook. */
-    void FinishCollisionSwaps();
+    /**
+     * Destroys retiring sets whose time has come: one replaced by pieces once every piece has cooked successfully,
+     * one replaced by nothing only when bTerrainQuiet (no task in flight, no queued commit, no cook pending anywhere).
+     */
+    void FinishCollisionSwaps(bool bTerrainQuiet);
 
-    /** True while any piece's collision cook runs or any chunk still has retiring pieces. */
+    /** True while any piece, current or retiring, has a collision cook running. */
+    bool HasCookPending() const;
+
+    /** True while any cook runs or any retiring set still waits for its swap (a set kept by a failed cook does not wait). */
     bool IsWaitingOnCollision() const;
+
+    /** The blocking box under the whole patch, its top 30 cm below the grid floor. */
+    UBoxComponent* GetSafetyFloor() const;
 
 protected:
     virtual void BeginPlay() override;
@@ -111,6 +138,11 @@ protected:
 
 private:
     UReflectionsDigChunkComponent* CreatePieceComponent();
+    /** Moves the current set out of the way of a new one, keeping the newest set that really collides. */
+    void RetireCurrentSet(FReflectionsDigTerrainChunk& State, double& InOutDestroySeconds);
+
+    UPROPERTY(VisibleAnywhere, Category = "Digging")
+    TObjectPtr<UBoxComponent> SafetyFloor;
 
     TUniquePtr<FReflectionsDigGrid> Grid;
 

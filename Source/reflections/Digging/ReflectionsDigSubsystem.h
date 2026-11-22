@@ -11,9 +11,9 @@ class FReflectionsDigCommitQueue;
 
 /**
  * Runs the dig flow of the world's terrain: Dig stamps the grid at once and marks chunks dirty; each tick
- * streams chunks around the focus, commits up to reflections.Dig.MaxCommitsPerFrame finished meshes and
- * launches one worker task per dirty wanted chunk (at most one in flight per chunk). Workers get a copy of the
- * chunk's samples and a shared pointer to the commit queue, nothing else.
+ * streams chunks around the focus, commits up to reflections.Dig.MaxCommitsPerFrame finished chunks and
+ * launches one worker task per dirty wanted chunk (at most one in flight per chunk) that meshes the chunk and
+ * builds its pieces. Workers get a copy of the chunk's samples and a shared pointer to the commit queue, nothing else.
  */
 UCLASS()
 class REFLECTIONS_API UReflectionsDigSubsystem : public UTickableWorldSubsystem

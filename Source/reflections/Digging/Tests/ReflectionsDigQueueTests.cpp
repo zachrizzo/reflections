@@ -1,7 +1,7 @@
 #include "Digging/ReflectionsDigCommitQueue.h"
 
 #include "CoreMinimal.h"
-#include "Digging/ReflectionsDigMesher.h"
+#include "Digging/ReflectionsDigPieces.h"
 #include "Misc/AutomationTest.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -10,26 +10,13 @@ namespace
 {
     constexpr EAutomationTestFlags DigQueueTestFlags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter;
 
-    /** A mesh of TriangleCount separate triangles. */
-    FReflectionsDigMeshData MakeMesh(int32 TriangleCount)
+    /** A result told apart from others by its SourceTriangleCount. */
+    FReflectionsDigChunkResult MakeResult(int32 TriangleCount)
     {
-        FReflectionsDigMeshData Mesh;
-        for (int32 Triangle = 0; Triangle < TriangleCount; ++Triangle)
-        {
-            for (int32 Corner = 0; Corner < 3; ++Corner)
-            {
-                Mesh.Triangles.Add(Mesh.Positions.Num());
-                Mesh.Positions.Add(FVector3f(static_cast<float>(Triangle * 100), static_cast<float>(Corner * 10), 0.0f));
-                Mesh.Normals.Add(FVector3f::UpVector);
-                Mesh.Materials.Add(0);
-            }
-        }
-        return Mesh;
-    }
-
-    int32 TriangleCountOf(const FReflectionsDigMeshData& Mesh)
-    {
-        return Mesh.Triangles.Num() / 3;
+        FReflectionsDigChunkResult Result;
+        Result.SourceTriangleCount = TriangleCount;
+        Result.SourceVertexCount = TriangleCount * 3;
+        return Result;
     }
 
     struct FPopped
@@ -41,9 +28,9 @@ namespace
     TArray<FPopped> PopAll(FReflectionsDigCommitQueue& Queue, int32 Max)
     {
         TArray<FPopped> Popped;
-        Queue.PopUpTo(Max, [&Popped](FIntVector Chunk, FReflectionsDigMeshData&& Mesh)
+        Queue.PopUpTo(Max, [&Popped](FIntVector Chunk, FReflectionsDigChunkResult&& Result)
         {
-            Popped.Add({ Chunk, TriangleCountOf(Mesh) });
+            Popped.Add({ Chunk, Result.SourceTriangleCount });
         });
         return Popped;
     }
@@ -56,7 +43,7 @@ bool FReflectionsDigQueueKeepsOnlyNewestPerChunkTest::RunTest(const FString& Par
     const FIntVector Chunk(1, 2, 0);
     for (int32 Triangles = 1; Triangles <= 5; ++Triangles)
     {
-        Queue.Push(Chunk, MakeMesh(Triangles));
+        Queue.Push(Chunk, MakeResult(Triangles));
     }
     TestEqual(TEXT("Num after five pushes for one chunk"), Queue.Num(), 1);
 
@@ -76,11 +63,11 @@ bool FReflectionsDigQueuePopRespectsBudgetTest::RunTest(const FString& Parameter
     FReflectionsDigCommitQueue Queue;
     for (int32 Index = 0; Index < 6; ++Index)
     {
-        Queue.Push(FIntVector(Index, 0, 0), MakeMesh(Index + 1));
+        Queue.Push(FIntVector(Index, 0, 0), MakeResult(Index + 1));
     }
 
     TArray<FIntVector> Committed;
-    const int32 Count = Queue.PopUpTo(2, [&Committed](FIntVector Chunk, FReflectionsDigMeshData&& Mesh)
+    const int32 Count = Queue.PopUpTo(2, [&Committed](FIntVector Chunk, FReflectionsDigChunkResult&& Result)
     {
         Committed.Add(Chunk);
     });
@@ -100,9 +87,9 @@ bool FReflectionsDigQueueReplacingKeepsPlaceInLineTest::RunTest(const FString& P
     FReflectionsDigCommitQueue Queue;
     const FIntVector A(0, 0, 1);
     const FIntVector B(1, 0, 1);
-    Queue.Push(A, MakeMesh(1));
-    Queue.Push(B, MakeMesh(2));
-    Queue.Push(A, MakeMesh(3));
+    Queue.Push(A, MakeResult(1));
+    Queue.Push(B, MakeResult(2));
+    Queue.Push(A, MakeResult(3));
 
     const TArray<FPopped> Popped = PopAll(Queue, 10);
     if (TestEqual(TEXT("Meshes popped"), Popped.Num(), 2))

@@ -4,6 +4,7 @@
 #include "Digging/ReflectionsDigCommitQueue.h"
 #include "Digging/ReflectionsDigGrid.h"
 #include "Digging/ReflectionsDigMesher.h"
+#include "Digging/ReflectionsDigPieces.h"
 #include "Digging/ReflectionsDigTerrain.h"
 #include "Digging/ReflectionsDigTypes.h"
 #include "Engine/World.h"
@@ -64,6 +65,8 @@ void UReflectionsDigSubsystem::RegisterTerrain(AReflectionsDigTerrain* Terrain)
     {
         if (Current != Terrain)
         {
+            // The spike supports one terrain per world: the ignored terrain stays ignored, even after the first one
+            // unregisters (it registers only from its own BeginPlay).
             UE_LOG(LogReflectionsDigSubsystem, Warning, TEXT("Only one dig terrain per world: %s is ignored while %s is registered."),
                 *Terrain->GetName(), *Current->GetName());
         }
@@ -171,7 +174,10 @@ void UReflectionsDigSubsystem::Tick(float DeltaTime)
     UpdateStreaming(*Terrain);
     CommitFinishedMeshes(*Terrain);
     LaunchMeshTasks(*Terrain);
-    Terrain->FinishCollisionSwaps();
+    // Quiet: nothing in flight, nothing queued, nothing cooking. Only then may a chunk that became empty drop the
+    // collision it still keeps, since a neighbour may still show the old hole into it.
+    const bool bTerrainQuiet = GetTasksInFlight() == 0 && GetQueuedCommits() == 0 && !Terrain->HasCookPending();
+    Terrain->FinishCollisionSwaps(bTerrainQuiet);
 }
 
 TStatId UReflectionsDigSubsystem::GetStatId() const
@@ -228,11 +234,9 @@ void UReflectionsDigSubsystem::UpdateStreaming(AReflectionsDigTerrain& Terrain)
 
         if (!Flow.bWanted)
         {
-            if (Flow.bMeshRequested)
-            {
-                Terrain.ReleaseChunk(Pair.Key);
-                Flow.bMeshRequested = false;
-            }
+            // Whatever led here (a stale result committed after the chunk was left, say), an unwanted chunk shows nothing.
+            Terrain.ReleaseChunk(Pair.Key);
+            Flow.bMeshRequested = false;
         }
         else if (!Flow.bMeshRequested)
         {
@@ -244,14 +248,14 @@ void UReflectionsDigSubsystem::UpdateStreaming(AReflectionsDigTerrain& Terrain)
 void UReflectionsDigSubsystem::CommitFinishedMeshes(AReflectionsDigTerrain& Terrain)
 {
     const int32 Budget = FMath::Max(1, CVarMaxCommitsPerFrame.GetValueOnGameThread());
-    Queue->PopUpTo(Budget, [this, &Terrain](FIntVector Chunk, FReflectionsDigMeshData&& Mesh)
+    Queue->PopUpTo(Budget, [this, &Terrain](FIntVector Chunk, FReflectionsDigChunkResult&& Result)
     {
         const FChunkFlow* Flow = ChunkFlows.Find(Chunk);
         if (Flow == nullptr || !Flow->bWanted)
         {
             return;
         }
-        Terrain.CommitChunk(Chunk, MoveTemp(Mesh));
+        Terrain.CommitChunkPieces(Chunk, MoveTemp(Result));
         ++CommitsLastTick;
     });
 }
@@ -259,6 +263,10 @@ void UReflectionsDigSubsystem::CommitFinishedMeshes(AReflectionsDigTerrain& Terr
 void UReflectionsDigSubsystem::LaunchMeshTasks(AReflectionsDigTerrain& Terrain)
 {
     const FReflectionsDigGrid& Grid = *Terrain.GetGrid();
+    // Copy every launching chunk's samples first, then launch them together, so the chunks of one dig mesh in
+    // parallel instead of each task racing the next chunk's copy.
+    TArray<FChunkFlow*, TInlineAllocator<8>> Launching;
+    TArray<FReflectionsDigChunkSamples, TInlineAllocator<8>> AllSamples;
     for (TPair<FIntVector, FChunkFlow>& Pair : ChunkFlows)
     {
         FChunkFlow& Flow = Pair.Value;
@@ -269,16 +277,20 @@ void UReflectionsDigSubsystem::LaunchMeshTasks(AReflectionsDigTerrain& Terrain)
         }
         Flow.bDirty = false;
         Flow.bMeshRequested = true;
-
-        FReflectionsDigChunkSamples Samples;
-        Grid.CopyChunkSamples(Pair.Key, Samples);
+        Launching.Add(&Flow);
+        Grid.CopyChunkSamples(Pair.Key, AllSamples.AddDefaulted_GetRef());
+    }
+    for (int32 Index = 0; Index < Launching.Num(); ++Index)
+    {
         // The worker owns its samples and shares only the queue; it never touches the grid, this subsystem or any UObject.
-        Flow.Task = UE::Tasks::Launch(TEXT("ReflectionsDigMeshChunk"),
-            [Samples = MoveTemp(Samples), TaskQueue = Queue]()
+        Launching[Index]->Task = UE::Tasks::Launch(TEXT("ReflectionsDigMeshChunk"),
+            [Samples = MoveTemp(AllSamples[Index]), TaskQueue = Queue]()
             {
                 FReflectionsDigMeshData Mesh;
                 ReflectionsDigMesher::BuildFromSamples(Samples, Mesh);
-                TaskQueue->Push(Samples.Chunk, MoveTemp(Mesh));
+                FReflectionsDigChunkResult Result;
+                ReflectionsDigPieces::Build(Mesh, Result);
+                TaskQueue->Push(Samples.Chunk, MoveTemp(Result));
             });
     }
 }
