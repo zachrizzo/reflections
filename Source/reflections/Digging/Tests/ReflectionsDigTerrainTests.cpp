@@ -34,8 +34,10 @@ namespace
     constexpr double TraceStartZ = 1000.0;
     /** The grid origin's Z for a terrain with the ground at 0 and two chunks of height: 0 - 2 * 1600 + 400. */
     constexpr double GridFloorZ = -2800.0;
+    /** The grid origin sits half a cell inside the terrain's corner in X and Y, so the meshed ground spans exactly the patch. */
+    constexpr double HalfCellCm = 25.0;
     /** A cavity of the riddled chunk (1, 1, 0): a lattice centre. */
-    const FVector CavityCentre(2500.0, 2500.0, -1900.0);
+    const FVector CavityCentre(2525.0, 2525.0, -1900.0);
     /**
      * Where the cavity test traces: 50 cm off the cavity's centre in X and Y, so the trace meets the cavity's own
      * floor (at about 70.7 cm below the centre) instead of the point where it touches the cavity under it.
@@ -115,9 +117,9 @@ namespace
         int32 Changed = 0;
         for (double Z = -2700.0; Z <= -1300.0; Z += 200.0)
         {
-            for (double Y = 1700.0; Y <= 3100.0; Y += 200.0)
+            for (double Y = 1725.0; Y <= 3125.0; Y += 200.0)
             {
-                for (double X = 1700.0; X <= 3100.0; X += 200.0)
+                for (double X = 1725.0; X <= 3125.0; X += 200.0)
                 {
                     Changed += Dig.Dig(FVector(X, Y, Z), 100.0f, EReflectionsDigMode::Remove) ? 1 : 0;
                 }
@@ -208,7 +210,7 @@ bool FReflectionsDigTerrainMeshesAllChunksWithNoFocusTest::RunTest(const FString
             {
                 TestTrue(FString::Printf(TEXT("Chunk %s has triangles"), *Top.ToString()), TopComponent->GetMesh()->TriangleCount() > 0);
                 TestEqual(FString::Printf(TEXT("Chunk %s's component sits at the grid origin"), *Top.ToString()),
-                    TopComponent->GetComponentLocation(), FVector(0.0, 0.0, GridFloorZ));
+                    TopComponent->GetComponentLocation(), FVector(HalfCellCm, HalfCellCm, GridFloorZ));
                 TestTrue(FString::Printf(TEXT("Chunk %s's component belongs to the terrain"), *Top.ToString()),
                     TopComponent->GetOwner() == Scene.Terrain);
             }
@@ -229,7 +231,40 @@ bool FReflectionsDigTerrainMeshesAllChunksWithNoFocusTest::RunTest(const FString
     return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainDigChangesCollisionTest, "Reflections.Digging.Terrain.DigChangesCollision", DigTerrainTestFlags)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainSurfaceSpansExactlyThePatchTest, "Reflections.Digging.Terrain.SurfaceSpansExactlyThePatch", DigTerrainTestFlags)
+bool FReflectionsDigTerrainSurfaceSpansExactlyThePatchTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    // The terrain at (0, 0, 0) with 3 x 3 chunks: the patch is X 0..4800, Y 0..4800, its ground at Z 0.
+    constexpr double Far = 4800.0;
+    constexpr double Mid = 2400.0;
+    constexpr double In = 5.0;
+    const FVector2D Inside[] = {
+        { In, Mid }, { Far - In, Mid }, { Mid, In }, { Mid, Far - In },
+        { In, In }, { Far - In, In }, { In, Far - In }, { Far - In, Far - In },
+    };
+    for (const FVector2D& At : Inside)
+    {
+        const TOptional<double> Z = TraceDownZ(TestWorld.World, At.X, At.Y);
+        TestTrue(FString::Printf(TEXT("5 cm inside the patch at (%.0f, %.0f) a trace hits a chunk piece within 5 cm of Z 0 (at %s)"), At.X, At.Y,
+            Z.IsSet() ? *FString::SanitizeFloat(*Z) : TEXT("no chunk piece")), Z.IsSet() && FMath::Abs(*Z) <= 5.0);
+    }
+    const FVector2D Outside[] = { { -In, Mid }, { Far + In, Mid }, { Mid, -In }, { Mid, Far + In } };
+    for (const FVector2D& At : Outside)
+    {
+        const TOptional<double> Z = TraceDownZ(TestWorld.World, At.X, At.Y);
+        TestFalse(FString::Printf(TEXT("5 cm outside the patch at (%.0f, %.0f) a trace hits no chunk piece (hit at %s)"), At.X, At.Y,
+            Z.IsSet() ? *FString::SanitizeFloat(*Z) : TEXT("none")), Z.IsSet());
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainDigChangesCollisionTest,"Reflections.Digging.Terrain.DigChangesCollision", DigTerrainTestFlags)
 bool FReflectionsDigTerrainDigChangesCollisionTest::RunTest(const FString& Parameters)
 {
     FReflectionsDigTestWorld TestWorld;
@@ -317,7 +352,7 @@ bool FReflectionsDigTerrainCommitBudgetIsRespectedTest::RunTest(const FString& P
     }
 
     // The corner of four top chunks: all four are re-meshed.
-    TestTrue(TEXT("Dig returns true"), Scene.Dig->Dig(FVector(1600.0, 1600.0, -400.0), 100.0f, EReflectionsDigMode::Remove));
+    TestTrue(TEXT("Dig returns true"), Scene.Dig->Dig(FVector(1625.0, 1625.0, -400.0), 100.0f, EReflectionsDigMode::Remove));
     int32 MostCommits = 0;
     int32 TotalCommits = 0;
     UReflectionsDigSubsystem* Dig = Scene.Dig;
@@ -386,7 +421,7 @@ bool FReflectionsDigTerrainHeldDigStaysBoundedTest::RunTest(const FString& Param
     }
     // The corner shared by eight chunks, so every dig there dirties all eight. Remove and Add alternate, so every
     // call changes the grid and the held dig keeps all eight chunks busy.
-    const FVector Point(1600.0, 1600.0, -1200.0);
+    const FVector Point(1625.0, 1625.0, -1200.0);
     int32 MostTasks = 0;
     int32 MostQueued = 0;
     int32 TotalCommits = 0;
@@ -642,7 +677,7 @@ bool FReflectionsDigTerrainWorldTornDownWithTasksInFlightTest::RunTest(const FSt
         {
             return true;
         }
-        TestTrue(TEXT("Dig at the eight-chunk corner returns true"), Scene.Dig->Dig(FVector(1600.0, 1600.0, -1200.0), 100.0f, EReflectionsDigMode::Remove));
+        TestTrue(TEXT("Dig at the eight-chunk corner returns true"), Scene.Dig->Dig(FVector(1625.0, 1625.0, -1200.0), 100.0f, EReflectionsDigMode::Remove));
         // The subsystem's tick here copies and launches all eight chunks; time it (headless, informal).
         const double Start = FPlatformTime::Seconds();
         Scene.Dig->Tick(1.0f / 60.0f);
@@ -806,7 +841,7 @@ bool FReflectionsDigTerrainSafetyFloorLiesBelowTheGridTest::RunTest(const FStrin
     {
         TestTrue(FString::Printf(TEXT("The safety floor is 100 cm thick (%.2f)"), Floor->GetScaledBoxExtent().Z * 2.0),
             FMath::IsNearlyEqual(Floor->GetScaledBoxExtent().Z * 2.0, 100.0, 0.01));
-        for (const FVector2D& Corner : { FVector2D(25.0, 25.0), FVector2D(4775.0, 25.0), FVector2D(25.0, 4775.0), FVector2D(4775.0, 4775.0) })
+        for (const FVector2D& Corner : { FVector2D(5.0, 5.0), FVector2D(4795.0, 5.0), FVector2D(5.0, 4795.0), FVector2D(4795.0, 4795.0) })
         {
             const TOptional<FHitResult> CornerHit = TraceDown(TestWorld.World, Corner.X, Corner.Y, -2000.0);
             const bool bHitsFloor = CornerHit.IsSet() && CornerHit->GetComponent() == Floor;
@@ -951,9 +986,9 @@ bool FReflectionsDigTerrainRetiredSetGoesDuringAHeldDigTest::RunTest(const FStri
     // Fill it back with radius-150 Adds on every lattice row but the lowest, so it meshes to one piece again.
     for (double Z = -2500.0; Z <= -1300.0; Z += 200.0)
     {
-        for (double Y = 1700.0; Y <= 3100.0; Y += 200.0)
+        for (double Y = 1725.0; Y <= 3125.0; Y += 200.0)
         {
-            for (double X = 1700.0; X <= 3100.0; X += 200.0)
+            for (double X = 1725.0; X <= 3125.0; X += 200.0)
             {
                 Scene.Dig->Dig(FVector(X, Y, Z), 150.0f, EReflectionsDigMode::Add);
             }
@@ -967,13 +1002,13 @@ bool FReflectionsDigTerrainRetiredSetGoesDuringAHeldDigTest::RunTest(const FStri
     // Hold a Remove that moves down 10 cm a tick through the filled space, starting at once (no idle in between,
     // so the split set is still retiring when the one-piece commits begin). The trace starts inside the new pit,
     // 50 cm off its axis; the old cavity there had its floor at about Z -1371.
-    const FVector TraceStart(2550.0, 2550.0, -1300.0);
+    const FVector TraceStart(2575.0, 2575.0, -1300.0);
     const double OldSurfaceZ = -1300.0 - CavityFloorBelowCentreCm;
     double DeepestZ = 0.0;
     bool bSawOnePiece = false;
     for (int32 Frame = 0; Frame < 120; ++Frame)
     {
-        Scene.Dig->Dig(FVector(2500.0, 2500.0, -1300.0 - 10.0 * Frame), 100.0f, EReflectionsDigMode::Remove);
+        Scene.Dig->Dig(FVector(2525.0, 2525.0, -1300.0 - 10.0 * Frame), 100.0f, EReflectionsDigMode::Remove);
         TickWithoutPumping(TestWorld);
         PumpGameThread();
         bSawOnePiece |= Scene.Terrain->GetChunkPieceCount(Busy) == 1;
@@ -1054,9 +1089,9 @@ bool FReflectionsDigTerrainReusePathClearsAFinishedRetiringSetTest::RunTest(cons
     // Fill it back so it meshes to one piece, and commit that directly: the split set retires behind one new piece.
     for (double Z = -2500.0; Z <= -1300.0; Z += 200.0)
     {
-        for (double Y = 1700.0; Y <= 3100.0; Y += 200.0)
+        for (double Y = 1725.0; Y <= 3125.0; Y += 200.0)
         {
-            for (double X = 1700.0; X <= 3100.0; X += 200.0)
+            for (double X = 1725.0; X <= 3125.0; X += 200.0)
             {
                 Scene.Dig->Dig(FVector(X, Y, Z), 150.0f, EReflectionsDigMode::Add);
             }
@@ -1353,9 +1388,9 @@ bool FReflectionsDigTerrainKeptRetiringSetLeavesNavigationAtTheNextCommitTest::R
     // The fill ReusePathClearsAFinishedRetiringSet uses: it leaves the lowest row of cavities, which mesh to one piece.
     for (double Z = -2500.0; Z <= -1300.0; Z += 200.0)
     {
-        for (double Y = 1700.0; Y <= 3100.0; Y += 200.0)
+        for (double Y = 1725.0; Y <= 3125.0; Y += 200.0)
         {
-            for (double X = 1700.0; X <= 3100.0; X += 200.0)
+            for (double X = 1725.0; X <= 3125.0; X += 200.0)
             {
                 Scene.Dig->Dig(FVector(X, Y, Z), 150.0f, EReflectionsDigMode::Add);
             }

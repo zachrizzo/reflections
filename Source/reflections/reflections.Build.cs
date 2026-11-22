@@ -28,7 +28,7 @@ public class reflections : ModuleRules
 		});
 
 		// NPC rebuild: removed WebSockets, AudioCaptureCore, AudioCapture and Json (used only by the old Voice code)
-		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime", "Niagara", "RenderCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime", "Niagara", "RenderCore", "RHI" });
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.AddRange(new string[] {

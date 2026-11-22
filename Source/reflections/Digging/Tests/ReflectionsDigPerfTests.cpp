@@ -10,6 +10,7 @@
 #include "Digging/Tests/ReflectionsDigGameTestHarness.h"
 #include "Digging/Tests/ReflectionsDigTestTraces.h"
 #include "DynamicMesh/DynamicMesh3.h"
+#include "DynamicRHI.h"
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
 #include "Engine/HitResult.h"
@@ -55,9 +56,9 @@
  * wall time from one sample to the next minus only the frame-cap wait (FApp::GetIdleTime), which keeps every other wait.
  *
  * The tests share one world and run one after another, each at its own site (at least 1000 cm from the others' digs):
- *   CaveShots      pit and tunnel at (1800, 1400), tunnel along +X; character at (1800, 400); four shots, then two
- *                  more with an engine cube in the tunnel (removed in the cleanup)
- *   CollisionSize  200 digs inside the column X 4200..5800, Y 800..2400; character at (5000, -400)
+ *   CaveShots      pit and tunnel at (1800, 1400), tunnel along +X; character at (1800, 400); the four shots, a view of
+ *                  the tunnel wall, and the tunnel view with an engine cube in it (removed in the cleanup)
+ *   CollisionSize  200 digs inside the column X 4225..5800, Y 825..2400; character at (5000, -400)
  *   DigCost        shaft at (1800, -1600), then a pocket at (2000, -1600) at the bottom
  *   Seams          no digs; character at (3400, 0)
  *   ShadowCost     pit at (4000, -1600), rim digs on its +X+Y side; character at (4000, -600)
@@ -224,6 +225,13 @@ namespace
         double FrameSwapMs = 0.0;
     };
 
+    /** What happened in a frame of a measured window. */
+    constexpr uint8 FrameTagCommit = 1;
+    constexpr uint8 FrameTagReleaseOrRestore = 2;
+    constexpr uint8 FrameTagCollection = 4;
+
+    TArray<FIntVector> GetAllChunks(const AReflectionsDigTerrain& Terrain);
+
     /** A frame slower than this is logged with what happened in it. */
     constexpr double SpikeMs = 16.0;
 
@@ -236,7 +244,19 @@ namespace
         TArray<double> BusyMs;
         /** GRenderThreadTime of the frame. */
         TArray<double> RenderMs;
+        /** The graphics card's time for the latest finished frame (RHIGetGPUFrameCycles; it lags a frame or two). */
+        TArray<double> GpuMs;
         double LastWallSeconds = 0.0;
+        /** What happened in each frame (EFrameTag bits), for the windows that tag their frames (Start). */
+        TArray<uint8> Tags;
+        int32 Collections = 0;
+        int32 Releases = 0;
+        int32 Restores = 0;
+        double ReleaseMsTotal = 0.0;
+        double ReleaseMsMaxFrame = 0.0;
+        TArray<bool> ChunkShown;
+        int32 LastReleaseCount = -1;
+        double LastReleaseSeconds = 0.0;
         /** Frames over SpikeMs, with what the terrain, navigation and the garbage collector did in them. */
         TArray<FString> Spikes;
         int32 LastGarbageCollections = -1;
@@ -260,6 +280,7 @@ namespace
             const double Game = FPlatformTime::ToMilliseconds(GGameThreadTime);
             GameMs.Add(Game);
             RenderMs.Add(FPlatformTime::ToMilliseconds(GRenderThreadTime));
+            GpuMs.Add(FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles(0)));
             const double Busy = LastWallSeconds > 0.0 ? FMath::Max(0.0, (Now - LastWallSeconds - FApp::GetIdleTime()) * 1000.0) : 0.0;
             if (LastWallSeconds > 0.0)
             {
@@ -267,7 +288,7 @@ namespace
             }
             LastWallSeconds = Now;
 
-            const int32 Collections = GGarbageCollections.load();
+            const int32 TotalCollections = GGarbageCollections.load();
             const AReflectionsDigTerrain* Terrain = Scene != nullptr ? Scene->Terrain.Get() : nullptr;
             const int32 NavUpdates = Terrain != nullptr ? Terrain->GetNavUpdateCount() : 0;
             const double NavSeconds = Terrain != nullptr ? Terrain->GetNavUpdateSeconds() : 0.0;
@@ -278,11 +299,40 @@ namespace
                     GameMs.Num() - 1, Game, Busy, RenderMs.Last(), Scene != nullptr && Scene->GetSubsystem() != nullptr ? Scene->GetSubsystem()->GetCommitsLastTick() : -1,
                     Watch.IsValid() ? Watch->FrameCommitMs : -1.0, Watch.IsValid() ? Watch->FrameSwapMs : -1.0,
                     LastNavUpdates >= 0 ? NavUpdates - LastNavUpdates : -1, LastNavUpdates >= 0 ? (NavSeconds - LastNavSeconds) * 1000.0 : -1.0,
-                    LastGarbageCollections >= 0 ? Collections - LastGarbageCollections : -1,
+                    LastGarbageCollections >= 0 ? TotalCollections - LastGarbageCollections : -1,
                     Navigation != nullptr ? Navigation->GetNumRunningBuildTasks() : -1,
                     Scene != nullptr && Scene->GetSubsystem() != nullptr ? Scene->GetSubsystem()->GetTasksInFlight() : -1));
             }
-            LastGarbageCollections = Collections;
+            // The frame's tags: chunk commits in this tick, chunks released or restored (a chunk that stopped or
+            // started showing pieces), and a garbage collection since the previous sample.
+            uint8 Tag = 0;
+            const int32 NewCollections = LastGarbageCollections >= 0 ? TotalCollections - LastGarbageCollections : 0;
+            Collections += NewCollections;
+            Tag |= NewCollections > 0 ? FrameTagCollection : 0;
+            if (Terrain != nullptr && Terrain->GetGrid() != nullptr)
+            {
+                Tag |= Scene->GetSubsystem() != nullptr && Scene->GetSubsystem()->GetCommitsLastTick() > 0 ? FrameTagCommit : 0;
+                const TArray<FIntVector> Chunks = GetAllChunks(*Terrain);
+                ChunkShown.SetNum(Chunks.Num());
+                int32 FrameRestores = 0;
+                for (int32 Index = 0; Index < Chunks.Num(); ++Index)
+                {
+                    const bool bShown = Terrain->GetChunkPieceCount(Chunks[Index]) > 0;
+                    FrameRestores += bShown && !ChunkShown[Index] && GameMs.Num() > 1 ? 1 : 0;
+                    ChunkShown[Index] = bShown;
+                }
+                const int32 FrameReleases = LastReleaseCount >= 0 ? Terrain->GetChunkReleaseCount() - LastReleaseCount : 0;
+                const double FrameReleaseMs = LastReleaseCount >= 0 ? (Terrain->GetChunkReleaseSeconds() - LastReleaseSeconds) * 1000.0 : 0.0;
+                LastReleaseCount = Terrain->GetChunkReleaseCount();
+                LastReleaseSeconds = Terrain->GetChunkReleaseSeconds();
+                Releases += FrameReleases;
+                Restores += FrameRestores;
+                ReleaseMsTotal += FrameReleaseMs;
+                ReleaseMsMaxFrame = FMath::Max(ReleaseMsMaxFrame, FrameReleaseMs);
+                Tag |= FrameReleases > 0 || FrameRestores > 0 ? FrameTagReleaseOrRestore : 0;
+            }
+            Tags.Add(Tag);
+            LastGarbageCollections = TotalCollections;
             LastNavUpdates = NavUpdates;
             LastNavSeconds = NavSeconds;
             if (Watch.IsValid())
@@ -297,9 +347,47 @@ namespace
         /** "frames=.. mean=.. p99=.. max=.." of each series, for the extra lines. */
         FString Describe() const
         {
-            return FString::Printf(TEXT("frames=%d game_mean=%.3f game_p99=%.3f game_max=%.3f game_top5=%s busy_mean=%.3f busy_p99=%.3f busy_max=%.3f render_mean=%.3f render_max=%.3f frames_over_16ms=%d"),
-                Num(), MeanOf(GameMs), PercentileOf(GameMs, 0.99), MaxOf(GameMs), *TopOf(GameMs, 5), MeanOf(BusyMs), PercentileOf(BusyMs, 0.99),
-                MaxOf(BusyMs), MeanOf(RenderMs), MaxOf(RenderMs), GameMs.FilterByPredicate([](double Ms) { return Ms > SpikeMs; }).Num());
+            return FString::Printf(TEXT("frames=%d game_mean=%.3f game_median=%.3f game_p99=%.3f game_max=%.3f game_top5=%s busy_mean=%.3f busy_p99=%.3f busy_max=%.3f render_mean=%.3f render_max=%.3f gpu_mean=%.3f gpu_max=%.3f frames_over_16ms=%d collections=%d"),
+                Num(), MeanOf(GameMs), PercentileOf(GameMs, 0.5), PercentileOf(GameMs, 0.99), MaxOf(GameMs), *TopOf(GameMs, 5), MeanOf(BusyMs), PercentileOf(BusyMs, 0.99),
+                MaxOf(BusyMs), MeanOf(RenderMs), MaxOf(RenderMs), MeanOf(GpuMs), MaxOf(GpuMs), GameMs.FilterByPredicate([](double Ms) { return Ms > SpikeMs; }).Num(),
+                Collections);
+        }
+
+        /**
+         * The frames' cost above Baseline (the idle median), by what happened in them: frames with a commit and no
+         * collection; frames with a release or a restore and no collection; frames with a collection; frames with none
+         * of these (the background noise). A frame with a commit and a release counts in both of the first two.
+         */
+        FString DescribeAttribution(double Baseline, int32 IdleCollections) const
+        {
+            TArray<double> Commit, ReleaseOrRestore, Collection, Quiet;
+            for (int32 Index = 0; Index < GameMs.Num() && Index < Tags.Num(); ++Index)
+            {
+                const double Above = GameMs[Index] - Baseline;
+                const uint8 Tag = Tags[Index];
+                if (Tag & FrameTagCollection)
+                {
+                    Collection.Add(Above);
+                    continue;
+                }
+                if (Tag & FrameTagCommit)
+                {
+                    Commit.Add(Above);
+                }
+                if (Tag & FrameTagReleaseOrRestore)
+                {
+                    ReleaseOrRestore.Add(Above);
+                }
+                if (Tag == 0)
+                {
+                    Quiet.Add(Above);
+                }
+            }
+            return FString::Printf(TEXT("idle_median_ms=%.3f commit_frames=%d commit_mean_ms=%.3f commit_p99_ms=%.3f commit_max_ms=%.3f release_restore_frames=%d release_restore_mean_ms=%.3f release_restore_p99_ms=%.3f release_restore_max_ms=%.3f collection_frames=%d collection_max_ms=%.3f quiet_frames=%d quiet_max_ms=%.3f collections_window=%d collections_idle_same_length=%d releases=%d restores=%d release_ms_total=%.3f release_ms_max_frame=%.3f"),
+                Baseline, Commit.Num(), MeanOf(Commit), PercentileOf(Commit, 0.99), Commit.IsEmpty() ? 0.0 : FMath::Max(Commit),
+                ReleaseOrRestore.Num(), MeanOf(ReleaseOrRestore), PercentileOf(ReleaseOrRestore, 0.99), ReleaseOrRestore.IsEmpty() ? 0.0 : FMath::Max(ReleaseOrRestore),
+                Collection.Num(), Collection.IsEmpty() ? 0.0 : FMath::Max(Collection), Quiet.Num(), Quiet.IsEmpty() ? 0.0 : FMath::Max(Quiet),
+                Collections, IdleCollections, Releases, Restores, ReleaseMsTotal, ReleaseMsMaxFrame);
         }
 
         /** Logs the window's summary, its terrain timings and its spikes under DIGSPIKE <Tag>. */
@@ -363,13 +451,13 @@ namespace
         });
     }
 
-    /** Queues a step that samples IdleFrames frames into Window. */
-    void AddIdleWindow(const FDigGameSceneRef& Scene, const FFrameWindowRef& Window)
+    /** Queues a step that samples Frames frames (IdleFrames unless given) into Window. */
+    void AddIdleWindow(const FDigGameSceneRef& Scene, const FFrameWindowRef& Window, int32 Frames = IdleFrames)
     {
-        AddStep(Scene, TEXT("Sample the idle frames"), 120.0, [Window](FDigGameScene& S)
+        AddStep(Scene, TEXT("Sample the idle frames"), 120.0, [Window, Frames](FDigGameScene& S)
         {
             Window->Sample(&S);
-            return Window->Num() >= IdleFrames;
+            return Window->Num() >= Frames;
         });
     }
 
@@ -543,7 +631,8 @@ bool FReflectionsSpikePerfDigCostTest::RunTest(const FString& Parameters)
 
     AddWaitForRest(Scene, TEXT("The character rests at the dig site"));
     AddWaitForQuiet(Scene, TEXT("DigCost"));
-    AddIdleWindow(Scene, Idle);
+    // As long as the dig window, so garbage collections can be compared between the two.
+    AddIdleWindow(Scene, Idle, 1800);
     AddStep(Scene, TEXT("Dig under the character every 0.1 s for 30 s"), 180.0, [Digging, Window, X, Y, WindowSeconds, DigEverySeconds, Pocket](FDigGameScene& S)
     {
         const double Now = S.GetWorld()->GetTimeSeconds();
@@ -612,6 +701,7 @@ bool FReflectionsSpikePerfDigCostTest::RunTest(const FString& Parameters)
         UE_LOG(LogTemp, Display, TEXT("DIGSPIKE DIG_EXTRA site=(1800,-1600) attempts=%d down_digs=%d pocket_digs=%d bottom_at_s=%.2f feet_start=%.1f feet_end=%.1f dig_call_max_ms=%.3f dig_call_total_ms=%.3f most_commits_in_a_tick=%d lumen_hwrt=%d"),
             Window->Attempts, Window->DownDigs, Window->PocketDigs, Window->BottomAtSeconds, Window->StartFeetZ, S.GetFeetZ(),
             Window->DigCallMaxMs, Window->DigCallTotalMs, Window->MostCommitsInATick, IsLumenHardwareRayTracingActive() ? 1 : 0);
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE DIG_ATTRIB %s"), *Digging->DescribeAttribution(PercentileOf(Idle->GameMs, 0.5), Idle->Collections));
         Idle->Log(TEXT("DIG_IDLE"));
         Digging->Log(TEXT("DIG_WINDOW"));
         Digging->Stop();
@@ -662,7 +752,8 @@ bool FReflectionsSpikePerfStreamingCostTest::RunTest(const FString& Parameters)
 
     AddWaitForRest(Scene, TEXT("The character rests at the start corner"));
     AddWaitForQuiet(Scene, TEXT("StreamingCost"));
-    AddIdleWindow(Scene, Idle);
+    // As long as the walk, so garbage collections can be compared between the two.
+    AddIdleWindow(Scene, Idle, 1200);
     AddStep(Scene, TEXT("Move the character corner to corner over 20 s"), 120.0, [Walking, Walk, From, To, WalkSeconds, CountShown](FDigGameScene& S)
     {
         const AReflectionsDigTerrain* Terrain = S.Terrain.Get();
@@ -708,6 +799,7 @@ bool FReflectionsSpikePerfStreamingCostTest::RunTest(const FString& Parameters)
         UE_LOG(LogTemp, Display, TEXT("DIGSPIKE STREAM_EXTRA from=(1100,-2300) to=(5700,2300) walk_s=%.1f idle_mean_ms=%.3f mean_ms=%.3f chunks_shown_at_start=%d most_commits_in_a_tick=%d idle_after_walk_s=%.3f lumen_hwrt=%d"),
             S.GetWorld()->GetTimeSeconds() - Walk->StartSeconds, MeanOf(Idle->GameMs), MeanOf(Walking->GameMs), Walk->ShownAtStart, Walk->MostCommitsInATick,
             FPlatformTime::Seconds() - Walk->EndWallSeconds, IsLumenHardwareRayTracingActive() ? 1 : 0);
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE STREAM_ATTRIB %s"), *Walking->DescribeAttribution(PercentileOf(Idle->GameMs, 0.5), Idle->Collections));
         Idle->Log(TEXT("STREAM_IDLE"));
         Walking->Log(TEXT("STREAM_WINDOW"));
         Walking->Stop();
@@ -720,8 +812,11 @@ bool FReflectionsSpikePerfStreamingCostTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsSpikePerfCollisionSizeTest, "Reflections.SpikePerf.CollisionSize", SpikePerfTestFlags)
 bool FReflectionsSpikePerfCollisionSizeTest::RunTest(const FString& Parameters)
 {
-    /** The digs fill one chunk column, (2, 2, *): X 4200..5800, Y 800..2400, from the grid floor's bedrock up to the ground. */
-    const FBox DigBox(FVector(4200.0, 800.0, -2700.0), FVector(5800.0, 2400.0, GroundZ));
+    /**
+     * The digs fill one chunk column, (2, 2, *): X 4225..5800, Y 825..2400 (the grid origin, and so every chunk border,
+     * sits half a cell inside the actor's corner), from the grid floor's bedrock up to the ground.
+     */
+    const FBox DigBox(FVector(4225.0, 825.0, -2700.0), FVector(5800.0, 2400.0, GroundZ));
     constexpr int32 Digs = 200;
     constexpr int32 Seed = 20261122;
     const TSharedPtr<FDigGameScene> Started = StartScene(*this, 5000.0, -400.0);
@@ -786,7 +881,7 @@ bool FReflectionsSpikePerfCollisionSizeTest::RunTest(const FString& Parameters)
             MostChunkVertices = FMath::Max(MostChunkVertices, Pair.Value);
         }
         UE_LOG(LogTemp, Display, TEXT("DIGSPIKE COLLISION largest_vertices=%d pieces_max_per_chunk=%d"), Terrain->GetLargestCollisionVertexCount(), MostPieces);
-        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE COLLISION_EXTRA column=X4200..5800,Y800..2400 seed=%d digs_changed=%d most_pieces_chunk=%s chunk_vertices_max=%d"),
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE COLLISION_EXTRA column=X4225..5800,Y825..2400 seed=%d digs_changed=%d most_pieces_chunk=%s chunk_vertices_max=%d"),
             20261122, *Changed, *MostPiecesChunk.ToString(), MostChunkVertices);
         Burst->Log(TEXT("COLLISION_BURST"));
         Burst->Stop();
@@ -820,10 +915,10 @@ bool FReflectionsSpikePerfSeamsTest::RunTest(const FString& Parameters)
         // The join with the cube ground, and the chunk borders inside the patch.
         const FLine Lines[] = {
             { TEXT("join X=1000"), true, 1000.0 },
-            { TEXT("border X=2600"), true, 2600.0 },
-            { TEXT("border X=4200"), true, 4200.0 },
-            { TEXT("border Y=-800"), false, -800.0 },
-            { TEXT("border Y=800"), false, 800.0 },
+            { TEXT("border X=2625"), true, 2625.0 },
+            { TEXT("border X=4225"), true, 4225.0 },
+            { TEXT("border Y=-775"), false, -775.0 },
+            { TEXT("border Y=825"), false, 825.0 },
         };
         int32 Traces = 0;
         int32 Misses = 0;
@@ -835,7 +930,7 @@ bool FReflectionsSpikePerfSeamsTest::RunTest(const FString& Parameters)
         {
             const double Lo = Line.bAlongY ? -2400.0 : 1000.0;
             // The other lines this one crosses: the sample nearest each crossing goes exactly onto it.
-            const TArray<double> Crossings = Line.bAlongY ? TArray<double>{ -800.0, 800.0 } : TArray<double>{ 1000.0, 2600.0, 4200.0 };
+            const TArray<double> Crossings = Line.bAlongY ? TArray<double>{ -775.0, 825.0 } : TArray<double>{ 1000.0, 2625.0, 4225.0 };
             int32 LineMisses = 0;
             for (int32 Index = 0; Index < PerLine; ++Index)
             {
@@ -1024,6 +1119,12 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
     /** From above the rim, looking down into the pit towards the tunnel's mouth. */
     const FVector PitCamera(PitX - 250.0, PitY - 150.0, 220.0);
     const FVector PitLookAt(PitX + 50.0, PitY, TunnelZ);
+    /**
+     * Inside the tunnel, 150 cm along it, looking across at its +Y wall: a view down the tunnel's length renders black
+     * (see SpikeResults.md), a view of the wall does not.
+     */
+    const FVector WallCamera(PitX + 150.0, PitY, TunnelZ + 20.0);
+    const FVector WallLookAt(PitX + 150.0, PitY + 300.0, TunnelZ + 20.0);
     const TSharedPtr<FDigGameScene> Started = StartScene(*this, PitX, PitY - 1000.0);
     if (!Started.IsValid())
     {
@@ -1116,11 +1217,15 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
     AddShot(Scene, Capture, TEXT("tunnel_hwrt_on"), 1, SettleSeconds);
     AddView(PitCamera, PitLookAt, 1);
     AddShot(Scene, Capture, TEXT("pit_hwrt_on"), 1, SettleSeconds);
+    AddView(WallCamera, WallLookAt, 1);
+    AddShot(Scene, Capture, TEXT("tunnel_wall_hwrt_on"), 1, SettleSeconds);
     AddView(TunnelCamera, TunnelLookAt, 0);
     AddShot(Scene, Capture, TEXT("tunnel_hwrt_off"), 0, SettleSeconds);
     AddView(PitCamera, PitLookAt, 0);
     AddShot(Scene, Capture, TEXT("pit_hwrt_off"), 0, SettleSeconds);
-    // Seen from inside, the dug terrain alone renders black (see SpikeResults.md); with an ordinary mesh in view it
+    AddView(WallCamera, WallLookAt, 0);
+    AddShot(Scene, Capture, TEXT("tunnel_wall_hwrt_off"), 0, SettleSeconds);
+    // A view down the tunnel renders black (see SpikeResults.md); with an ordinary mesh in the middle of that view it
     // draws and is lit. These two show the tunnel lit by the cave light that way, with hardware ray tracing off and on.
     AddAction(Scene, TEXT("Put a test cube in the tunnel"), [Cave](FDigGameScene& S)
     {

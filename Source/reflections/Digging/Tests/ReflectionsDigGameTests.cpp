@@ -69,8 +69,10 @@ bool FReflectionsDigSpikeHarnessRunsInGameTest::RunTest(const FString& Parameter
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigSpikePitTunnelAndFillTest, "Reflections.DigSpike.PitTunnelAndFill", DigGameTestFlags)
 bool FReflectionsDigSpikePitTunnelAndFillTest::RunTest(const FString& Parameters)
 {
-    constexpr double X = 3400.0;
-    constexpr double Y = 0.0;
+    // On grid samples, as before the grid origin moved half a cell inside the terrain's corner: the tunnel's stamps
+    // then carve the same shape as before, whose floor a resting capsule clears to the tunnel's end.
+    constexpr double X = 3425.0;
+    constexpr double Y = 25.0;
     /** The tunnel runs along +X at the height of the pit's lowest stamp. */
     constexpr double TunnelZ = -300.0;
     constexpr double TunnelLengthCm = 500.0;
@@ -177,7 +179,7 @@ bool FReflectionsDigSpikePitTunnelAndFillTest::RunTest(const FString& Parameters
     AddAction(Scene, TEXT("Check the fill"), [](FDigGameScene& S)
     {
         const TOptional<double> Ground = S.TraceGroundZ(X, Y);
-        S.Test->TestTrue(FString::Printf(TEXT("The filled ground at (3400, 0) is within 60 cm of Z 0 (at %s)"),
+        S.Test->TestTrue(FString::Printf(TEXT("The filled ground at (3425, 25) is within 60 cm of Z 0 (at %s)"),
             Ground.IsSet() ? *FString::SanitizeFloat(*Ground) : TEXT("no terrain hit")), Ground.IsSet() && FMath::Abs(*Ground - GroundZ) <= 60.0);
         S.Test->TestTrue(FString::Printf(TEXT("The character never went below the grid floor (lowest feet %.1f)"), S.LowestFeetZ),
             S.LowestFeetZ > GridFloorZ);

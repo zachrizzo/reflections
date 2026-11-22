@@ -79,7 +79,8 @@ struct FReflectionsDigTerrainChunk
 /**
  * A diggable patch of ground. It owns the grid, one or more mesh components per chunk and a safety floor under the
  * grid; the dig subsystem decides what is meshed and when. The actor must be unrotated and unscaled: its X and Y are
- * the patch's minimum corner and the ground surface lies 400 cm below the top of the grid. One terrain per world.
+ * the patch's minimum corner and the ground surface lies 400 cm below the top of the grid. The grid origin sits half a
+ * cell (25 cm) inside that corner in X and Y, so the meshed ground spans exactly the patch. One terrain per world.
  */
 UCLASS()
 class REFLECTIONS_API AReflectionsDigTerrain : public AActor
@@ -166,6 +167,10 @@ public:
     /** The game-thread seconds spent inside those calls, summed. The navigation system's own later work is not in it. */
     double GetNavUpdateSeconds() const;
 
+    /** How many chunks ReleaseChunk has released (chunks that showed anything), and the game-thread seconds it took. For measurements. */
+    int32 GetChunkReleaseCount() const;
+    double GetChunkReleaseSeconds() const;
+
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -197,6 +202,8 @@ private:
     double LastNavUpdateSeconds = -1.0;
     int32 NavUpdateCount = 0;
     double NavUpdateSeconds = 0.0;
+    int32 ReleaseCount = 0;
+    double ReleaseSeconds = 0.0;
 
     /** Rebuilt from the grid at run time, never saved. */
     UPROPERTY(Transient)

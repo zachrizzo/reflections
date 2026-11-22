@@ -262,13 +262,17 @@ void AReflectionsDigTerrain::BeginPlay()
         UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("%s must be unrotated and unscaled; its chunks ignore its rotation and scale."), *GetName());
     }
     const FVector Location = GetActorLocation();
-    const FVector OriginCm(Location.X, Location.Y, GroundHeightCm - SizeInChunks.Z * ChunkHeightCm + GroundBelowGridTopCm);
+    // Cells are sample points and the mesher puts its vertices at cube centres, so the meshed ground starts half a
+    // cell after the grid origin's first sample. With the origin half a cell inside the actor's corner, the ground
+    // spans exactly the patch: X and Y from the actor's location to SizeInChunks chunks further.
+    const double HalfCellCm = ReflectionsDig::CellSizeCm * 0.5;
+    const FVector OriginCm(Location.X + HalfCellCm, Location.Y + HalfCellCm, GroundHeightCm - SizeInChunks.Z * ChunkHeightCm + GroundBelowGridTopCm);
     Grid = MakeUnique<FReflectionsDigGrid>(SizeInChunks, OriginCm, GroundHeightCm);
 
-    // The safety floor spans the whole patch, under the grid floor.
+    // The safety floor spans the whole patch (from the actor's corner, not the grid origin), under the grid floor.
     const FVector HalfSize(SizeInChunks.X * ChunkHeightCm * 0.5, SizeInChunks.Y * ChunkHeightCm * 0.5, SafetyFloorThicknessCm * 0.5);
     SafetyFloor->SetBoxExtent(HalfSize);
-    SafetyFloor->SetWorldLocation(OriginCm + FVector(HalfSize.X, HalfSize.Y, -SafetyFloorGapCm - HalfSize.Z));
+    SafetyFloor->SetWorldLocation(FVector(Location.X + HalfSize.X, Location.Y + HalfSize.Y, OriginCm.Z - SafetyFloorGapCm - HalfSize.Z));
 
     if (UReflectionsDigSubsystem* Subsystem = GetWorld()->GetSubsystem<UReflectionsDigSubsystem>())
     {
@@ -452,10 +456,23 @@ void AReflectionsDigTerrain::ReleaseChunk(FIntVector Chunk)
 {
     if (FReflectionsDigTerrainChunk* State = Chunks.Find(Chunk))
     {
+        const double ReleaseStart = FPlatformTime::Seconds();
         DestroyPieces(State->Pieces);
         DestroyPieces(State->Retiring);
         Chunks.Remove(Chunk);
+        ReleaseSeconds += FPlatformTime::Seconds() - ReleaseStart;
+        ++ReleaseCount;
     }
+}
+
+int32 AReflectionsDigTerrain::GetChunkReleaseCount() const
+{
+    return ReleaseCount;
+}
+
+double AReflectionsDigTerrain::GetChunkReleaseSeconds() const
+{
+    return ReleaseSeconds;
 }
 
 UDynamicMeshComponent* AReflectionsDigTerrain::FindChunkComponent(FIntVector Chunk) const
