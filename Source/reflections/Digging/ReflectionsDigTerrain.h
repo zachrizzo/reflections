@@ -142,7 +142,10 @@ public:
     /** True while any piece, current or retiring, has a collision cook running. */
     bool HasCookPending() const;
 
-    /** True while any cook runs or any retiring set still waits for its swap (a set kept by a failed cook does not wait). */
+    /**
+     * True while any cook runs or any retiring set still waits for the swap check. A set kept by a failed cook waits
+     * only until the swap check has handled the failure.
+     */
     bool IsWaitingOnCollision() const;
 
     /** The blocking box under the whole patch, its top 30 cm below the grid floor. It never affects navigation. */

@@ -18,7 +18,11 @@
 #include "HAL/PlatformProcess.h"
 #include "HAL/PlatformTime.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/OutputDevice.h"
+#include "Misc/OutputDeviceRedirector.h"
 #include "PhysicsEngine/BodySetup.h"
+
+#include <atomic>
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -1117,6 +1121,52 @@ namespace
         return Test.TestTrue(TEXT("Premise: the new set is cooking"), Scene.Terrain->IsChunkCooking(Busy))
             && Test.TestTrue(TEXT("Premise: the split set is retiring"), Scene.Terrain->GetRetiringPieceCount(Busy) >= 2);
     }
+
+    /**
+     * Lets the chunk's cooks finish by running the game thread's tasks without ticking the world, as happens between
+     * two ticks: no swap check runs. Returns false (reported) when they do not finish in time.
+     */
+    bool FinishCooksWithoutATick(FAutomationTestBase& Test, const FTerrainScene& Scene, FIntVector Chunk)
+    {
+        const double Deadline = FPlatformTime::Seconds() + IdleTimeoutSeconds;
+        while (Scene.Terrain->IsChunkCooking(Chunk) && FPlatformTime::Seconds() < Deadline)
+        {
+            PumpGameThread();
+        }
+        return Test.TestFalse(TEXT("The new set's cooks finish while the game thread is pumped, with no tick"), Scene.Terrain->IsChunkCooking(Chunk));
+    }
+
+    /** Counts the log lines that contain a text, as they are logged, for one scope. */
+    struct FScopedLogCounter : public FOutputDevice
+    {
+        explicit FScopedLogCounter(const TCHAR* InText)
+            : Text(InText)
+        {
+            GLog->AddOutputDevice(this);
+        }
+
+        virtual ~FScopedLogCounter() override
+        {
+            GLog->RemoveOutputDevice(this);
+        }
+
+        virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const FName& Category) override
+        {
+            if (FCString::Strstr(Message, *Text) != nullptr)
+            {
+                ++Count;
+            }
+        }
+
+        /** Unbuffered: called on the logging thread at once, so a count read right after a call is current. */
+        virtual bool CanBeUsedOnMultipleThreads() const override
+        {
+            return true;
+        }
+
+        FString Text;
+        std::atomic<int32> Count{ 0 };
+    };
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainRetiringPiecesLeaveNavigationAtOnceTest, "Reflections.Digging.Terrain.RetiringPiecesLeaveNavigationAtOnce", DigTerrainTestFlags)
@@ -1140,6 +1190,13 @@ bool FReflectionsDigTerrainRetiringPiecesLeaveNavigationAtOnceTest::RunTest(cons
     {
         TestFalse(FString::Printf(TEXT("Retiring piece %s cannot affect navigation"), *Piece->GetName()), Piece->CanEverAffectNavigation());
     }
+    // A successful cook that lands between ticks leaves a swap due: the terrain is not idle until the swap check
+    // has destroyed the retiring set.
+    if (!FinishCooksWithoutATick(*this, Scene, Busy))
+    {
+        return true;
+    }
+    TestFalse(TEXT("Before any tick, a due swap keeps the terrain from idle"), Scene.Dig->IsIdle());
     if (WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the commit")))
     {
         TestEqual(TEXT("The retiring set is gone once the new set has cooked"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
@@ -1162,8 +1219,9 @@ bool FReflectionsDigTerrainFailedCookGivesTheRetiringSetItsNavigationBackTest::R
         return true;
     }
     // Every piece of the new set fails its cook, so the retiring set stays the chunk's only collision.
-    AddExpectedMessagePlain(TEXT("a collision cook failed or a piece has no collision"), ELogVerbosity::Warning,
-        EAutomationExpectedMessageFlags::Contains, 1);
+    const TCHAR* FailureWarning = TEXT("a collision cook failed or a piece has no collision");
+    AddExpectedMessagePlain(FailureWarning, ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1);
+    FScopedLogCounter Warnings(FailureWarning);
     TArray<UReflectionsDigChunkComponent*> All;
     Scene.Terrain->GetComponents(All);
     int32 Failing = 0;
@@ -1178,10 +1236,20 @@ bool FReflectionsDigTerrainFailedCookGivesTheRetiringSetItsNavigationBackTest::R
     TestEqual(TEXT("Premise: every cooking piece is the new set's"), Failing, Scene.Terrain->GetChunkPieceCount(Busy));
     const int32 RetiringBefore = Scene.Terrain->GetRetiringPieceCount(Busy);
 
+    // The cooks fail between ticks. Until the next swap check has handled the failure, something is still to happen.
+    if (!FinishCooksWithoutATick(*this, Scene, Busy))
+    {
+        return true;
+    }
+    TestFalse(TEXT("Before any tick, an unhandled failed cook keeps the terrain from idle"), Scene.Dig->IsIdle());
+    TestEqual(TEXT("Before any tick, no failure warning yet"), Warnings.Count.load(), 0);
+
+    // Everything below holds at the first moment the terrain is idle.
     if (!WaitForIdle(*this, TestWorld, Scene, TEXT("The terrain reaches idle after the failed cooks")))
     {
         return true;
     }
+    TestEqual(TEXT("At the first idle the failure warning has been logged once"), Warnings.Count.load(), 1);
     TestEqual(TEXT("The retiring set is kept"), Scene.Terrain->GetRetiringPieceCount(Busy), RetiringBefore);
     const TOptional<FHitResult> Hit = TraceDown(TestWorld.World, CavityTraceStart.X, CavityTraceStart.Y, CavityTraceStart.Z);
     const UReflectionsDigChunkComponent* HitPiece = Hit.IsSet() ? Cast<UReflectionsDigChunkComponent>(Hit->GetComponent()) : nullptr;
@@ -1196,7 +1264,7 @@ bool FReflectionsDigTerrainFailedCookGivesTheRetiringSetItsNavigationBackTest::R
     TestEqual(TEXT("The hidden pieces are the kept retiring set"), Kept.Num(), RetiringBefore);
     for (const UReflectionsDigChunkComponent* Piece : Kept)
     {
-        TestTrue(FString::Printf(TEXT("Kept retiring piece %s can affect navigation again"), *Piece->GetName()), Piece->CanEverAffectNavigation());
+        TestTrue(FString::Printf(TEXT("At the first idle, kept retiring piece %s can affect navigation again"), *Piece->GetName()), Piece->CanEverAffectNavigation());
     }
     return true;
 }

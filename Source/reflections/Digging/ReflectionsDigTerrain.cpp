@@ -96,8 +96,11 @@ namespace
     }
 
     /**
-     * Whether a chunk's retiring set still waits for a swap that will come: a cook is running, or every piece has
-     * collision of its own and the swap is due. A failed cook, or a piece that never received a body, stops the wait.
+     * Whether a chunk's retiring set still waits for the swap check: a cook is running, every piece has collision of
+     * its own and the swap is due, or a failed cook (or a piece that never received a body) has not been handled yet.
+     * A cook can finish between ticks, while game-thread tasks run; until the next swap check has kept the set,
+     * warned and given it its navigation back, something is still to happen. Once handled, the wait stops, so a
+     * failure cannot hold idle off.
      */
     bool IsSwapWaiting(const FReflectionsDigTerrainChunk& State)
     {
@@ -105,11 +108,15 @@ namespace
         {
             return false;
         }
-        if (State.Pieces.IsEmpty())
+        if (State.Pieces.IsEmpty() || AnyCookPending(State.Pieces))
         {
             return true;
         }
-        return AnyCookPending(State.Pieces) || (!AnyCookFailed(State.Pieces) && AllHaveCollision(State.Pieces));
+        if (AnyCookFailed(State.Pieces) || !AllHaveCollision(State.Pieces))
+        {
+            return !State.bCookFailureReported;
+        }
+        return true;
     }
 
     /**
