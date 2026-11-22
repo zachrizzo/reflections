@@ -94,6 +94,41 @@ def minus(a, b):
     return None if a is None or b is None else a - b
 
 
+SPIKE_TAGS = ("digs", "commits", "cooks_finished", "nav_updates", "gc", "previous_frame_dig_related")
+SPIKE_MS = 16.0
+
+
+def frame_tags(log, spike_tag, raw_ms):
+    """
+    The frame number and tags of the frame whose raw game-thread time is raw_ms, from the window's spike lines (the
+    test logs a frame there only when it is over 16 ms, and at most 20 per window).
+    """
+    if raw_ms is None:
+        return NA
+    for fields in log.all(spike_tag):
+        try:
+            if abs(float(fields.get("game_ms", "nan")) - raw_ms) <= 0.011:
+                return f"frame={fields.get('frame', '?')} " + " ".join(f"{key}={fields.get(key, '?')}" for key in SPIKE_TAGS)
+        except ValueError:
+            continue
+    return "not logged (16 ms or under)" if raw_ms <= SPIKE_MS else "not among the logged spike lines (first 20 only)"
+
+
+def worst_frame_rows(tag):
+    """The tags of a window's worst frame and of its worst dig-related frame, from its _WINDOW_SPIKE lines."""
+    spike_tag = tag[: -len("_WHOLE")] + "_WINDOW_SPIKE"
+
+    def dig_related_raw(log):
+        above = log.get(tag, "dig_related_max_ms")
+        median = log.get(tag, "idle_median_ms")
+        return None if above is None or median is None else above + median
+
+    return [
+        ("worst frame: tags", lambda log: frame_tags(log, spike_tag, log.get(tag, "raw_max_ms"))),
+        ("worst dig-related frame: tags", lambda log: frame_tags(log, spike_tag, dig_related_raw(log))),
+    ]
+
+
 def whole_rows(tag):
     """The rows of one *_WHOLE line: the whole-window table of its test."""
     def worst(log):
@@ -118,7 +153,7 @@ def whole_rows(tag):
         ("collections window / idle", lambda log: f"{fmt(log.get(tag, 'collections_window'), 0)} / {fmt(log.get(tag, 'collections_idle'), 0)}"),
         ("commits / cooks finished / nav updates", lambda log: f"{fmt(log.get(tag, 'commits'), 0)} / {fmt(log.get(tag, 'cooks_finished'), 0)} / {fmt(log.get(tag, 'nav_updates'), 0)}"),
         ("game_thread_cooks", lambda log: fmt(log.get(tag, "game_thread_cooks"), 0)),
-    ]
+    ] + worst_frame_rows(tag)
 
 
 def split_rows(test, corner):
@@ -149,7 +184,7 @@ def split_rows(test, corner):
         ]
     rows += [
         ("parts named, share of the whole", lambda log: NA if value(log, "parts_ms_total") is None or not value(log, "window_above_idle_ms_total")
-            else f"{100.0 * value(log, 'parts_ms_total') / value(log, 'window_above_idle_ms_total'):.0f}%"),
+            else f"{fmt(100.0 * value(log, 'parts_ms_total') / value(log, 'window_above_idle_ms_total'), 0)}%"),
         ("pieces / vertices per chunk update", lambda log: f"{fmt(value(log, 'pieces_per_commit'), 2)} / {fmt(value(log, 'vertices_per_commit'), 0, True)}"),
     ]
     return rows
@@ -241,7 +276,8 @@ def sections():
     nav = [
         ("dig to walkable floor", lambda log: f"{fmt(log.get('NAV', 'FROM_DIG_SECONDS'), 3)} s"),
         ("collision ready after / walkable after that", lambda log: f"{fmt(log.get('NAV_EXTRA', 'collision_ready_after_dig_seconds'), 3)} / {fmt(log.get('NAV_EXTRA', 'from_collision_ready_seconds'), 3)} s"),
-        ("worst frame while it rebuilt, above idle", lambda log: f"{fmt(log.get('NAV_EXTRA', 'worst_frame_above_idle_ms'))} ms"),
+        ("worst frame while it rebuilt, above idle (raw)", lambda log: f"{fmt(log.get('NAV_EXTRA', 'worst_frame_above_idle_ms'))} ms ({fmt(log.get('NAV_EXTRA', 'raw_worst_ms'))})"),
+        ("worst frame: tags", lambda log: frame_tags(log, "NAV_WINDOW_SPIKE", log.get("NAV_EXTRA", "raw_worst_ms"))),
     ]
     collision = [
         ("largest collision mesh (COLLISION)", lambda log: f"{fmt(log.get('COLLISION', 'largest_vertices'), 0, True)} vertices"),
@@ -253,6 +289,8 @@ def sections():
         ("graphics card, digging (idle)", lambda log: f"{fmt(log.get('SHADOW_WINDOW', 'gpu_mean'), 2)} ({fmt(log.get('SHADOW_IDLE', 'gpu_mean'), 2)}) ms"),
         ("render / graphics card change", lambda log: f"{fmt(minus(log.get('SHADOW_EXTRA', 'render_mean_ms'), log.get('SHADOW_EXTRA', 'render_idle_mean_ms')), 2)} / {fmt(minus(log.get('SHADOW_WINDOW', 'gpu_mean'), log.get('SHADOW_IDLE', 'gpu_mean')), 2)} ms"),
         ("game thread: worst frame minus worst idle frame", lambda log: f"{fmt(minus(log.get('SHADOW', 'max_ms'), log.get('SHADOW', 'idle_max_ms')))} ms"),
+        ("game thread: worst frame / worst idle frame (raw)", lambda log: f"{fmt(log.get('SHADOW', 'max_ms'))} / {fmt(log.get('SHADOW', 'idle_max_ms'))} ms"),
+        ("worst frame: tags", lambda log: frame_tags(log, "SHADOW_WINDOW_SPIKE", log.get("SHADOW", "max_ms"))),
     ]
     return [
         ("Run", run),
@@ -291,7 +329,13 @@ def main(paths):
                     cells.append(figure(log))
                 except (TypeError, ValueError, ZeroDivisionError):
                     cells.append(NA)
-            print(f"  {label:<{label_width - 2}}" + "".join(f"{cell:<{column_width}}" for cell in cells))
+            if any(len(cell) >= column_width for cell in cells):
+                # Too wide for a column (the frame tags): one line per log.
+                print(f"  {label}")
+                for log, cell in zip(logs, cells):
+                    print(f"      {log.name}: {cell}")
+            else:
+                print(f"  {label:<{label_width - 2}}" + "".join(f"{cell:<{column_width}}" for cell in cells))
     return 0
 
 
