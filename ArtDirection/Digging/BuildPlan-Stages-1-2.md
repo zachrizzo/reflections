@@ -430,6 +430,7 @@ The map uses the project's default game mode; it sets no override.
 **Files:**
 - Modify: `Source/reflections/Digging/ReflectionsDigTerrain.cpp` (and `.h` if needed)
 - Modify: `Tools/Digging/build_dig_spike_map.py`, then rebuild the map
+- Create: `Source/reflections/Digging/Tests/ReflectionsDigGameTestHarness.h` (added in review): the game-test harness helpers moved out of `ReflectionsDigGameTests.cpp` unchanged, so task 2.6's measurement tests can use them
 - Modify: `Source/reflections/Digging/Tests/ReflectionsDigSpikeMapTests.cpp`, `Source/reflections/Digging/Tests/ReflectionsDigGameTests.cpp`
 
 **Interfaces:**
@@ -442,7 +443,7 @@ The map uses the project's default game mode; it sets no override.
 
 - [ ] **Step 1: Write two failing game-context tests**:
   - `Reflections.DigSpike.NavmeshFollowsNewPit`: before digging, a navigation projection at (2000, 1600, 0) succeeds. Starting at (1800, 1600), dig a ramp down to 300 cm deep (stamps of radius 150 stepping down along +X so the slope is walkable); this site is clear of every other game test's digs. Within 1 second of the last dig's collision being ready, a projection onto the ramp's lowest point succeeds. Log the measured time as `DIGSPIKE NAV SECONDS=<value>`.
-  - `Reflections.DigSpike.AiWalksIntoPit`: a plain `ACharacter` with an `AAIController` is told to move to the ramp's lowest point and arrives within 100 cm of it inside 10 seconds.
+  - `Reflections.DigSpike.AiWalksIntoPit`: at its own site, starting at (2200, -400), dig a ramp of the same shape along -Y; a plain `ACharacter` with an `AAIController` is told to move to that ramp's lowest point and arrives within 100 cm of it inside 10 seconds. (Tests run in name order and digs persist, so this test cannot share the other test's ramp or its start point.)
 - [ ] **Step 2: Build and run** the game-context command. Record RED.
 - [ ] **Step 3: Implement** the navigation update, the map changes and the map test additions (bounds volume present; the map's navmesh actor is Dynamic). Rebuild the map.
 - [ ] **Step 4: Run** both test commands. Expected: every test passes in both.
