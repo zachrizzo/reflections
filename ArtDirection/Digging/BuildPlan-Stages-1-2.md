@@ -151,23 +151,27 @@
 
 **`TryDig` rules.**
 - The view point is the pawn controller's `GetPlayerViewPoint`, or the pawn's `GetActorEyesViewPoint` when it has no controller.
-- Trace `ECC_Visibility` from the view location along the view direction, ignoring the pawn. The trace length is the distance from the view location to the pawn location plus `ReachCm`, so a third-person camera does not eat the reach.
+- Trace `ECC_Visibility` along the view direction, ignoring the pawn and every actor attached to it (`GetAttachedActors`, recursive), the way `UReflectionsSpellAimComponent` does (`Source/reflections/Hero/ReflectionsSpellAim.cpp`, around line 189).
+- The trace starts level with the pawn, not at the camera: `Start = ViewLocation + ViewDirection * max(0, dot(PawnLocation - ViewLocation, ViewDirection))`, and `End = Start + ViewDirection * ReachCm`. Nothing between a third-person camera and the pawn can be hit. This geometry lives in `static void UReflectionsDigComponent::ComputeReachTrace(const FVector& ViewLocation, const FVector& ViewDirection, const FVector& PawnLocation, float ReachCm, FVector& OutStart, FVector& OutEnd)` so it can be tested without a camera.
 - A hit counts only if the impact point is within `ReachCm` of the pawn's actor location.
 - On an `AReflectionsDigSpot`: call `DigOnce`. If it returned true and `SpotId` is not `NAME_None`, call `ReflectionsSave::Update` to set `DigSpotStages[SpotId]` to the new stage. Return what `DigOnce` returned; a failed save does not change the return value.
 - Anything else: return false.
 
 **Input.** Build an `IA_Dig` boolean action and an `IMC_Digging` mapping context in code with `NewObject`, the way `UReflectionsSampleSpellDriver::BindControls` does (`Source/reflections/Hero/ReflectionsSampleSpellDriver.cpp`, lines 277 to 330): key `EKeys::G`, `bConsumeInput` true, mapping context priority 1, `ETriggerEvent::Started` calls `TryDig`. Bind only for a locally controlled pawn with a player controller: try in `BeginPlay`, and if there is no controller yet, bind when the pawn's controller changes. Remove the mapping context in `EndPlay`. The component does not tick.
 
-- [ ] **Step 1: Write six failing tests**, each in an `FReflectionsDigTestWorld`, inside `FScopedSlotOverride("ReflectionsTest")`, deleting that slot before and after. The spot sits at the origin with the three engine stage meshes; the pawn is a plain `APawn` with the component added by `EnsureOnPawn`, facing +X:
+- [ ] **Step 1: Write the failing tests** (six at first, nine after review), each in an `FReflectionsDigTestWorld`, inside `FScopedSlotOverride("ReflectionsTest")`, deleting that slot before and after. The spot sits at the origin with the three engine stage meshes; the pawn is an `ADefaultPawn` with `BaseEyeHeight = 0` unless stated, with the component added by `EnsureOnPawn`, facing +X:
   - `Reflections.DigInput.DigsSpotInReach`: pawn at (-150, 0, 0); `TryDig` returns true, the spot is at stage 1, and the save holds the spot's id with value 1.
   - `Reflections.DigInput.IgnoresSpotOutOfReach`: pawn at (-400, 0, 0); `TryDig` returns false, stage 0, and no save file exists.
   - `Reflections.DigInput.NothingHitReturnsFalse`: pawn at (-150, 0, 0) facing -X; false.
   - `Reflections.DigInput.SpotWithoutIdDigsButIsNotSaved`: `SpotId` is `NAME_None`; `TryDig` returns true, stage 1, no save file.
   - `Reflections.DigInput.EnsureOnPawnAddsExactlyOne`: two calls return the same pointer and the pawn has one such component; a null pawn gives null.
-  - `Reflections.DigInput.BadSaveDoesNotBlockDigging`: the slot holds 256 random bytes; `TryDig` returns true, stage 1, and the bytes are unchanged. Declare the expected warning.
+  - `Reflections.DigInput.BadSaveDoesNotBlockDigging`: the slot holds 256 random bytes; `TryDig` returns true, stage 1, and the bytes are unchanged. Declare the expected warning (exact count 1, matching the refusal text).
+  - `Reflections.DigInput.ReachIsMeasuredFromThePawn` (added in review): with `BaseEyeHeight = 300` and the pawn at (-150, 0, -300), `TryDig` returns false (the cube face is about 316 cm from the pawn). With `BaseEyeHeight = 100` and the pawn at (-150, 0, -100) it returns true.
+  - `Reflections.DigInput.TraceStartsLevelWithThePawn` (added in review): `ComputeReachTrace` with the view at (-565, 0, 100), direction +X, pawn at (-150, 0, 0), reach 250 gives start (-150, 0, 100) and end (100, 0, 100). With the view at (50, 0, 0), ahead of the pawn, the start is the view location itself.
+  - `Reflections.DigInput.IgnoresActorsAttachedToThePawn` (added in review): a blocking cube actor (scale 0.2) attached to the pawn 60 cm in front of it, between the pawn and the spot; `TryDig` still returns true and the spot is at stage 1.
 - [ ] **Step 2: Build and run** `test.ps1 -Filter Reflections.DigInput`. Record RED.
 - [ ] **Step 3: Implement** the component, the hero constructor line and the game mode override.
-- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections`. Expected: all tests from tasks 1.1 to 1.3 pass (19).
+- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections`. Expected: all tests from tasks 1.1 to 1.3 pass (22).
 - [ ] **Step 5: Commit** the listed files. In the report, say plainly that the `G` key binding itself is not covered by a test and needs a manual check in the real editor.
 
 ---
@@ -208,7 +212,7 @@ The map uses the project's default game mode; it sets no override.
 - [ ] **Step 3: Implement** the `BeginPlay` restore. Build and run again; both new tests pass.
 - [ ] **Step 4: Write** `Tools/Digging/build_dig_spike_map.py` to the table above, and run it with `editor-python.ps1 -Script "C:\Users\zachc\Documents\Unreal Projects\reflections\.worktrees\digging\Tools\Digging\build_dig_spike_map.py"`. Expected: the script prints `DIG SPIKE MAP SAVED` and `Content/Maps/DigSpike/L_DigSpike.umap` exists.
 - [ ] **Step 5: Write the map test** `Reflections.DigSpike.MapIsBuiltAsSpecified`: load the map package and check its persistent level holds exactly two dig spots with ids `DigSpike_A` and `DigSpike_B`, three non-null stage meshes each, one `APlayerStart`, one `ADirectionalLight`, one `ASkyLight`, and a `AStaticMeshActor` labelled `DigSpike_Ground`.
-- [ ] **Step 6: Build and run** `test.ps1 -Filter Reflections`. Expected: every test passes (22).
+- [ ] **Step 6: Build and run** `test.ps1 -Filter Reflections`. Expected: every test passes (25).
 - [ ] **Step 7: Commit** the code, the script and the map (the map goes through Git LFS; `git add` handles it).
 
 **Gate 1:** every `Reflections.*` test passes. The `G` key and the look of the map are checked by hand in the real editor after the branch is merged.
