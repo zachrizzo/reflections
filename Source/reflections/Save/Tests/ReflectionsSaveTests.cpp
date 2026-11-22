@@ -193,8 +193,8 @@ bool FReflectionsSaveUpdateWritesThroughActiveSlotTest::RunTest(const FString& P
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsSaveUpdateLeavesBadFileAloneTest, "Reflections.Save.UpdateLeavesBadFileAlone", SaveTestFlags)
 bool FReflectionsSaveUpdateLeavesBadFileAloneTest::RunTest(const FString& Parameters)
 {
-    // Update logs one LogReflectionsSave warning per refused result kind, at most once per process run.
-    AddExpectedError(TEXT("LogReflectionsSave"), EAutomationExpectedErrorFlags::Contains, 0);
+    // Update logs one LogReflectionsSave warning on every refused call; Occurrences > 0 means exactly that many.
+    AddExpectedError(TEXT("LogReflectionsSave"), EAutomationExpectedErrorFlags::Contains, 2);
 
     DeleteTestSlot();
 

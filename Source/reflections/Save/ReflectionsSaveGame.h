@@ -46,10 +46,17 @@ namespace ReflectionsSave
     /** Writes Data to Slot with the checked header. Returns false if the data could not be serialized or stored. */
     REFLECTIONS_API bool Write(const UReflectionsSaveGame& Data, const FString& Slot);
 
-    /** Reads Slot. Never writes, deletes or renames the file. OutData is null unless the result is Loaded or NoFile. */
+    /**
+     * Reads Slot. Never writes, deletes or renames the file. OutData is null unless the result is Loaded or NoFile.
+     * The returned save object is not rooted: use it at once or hold it in a UPROPERTY.
+     */
     REFLECTIONS_API EReflectionsLoadResult Read(const FString& Slot, UReflectionsSaveGame*& OutData);
 
-    /** Reads ActiveSlot(), applies Mutate and writes it back. Refuses (returns false, no write) on a newer or corrupt file. */
+    /**
+     * Reads ActiveSlot(), applies Mutate and writes it back. Refuses (returns false, no write, one LogReflectionsSave
+     * warning per refused call) on a newer or corrupt file. The save object passed to Mutate is not rooted: use it
+     * inside Mutate only, or hold what you need in a UPROPERTY.
+     */
     REFLECTIONS_API bool Update(TFunctionRef<void(UReflectionsSaveGame&)> Mutate);
 
     /** Points ActiveSlot() at another slot for its lifetime (tests); restores the previous slot when destroyed. */

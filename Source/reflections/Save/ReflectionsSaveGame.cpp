@@ -114,15 +114,8 @@ namespace ReflectionsSave
 
         if (Result == EReflectionsLoadResult::NewerVersion || Result == EReflectionsLoadResult::Corrupt)
         {
-            static bool bWarnedNewer = false;
-            static bool bWarnedCorrupt = false;
-            bool& bWarned = Result == EReflectionsLoadResult::NewerVersion ? bWarnedNewer : bWarnedCorrupt;
-            if (!bWarned)
-            {
-                bWarned = true;
-                UE_LOG(LogReflectionsSave, Warning, TEXT("Save slot '%s' is %s; not updating it, progress will not be saved."),
-                    *Slot, Result == EReflectionsLoadResult::NewerVersion ? TEXT("from a newer version") : TEXT("corrupt"));
-            }
+            UE_LOG(LogReflectionsSave, Warning, TEXT("Save slot '%s' is %s; not updating it, progress will not be saved."),
+                *Slot, Result == EReflectionsLoadResult::NewerVersion ? TEXT("from a newer version") : TEXT("corrupt"));
             return false;
         }
 
