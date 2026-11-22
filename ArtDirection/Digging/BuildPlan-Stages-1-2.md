@@ -297,15 +297,16 @@ The map uses the project's default game mode; it sets no override.
 - `Out` is reset first. A chunk with no surface gives an empty `Out`.
 - No triangle has zero area. The tests assert, on every mesh they build, that each triangle's area is above 0.01 cm² and that its `VectorUtil::Normal` agrees in direction with the stored normals of its three vertices.
 
-- [ ] **Step 1: Write five failing tests** (grid 3 x 3 x 2 chunks, origin (0, 0, 0), ground height 2800 unless stated):
+- [ ] **Step 1: Write six failing tests** (grid 3 x 3 x 2 chunks, origin (0, 0, 0), ground height 2800 unless stated):
   - `Reflections.Digging.Mesher.UniformChunkIsEmpty`: chunk (1, 1, 0), all solid, gives no triangles; a sample block filled with -127 gives none.
   - `Reflections.Digging.Mesher.FlatGroundIsFlat`: chunk (1, 1, 1). Every vertex Z is within 1 cm of 2800; every normal is within 1 degree of +Z; every triangle's `VectorUtil::Normal` is within 1 degree of +Z; there are exactly 2048 triangles.
   - `Reflections.Digging.Mesher.NeighboursShareBorderVertices`: Remove at (1600, 2400, 2600), radius 200, then mesh chunks (0, 1, 1) and (1, 1, 1). Every vertex of either chunk with X between 1550 and 1600 has a twin in the other chunk within 0.01 cm, and their normals agree within 0.1 degree.
   - `Reflections.Digging.Mesher.QuadsAreNotDuplicatedAcrossChunks`: for the same two meshes, no triangle (as a set of three positions, within 0.01 cm) appears in both.
+  - `Reflections.Digging.Mesher.CellCentredDigsMakeNoDegenerateTriangles` (added when the 0-level bug was found): Remove stamps of radius 100 centred exactly on cells, underground, inside chunk (1, 1, 1) and across its border into (0, 1, 1); both meshes hold no triangle under the area threshold.
   - `Reflections.Digging.Mesher.BuriedSphereIsClosed`: on a grid with ground height 6400 (all solid), Remove at (2400, 2400, 2400), radius 200, then mesh chunk (1, 1, 1). There is at least one triangle, every edge is used by exactly two triangles, and every vertex normal points toward the sphere centre.
 - [ ] **Step 2: Build and run** `test.ps1 -Filter Reflections.Digging.Mesher`. Record RED.
 - [ ] **Step 3: Implement** the mesher.
-- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections.Digging`. Expected: 16 ran, 16 passed (9 grid tests, 2 grid tests added by the task 2.1 review, 5 mesher tests).
+- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections.Digging`. Expected: 17 ran, 17 passed (9 grid tests, 2 grid tests added by the task 2.1 review, 6 mesher tests).
 - [ ] **Step 5: Commit** the listed files.
 
 ---
