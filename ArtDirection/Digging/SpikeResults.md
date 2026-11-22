@@ -6,16 +6,21 @@ Every number in the results tables comes from the same three measurement runs.
 ## Read this first
 
 - **This was not a packaged game.** The measurements ran in the editor program started as a game (the only way to run
-  them in this copy of the project). In that mode some of the renderer's bookkeeping for changed objects runs on the
-  game's main thread at the end of each frame; a packaged game does that work elsewhere. A packaged game may
-  therefore be faster. These numbers are the cautious reading.
+  them in this copy of the project). Nothing measured here says whether a packaged game would be faster or slower.
+- **The spike's gate is not passed as measured.** On these numbers the heavily dug chunk and the eight-chunk corner do
+  not meet the 4 ms mark on either figure in any run, and no row meets it on the worst frame.
 - **Two cases break the 4 ms mark clearly:** digging in a chunk that is already full of holes (about 60 ms of extra
   main-thread work per dig, worst frames of 64 to 89 ms) and digging where eight chunks meet (about 11 to 15 ms per
-  dig, 99 frames in 100 under 6.5 to 8.8 ms). Streaming also has a single slow frame of 42 to 65 ms each run when a
-  heavily dug chunk comes back. Digging in open ground meets the mark on 99 frames in 100 but not on the worst frame.
-- **Where the heavy cost goes:** almost all of it is in the frame right after a chunk is updated, outside the terrain's
-  own code. The terrain's own work is about 2.5 ms per dig in a busy chunk and about 3 ms per corner dig. See "Where
-  the cost of a heavy dig goes".
+  dig, 99 frames in 100 under 6.5 to 8.8 ms). Streaming also has a single slow frame of 42 to 65 ms each run, a frame
+  in which, by the logs, three new collision meshes finished; the logs do not say which chunk they belong to. Digging
+  in open ground meets the mark on 99 frames in 100 but not on the worst frame.
+- **Where the heavy cost goes is not known.** In the busy chunk about 47 ms per dig falls in the frame right after the
+  chunk update, and no counter times it. That is the frame in which the chunk's new collision arrives. Everything the
+  test does time (the terrain's chunk updates and clean-up of old pieces, the engine's swap-in of the new collision,
+  the navigation update) adds up to only about 4 percent of the busy chunk's cost. The terrain's own work (its chunk
+  updates and swap checks) is about 2.2 ms per dig in a busy chunk and about 2 ms per corner dig; the engine's
+  collision swap-in and the navigation calls add about 0.3 ms and 0.8 ms per dig. What else happens in that frame was
+  not separated and needs a profiler capture. See "Where the cost of a heavy dig goes".
 
 ## How it was measured
 
@@ -59,8 +64,8 @@ The 4 ms mark is judged two ways, as the plan document asks: on the worst frame 
 
 (a) The worst frame was a garbage collection (the engine cleaning up memory). It is kept in the row.
 (b) The worst frame (395 ms) was the frame after a dig call, so it counts as dig-related; nothing else of the dig
-happened in it (no chunk update, no collision, no navigation), and the dig call itself takes well under 0.1 ms. It was
-most likely the machine stalling, but by the rule above it counts.
+happened in it (no chunk update, no collision, no navigation). It was most likely the machine stalling, but by the
+rule above it counts.
 
 ### The machine's noise level
 
@@ -123,9 +128,9 @@ the whole window's extra main-thread time:
 - **swap check**: the terrain retiring and destroying old pieces;
 - **collision finishing**: the engine's own work when a piece's new collision is ready (swapping it in);
 - **navigation**: the terrain telling navigation about the new collision;
-- **rest**: everything else in those frames. The test cannot see inside it. In this mode (the editor program run as a
-  game) it includes the renderer rebuilding the drawing data of changed pieces on the main thread, which happens in the
-  frame after a chunk update.
+- **rest**: everything else in those frames. The test cannot see inside it, and its cause is not known. In the busy
+  chunk most of it falls in the frame right after a chunk update, which in every busy-chunk and streaming spike line of
+  the logs is the frame in which the chunk's three new collision meshes finish (`cooks_finished=3`).
 
 | Total over the 10-second window, 100 digs | Run 1 | Run 2 | Run 3 |
 |---|---|---|---|
@@ -153,11 +158,13 @@ What this shows, in plain words:
 
 What it does not show:
 
-- It does not say what the "rest" is. The likely cause is the renderer rebuilding the drawing data of the changed
-  pieces on the main thread, because that is the work this mode does in the frame after an update. It may also include
-  the engine's physics and navigation work outside the timed calls. Splitting it needs a profiler capture.
-- It does not say whether a packaged game is faster. If the "rest" is the renderer's rebuild, a packaged game does it
-  elsewhere and may be much faster; that is not measured.
+- It does not say what the "rest" is. In the busy chunk the unexplained cost coincides with the frame in which the new
+  collision arrives. The one collision call the test timed, the engine's swap-in of the new body, is small (about 22 ms
+  over 100 digs). The engine's tick order puts the renderer's rebuild of a changed piece in the same frame as the chunk
+  update, not the frame after. What else happens in that frame was not separated: physics scene work after new
+  collision arrives is one candidate, renderer work another. Splitting it needs a profiler capture.
+- It does not say whether a packaged game would be faster or slower. In a packaged game the main thread still helps
+  with and waits for this kind of work, and nothing measured here points either way.
 - It does not include waiting: game-thread time leaves out time the main thread spends waiting for other threads.
 
 ### Streaming
@@ -172,8 +179,8 @@ over 20 seconds. Ten chunks were dropped behind it and eleven rebuilt in front o
 | Worst frame (raw) | 51.3 ms (53.4) | 64.8 ms (66.9) | 42.4 ms (44.4) |
 | Time spent dropping chunks, all ten | 0.9 ms | 0.9 ms | 0.9 ms |
 
-The worst frame in each run was the frame after the riddled busy chunk came back into range, when its three large
-pieces were rebuilt.
+In each run the worst frame was one in which, by the logs, three new collision meshes finished (`cooks_finished=3`).
+The logs do not say which chunk they belong to.
 
 ### Navmesh
 
@@ -184,8 +191,8 @@ stall.
 
 ### Collision size
 
-The largest collision mesh anywhere was 10,320 vertices, from the riddled busy chunk; the 200 random digs of the
-collision test alone made smaller meshes. The engine's problem starts above 16,384 vertices per collision mesh, and
+The largest collision mesh anywhere was 10,320 vertices, from the riddled busy chunk. In earlier runs (not the three
+cited on this page) the 200 random digs of the collision test alone made smaller meshes. The engine's problem starts above 16,384 vertices per collision mesh, and
 the code splits a chunk into pieces of at most 12,000.
 
 ### Seams
@@ -233,7 +240,7 @@ really is. The last two shots use one fixed exposure, so they compare real brigh
 
 **Hardware ray tracing on and off look different.** With it off, the parts of the tunnel and pit that the sun does
 not reach are lit blue-grey, and the fixed-exposure pair shows that this is extra light, not only a colour change:
-sky light reaching underground. The likely reason is that without hardware ray tracing the lighting system works from
+most likely sky light reaching underground. The likely reason is that without hardware ray tracing the lighting system works from
 a simplified version of the scene that does not include the dug ground, so nothing blocks the sky's light. Whether
 either look is right for a cave is for the owner to judge.
 
@@ -248,9 +255,10 @@ was in use; for each "off" shot they said it was not; the images agree. It was s
 - **The engine's default material turned tunnels black.** When the dug ground had no material of its own, the engine
   drew it with its default grid material, and a view down a tunnel came out completely black. Fixed: the terrain always
   uses a plain engine material when none is set, and the test map sets one.
-- **Hardware ray tracing matters underground.** Without it, sky light leaks into tunnels and pits (see "Cave lighting").
+- **Hardware ray tracing matters underground.** Without it, tunnels and pits are lit brighter and blue-grey, most likely
+  by sky light leaking in (see "Cave lighting").
 - **Heavily dug chunks are expensive to change.** Each change to a chunk of about 30,000 vertices costs about 60 ms on
-  the main thread, almost all of it after the terrain's own code has finished.
+  the main thread, almost all of it after the terrain's own code has finished, for reasons not yet known.
 
 ## Numbers from earlier tests, without the renderer (headless)
 
@@ -269,14 +277,15 @@ These come from tasks 2.3 to 2.5, run without any graphics. They are not compara
 
 ## What was not measured
 
-- **A packaged build.** This copy of the project has no game content, so nothing can be packaged; and see "Read this
-  first" on why a packaged game may be faster.
+- **A packaged build.** This copy of the project has no game content, so nothing can be packaged. Nothing measured
+  here says whether a packaged game would be faster or slower.
 - **The real hero and the real town.** They are not in this copy. All tests used a plain stand-in character on a small
   test map.
 - **A machine without a ray-tracing graphics card.** Only this machine (RTX 5080) was used. Given the sky-light leak
   above, caves on such a machine would likely look blue-grey.
 - **Flicker.** Nobody watched the game running.
-- **A quiet machine.** Another Unreal editor ran throughout; the worst single frames reflect that.
+- **A quiet machine.** Another Unreal editor was running throughout, and idle frames alone (nothing being dug) reached
+  29 ms and once 103 ms. A quiet machine is needed to bound single slow frames.
 
 ## Plugin check
 
