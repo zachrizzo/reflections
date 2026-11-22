@@ -127,11 +127,15 @@ bool FReflectionsDigQueueSkippedChunkKeepsItsPlaceTest::RunTest(const FString& P
     }
     TestEqual(TEXT("A is still queued"), Queue.Num(), 1);
 
+    // A chunk queued after the skip must come after A: A kept its place at the front.
+    const FIntVector D(0, 1, 1);
+    Queue.Push(D, MakeResult(4));
     const TArray<FPopped> Next = PopAll(Queue, 10);
-    if (TestEqual(TEXT("Next call pops one"), Next.Num(), 1))
+    if (TestEqual(TEXT("Next call pops two"), Next.Num(), 2))
     {
         TestEqual(TEXT("A is first on the next call"), Next[0].Chunk, A);
         TestEqual(TEXT("A's result is unchanged (1 triangle)"), Next[0].Triangles, 1);
+        TestEqual(TEXT("D comes after A"), Next[1].Chunk, D);
     }
     return true;
 }

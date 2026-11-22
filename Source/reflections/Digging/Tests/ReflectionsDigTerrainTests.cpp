@@ -804,9 +804,25 @@ bool FReflectionsDigTerrainSafetyFloorLiesBelowTheGridTest::RunTest(const FStrin
         TestTrue(FString::Printf(TEXT("The safety floor's top is within 1 cm of Z %.1f (hit at %.2f)"), Expected, Hit->ImpactPoint.Z),
             FMath::Abs(Hit->ImpactPoint.Z - Expected) <= 1.0);
     }
-    // It spans the whole patch: a trace at a corner of the patch hits it too.
-    const TOptional<FHitResult> Corner = TraceDown(TestWorld.World, 25.0, 4775.0, -2000.0);
-    TestTrue(TEXT("The safety floor covers the patch's corner"), Corner.IsSet() && Corner->GetComponent() == Scene.Terrain->GetSafetyFloor());
+    // It is 100 cm thick and spans the whole patch: traces inside solid ground at the four corners of the patch
+    // hit it at the same height.
+    UBoxComponent* Floor = Scene.Terrain->GetSafetyFloor();
+    if (TestNotNull(TEXT("Safety floor"), Floor))
+    {
+        TestTrue(FString::Printf(TEXT("The safety floor is 100 cm thick (%.2f)"), Floor->GetScaledBoxExtent().Z * 2.0),
+            FMath::IsNearlyEqual(Floor->GetScaledBoxExtent().Z * 2.0, 100.0, 0.01));
+        for (const FVector2D& Corner : { FVector2D(25.0, 25.0), FVector2D(4775.0, 25.0), FVector2D(25.0, 4775.0), FVector2D(4775.0, 4775.0) })
+        {
+            const TOptional<FHitResult> CornerHit = TraceDown(TestWorld.World, Corner.X, Corner.Y, -2000.0);
+            const bool bHitsFloor = CornerHit.IsSet() && CornerHit->GetComponent() == Floor;
+            TestTrue(FString::Printf(TEXT("A trace at the patch corner (%.0f, %.0f) hits the safety floor"), Corner.X, Corner.Y), bHitsFloor);
+            if (bHitsFloor)
+            {
+                TestTrue(FString::Printf(TEXT("At (%.0f, %.0f) its top is at Z %.1f (hit at %.2f)"), Corner.X, Corner.Y, GridFloorZ - 30.0, CornerHit->ImpactPoint.Z),
+                    FMath::Abs(CornerHit->ImpactPoint.Z - (GridFloorZ - 30.0)) <= 1.0);
+            }
+        }
+    }
     return true;
 }
 
@@ -917,6 +933,109 @@ bool FReflectionsDigTerrainChunkWaitsForItsCookBeforeTheNextCommitTest::RunTest(
     }
     TestTrue(FString::Printf(TEXT("The collision under the held dig changed at least 10 times (%d)"), Changes), Changes >= 10);
     WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the held dig"));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainRetiredSetGoesDuringAHeldDigTest, "Reflections.Digging.Terrain.RetiredSetGoesDuringAHeldDig", DigTerrainTestFlags)
+bool FReflectionsDigTerrainRetiredSetGoesDuringAHeldDigTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    const FIntVector Busy(1, 1, 0);
+    RiddleBuriedChunk(*Scene.Dig);
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after riddling the chunk")))
+    {
+        return true;
+    }
+    TestTrue(TEXT("The riddled chunk is split"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+
+    // Fill it back with radius-150 Adds on every lattice row but the lowest, so it meshes to one piece again.
+    for (double Z = -2500.0; Z <= -1300.0; Z += 200.0)
+    {
+        for (double Y = 1700.0; Y <= 3100.0; Y += 200.0)
+        {
+            for (double X = 1700.0; X <= 3100.0; X += 200.0)
+            {
+                Scene.Dig->Dig(FVector(X, Y, Z), 150.0f, EReflectionsDigMode::Add);
+            }
+        }
+    }
+    FReflectionsDigMeshData Filled;
+    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Filled);
+    TestTrue(FString::Printf(TEXT("Premise: the filled chunk meshes to one piece's worth (%d vertices)"), Filled.Positions.Num()),
+        Filled.Positions.Num() > 0 && Filled.Positions.Num() <= ReflectionsDig::MaxPieceVertices);
+
+    // Hold a Remove that moves down 10 cm a tick through the filled space, starting at once (no idle in between,
+    // so the split set is still retiring when the one-piece commits begin). The trace starts inside the new pit,
+    // 50 cm off its axis; the old cavity there had its floor at about Z -1371.
+    const FVector TraceStart(2550.0, 2550.0, -1300.0);
+    const double OldSurfaceZ = -1300.0 - CavityFloorBelowCentreCm;
+    double DeepestZ = 0.0;
+    bool bSawOnePiece = false;
+    for (int32 Frame = 0; Frame < 120; ++Frame)
+    {
+        Scene.Dig->Dig(FVector(2500.0, 2500.0, -1300.0 - 10.0 * Frame), 100.0f, EReflectionsDigMode::Remove);
+        TickWithoutPumping(TestWorld);
+        PumpGameThread();
+        bSawOnePiece |= Scene.Terrain->GetChunkPieceCount(Busy) == 1;
+        const TOptional<double> Z = TraceDownZ(TestWorld.World, TraceStart.X, TraceStart.Y, TraceStart.Z);
+        if (Z.IsSet())
+        {
+            DeepestZ = FMath::Min(DeepestZ, *Z);
+        }
+    }
+    TestTrue(TEXT("The chunk was one piece during the hold"), bSawOnePiece);
+    TestTrue(FString::Printf(TEXT("A trace into the new pit reached well below the old surface at %.1f (deepest %.2f)"), OldSurfaceZ, DeepestZ),
+        DeepestZ < OldSurfaceZ - 200.0);
+    TestEqual(TEXT("No retiring pieces are left by the end of the hold"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
+    WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the held dig"));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainDirectCommitWhileCookingKeepsTheRetiringFloorTest, "Reflections.Digging.Terrain.DirectCommitWhileCookingKeepsTheRetiringFloor", DigTerrainTestFlags)
+bool FReflectionsDigTerrainDirectCommitWhileCookingKeepsTheRetiringFloorTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    const FIntVector Busy(1, 1, 0);
+    RiddleBuriedChunk(*Scene.Dig);
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after riddling the chunk")))
+    {
+        return true;
+    }
+    TestTrue(TEXT("The riddled chunk is split"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+    const double FloorZ = CavityCentre.Z - CavityFloorBelowCentreCm;
+    const FVector Elsewhere(2100.0, 2100.0, -2300.0);
+
+    // A first direct commit retires the cooked set; a second one, while the first replacement is still cooking,
+    // must destroy that replacement and keep the retiring set. Nothing is pumped in between, so no cook finishes.
+    TestTrue(TEXT("The first change changes the grid"), Scene.Dig->Dig(Elsewhere, 100.0f, EReflectionsDigMode::Add));
+    FReflectionsDigMeshData First;
+    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, First);
+    Scene.Terrain->CommitChunk(Busy, MoveTemp(First));
+    TestTrue(TEXT("The first replacement is cooking"), Scene.Terrain->IsChunkCooking(Busy));
+    TestTrue(TEXT("The cooked set is retiring"), Scene.Terrain->GetRetiringPieceCount(Busy) >= 2);
+
+    TestTrue(TEXT("The second change changes the grid"), Scene.Dig->Dig(Elsewhere, 100.0f, EReflectionsDigMode::Remove));
+    FReflectionsDigMeshData Second;
+    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Second);
+    Scene.Terrain->CommitChunk(Busy, MoveTemp(Second));
+    TestTrue(TEXT("The second replacement is cooking"), Scene.Terrain->IsChunkCooking(Busy));
+
+    const TOptional<double> Floor = TraceDownZ(TestWorld.World, CavityTraceStart.X, CavityTraceStart.Y, CavityTraceStart.Z);
+    if (TestTrue(TEXT("On that tick a trace into the cavity hits a terrain piece"), Floor.IsSet()))
+    {
+        TestTrue(FString::Printf(TEXT("It hits the retiring set's cavity floor near Z %.1f (hit at %.2f)"), FloorZ, *Floor), FMath::Abs(*Floor - FloorZ) <= 25.0);
+    }
+    WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the direct commits"));
     return true;
 }
 

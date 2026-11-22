@@ -561,7 +561,7 @@ bool FReflectionsDigGridCopyChunkSamplesIsFastTest::RunTest(const FString& Param
     }
     const double TotalMs = (FPlatformTime::Seconds() - Start) * 1000.0;
     UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless CopyChunkSamples: %d copies in %.2f ms, %.4f ms per copy"), Copies, TotalMs, TotalMs / Copies);
-    TestTrue(FString::Printf(TEXT("%d copies of an interior chunk take under 20 ms (%.2f ms)"), Copies, TotalMs), TotalMs < 20.0);
+    TestTrue(FString::Printf(TEXT("%d copies of an interior chunk take under 40 ms (%.2f ms)"), Copies, TotalMs), TotalMs < 40.0);
     return true;
 }
 

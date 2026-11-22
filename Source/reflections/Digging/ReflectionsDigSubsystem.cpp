@@ -171,13 +171,31 @@ void UReflectionsDigSubsystem::Tick(float DeltaTime)
         }
         return;
     }
+    // Quiet: nothing in flight, nothing queued, nothing cooking, and no wanted chunk dirty (at the start of a tick a
+    // dirty chunk has not been launched yet, so it is work to come just like a task in flight). Only then may a
+    // chunk that became empty drop the collision it still keeps, since a neighbour may still show the old hole into it.
+    auto IsTerrainQuiet = [this, Terrain]()
+    {
+        if (GetTasksInFlight() > 0 || GetQueuedCommits() > 0 || Terrain->HasCookPending())
+        {
+            return false;
+        }
+        for (const TPair<FIntVector, FChunkFlow>& Pair : ChunkFlows)
+        {
+            if (Pair.Value.bWanted && Pair.Value.bDirty)
+            {
+                return false;
+            }
+        }
+        return true;
+    };
     UpdateStreaming(*Terrain);
+    // Swaps run before the commits (a cook that finished since the last tick retires its old set before a new
+    // commit can start another cook) and again after the launches.
+    Terrain->FinishCollisionSwaps(IsTerrainQuiet());
     CommitFinishedMeshes(*Terrain);
     LaunchMeshTasks(*Terrain);
-    // Quiet: nothing in flight, nothing queued, nothing cooking. Only then may a chunk that became empty drop the
-    // collision it still keeps, since a neighbour may still show the old hole into it.
-    const bool bTerrainQuiet = GetTasksInFlight() == 0 && GetQueuedCommits() == 0 && !Terrain->HasCookPending();
-    Terrain->FinishCollisionSwaps(bTerrainQuiet);
+    Terrain->FinishCollisionSwaps(IsTerrainQuiet());
 }
 
 TStatId UReflectionsDigSubsystem::GetStatId() const

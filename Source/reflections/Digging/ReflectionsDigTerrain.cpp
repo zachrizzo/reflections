@@ -33,7 +33,8 @@ using UE::Geometry::FDynamicMesh3;
  *   retiring set the current set always retires: it is the only collision there is. Through the subsystem the
  *   second case arises only after a failed cook.
  * - A retiring set replaced by pieces goes once every piece has finished cooking successfully. A failed cook keeps
- *   it, with one warning.
+ *   it, with one warning. The subsystem checks this at the start of each tick, before the commits, and again after
+ *   the launches; a commit that reuses a chunk's single piece checks its own chunk first.
  * - A retiring set replaced by nothing (the chunk became all solid or all air) goes only when the whole terrain is
  *   quiet: a neighbouring chunk may still be showing the old hole into this chunk.
  */
@@ -100,6 +101,51 @@ namespace
             return true;
         }
         return AnyCookPending(State.Pieces) || !AnyCookFailed(State.Pieces);
+    }
+
+    /**
+     * Destroys the chunk's retiring set if its time has come (see the collision swap above). Returns true when the
+     * chunk was emptied and is now showing nothing at all, so its entry can go.
+     */
+    bool FinishSwap(const FIntVector& Chunk, FReflectionsDigTerrainChunk& State, bool bTerrainQuiet)
+    {
+        if (State.Retiring.IsEmpty())
+        {
+            return false;
+        }
+        const double DestroyStart = FPlatformTime::Seconds();
+        const int32 Destroyed = State.Retiring.Num();
+        bool bEmptied = false;
+        if (State.Pieces.IsEmpty())
+        {
+            if (!bTerrainQuiet)
+            {
+                return false;
+            }
+            DestroyPieces(State.Retiring);
+            bEmptied = true;
+        }
+        else if (AnyCookPending(State.Pieces))
+        {
+            return false;
+        }
+        else if (AnyCookFailed(State.Pieces))
+        {
+            if (!State.bCookFailureReported)
+            {
+                State.bCookFailureReported = true;
+                UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("Chunk %s: a collision cook failed; its previous collision stays until the next commit"),
+                    *Chunk.ToString());
+            }
+            return false;
+        }
+        else
+        {
+            DestroyPieces(State.Retiring);
+        }
+        UE_LOG(LogReflectionsDigTerrain, Verbose, TEXT("DIGSPIKE headless swap %s: destroyed %d retiring pieces in %.2f ms"),
+            *Chunk.ToString(), Destroyed, MillisecondsSince(DestroyStart));
+        return bEmptied;
     }
 }
 
@@ -247,7 +293,11 @@ void AReflectionsDigTerrain::CommitChunkPieces(FIntVector Chunk, FReflectionsDig
         TArray<UReflectionsDigChunkComponent*, TInlineAllocator<4>> Targets;
         if (Result.Pieces.Num() == 1 && State.Pieces.Num() == 1 && State.Pieces[0] != nullptr)
         {
-            // One piece before and after: the engine keeps the old body until the new cook is in.
+            // One piece before and after: the engine keeps the old body until the new cook is in. A retiring set
+            // whose replacement (this piece) has finished cooking goes first: every later commit to this chunk takes
+            // this path and starts a new cook, so a swap check that runs only between commits would never find the
+            // piece idle and the retiring set would stay for the whole hold, an invisible lid.
+            FinishSwap(Chunk, State, /*bTerrainQuiet=*/ false);
             Targets.Add(State.Pieces[0]);
         }
         else
@@ -334,6 +384,12 @@ int32 AReflectionsDigTerrain::GetChunkPieceCount(FIntVector Chunk) const
     return State != nullptr ? State->Pieces.Num() : 0;
 }
 
+int32 AReflectionsDigTerrain::GetRetiringPieceCount(FIntVector Chunk) const
+{
+    const FReflectionsDigTerrainChunk* State = Chunks.Find(Chunk);
+    return State != nullptr ? State->Retiring.Num() : 0;
+}
+
 FReflectionsDigGrid* AReflectionsDigTerrain::GetGrid() const
 {
     return Grid.Get();
@@ -363,42 +419,10 @@ void AReflectionsDigTerrain::FinishCollisionSwaps(bool bTerrainQuiet)
     TArray<FIntVector, TInlineAllocator<4>> Emptied;
     for (TPair<FIntVector, FReflectionsDigTerrainChunk>& Pair : Chunks)
     {
-        FReflectionsDigTerrainChunk& State = Pair.Value;
-        if (State.Retiring.IsEmpty())
+        if (FinishSwap(Pair.Key, Pair.Value, bTerrainQuiet))
         {
-            continue;
-        }
-        const double DestroyStart = FPlatformTime::Seconds();
-        const int32 Destroyed = State.Retiring.Num();
-        if (State.Pieces.IsEmpty())
-        {
-            if (!bTerrainQuiet)
-            {
-                continue;
-            }
-            DestroyPieces(State.Retiring);
             Emptied.Add(Pair.Key);
         }
-        else if (AnyCookPending(State.Pieces))
-        {
-            continue;
-        }
-        else if (AnyCookFailed(State.Pieces))
-        {
-            if (!State.bCookFailureReported)
-            {
-                State.bCookFailureReported = true;
-                UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("Chunk %s: a collision cook failed; its previous collision stays until the next commit"),
-                    *Pair.Key.ToString());
-            }
-            continue;
-        }
-        else
-        {
-            DestroyPieces(State.Retiring);
-        }
-        UE_LOG(LogReflectionsDigTerrain, Verbose, TEXT("DIGSPIKE headless swap %s: destroyed %d retiring pieces in %.2f ms"),
-            *Pair.Key.ToString(), Destroyed, MillisecondsSince(DestroyStart));
     }
     for (const FIntVector& Chunk : Emptied)
     {

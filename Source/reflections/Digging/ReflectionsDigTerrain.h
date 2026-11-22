@@ -111,6 +111,9 @@ public:
 
     int32 GetChunkPieceCount(FIntVector Chunk) const;
 
+    /** The chunk's retiring pieces: hidden, still colliding until their swap. */
+    int32 GetRetiringPieceCount(FIntVector Chunk) const;
+
     /** Null before BeginPlay and after EndPlay. */
     FReflectionsDigGrid* GetGrid() const;
 
