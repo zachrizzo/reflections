@@ -138,7 +138,7 @@ uint8 FReflectionsDigGrid::GetMaterial(FIntVector Cell) const
 void FReflectionsDigGrid::ApplyStamp(const FReflectionsDigStamp& Stamp, TArray<FIntVector>& OutDirtyChunks)
 {
     const double RadiusCm = Stamp.RadiusCm;
-    if (!(RadiusCm > 0.0) || !FMath::IsFinite(Stamp.Center.X) || !FMath::IsFinite(Stamp.Center.Y) || !FMath::IsFinite(Stamp.Center.Z))
+    if (!(RadiusCm > 0.0) || !FMath::IsFinite(RadiusCm) || !FMath::IsFinite(Stamp.Center.X) || !FMath::IsFinite(Stamp.Center.Y) || !FMath::IsFinite(Stamp.Center.Z))
     {
         return;
     }

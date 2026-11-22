@@ -4,6 +4,8 @@
 #include "Digging/ReflectionsDigTypes.h"
 #include "Misc/AutomationTest.h"
 
+#include <limits>
+
 #if WITH_DEV_AUTOMATION_TESTS
 
 namespace
@@ -409,6 +411,134 @@ bool FReflectionsDigGridCopyChunkSamplesMatchesGettersTest::RunTest(const FStrin
             }
         }
         Mismatches.Check(*this, *Label);
+
+        // Pin the raw array order: X varies fastest, then Y, then Z.
+        TestEqual(Label + TEXT(" Density[0] is local (-2, -2, -2)"), static_cast<int32>(Samples.Density[0]), static_cast<int32>(Grid.GetDensity(Base + FIntVector(-2, -2, -2))));
+        TestEqual(Label + TEXT(" Density[1] is local (-1, -2, -2)"), static_cast<int32>(Samples.Density[1]), static_cast<int32>(Grid.GetDensity(Base + FIntVector(-1, -2, -2))));
+        TestEqual(Label + TEXT(" Density[36] is local (-2, -1, -2)"), static_cast<int32>(Samples.Density[Side]), static_cast<int32>(Grid.GetDensity(Base + FIntVector(-2, -1, -2))));
+        TestEqual(Label + TEXT(" Density[36 * 36] is local (-2, -2, -1)"), static_cast<int32>(Samples.Density[Side * Side]), static_cast<int32>(Grid.GetDensity(Base + FIntVector(-2, -2, -1))));
+    }
+
+    // The digs above leave the first border cells of those chunks equal to their neighbours (clamped or untouched),
+    // so pin the order again where a second dig makes local (-2, -2, -2) and its three +1 neighbours all differ.
+    // Chunk (2, 1, 1) has local (-2, -2, -2) at cell (62, 30, 30); the stamp sits at cell (61, 28, 27).
+    Grid.ApplyStamp(MakeStamp(FVector(3050.0, 1400.0, 1350.0), 200.0f, EReflectionsDigMode::Remove), Dirty);
+    const FIntVector Chunk(2, 1, 1);
+    const FIntVector Base = Chunk * ReflectionsDig::ChunkCells;
+    FReflectionsDigChunkSamples Samples;
+    Grid.CopyChunkSamples(Chunk, Samples);
+    const int32 Origin = Grid.GetDensity(Base + FIntVector(-2, -2, -2));
+    const int32 PlusX = Grid.GetDensity(Base + FIntVector(-1, -2, -2));
+    const int32 PlusY = Grid.GetDensity(Base + FIntVector(-2, -1, -2));
+    const int32 PlusZ = Grid.GetDensity(Base + FIntVector(-2, -2, -1));
+    TestTrue(TEXT("premise: the four first border cells of chunk (2, 1, 1) all differ"),
+        Origin != PlusX && Origin != PlusY && Origin != PlusZ && PlusX != PlusY && PlusX != PlusZ && PlusY != PlusZ);
+    TestEqual(TEXT("chunk (2, 1, 1) Density[0] is local (-2, -2, -2)"), static_cast<int32>(Samples.Density[0]), Origin);
+    TestEqual(TEXT("chunk (2, 1, 1) Density[1] is local (-1, -2, -2)"), static_cast<int32>(Samples.Density[1]), PlusX);
+    TestEqual(TEXT("chunk (2, 1, 1) Density[36] is local (-2, -1, -2)"), static_cast<int32>(Samples.Density[Side]), PlusY);
+    TestEqual(TEXT("chunk (2, 1, 1) Density[36 * 36] is local (-2, -2, -1)"), static_cast<int32>(Samples.Density[Side * Side]), PlusZ);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigGridDegenerateStampsAreNoOpsTest, "Reflections.Digging.Grid.DegenerateStampsAreNoOps", DigGridTestFlags)
+bool FReflectionsDigGridDegenerateStampsAreNoOpsTest::RunTest(const FString& Parameters)
+{
+    const FVector Center(2400.0, 2400.0, 2400.0);
+    const float Infinity = std::numeric_limits<float>::infinity();
+    const float NaN = std::numeric_limits<float>::quiet_NaN();
+    struct FCase
+    {
+        const TCHAR* Label;
+        FVector Center;
+        float RadiusCm;
+    };
+    const FCase Cases[] = {
+        { TEXT("radius 0"), Center, 0.0f },
+        { TEXT("radius -100"), Center, -100.0f },
+        { TEXT("infinite radius"), Center, Infinity },
+        { TEXT("NaN radius"), Center, NaN },
+        { TEXT("centre with a NaN component"), FVector(2400.0, static_cast<double>(NaN), 2400.0), 100.0f },
+    };
+
+    for (const FCase& Case : Cases)
+    {
+        FReflectionsDigGrid Grid = MakeTestGrid();
+        const FGridSnapshot Before = SnapshotAllChunks(Grid);
+        TArray<FIntVector> Dirty;
+        Grid.ApplyStamp(MakeStamp(Case.Center, Case.RadiusCm, EReflectionsDigMode::Remove), Dirty);
+        const FGridSnapshot After = SnapshotAllChunks(Grid);
+
+        TestEqual(FString::Printf(TEXT("%s: no dirty chunks"), Case.Label), Dirty.Num(), 0);
+        TestTrue(FString::Printf(TEXT("%s: density bytes unchanged"), Case.Label), Before.Density == After.Density);
+        TestTrue(FString::Printf(TEXT("%s: material bytes unchanged"), Case.Label), Before.Material == After.Material);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigGridDirtyChunksIncludeBorderNeighboursTest, "Reflections.Digging.Grid.DirtyChunksIncludeBorderNeighbours", DigGridTestFlags)
+bool FReflectionsDigGridDirtyChunksIncludeBorderNeighboursTest::RunTest(const FString& Parameters)
+{
+    // Returns the cells whose density differs from the initial ground.
+    auto ChangedCells = [](const FReflectionsDigGrid& Grid)
+    {
+        TArray<FIntVector> Changed;
+        const FIntVector Size = Grid.GetSizeInCells();
+        for (int32 Z = 0; Z < Size.Z; ++Z)
+        {
+            for (int32 Y = 0; Y < Size.Y; ++Y)
+            {
+                for (int32 X = 0; X < Size.X; ++X)
+                {
+                    const FIntVector Cell(X, Y, Z);
+                    if (Grid.GetDensity(Cell) != ExpectedInitialDensity(Z))
+                    {
+                        Changed.Add(Cell);
+                    }
+                }
+            }
+        }
+        return Changed;
+    };
+    // True when Changed is exactly the 3 x 3 x 3 block around Middle.
+    auto IsBlockAround = [](const TArray<FIntVector>& Changed, const FIntVector& Middle)
+    {
+        if (Changed.Num() != 27)
+        {
+            return false;
+        }
+        for (const FIntVector& Cell : Changed)
+        {
+            const FIntVector Offset = Cell - Middle;
+            if (FMath::Abs(Offset.X) > 1 || FMath::Abs(Offset.Y) > 1 || FMath::Abs(Offset.Z) > 1)
+            {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    {
+        // Cell (29, 16, 16): the changed cells reach x = 30, which chunk (1, 0, 0) sees through its border.
+        FReflectionsDigGrid Grid = MakeTestGrid();
+        TArray<FIntVector> Dirty;
+        Grid.ApplyStamp(MakeStamp(FVector(1450.0, 800.0, 800.0), 1.0f, EReflectionsDigMode::Remove), Dirty);
+        const TArray<FIntVector> Changed = ChangedCells(Grid);
+        TestTrue(TEXT("premise: the changed cells are the block x 28 to 30, y and z 15 to 17"), IsBlockAround(Changed, FIntVector(29, 16, 16)));
+
+        const TSet<FIntVector> Unique(Dirty);
+        TestEqual(TEXT("border stamp: dirty chunk count"), Dirty.Num(), 2);
+        TestEqual(TEXT("border stamp: no repeated chunks"), Unique.Num(), Dirty.Num());
+        TestTrue(TEXT("border stamp: chunk (0, 0, 0) is dirty"), Unique.Contains(FIntVector(0, 0, 0)));
+        TestTrue(TEXT("border stamp: chunk (1, 0, 0) is dirty"), Unique.Contains(FIntVector(1, 0, 0)));
+    }
+    {
+        // Cell (16, 16, 16): the changed cells stay more than two cells from every other chunk.
+        FReflectionsDigGrid Grid = MakeTestGrid();
+        TArray<FIntVector> Dirty;
+        Grid.ApplyStamp(MakeStamp(FVector(800.0, 800.0, 800.0), 1.0f, EReflectionsDigMode::Remove), Dirty);
+        TestTrue(TEXT("premise: the changed cells are the block x, y and z 15 to 17"), IsBlockAround(ChangedCells(Grid), FIntVector(16, 16, 16)));
+        TestEqual(TEXT("middle stamp: dirty chunk count"), Dirty.Num(), 1);
+        TestTrue(TEXT("middle stamp: chunk (0, 0, 0) is dirty"), Dirty.Contains(FIntVector(0, 0, 0)));
     }
     return true;
 }
