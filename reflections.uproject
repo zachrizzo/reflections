@@ -13,6 +13,16 @@
 				"AIModule",
 				"UMG"
 			]
+		},
+		{
+			"Name": "MetaHumanWardrobeEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "ClothingFitEditor",
+			"Type": "Editor",
+			"LoadingPhase": "None"
 		}
 	],
 	"Plugins": [

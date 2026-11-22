@@ -1,0 +1,283 @@
+{
+  "wardrobe_item": "/Game/Characters/Clothing/OA_WayfarersTunic/WI_WayfarersTunic",
+  "reference_sizes": [
+    "BridgeGuard",
+    "Dwarf",
+    "Elf",
+    "Orc"
+  ],
+  "holdout": "TunicFieldTest",
+  "holdout_target_height_cm": 170,
+  "poses": {
+    "standing": 1,
+    "walk": 3,
+    "crouch": 3,
+    "cast": 3
+  },
+  "characters": {
+    "Dwarf": {
+      "front_waist_median_mm": 14.81,
+      "front_chest_median_mm": 13.7,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.19,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.96,
+      "maximum_frame_p95_edge_length_ratio": 1.28,
+      "standing_crossing_percent": 1.685,
+      "worst_crossing_percent": 7.116,
+      "worst_crossing_pose": "cast_50"
+    },
+    "Elf": {
+      "front_waist_median_mm": 20.94,
+      "front_chest_median_mm": 19.44,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.6,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.85,
+      "maximum_frame_p95_edge_length_ratio": 1.2,
+      "standing_crossing_percent": 1.245,
+      "worst_crossing_percent": 6.168,
+      "worst_crossing_pose": "cast_50"
+    },
+    "Orc": {
+      "front_waist_median_mm": 16.98,
+      "front_chest_median_mm": 19.35,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 10.66,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.97,
+      "maximum_frame_p95_edge_length_ratio": 1.19,
+      "standing_crossing_percent": 1.286,
+      "worst_crossing_percent": 5.381,
+      "worst_crossing_pose": "cast_22"
+    },
+    "FrostAmara": {
+      "front_waist_median_mm": 12.8,
+      "front_chest_median_mm": 21.34,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.29,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.79,
+      "maximum_frame_p95_edge_length_ratio": 1.21,
+      "standing_crossing_percent": 2.688,
+      "worst_crossing_percent": 8.03,
+      "worst_crossing_pose": "cast_78"
+    },
+    "FrostHyeon": {
+      "front_waist_median_mm": 16.02,
+      "front_chest_median_mm": 11.16,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.02,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.73,
+      "maximum_frame_p95_edge_length_ratio": 1.19,
+      "standing_crossing_percent": 1.165,
+      "worst_crossing_percent": 5.658,
+      "worst_crossing_pose": "cast_78"
+    },
+    "FrostNia": {
+      "front_waist_median_mm": 15.42,
+      "front_chest_median_mm": 22.31,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 8.99,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.73,
+      "maximum_frame_p95_edge_length_ratio": 1.18,
+      "standing_crossing_percent": 1.389,
+      "worst_crossing_percent": 5.45,
+      "worst_crossing_pose": "cast_78"
+    },
+    "FrostSaran": {
+      "front_waist_median_mm": 16.06,
+      "front_chest_median_mm": 10.54,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.1,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.69,
+      "maximum_frame_p95_edge_length_ratio": 1.2,
+      "standing_crossing_percent": 2.21,
+      "worst_crossing_percent": 7.03,
+      "worst_crossing_pose": "cast_50"
+    },
+    "FrostSilas": {
+      "front_waist_median_mm": 15.69,
+      "front_chest_median_mm": 20.16,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.85,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.9,
+      "maximum_frame_p95_edge_length_ratio": 1.23,
+      "standing_crossing_percent": 1.947,
+      "worst_crossing_percent": 6.743,
+      "worst_crossing_pose": "cast_50"
+    },
+    "FrostTobias": {
+      "front_waist_median_mm": 16.42,
+      "front_chest_median_mm": 10.65,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 10.03,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.85,
+      "maximum_frame_p95_edge_length_ratio": 1.23,
+      "standing_crossing_percent": 1.827,
+      "worst_crossing_percent": 6.534,
+      "worst_crossing_pose": "cast_50"
+    },
+    "FrostWen": {
+      "front_waist_median_mm": 17.45,
+      "front_chest_median_mm": 17.95,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.71,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.84,
+      "maximum_frame_p95_edge_length_ratio": 1.21,
+      "standing_crossing_percent": 1.795,
+      "worst_crossing_percent": 5.985,
+      "worst_crossing_pose": "cast_50"
+    },
+    "GiltBarnaby": {
+      "front_waist_median_mm": 12.41,
+      "front_chest_median_mm": 10.29,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.93,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.71,
+      "maximum_frame_p95_edge_length_ratio": 1.27,
+      "standing_crossing_percent": 3.786,
+      "worst_crossing_percent": 9.191,
+      "worst_crossing_pose": "cast_50"
+    },
+    "GiltHaruto": {
+      "front_waist_median_mm": 13.87,
+      "front_chest_median_mm": 11.81,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.75,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.79,
+      "maximum_frame_p95_edge_length_ratio": 1.3,
+      "standing_crossing_percent": 1.81,
+      "worst_crossing_percent": 8.021,
+      "worst_crossing_pose": "cast_50"
+    },
+    "GiltMaren": {
+      "front_waist_median_mm": 13.69,
+      "front_chest_median_mm": 15.99,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.84,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.72,
+      "maximum_frame_p95_edge_length_ratio": 1.27,
+      "standing_crossing_percent": 2.516,
+      "worst_crossing_percent": 7.929,
+      "worst_crossing_pose": "cast_50"
+    },
+    "GiltPriya": {
+      "front_waist_median_mm": 15.04,
+      "front_chest_median_mm": 20.19,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.1,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.76,
+      "maximum_frame_p95_edge_length_ratio": 1.18,
+      "standing_crossing_percent": 1.381,
+      "worst_crossing_percent": 5.144,
+      "worst_crossing_pose": "cast_50"
+    },
+    "GiltRamon": {
+      "front_waist_median_mm": 15.5,
+      "front_chest_median_mm": 17.82,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 10.07,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.9,
+      "maximum_frame_p95_edge_length_ratio": 1.29,
+      "standing_crossing_percent": 1.735,
+      "worst_crossing_percent": 8.153,
+      "worst_crossing_pose": "cast_50"
+    },
+    "GiltRowena": {
+      "front_waist_median_mm": 13.84,
+      "front_chest_median_mm": 19.68,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 8.92,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.74,
+      "maximum_frame_p95_edge_length_ratio": 1.18,
+      "standing_crossing_percent": 1.381,
+      "worst_crossing_percent": 5.466,
+      "worst_crossing_pose": "cast_50"
+    },
+    "ArchiveApprentice": {
+      "front_waist_median_mm": 14.42,
+      "front_chest_median_mm": 11.73,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 10.05,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.75,
+      "maximum_frame_p95_edge_length_ratio": 1.19,
+      "standing_crossing_percent": 1.71,
+      "worst_crossing_percent": 6.393,
+      "worst_crossing_pose": "cast_50"
+    },
+    "BridgeGuard": {
+      "front_waist_median_mm": 14.77,
+      "front_chest_median_mm": 20.56,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.03,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.73,
+      "maximum_frame_p95_edge_length_ratio": 1.18,
+      "standing_crossing_percent": 1.389,
+      "worst_crossing_percent": 5.169,
+      "worst_crossing_pose": "cast_50"
+    },
+    "CoinClerk": {
+      "front_waist_median_mm": 13.79,
+      "front_chest_median_mm": 15.76,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.95,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.76,
+      "maximum_frame_p95_edge_length_ratio": 1.31,
+      "standing_crossing_percent": 2.632,
+      "worst_crossing_percent": 8.369,
+      "worst_crossing_pose": "cast_50"
+    },
+    "FerryPilot": {
+      "front_waist_median_mm": 14.36,
+      "front_chest_median_mm": 10.36,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.93,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.7,
+      "maximum_frame_p95_edge_length_ratio": 1.23,
+      "standing_crossing_percent": 1.685,
+      "worst_crossing_percent": 7.182,
+      "worst_crossing_pose": "cast_22"
+    },
+    "FestivalDrummer": {
+      "front_waist_median_mm": 15.72,
+      "front_chest_median_mm": 22.1,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.17,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.76,
+      "maximum_frame_p95_edge_length_ratio": 1.18,
+      "standing_crossing_percent": 1.365,
+      "worst_crossing_percent": 5.417,
+      "worst_crossing_pose": "cast_50"
+    },
+    "GlassArtisan": {
+      "front_waist_median_mm": 15.08,
+      "front_chest_median_mm": 11.18,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 10.24,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.81,
+      "maximum_frame_p95_edge_length_ratio": 1.27,
+      "standing_crossing_percent": 2.051,
+      "worst_crossing_percent": 7.805,
+      "worst_crossing_pose": "cast_22"
+    },
+    "IvenRook": {
+      "front_waist_median_mm": 14.68,
+      "front_chest_median_mm": 11.61,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 10.2,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.64,
+      "maximum_frame_p95_edge_length_ratio": 1.22,
+      "standing_crossing_percent": 1.802,
+      "worst_crossing_percent": 6.343,
+      "worst_crossing_pose": "cast_50"
+    },
+    "TunicFieldTest": {
+      "front_waist_median_mm": 13.85,
+      "front_chest_median_mm": 14.78,
+      "moving_samples": 9,
+      "minimum_frame_p95_tunic_travel_cm": 9.54,
+      "maximum_frame_p95_change_in_gap_to_tracked_skin_mm": 0.76,
+      "maximum_frame_p95_edge_length_ratio": 1.24,
+      "standing_crossing_percent": 1.611,
+      "worst_crossing_percent": 6.717,
+      "worst_crossing_pose": "cast_50"
+    }
+  }
+}

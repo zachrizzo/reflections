@@ -1,0 +1,266 @@
+[
+  {
+    "label": "01 FrostAmara",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/FrostAmara/MHC_FrostAmara",
+    "location_cm": [
+      -670.0,
+      -1055.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "02 FrostHyeon",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/FrostHyeon/MHC_FrostHyeon",
+    "location_cm": [
+      -670.0,
+      -880.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "03 FrostNia",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/FrostNia/MHC_FrostNia",
+    "location_cm": [
+      -670.0,
+      -705.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "04 FrostSaran",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/FrostSaran/MHC_FrostSaran",
+    "location_cm": [
+      -670.0,
+      -530.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "05 FrostSilas",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/FrostSilas/MHC_FrostSilas",
+    "location_cm": [
+      -670.0,
+      -355.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "06 FrostTobias",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/FrostTobias/MHC_FrostTobias",
+    "location_cm": [
+      -670.0,
+      -180.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "07 FrostWen",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/FrostWen/MHC_FrostWen",
+    "location_cm": [
+      -670.0,
+      -5.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "08 GiltBarnaby",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/GiltBarnaby/MHC_GiltBarnaby",
+    "location_cm": [
+      -670.0,
+      170.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "09 GiltHaruto",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/GiltHaruto/MHC_GiltHaruto",
+    "location_cm": [
+      -670.0,
+      345.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "10 GiltMaren",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/GiltMaren/MHC_GiltMaren",
+    "location_cm": [
+      -670.0,
+      520.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "11 GiltPriya",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/GiltPriya/MHC_GiltPriya",
+    "location_cm": [
+      -50.0,
+      -970.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "12 GiltRamon",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/GiltRamon/MHC_GiltRamon",
+    "location_cm": [
+      -50.0,
+      -795.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "13 GiltRowena",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/Lanthorne/People/GiltRowena/MHC_GiltRowena",
+    "location_cm": [
+      -50.0,
+      -620.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "14 ArchiveApprentice",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/RedLondon/ArchiveApprentice/MHC_ArchiveApprentice",
+    "location_cm": [
+      -50.0,
+      -445.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "15 BridgeGuard",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/RedLondon/BridgeGuard/MHC_BridgeGuard",
+    "location_cm": [
+      -50.0,
+      -270.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "16 CoinClerk",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/RedLondon/CoinClerk/MHC_CoinClerk",
+    "location_cm": [
+      -50.0,
+      -95.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "17 FerryPilot",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/RedLondon/FerryPilot/MHC_FerryPilot",
+    "location_cm": [
+      -50.0,
+      80.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "18 FestivalDrummer",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/RedLondon/FestivalDrummer/MHC_FestivalDrummer",
+    "location_cm": [
+      -50.0,
+      255.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "19 GlassArtisan",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/RedLondon/GlassArtisan/MHC_GlassArtisan",
+    "location_cm": [
+      -50.0,
+      430.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "20 IvenRook",
+    "folder": "Preview/MetaHuman Lineup",
+    "character": "/Game/Characters/WhiteLondon/IvenRook/MetaHuman/MHC_IvenRook",
+    "location_cm": [
+      -50.0,
+      605.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "24 TunicFieldTest",
+    "folder": "Preview/Wardrobe Holdout",
+    "character": "/Game/Characters/Fantasy/MHC_TunicFieldTest",
+    "location_cm": [
+      -1050.0,
+      420.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "Dwarf",
+    "folder": "Preview/Fantasy MetaHumans",
+    "character": "/Game/Characters/Fantasy/MHC_Dwarf",
+    "location_cm": [
+      -1050.0,
+      -510.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "Elf",
+    "folder": "Preview/Fantasy MetaHumans",
+    "character": "/Game/Characters/Fantasy/MHC_Elf",
+    "location_cm": [
+      -1050.0,
+      -210.0,
+      8.0
+    ],
+    "yaw": 90.0
+  },
+  {
+    "label": "Orc",
+    "folder": "Preview/Fantasy MetaHumans",
+    "character": "/Game/Characters/Fantasy/MHC_Orc",
+    "location_cm": [
+      -1050.0,
+      120.0,
+      8.0
+    ],
+    "yaw": 90.0
+  }
+]
