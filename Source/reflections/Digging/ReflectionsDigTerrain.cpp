@@ -14,6 +14,7 @@
 #include "Engine/World.h"
 #include "HAL/PlatformTime.h"
 #include "Materials/MaterialInterface.h"
+#include "UObject/ConstructorHelpers.h"
 #include "PhysicsEngine/BodySetup.h"
 
 DEFINE_LOG_CATEGORY(LogReflectionsDigTerrain);
@@ -230,6 +231,10 @@ void UReflectionsDigChunkComponent::FinishPhysicsAsyncCook(bool bSuccess, UBodyS
         PendingCook = nullptr;
         // The engine swaps a finished body in only when the cook succeeded (or needed no cooking).
         bLastCookFailed = MeshBodySetup != FinishedBodySetup;
+        if (AReflectionsDigTerrain* Owner = Cast<AReflectionsDigTerrain>(GetOwner()))
+        {
+            ++Owner->CookCompletionCount;
+        }
         bHasCollision |= !bLastCookFailed;
         // Navigation exports the body setup it is handed, so it is told only now that the new one is in; a failed
         // cook kept the old body, which navigation already has.
@@ -245,6 +250,10 @@ AReflectionsDigTerrain::AReflectionsDigTerrain()
 {
     PrimaryActorTick.bCanEverTick = false;
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+
+    // A hard reference, so a packaged game cooks the fallback material with the terrain.
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> PlainMaterialFinder(PlainGroundMaterialPath);
+    PlainGroundMaterial = PlainMaterialFinder.Object;
 
     SafetyFloor = CreateDefaultSubobject<UBoxComponent>(TEXT("SafetyFloor"));
     SafetyFloor->SetupAttachment(RootComponent);
@@ -276,7 +285,7 @@ void AReflectionsDigTerrain::BeginPlay()
     PieceMaterial = GroundMaterial;
     if (PieceMaterial == nullptr)
     {
-        PieceMaterial = LoadObject<UMaterialInterface>(nullptr, PlainGroundMaterialPath);
+        PieceMaterial = PlainGroundMaterial;
         if (PieceMaterial == nullptr)
         {
             UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("%s has no GroundMaterial and %s could not be loaded; its pieces use the engine default material."),
@@ -478,6 +487,11 @@ void AReflectionsDigTerrain::ReleaseChunk(FIntVector Chunk)
         ReleaseSeconds += FPlatformTime::Seconds() - ReleaseStart;
         ++ReleaseCount;
     }
+}
+
+int32 AReflectionsDigTerrain::GetCookCompletionCount() const
+{
+    return CookCompletionCount;
 }
 
 int32 AReflectionsDigTerrain::GetChunkReleaseCount() const

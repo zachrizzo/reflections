@@ -170,6 +170,8 @@ public:
 
     /** How many chunks ReleaseChunk has released (chunks that showed anything), and the game-thread seconds it took. For measurements. */
     int32 GetChunkReleaseCount() const;
+    /** How many newest collision cooks of its pieces have finished, failed ones included. For measurements. */
+    int32 GetCookCompletionCount() const;
     double GetChunkReleaseSeconds() const;
 
 protected:
@@ -204,10 +206,15 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UMaterialInterface> PieceMaterial;
 
+    /** /Engine/BasicShapes/BasicShapeMaterial, found in the constructor so it is a hard reference (cooked with the terrain). */
+    UPROPERTY()
+    TObjectPtr<UMaterialInterface> PlainGroundMaterial;
+
     double LastNavUpdateSeconds = -1.0;
     int32 NavUpdateCount = 0;
     double NavUpdateSeconds = 0.0;
     int32 ReleaseCount = 0;
+    int32 CookCompletionCount = 0;
     double ReleaseSeconds = 0.0;
 
     /** Rebuilt from the grid at run time, never saved. */
