@@ -455,23 +455,27 @@ The map uses the project's default game mode; it sets no override.
 ### Task 2.6: Measure and report
 
 **Files:**
-- Create: `Source/reflections/Digging/Tests/ReflectionsDigPerfTests.cpp` (game-context tests under `Reflections.DigSpikePerf`)
-- Create: `ArtDirection/Digging/SpikeResults.md`
+- Create: `Source/reflections/Digging/Tests/ReflectionsDigPerfTests.cpp` (game-context tests under `Reflections.SpikePerf`)
+- Modify: `Source/reflections/Digging/ReflectionsDigTerrain.h` and `.cpp` only to add two counters for navigation cost (see below)
+- Modify: `Source/reflections/reflections.Build.cs` only if the game-thread timer lives in a module not yet listed
+- Create: `ArtDirection/Digging/SpikeResults.md` and screenshots under `ArtDirection/Digging/SpikeShots/`
 
 **Interfaces:**
-- Consumes: everything above. Produces numbers only.
+- Consumes: everything above, and the game-test harness in `Tests/ReflectionsDigGameTestHarness.h`.
+- Produces: numbers only, plus `int32 AReflectionsDigTerrain::GetNavUpdateCount() const` and `double AReflectionsDigTerrain::GetNavUpdateSeconds() const` (how many navigation updates the terrain has asked for, and the game-thread seconds spent inside those calls).
 
-These run with the real renderer: `test.ps1 -Game -Render -Map /Game/Maps/DigSpike/L_DigSpike -Filter Reflections.DigSpikePerf`. They are measurements, not pass or fail gates in code: each test logs a line starting `DIGSPIKE` and passes if it completed. Game-thread time per frame is read from `GGameThreadTime`.
+These run with the real renderer, off screen: `test.ps1 -Game -Render -Map /Game/Maps/DigSpike/L_DigSpike -Filter Reflections.SpikePerf -TimeoutSec 2400`. The prefix is `Reflections.SpikePerf`, not `Reflections.DigSpike...`, so the ordinary game-context command does not pick them up. They are measurements, not gates: each test logs lines that start with `DIGSPIKE` at Display level and passes if it completed. The pass marks are applied in `SpikeResults.md`, not in code. Game-thread time per frame is read from the engine's own game-thread timer (`GGameThreadTime`); the wrapper caps the run at 60 frames a second, so frame time itself says nothing.
 
-- [ ] **Step 1: Write the measurement tests**:
-  - `Reflections.DigSpikePerf.DigCost`: 300 idle frames, then 30 seconds of a dig under the character every 0.1 s. Log `DIGSPIKE DIG idle_mean_ms=… idle_max_ms=… dig_max_ms=… dig_p99_ms=…`.
-  - `Reflections.DigSpikePerf.StreamingCost`: move the character corner to corner over 20 seconds so chunks unload and reload. Log `DIGSPIKE STREAM max_ms=… p99_ms=…`.
-  - `Reflections.DigSpikePerf.CollisionSize`: after 200 random digs inside the patch, log `DIGSPIKE COLLISION largest_vertices=…`.
-  - `Reflections.DigSpikePerf.Seams`: 500 downward traces along the chunk borders and along the join with the cube ground at X = 1000. Log `DIGSPIKE SEAMS traces=500 misses=…`.
-  - `Reflections.DigSpikePerf.CaveShots`: dig a 500 cm tunnel, put `DigSpike_CaveLight1` inside it, and save four screenshots under `ArtDirection/Digging/SpikeShots/`: tunnel and pit, each with `r.Lumen.HardwareRayTracing` 1 and 0.
-  - `Reflections.DigSpikePerf.ShadowCost`: dig beside the sun-lit pit edge for 10 seconds. Log `DIGSPIKE SHADOW max_ms=… mean_ms=…`.
-- [ ] **Step 2: Run** the command and collect every `DIGSPIKE` line from the log.
-- [ ] **Step 3: Write** `ArtDirection/Digging/SpikeResults.md`: the plan doc's results table with the measured numbers, how each was measured, what could not be measured from the worktree (the packaged build, and anything that needs the game's real content), and the plugin check (Voxel Plugin 2 listed UE 5.6 and 5.7 only when checked on 2026-11-21; nothing was bought or installed).
-- [ ] **Step 4: Commit** the test file, the results file and the screenshots.
+- [ ] **Step 1: Prove the renderer is on.** Write `Reflections.SpikePerf.RendererIsOn`: it passes when the process is not using the null RHI and a game viewport exists, and logs `DIGSPIKE RENDER rhi=<name> raytracing=<0 or 1> lumen_hwrt=<0 or 1> resolution=<w>x<h>`. Run the command above. If the process cannot start a renderer off screen on this machine, stop and report NEEDS_CONTEXT with the log lines.
+- [ ] **Step 2: Write the measurement tests**, each at its own site on the patch, clear of the other game tests' digs:
+  - `Reflections.SpikePerf.DigCost`: 300 idle frames, then 30 seconds of a dig under the character every 0.1 s. Log `DIGSPIKE DIG idle_mean_ms=... idle_max_ms=... dig_max_ms=... dig_p99_ms=... dig_mean_ms=... digs=... nav_updates=... nav_ms_total=...`.
+  - `Reflections.SpikePerf.StreamingCost`: move the character corner to corner over 20 seconds so chunks unload and reload. Log `DIGSPIKE STREAM idle_max_ms=... max_ms=... p99_ms=... chunks_released=... chunks_restored=...`.
+  - `Reflections.SpikePerf.CollisionSize`: after 200 digs at seeded random points inside the patch, log `DIGSPIKE COLLISION largest_vertices=... pieces_max_per_chunk=...`.
+  - `Reflections.SpikePerf.Seams`: 500 downward traces along the chunk borders and along the join with the cube ground at X = 1000. Log `DIGSPIKE SEAMS traces=500 misses=...`.
+  - `Reflections.SpikePerf.CaveShots`: dig a 500 cm tunnel, put `DigSpike_CaveLight1` inside it, and save four screenshots under `ArtDirection/Digging/SpikeShots/`: the tunnel and the pit, each with `r.Lumen.HardwareRayTracing` 1 and 0. Log for each shot whether hardware ray tracing was really active.
+  - `Reflections.SpikePerf.ShadowCost`: dig beside the sun-lit pit edge for 10 seconds. Log `DIGSPIKE SHADOW idle_max_ms=... max_ms=... mean_ms=...`.
+- [ ] **Step 3: Run** the command three times and collect every `DIGSPIKE` line from each log.
+- [ ] **Step 4: Write** `ArtDirection/Digging/SpikeResults.md`: the plan doc's results table (game-thread cost of digging, streaming, collision size per chunk, seams, navmesh, cave lighting, shadows, packaged build) with the measured numbers from all three runs, the pass mark beside each, and how each was measured; the headless numbers from the earlier tasks, labelled as headless; what could not be measured from this worktree (the packaged build, and anything that needs the game's real content or the real hero) and why; and the plugin check (Voxel Plugin 2 listed UE 5.6 and 5.7 only when checked on 2026-11-21; nothing was bought or installed). Leave the last section, "Verdict", with the single line `Verdict: to be written by the controller after review.`
+- [ ] **Step 5: Commit** the test file, the two counters, the results file and the screenshots.
 
 **Gate 2:** every measured row meets the plan doc's pass mark and the user accepts the cave lighting.
