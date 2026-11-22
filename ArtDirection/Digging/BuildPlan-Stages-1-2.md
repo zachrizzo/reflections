@@ -285,6 +285,7 @@ The map uses the project's default game mode; it sets no override.
   - `namespace ReflectionsDigMesher`:
     - `REFLECTIONS_API void BuildFromSamples(const FReflectionsDigChunkSamples& Samples, FReflectionsDigMeshData& Out);` pure and safe to call from any thread
     - `REFLECTIONS_API void BuildChunk(const FReflectionsDigGrid& Grid, FIntVector Chunk, FReflectionsDigMeshData& Out);` copies the samples, then calls `BuildFromSamples`
+    - `REFLECTIONS_API bool SplitsAlongOwnCubeDiagonal(const FVector3f& P00, const FVector3f& P10, const FVector3f& P11, const FVector3f& P01, const FVector3f& AirDirection);` the one place the quad diagonal is decided, exposed so a test can pin it
 
 **Rules (exact).** Naive surface nets.
 - A cube (i, j, k) has its corners at local cells i..i+1, j..j+1, k..k+1. A corner is solid when its density is above 0.
@@ -298,17 +299,18 @@ The map uses the project's default game mode; it sets no override.
 - `Out` is reset first. A chunk with no surface gives an empty `Out`.
 - No triangle has zero area. The tests assert, on every mesh they build, that each triangle's area is above 0.01 cm² and that its `VectorUtil::Normal` agrees in direction with the stored normals of its three vertices.
 
-- [ ] **Step 1: Write the failing tests** (seven after review) (grid 3 x 3 x 2 chunks, origin (0, 0, 0), ground height 2800 unless stated):
+- [ ] **Step 1: Write the failing tests** (eight after review) (grid 3 x 3 x 2 chunks, origin (0, 0, 0), ground height 2800 unless stated):
   - `Reflections.Digging.Mesher.UniformChunkIsEmpty`: chunk (1, 1, 0), all solid, gives no triangles; a sample block filled with -127 gives none.
   - `Reflections.Digging.Mesher.FlatGroundIsFlat`: chunk (1, 1, 1). Every vertex Z is within 1 cm of 2800; every normal is within 1 degree of +Z; every triangle's `VectorUtil::Normal` is within 1 degree of +Z; there are exactly 2048 triangles.
   - `Reflections.Digging.Mesher.NeighboursShareBorderVertices`: Remove at (1600, 2400, 2600), radius 200, then mesh chunks (0, 1, 1) and (1, 1, 1). Pair vertices by cube (a cube has at most one vertex; a vertex's cube is the floor of its position divided by 50). At least 8 cubes with X index 31 have a vertex in both chunks, and in every such pair the positions agree within 0.01 cm and the normals within 0.1 degree. (A border cube used only by edges the first chunk owns has no twin, and that is correct.)
   - `Reflections.Digging.Mesher.QuadsAreNotDuplicatedAcrossChunks`: for the same two meshes, no triangle (as a set of three positions, within 0.01 cm) appears in both.
   - `Reflections.Digging.Mesher.CellCentredDigsMakeNoDegenerateTriangles` (added when the 0-level bug was found): Remove stamps of radius 100 centred exactly on cells, underground, inside chunk (1, 1, 1) and across its border into (0, 1, 1); both meshes hold no triangle under the area threshold.
   - `Reflections.Digging.Mesher.DenseDigFieldsKeepEveryTriangleFacingAir` (added in review): radius-100 Remove stamps on 150, 200 and 250 cm lattices, with centres on cells and 17 cm off cells, buried (ground height 6400) and at the surface (ground height 2800). For each of the twelve fields, mesh chunks (1, 1, 1) and (0, 1, 1): every triangle passes the area and facing checks, every normal is unit length, and vertices paired by cube across the border agree.
+  - `Reflections.Digging.Mesher.FoldedQuadTakesTheOtherDiagonal` (added in review): crafted quads fed to `SplitsAlongOwnCubeDiagonal`: one folded on each diagonal, one where both qualify and the other diagonal is shorter, and a square (exact tie). The chosen split always has both triangles facing air, and for the folded cases the rejected split has a triangle facing away.
   - `Reflections.Digging.Mesher.BuriedSphereIsClosed`: on a grid with ground height 6400 (all solid), Remove at (2400, 2400, 2400), radius 200, then mesh chunk (1, 1, 1). There is at least one triangle, every edge is used by exactly two triangles, and every vertex normal points toward the sphere centre.
 - [ ] **Step 2: Build and run** `test.ps1 -Filter Reflections.Digging.Mesher`. Record RED.
 - [ ] **Step 3: Implement** the mesher.
-- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections.Digging`. Expected: 18 ran, 18 passed (9 grid tests, 2 grid tests added by the task 2.1 review, 7 mesher tests).
+- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections.Digging`. Expected: 19 ran, 19 passed (9 grid tests, 2 grid tests added by the task 2.1 review, 8 mesher tests).
 - [ ] **Step 5: Commit** the listed files.
 
 ---
