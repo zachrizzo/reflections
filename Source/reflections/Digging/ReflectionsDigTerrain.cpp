@@ -403,7 +403,10 @@ void AReflectionsDigTerrain::RetireCurrentSet(FReflectionsDigTerrainChunk& State
                 Old->SetVisibility(false);
                 // Old collision: it leaves navigation now (the engine removes it from the navigation octree and
                 // dirties its area), not when it is destroyed after the swap.
+                const double NavStart = FPlatformTime::Seconds();
                 Old->SetCanEverAffectNavigation(false);
+                NavUpdateSeconds += FPlatformTime::Seconds() - NavStart;
+                ++NavUpdateCount;
             }
         }
         if (const UWorld* World = GetWorld())
@@ -431,7 +434,10 @@ void AReflectionsDigTerrain::SetRetiringSetNavigation(FReflectionsDigTerrainChun
         {
             // The engine adds the piece to the navigation octree with its current body, or removes it, and dirties
             // its area.
+            const double NavStart = FPlatformTime::Seconds();
             Piece->SetCanEverAffectNavigation(bAffects);
+            NavUpdateSeconds += FPlatformTime::Seconds() - NavStart;
+            ++NavUpdateCount;
             bChanged = true;
         }
     }
@@ -557,6 +563,16 @@ double AReflectionsDigTerrain::GetLastNavUpdateSeconds() const
     return LastNavUpdateSeconds;
 }
 
+int32 AReflectionsDigTerrain::GetNavUpdateCount() const
+{
+    return NavUpdateCount;
+}
+
+double AReflectionsDigTerrain::GetNavUpdateSeconds() const
+{
+    return NavUpdateSeconds;
+}
+
 void AReflectionsDigTerrain::UpdatePieceNavigation(UReflectionsDigChunkComponent& Piece)
 {
     UWorld* World = GetWorld();
@@ -567,7 +583,10 @@ void AReflectionsDigTerrain::UpdatePieceNavigation(UReflectionsDigChunkComponent
     {
         return;
     }
+    const double NavStart = FPlatformTime::Seconds();
     FNavigationSystem::UpdateComponentData(Piece);
+    NavUpdateSeconds += FPlatformTime::Seconds() - NavStart;
+    ++NavUpdateCount;
     LastNavUpdateSeconds = World->GetTimeSeconds();
 }
 

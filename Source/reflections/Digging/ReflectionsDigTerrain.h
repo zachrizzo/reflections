@@ -157,6 +157,15 @@ public:
      */
     double GetLastNavUpdateSeconds() const;
 
+    /**
+     * How many navigation updates the terrain has asked for: each call that tells navigation about one piece (its new
+     * body is in, or it starts or stops affecting navigation). For measurements; it changes nothing.
+     */
+    int32 GetNavUpdateCount() const;
+
+    /** The game-thread seconds spent inside those calls, summed. The navigation system's own later work is not in it. */
+    double GetNavUpdateSeconds() const;
+
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -186,6 +195,8 @@ private:
     TUniquePtr<FReflectionsDigGrid> Grid;
 
     double LastNavUpdateSeconds = -1.0;
+    int32 NavUpdateCount = 0;
+    double NavUpdateSeconds = 0.0;
 
     /** Rebuilt from the grid at run time, never saved. */
     UPROPERTY(Transient)

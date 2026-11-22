@@ -1269,4 +1269,135 @@ bool FReflectionsDigTerrainFailedCookGivesTheRetiringSetItsNavigationBackTest::R
     return true;
 }
 
+namespace
+{
+    /** Marks every piece whose cook is running to fail it; returns how many. */
+    int32 FailEveryPendingCook(const AReflectionsDigTerrain& Terrain)
+    {
+        TArray<UReflectionsDigChunkComponent*> All;
+        Terrain.GetComponents(All);
+        int32 Failing = 0;
+        for (UReflectionsDigChunkComponent* Piece : All)
+        {
+            if (Piece->IsCollisionCookPending())
+            {
+                Piece->FailNextCookForTest();
+                ++Failing;
+            }
+        }
+        return Failing;
+    }
+
+    /**
+     * Checks that every retiring piece of the chunk has navigation back (Expected true) or has left it again (false).
+     * Returns false (reported) when the chunk has no retiring pieces.
+     */
+    bool TestRetiringNavigation(FAutomationTestBase& Test, const AReflectionsDigTerrain& Terrain, const FString& When, bool bExpected)
+    {
+        const TArray<UReflectionsDigChunkComponent*> Retiring = GetHiddenPieces(Terrain);
+        if (!Test.TestTrue(FString::Printf(TEXT("%s: the chunk has retiring pieces"), *When), Retiring.Num() > 0))
+        {
+            return false;
+        }
+        for (const UReflectionsDigChunkComponent* Piece : Retiring)
+        {
+            Test.TestEqual(FString::Printf(TEXT("%s: retiring piece %s can affect navigation"), *When, *Piece->GetName()),
+                Piece->CanEverAffectNavigation(), bExpected);
+        }
+        return true;
+    }
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainKeptRetiringSetLeavesNavigationAtTheNextCommitTest, "Reflections.Digging.Terrain.KeptRetiringSetLeavesNavigationAtTheNextCommit", DigTerrainTestFlags)
+bool FReflectionsDigTerrainKeptRetiringSetLeavesNavigationAtTheNextCommitTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    const FIntVector Busy(1, 1, 0);
+    // Two failed cooks below, one warning each.
+    AddExpectedMessagePlain(TEXT("a collision cook failed or a piece has no collision"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 2);
+
+    // Part 1, the replace path (RetireCurrentSet): a kept split set behind a split set that never got collision.
+    if (!RetireTheRiddledChunk(*this, TestWorld, Scene, Busy))
+    {
+        return true;
+    }
+    TestEqual(TEXT("Premise: every cooking piece is the new split set's"), FailEveryPendingCook(*Scene.Terrain), Scene.Terrain->GetChunkPieceCount(Busy));
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the split set's failed cooks"))
+        || !TestRetiringNavigation(*this, *Scene.Terrain, TEXT("Part 1, at the first idle"), true))
+    {
+        return true;
+    }
+    const int32 KeptSplit = Scene.Terrain->GetRetiringPieceCount(Busy);
+    FReflectionsDigMeshData Riddled;
+    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Riddled);
+    Scene.Terrain->CommitChunk(Busy, MoveTemp(Riddled));
+    TestTrue(TEXT("Premise: part 1's commit replaces the set (more than one piece)"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+    TestTrue(TEXT("Premise: part 1's new set is cooking"), Scene.Terrain->IsChunkCooking(Busy));
+    TestEqual(TEXT("Premise: part 1 keeps the same retiring set"), Scene.Terrain->GetRetiringPieceCount(Busy), KeptSplit);
+    TestRetiringNavigation(*this, *Scene.Terrain, TEXT("Part 1, while the next set cooks"), false);
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after part 1's commit")))
+    {
+        return true;
+    }
+    TestEqual(TEXT("Part 1's retiring set is gone once the new set has cooked"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
+
+    // Part 2, the reuse path (one piece onto one piece): a kept split set behind one piece that never got collision.
+    // The split mesh is kept from before the fill, so it can be committed again once the grid holds one piece's worth.
+    FReflectionsDigMeshData SplitBeforeFill;
+    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, SplitBeforeFill);
+    // The fill ReusePathClearsAFinishedRetiringSet uses: it leaves the lowest row of cavities, which mesh to one piece.
+    for (double Z = -2500.0; Z <= -1300.0; Z += 200.0)
+    {
+        for (double Y = 1700.0; Y <= 3100.0; Y += 200.0)
+        {
+            for (double X = 1700.0; X <= 3100.0; X += 200.0)
+            {
+                Scene.Dig->Dig(FVector(X, Y, Z), 150.0f, EReflectionsDigMode::Add);
+            }
+        }
+    }
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the fill")))
+    {
+        return true;
+    }
+    TestEqual(TEXT("Premise: the filled chunk is one piece"), Scene.Terrain->GetChunkPieceCount(Busy), 1);
+    // The stale split mesh goes in directly and cooks: a split set with collision, nothing retiring, nothing dirty.
+    Scene.Terrain->CommitChunk(Busy, MoveTemp(SplitBeforeFill));
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the split mesh's commit")))
+    {
+        return true;
+    }
+    TestTrue(TEXT("Premise: the chunk shows the split set again"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+    TestEqual(TEXT("Premise: nothing retires before part 2's first commit"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
+    FReflectionsDigMeshData OnePiece;
+    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, OnePiece);
+    Scene.Terrain->CommitChunk(Busy, MoveTemp(OnePiece));
+    TestEqual(TEXT("Premise: part 2's first commit shows one piece"), Scene.Terrain->GetChunkPieceCount(Busy), 1);
+    TestEqual(TEXT("Premise: the one piece's cook is the only one running"), FailEveryPendingCook(*Scene.Terrain), 1);
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the one piece's failed cook"))
+        || !TestRetiringNavigation(*this, *Scene.Terrain, TEXT("Part 2, at the first idle"), true))
+    {
+        return true;
+    }
+    const int32 KeptForReuse = Scene.Terrain->GetRetiringPieceCount(Busy);
+    const UDynamicMeshComponent* Reused = Scene.Terrain->FindChunkComponent(Busy);
+    FReflectionsDigMeshData OnePieceAgain;
+    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, OnePieceAgain);
+    Scene.Terrain->CommitChunk(Busy, MoveTemp(OnePieceAgain));
+    TestTrue(TEXT("Premise: part 2's commit reuses the one piece"), Scene.Terrain->GetChunkPieceCount(Busy) == 1 && Scene.Terrain->FindChunkComponent(Busy) == Reused);
+    TestTrue(TEXT("Premise: the reused piece is cooking"), Scene.Terrain->IsChunkCooking(Busy));
+    TestEqual(TEXT("Premise: part 2 keeps the same retiring set"), Scene.Terrain->GetRetiringPieceCount(Busy), KeptForReuse);
+    TestRetiringNavigation(*this, *Scene.Terrain, TEXT("Part 2, while the reused piece cooks"), false);
+    if (WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after part 2's commit")))
+    {
+        TestEqual(TEXT("Part 2's retiring set is gone once the reused piece has cooked"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
+    }
+    return true;
+}
+
 #endif
