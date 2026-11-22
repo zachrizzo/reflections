@@ -304,7 +304,7 @@ The map uses the project's default game mode; it sets no override.
   - `Reflections.Digging.Mesher.BuriedSphereIsClosed`: on a grid with ground height 6400 (all solid), Remove at (2400, 2400, 2400), radius 200, then mesh chunk (1, 1, 1). There is at least one triangle, every edge is used by exactly two triangles, and every vertex normal points toward the sphere centre.
 - [ ] **Step 2: Build and run** `test.ps1 -Filter Reflections.Digging.Mesher`. Record RED.
 - [ ] **Step 3: Implement** the mesher.
-- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections.Digging`. Expected: 14 ran, 14 passed.
+- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections.Digging`. Expected: 16 ran, 16 passed (9 grid tests, 2 grid tests added by the task 2.1 review, 5 mesher tests).
 - [ ] **Step 5: Commit** the listed files.
 
 ---
