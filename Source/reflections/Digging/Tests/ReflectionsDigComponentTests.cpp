@@ -1,6 +1,7 @@
 #include "Digging/ReflectionsDigComponent.h"
 
 #include "CoreMinimal.h"
+#include "AIController.h"
 #include "Digging/ReflectionsDigGrid.h"
 #include "Digging/ReflectionsDigSpot.h"
 #include "Digging/ReflectionsDigSubsystem.h"
@@ -9,11 +10,13 @@
 #include "Digging/Tests/ReflectionsDigTestTraces.h"
 #include "Digging/Tests/ReflectionsDigTestWorld.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/DefaultPawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "Math/RandomStream.h"
@@ -181,6 +184,28 @@ namespace
             }
         }
         return All;
+    }
+
+    bool SamplesEqual(const TArray<FReflectionsDigChunkSamples>& A, const TArray<FReflectionsDigChunkSamples>& B)
+    {
+        if (A.Num() != B.Num())
+        {
+            return false;
+        }
+        for (int32 Index = 0; Index < A.Num(); ++Index)
+        {
+            if (A[Index].Density != B[Index].Density || A[Index].Material != B[Index].Material)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    AReflectionsDigTerrain* FindTerrain(UWorld* World)
+    {
+        TActorIterator<AReflectionsDigTerrain> It(World);
+        return It ? *It : nullptr;
     }
 }
 
@@ -537,6 +562,145 @@ bool FReflectionsDigInputSafetyFloorIsNotTerrainTest::RunTest(const FString& Par
                             Before[Index].Density == After[Index].Density && Before[Index].Material == After[Index].Material);
                     }
                 }
+            }
+        }
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigInputWithoutTerrainFillFailsAndSpotsDigTest, "Reflections.DigInput.WithoutTerrainFillFailsAndSpotsDig", DigInputTestFlags)
+bool FReflectionsDigInputWithoutTerrainFillFailsAndSpotsDigTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    {
+        // 250 cm behind the cube's centre: its face is 200 cm away (in reach), and a fill sphere there stays clear of
+        // the pawn, so only the missing terrain can refuse the fill.
+        FReflectionsDigTestWorld TestWorld;
+        FDigScene Scene;
+        if (MakeScene(*this, TestWorld, FVector(-250.0, 0.0, 0.0), FRotator::ZeroRotator, TestSpotId, Scene))
+        {
+            UReflectionsDigSubsystem* Subsystem = TestWorld.World->GetSubsystem<UReflectionsDigSubsystem>();
+            if (TestNotNull(TEXT("Dig subsystem"), Subsystem))
+            {
+                TestFalse(TEXT("The world has no terrain"), Subsystem->HasTerrain());
+            }
+            TestFalse(TEXT("Fill is not mapped"), Scene.Dig->IsFillMapped());
+            TestFalse(TEXT("TryFill with no terrain returns false"), Scene.Dig->TryFill());
+            TestEqual(TEXT("The fill left the spot alone"), Scene.Spot->GetStage(), 0);
+            TestTrue(TEXT("TryDig still digs the dig spot"), Scene.Dig->TryDig());
+            TestEqual(TEXT("Spot stage"), Scene.Spot->GetStage(), 1);
+        }
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigInputFillIsMappedOnlyWithTerrainTest, "Reflections.DigInput.FillIsMappedOnlyWithTerrain", DigInputTestFlags)
+bool FReflectionsDigInputFillIsMappedOnlyWithTerrainTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    {
+        FReflectionsDigTestWorld TestWorld;
+        if (TestNotNull(TEXT("Test world"), TestWorld.World))
+        {
+            ADefaultPawn* Pawn = TestWorld.Spawn<ADefaultPawn>(TerrainPawnLocation);
+            UReflectionsDigComponent* Dig = UReflectionsDigComponent::EnsureOnPawn(Pawn);
+            if (TestNotNull(TEXT("Pawn"), Pawn) && TestNotNull(TEXT("Dig component"), Dig))
+            {
+                TestFalse(TEXT("Fill is not mapped before a terrain exists"), Dig->IsFillMapped());
+
+                AReflectionsDigTerrain* Terrain = TestWorld.Spawn<AReflectionsDigTerrain>(FVector::ZeroVector);
+                if (TestNotNull(TEXT("Terrain"), Terrain))
+                {
+                    TestTrue(TEXT("Fill is mapped once a terrain registers"), Dig->IsFillMapped());
+                    TestWorld.Tick();
+                    Terrain->Destroy();
+                    TestFalse(TEXT("Fill is not mapped after the terrain is destroyed"), Dig->IsFillMapped());
+                }
+
+                // A component that begins play in a world that already has a terrain maps fill at once.
+                AReflectionsDigTerrain* Second = TestWorld.Spawn<AReflectionsDigTerrain>(FVector::ZeroVector);
+                ADefaultPawn* Late = TestWorld.Spawn<ADefaultPawn>(TerrainPawnLocation + FVector(0.0, 300.0, 0.0));
+                UReflectionsDigComponent* LateDig = UReflectionsDigComponent::EnsureOnPawn(Late);
+                if (TestNotNull(TEXT("Second terrain"), Second) && TestNotNull(TEXT("Late dig component"), LateDig))
+                {
+                    TestTrue(TEXT("A component added after the terrain maps fill"), LateDig->IsFillMapped());
+                    TestTrue(TEXT("The first component maps fill again"), Dig->IsFillMapped());
+                }
+            }
+        }
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigInputFillNeverBuriesThePawnTest, "Reflections.DigInput.FillNeverBuriesThePawn", DigInputTestFlags)
+bool FReflectionsDigInputFillNeverBuriesThePawnTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    {
+        FReflectionsDigTestWorld TestWorld;
+        FTerrainDigScene Scene;
+        if (MakeTerrainScene(*this, TestWorld, Scene))
+        {
+            AReflectionsDigTerrain* Terrain = FindTerrain(TestWorld.World);
+            if (TestNotNull(TEXT("Terrain"), Terrain) && TestNotNull(TEXT("Grid"), Terrain->GetGrid()))
+            {
+                const TArray<FReflectionsDigChunkSamples> Before = CopyAllSamples(*Terrain->GetGrid());
+
+                // A pawn that is not a character, standing on the ground (its 35 cm collision sphere touches it) and
+                // looking straight down: the fill sphere would be checked against its colliding bounds.
+                const double SphereX = 2000.0;
+                const double SphereY = 2400.0;
+                const TOptional<double> SphereGround = FReflectionsDigTestTraces::TraceDownToChunkZ(TestWorld.World, SphereX, SphereY,
+                    1000.0, -3100.0, Scene.Pawn);
+                if (TestTrue(TEXT("Ground under the standing pawn"), SphereGround.IsSet()))
+                {
+                    ADefaultPawn* Standing = TestWorld.Spawn<ADefaultPawn>(FVector(SphereX, SphereY, *SphereGround + 36.0), FRotator(-90.0, 0.0, 0.0));
+                    if (TestNotNull(TEXT("Standing pawn"), Standing))
+                    {
+                        Standing->BaseEyeHeight = 0.0f;
+                        UReflectionsDigComponent* Dig = UReflectionsDigComponent::EnsureOnPawn(Standing);
+                        if (TestNotNull(TEXT("Standing pawn's dig component"), Dig))
+                        {
+                            TestFalse(TEXT("A standing pawn cannot fill the ground at its feet"), Dig->TryFill());
+                        }
+                    }
+                }
+
+                // A character standing on the ground, looking straight down through its controller: the fill sphere
+                // would be checked against its capsule.
+                const double CharacterX = 2800.0;
+                const double CharacterY = 2400.0;
+                const TOptional<double> CharacterGround = FReflectionsDigTestTraces::TraceDownToChunkZ(TestWorld.World, CharacterX, CharacterY,
+                    1000.0, -3100.0, Scene.Pawn);
+                if (TestTrue(TEXT("Ground under the character"), CharacterGround.IsSet()))
+                {
+                    ACharacter* Character = TestWorld.Spawn<ACharacter>(FVector(CharacterX, CharacterY, 500.0));
+                    AAIController* Controller = TestWorld.Spawn<AAIController>();
+                    if (TestNotNull(TEXT("Character"), Character) && TestNotNull(TEXT("Controller"), Controller))
+                    {
+                        const double HalfHeight = Character->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+                        Character->SetActorLocation(FVector(CharacterX, CharacterY, *CharacterGround + HalfHeight + 1.0));
+                        Character->BaseEyeHeight = 0.0f;
+                        Controller->Possess(Character);
+                        Controller->SetControlRotation(FRotator(-90.0, 0.0, 0.0));
+                        UReflectionsDigComponent* Dig = UReflectionsDigComponent::EnsureOnPawn(Character);
+                        if (TestNotNull(TEXT("Character's dig component"), Dig))
+                        {
+                            TestFalse(TEXT("A standing character cannot fill the ground at its feet"), Dig->TryFill());
+                        }
+                    }
+                }
+
+                TestTrue(TEXT("The grid is unchanged"), SamplesEqual(Before, CopyAllSamples(*Terrain->GetGrid())));
+
+                // The same fill from the scene's pawn, 150 cm above the ground, is clear of it and fills.
+                TestTrue(TEXT("A fill clear of the pawn still fills"), Scene.Dig->TryFill());
             }
         }
     }

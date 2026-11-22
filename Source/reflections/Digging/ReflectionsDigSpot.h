@@ -9,8 +9,9 @@ class UStaticMeshComponent;
 
 /**
  * A patch of ground dug in stages. Each DigOnce shows the next stage mesh; reaching the last stage
- * uncovers one BuriedFindClass actor. SetStage (used when restoring a save) never uncovers the find.
- * On BeginPlay a spot with a SpotId restores its stage from the active save slot.
+ * uncovers one BuriedFindClass actor. SetStage never uncovers the find.
+ * On BeginPlay a spot with a SpotId restores its stage from the active save slot; restored at its last stage, it
+ * uncovers its find again unless MarkFindCollected was called for it.
  */
 UCLASS()
 class REFLECTIONS_API AReflectionsDigSpot : public AActor
@@ -43,6 +44,13 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Digging")
     void SetStage(int32 NewStage);
 
+    /**
+     * Records in the active save that the player took this spot's find, so a restored spot no longer uncovers it.
+     * Does nothing for a spot without a SpotId.
+     */
+    UFUNCTION(BlueprintCallable, Category = "Digging")
+    void MarkFindCollected();
+
     /** The root component; collision profile BlockAll. */
     UStaticMeshComponent* GetMeshComponent() const;
 
@@ -54,10 +62,14 @@ protected:
 private:
     int32 GetLastStage() const;
     void ShowStage();
+    /** Spawns BuriedFindClass at the spot's location and rotation, unit scale, unless a find was already given. */
+    void SpawnFind();
 
     UPROPERTY(VisibleAnywhere, Category = "Digging")
     TObjectPtr<UStaticMeshComponent> MeshComponent;
 
     int32 Stage = 0;
     bool bFindSpawned = false;
+    /** The player took this spot's find (from the save, or MarkFindCollected). */
+    bool bFindCollected = false;
 };

@@ -38,11 +38,10 @@ namespace ReflectionsDig::GameTest
     inline constexpr double GridFloorZ = -2800.0;
     /** The bedrock surface meshes about 25 cm above the grid floor. */
     inline constexpr double BedrockTopZ = GridFloorZ + 25.0;
-    inline constexpr float DigRadiusCm = 100.0f;
+    inline constexpr float DigRadiusCm = ReflectionsDig::StampRadiusCm;
     /** Downward traces start above the top of the grid and end under the safety floor (its top is 30 cm below the grid floor). */
     inline constexpr double TraceStartZ = 1000.0;
     inline constexpr double TraceEndZ = GridFloorZ - 300.0;
-    inline constexpr double ChunkSizeCm = ReflectionsDig::ChunkCells * ReflectionsDig::CellSizeCm;
 
     inline constexpr double ReadyTimeoutSeconds = 30.0;
     inline constexpr double RestTimeoutSeconds = 30.0;

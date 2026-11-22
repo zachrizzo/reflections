@@ -12,14 +12,16 @@ class UEnhancedInputComponent;
 class UInputAction;
 class UInputMappingContext;
 class ULocalPlayer;
+class UReflectionsDigSubsystem;
 struct FHitResult;
 struct FInputActionValue;
 
 /**
- * Lets its pawn dig: TryDig traces from the view point and digs what it hits within reach. A chunk piece of the dig
- * terrain loses a 100 cm sphere; an AReflectionsDigSpot digs one stage deeper and its new stage is saved. TryFill
- * fills a 100 cm sphere of terrain back in. For a locally controlled player pawn it also binds G to TryDig and H to
- * TryFill (IA_Dig and IA_Fill in IMC_Digging, built in code).
+ * Lets its pawn dig: TryDig traces from the view point and digs what it hits within reach. An AReflectionsDigSpot digs
+ * one stage deeper and its new stage is saved; anything else is handed to the dig subsystem, which digs a sphere out of
+ * its terrain if the hit is that terrain's ground. TryFill fills a sphere of terrain back in the same way. For a
+ * locally controlled player pawn it also binds G to TryDig (IA_Dig in IMC_Digging, always) and H to TryFill (IA_Fill in
+ * IMC_DigFill, only while the pawn's world has a dig terrain); both are built in code.
  */
 UCLASS(ClassGroup = (Digging), meta = (BlueprintSpawnableComponent))
 class REFLECTIONS_API UReflectionsDigComponent : public UActorComponent
@@ -40,9 +42,18 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Digging")
     bool TryDig();
 
-    /** Fills the terrain in front of the pawn once. Returns true if terrain within reach gained ground. */
+    /**
+     * Fills the terrain in front of the pawn once. Returns true if terrain within reach gained ground. A fill whose
+     * sphere would reach into the pawn (its capsule, for a character; its colliding bounds otherwise) does nothing.
+     */
     UFUNCTION(BlueprintCallable, Category = "Digging")
     bool TryFill();
+
+    /**
+     * Whether H is mapped to TryFill: with a local player, whether IMC_DigFill is in its Enhanced Input subsystem;
+     * without one (a pawn nobody controls locally), whether it would be, which is whether the world has a dig terrain.
+     */
+    bool IsFillMapped() const;
 
     /** Returns the pawn's dig component, adding and registering one if it has none. Null pawn gives null. */
     static UReflectionsDigComponent* EnsureOnPawn(APawn* Pawn);
@@ -62,11 +73,14 @@ private:
     /** Traces the ComputeReachTrace ray; true with OutHit filled when something is hit within ReachCm of the pawn. */
     bool TraceReach(FHitResult& OutHit) const;
 
-    /** Digs (Remove) or fills (Add) a 100 cm sphere at a terrain hit; false unless the hit is a chunk piece and the grid changed. */
-    bool StampTerrain(const FHitResult& Hit, EReflectionsDigMode Mode) const;
+    /** True when a ReflectionsDig::StampRadiusCm sphere at Center reaches into the pawn's capsule or colliding bounds. */
+    bool StampWouldReachPawn(const FVector& Center) const;
 
     void BindControls();
     void UnbindControls();
+    /** Adds IMC_DigFill to the bound local player while the world has a terrain, and removes it otherwise. */
+    void ApplyFillMapping();
+    void HandleTerrainRegisteredChanged();
     void OnDigAction(const FInputActionValue& Value);
     void OnFillAction(const FInputActionValue& Value);
 
@@ -75,6 +89,10 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<UInputMappingContext> DigContext;
+
+    /** Holds only H to IA_Fill, so it can be added and removed on its own. */
+    UPROPERTY(Transient)
+    TObjectPtr<UInputMappingContext> FillContext;
 
     UPROPERTY(Transient)
     TObjectPtr<UInputAction> DigAction;
@@ -90,4 +108,11 @@ private:
 
     /** The local player DigContext was added for; kept separately so the context is removed after the controller is gone. */
     TWeakObjectPtr<ULocalPlayer> BoundPlayer;
+
+    /** The dig subsystem whose OnTerrainRegisteredChanged this component listens to, from BeginPlay to EndPlay. */
+    TWeakObjectPtr<UReflectionsDigSubsystem> TerrainSource;
+    FDelegateHandle TerrainChangedHandle;
+
+    /** Whether the world had a dig terrain when this component last looked: H is mapped exactly then. */
+    bool bWorldHasTerrain = false;
 };

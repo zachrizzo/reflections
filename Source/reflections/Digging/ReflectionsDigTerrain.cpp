@@ -49,7 +49,6 @@ using UE::Geometry::FDynamicMesh3;
 
 namespace
 {
-    constexpr float ChunkHeightCm = ReflectionsDig::ChunkCells * ReflectionsDig::CellSizeCm;
     /** The ground surface lies this far below the top of the grid. */
     constexpr float GroundBelowGridTopCm = 400.0f;
     /** The safety floor's top lies this far below the grid floor, and it is this thick. */
@@ -198,10 +197,15 @@ void UReflectionsDigChunkComponent::RebuildPhysicsData()
     PendingCook = LastAfter != LastBefore ? LastAfter : nullptr;
     if (AsyncBodySetupQueue.IsEmpty())
     {
-        // Cooked on the spot (a world without async cooking): the body is in place.
-        bHasCollision = true;
-        bLastCookFailed = false;
-        if (AReflectionsDigTerrain* Terrain = Cast<AReflectionsDigTerrain>(GetOwner()))
+        // Nothing left to wait for, but an empty queue does not prove a body: the engine's RebuildPhysicsData returns
+        // early when it has no body setup, and FinishPhysicsAsyncCook keeps the old MeshBodySetup when a cook that
+        // ended inside the call failed. So the piece counts as colliding only if its MeshBodySetup exists, created its
+        // physics meshes without failing, and holds collision data (cooked triangle meshes or simple shapes).
+        const UBodySetup* Body = MeshBodySetup;
+        bHasCollision = Body != nullptr && Body->bCreatedPhysicsMeshes && !Body->bFailedToCreatePhysicsMeshes
+            && (Body->TriMeshGeometries.Num() > 0 || Body->AggGeom.GetElementCount() > 0);
+        bLastCookFailed = !bHasCollision;
+        if (AReflectionsDigTerrain* Terrain = Cast<AReflectionsDigTerrain>(GetOwner()); Terrain != nullptr && bHasCollision)
         {
             Terrain->UpdatePieceNavigation(*this);
         }
@@ -283,7 +287,7 @@ void AReflectionsDigTerrain::BeginPlay()
     // cell after the grid origin's first sample. With the origin half a cell inside the actor's corner, the ground
     // spans exactly the patch: X and Y from the actor's location to SizeInChunks chunks further.
     const double HalfCellCm = ReflectionsDig::CellSizeCm * 0.5;
-    const FVector OriginCm(Location.X + HalfCellCm, Location.Y + HalfCellCm, GroundHeightCm - SizeInChunks.Z * ChunkHeightCm + GroundBelowGridTopCm);
+    const FVector OriginCm(Location.X + HalfCellCm, Location.Y + HalfCellCm, GroundHeightCm - SizeInChunks.Z * ReflectionsDig::ChunkSizeCm + GroundBelowGridTopCm);
     Grid = MakeUnique<FReflectionsDigGrid>(SizeInChunks, OriginCm, GroundHeightCm);
 
     // The pieces never draw with the engine's default material: on this mesh (normals only, no texture coordinates,
@@ -300,7 +304,7 @@ void AReflectionsDigTerrain::BeginPlay()
     }
 
     // The safety floor spans the whole patch (from the actor's corner, not the grid origin), under the grid floor.
-    const FVector HalfSize(SizeInChunks.X * ChunkHeightCm * 0.5, SizeInChunks.Y * ChunkHeightCm * 0.5, SafetyFloorThicknessCm * 0.5);
+    const FVector HalfSize(SizeInChunks.X * ReflectionsDig::ChunkSizeCm * 0.5, SizeInChunks.Y * ReflectionsDig::ChunkSizeCm * 0.5, SafetyFloorThicknessCm * 0.5);
     SafetyFloor->SetBoxExtent(HalfSize);
     SafetyFloor->SetWorldLocation(FVector(Location.X + HalfSize.X, Location.Y + HalfSize.Y, OriginCm.Z - SafetyFloorGapCm - HalfSize.Z));
 
@@ -536,6 +540,12 @@ int32 AReflectionsDigTerrain::GetChunkPieceCount(FIntVector Chunk) const
 {
     const FReflectionsDigTerrainChunk* State = Chunks.Find(Chunk);
     return State != nullptr ? State->Pieces.Num() : 0;
+}
+
+UDynamicMeshComponent* AReflectionsDigTerrain::GetChunkPiece(FIntVector Chunk, int32 Index) const
+{
+    const FReflectionsDigTerrainChunk* State = Chunks.Find(Chunk);
+    return State != nullptr && State->Pieces.IsValidIndex(Index) ? State->Pieces[Index].Get() : nullptr;
 }
 
 int32 AReflectionsDigTerrain::GetRetiringPieceCount(FIntVector Chunk) const

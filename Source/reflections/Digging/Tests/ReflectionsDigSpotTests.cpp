@@ -9,8 +9,13 @@
 #include "EngineUtils.h"
 #include "GameFramework/DefaultPawn.h"
 #include "Kismet/GameplayStatics.h"
+#include "Math/RandomStream.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/OutputDevice.h"
+#include "Misc/OutputDeviceRedirector.h"
 #include "Save/ReflectionsSaveGame.h"
+
+#include <atomic>
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -66,6 +71,66 @@ namespace
         Spot->BuriedFindClass = FindClass;
         return TestWorld.FinishSpawning(Spot);
     }
+
+    TArray<uint8> LoadRaw()
+    {
+        TArray<uint8> Bytes;
+        UGameplayStatics::LoadDataFromSlot(Bytes, TestSlot, 0);
+        return Bytes;
+    }
+
+    TArray<uint8> RandomBytes()
+    {
+        FRandomStream Stream(1234);
+        TArray<uint8> Bytes;
+        Bytes.SetNumUninitialized(256);
+        for (uint8& Byte : Bytes)
+        {
+            Byte = static_cast<uint8>(Stream.RandRange(0, 255));
+        }
+        return Bytes;
+    }
+
+    /** Writes the test slot with SpikeA at Stage and, if bCollected, SpikeA's find taken. */
+    bool WriteSpikeA(uint8 Stage, bool bCollected)
+    {
+        UReflectionsSaveGame* Data = NewObject<UReflectionsSaveGame>();
+        Data->DigSpotStages.Add(SpikeA, Stage);
+        if (bCollected)
+        {
+            Data->DigSpotFindsCollected.Add(SpikeA);
+        }
+        return ReflectionsSave::Write(*Data, TestSlot);
+    }
+
+    /** Counts, while alive, every log line of a category whose name contains "Reflections". */
+    struct FReflectionsLogCounter : public FOutputDevice
+    {
+        std::atomic<int32> Lines{ 0 };
+
+        FReflectionsLogCounter()
+        {
+            GLog->AddOutputDevice(this);
+        }
+
+        virtual ~FReflectionsLogCounter() override
+        {
+            GLog->RemoveOutputDevice(this);
+        }
+
+        virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type Verbosity, const FName& Category) override
+        {
+            if (Category.ToString().Contains(TEXT("Reflections")))
+            {
+                ++Lines;
+            }
+        }
+
+        virtual bool CanBeUsedOnMultipleThreads() const override
+        {
+            return true;
+        }
+    };
 
     int32 CountTargetPoints(UWorld* World)
     {
@@ -276,7 +341,7 @@ bool FReflectionsDigSpotRestoresStageFromSaveTest::RunTest(const FString& Parame
                 TestTrue(TEXT("A has begun play"), A->HasActorBegunPlay());
                 TestEqual(TEXT("A is restored to stage 2"), A->GetStage(), 2);
                 TestTrue(TEXT("A shows mesh 2"), A->GetMeshComponent()->GetStaticMesh() == Meshes[2]);
-                TestEqual(TEXT("Restoring gives no find"), CountTargetPoints(TestWorld.World), 0);
+                TestEqual(TEXT("Restored at the last stage with its find not taken, A gives the find once"), CountTargetPoints(TestWorld.World), 1);
                 TestEqual(TEXT("B has no entry and stays at stage 0"), B->GetStage(), 0);
                 TestTrue(TEXT("B shows mesh 0"), B->GetMeshComponent()->GetStaticMesh() == Meshes[0]);
             }
@@ -345,6 +410,176 @@ bool FReflectionsDigSpotDigTwiceThenReloadKeepsStageTest::RunTest(const FString&
                 TestEqual(TEXT("World 3 spot A begins at stage 0"), A->GetStage(), 0);
                 TestEqual(TEXT("World 3 spot B begins at stage 0"), B->GetStage(), 0);
             }
+        }
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigSpotRestoredLastStageGivesUntakenFindTest, "Reflections.DigSpot.RestoredLastStageGivesUntakenFind", DigSpotTestFlags)
+bool FReflectionsDigSpotRestoredLastStageGivesUntakenFindTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    {
+        TestTrue(TEXT("Write the slot"), WriteSpikeA(2, /*bCollected=*/ false));
+        FReflectionsDigTestWorld TestWorld;
+        const TArray<UStaticMesh*> Meshes = LoadStageMeshes();
+        if (TestNotNull(TEXT("Test world"), TestWorld.World) && TestFalse(TEXT("A stage mesh failed to load"), Meshes.Contains(nullptr)))
+        {
+            const FVector Location(300.0, -200.0, 50.0);
+            AReflectionsDigSpot* A = SpawnSpotWithId(TestWorld, Meshes, SpikeA, Location, ATargetPoint::StaticClass());
+            if (TestNotNull(TEXT("Spot A"), A))
+            {
+                TestEqual(TEXT("A is restored to its last stage"), A->GetStage(), 2);
+                TestEqual(TEXT("Exactly one find is uncovered"), CountTargetPoints(TestWorld.World), 1);
+                TActorIterator<ATargetPoint> Find(TestWorld.World);
+                if (TestTrue(TEXT("The find exists"), static_cast<bool>(Find)))
+                {
+                    TestEqual(TEXT("The find is at the spot's location"), Find->GetActorLocation(), Location);
+                    TestEqual(TEXT("The find has unit scale"), Find->GetActorScale3D(), FVector::OneVector);
+                }
+                TestFalse(TEXT("A restored spot at its last stage digs no further"), A->DigOnce());
+                A->SetStage(2);
+                TestEqual(TEXT("Digging and SetStage after the restore give no second find"), CountTargetPoints(TestWorld.World), 1);
+            }
+        }
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigSpotRestoredTakenFindIsNotGivenAgainTest, "Reflections.DigSpot.RestoredTakenFindIsNotGivenAgain", DigSpotTestFlags)
+bool FReflectionsDigSpotRestoredTakenFindIsNotGivenAgainTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    {
+        TestTrue(TEXT("Write the slot"), WriteSpikeA(2, /*bCollected=*/ true));
+        FReflectionsDigTestWorld TestWorld;
+        const TArray<UStaticMesh*> Meshes = LoadStageMeshes();
+        if (TestNotNull(TEXT("Test world"), TestWorld.World) && TestFalse(TEXT("A stage mesh failed to load"), Meshes.Contains(nullptr)))
+        {
+            AReflectionsDigSpot* A = SpawnSpotWithId(TestWorld, Meshes, SpikeA, FVector::ZeroVector, ATargetPoint::StaticClass());
+            if (TestNotNull(TEXT("Spot A"), A))
+            {
+                TestEqual(TEXT("A is restored to its last stage"), A->GetStage(), 2);
+                TestEqual(TEXT("A taken find is not uncovered again"), CountTargetPoints(TestWorld.World), 0);
+            }
+        }
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigSpotMarkFindCollectedSurvivesReloadTest, "Reflections.DigSpot.MarkFindCollectedSurvivesReload", DigSpotTestFlags)
+bool FReflectionsDigSpotMarkFindCollectedSurvivesReloadTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    const TArray<UStaticMesh*> Meshes = LoadStageMeshes();
+    if (!TestFalse(TEXT("A stage mesh failed to load"), Meshes.Contains(nullptr)))
+    {
+        return false;
+    }
+    TestTrue(TEXT("Write the slot"), WriteSpikeA(2, /*bCollected=*/ false));
+    {
+        // World 1: the find is uncovered and the player takes it.
+        FReflectionsDigTestWorld TestWorld;
+        if (TestNotNull(TEXT("World 1"), TestWorld.World))
+        {
+            AReflectionsDigSpot* A = SpawnSpotWithId(TestWorld, Meshes, SpikeA, FVector::ZeroVector, ATargetPoint::StaticClass());
+            if (TestNotNull(TEXT("World 1 spot A"), A))
+            {
+                TestEqual(TEXT("World 1 uncovers the find"), CountTargetPoints(TestWorld.World), 1);
+                A->MarkFindCollected();
+            }
+        }
+    }
+    UReflectionsSaveGame* Loaded = nullptr;
+    TestEqual(TEXT("Read result"), ReflectionsSave::Read(TestSlot, Loaded), EReflectionsLoadResult::Loaded);
+    if (TestNotNull(TEXT("Loaded data"), Loaded))
+    {
+        TestTrue(TEXT("The save records A's find as taken"), Loaded->DigSpotFindsCollected.Contains(SpikeA));
+        const uint8* Stage = Loaded->DigSpotStages.Find(SpikeA);
+        TestTrue(TEXT("The save keeps A's stage"), Stage != nullptr && *Stage == 2);
+    }
+    {
+        // World 2: the restored spot gives nothing.
+        FReflectionsDigTestWorld TestWorld;
+        if (TestNotNull(TEXT("World 2"), TestWorld.World))
+        {
+            AReflectionsDigSpot* A = SpawnSpotWithId(TestWorld, Meshes, SpikeA, FVector::ZeroVector, ATargetPoint::StaticClass());
+            if (TestNotNull(TEXT("World 2 spot A"), A))
+            {
+                TestEqual(TEXT("World 2 spot A begins at its last stage"), A->GetStage(), 2);
+                TestEqual(TEXT("World 2 uncovers no find"), CountTargetPoints(TestWorld.World), 0);
+            }
+        }
+    }
+    DeleteTestSlot();
+    {
+        // A spot without an id records nothing.
+        FReflectionsDigTestWorld TestWorld;
+        if (TestNotNull(TEXT("World 3"), TestWorld.World))
+        {
+            AReflectionsDigSpot* NoId = SpawnSpot(TestWorld, Meshes, ATargetPoint::StaticClass());
+            if (TestNotNull(TEXT("Spot without an id"), NoId))
+            {
+                NoId->MarkFindCollected();
+                TestFalse(TEXT("MarkFindCollected on a spot without an id writes no save"), UGameplayStatics::DoesSaveGameExist(TestSlot, 0));
+            }
+        }
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigSpotBadSaveLeavesTheSpotUntouchedTest, "Reflections.DigSpot.BadSaveLeavesTheSpotUntouched", DigSpotTestFlags)
+bool FReflectionsDigSpotBadSaveLeavesTheSpotUntouchedTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    const TArray<UStaticMesh*> Meshes = LoadStageMeshes();
+    if (!TestFalse(TEXT("A stage mesh failed to load"), Meshes.Contains(nullptr)))
+    {
+        return false;
+    }
+    TArray<TArray<uint8>> BadFiles;
+    BadFiles.Add(RandomBytes());
+    {
+        // A well-formed file from a newer version: its header says 2, and it would put spot A at its last stage.
+        UReflectionsSaveGame* Newer = NewObject<UReflectionsSaveGame>();
+        Newer->SaveVersion = 2;
+        Newer->DigSpotStages.Add(SpikeA, 2);
+        TestTrue(TEXT("Write a version 2 file"), ReflectionsSave::Write(*Newer, TestSlot));
+        BadFiles.Add(LoadRaw());
+    }
+    const TCHAR* const Kinds[] = { TEXT("random bytes"), TEXT("a version 2 file") };
+    for (int32 Index = 0; Index < BadFiles.Num(); ++Index)
+    {
+        const FString Kind = Kinds[Index];
+        DeleteTestSlot();
+        TestTrue(FString::Printf(TEXT("Store %s"), *Kind), UGameplayStatics::SaveDataToSlot(BadFiles[Index], TestSlot, 0));
+        FReflectionsDigTestWorld TestWorld;
+        if (TestNotNull(FString::Printf(TEXT("Test world (%s)"), *Kind), TestWorld.World))
+        {
+            int32 Logged = 0;
+            AReflectionsDigSpot* A = nullptr;
+            {
+                FReflectionsLogCounter Counter;
+                A = SpawnSpotWithId(TestWorld, Meshes, SpikeA, FVector::ZeroVector, ATargetPoint::StaticClass());
+                Logged = Counter.Lines;
+            }
+            if (TestNotNull(FString::Printf(TEXT("Spot A (%s)"), *Kind), A))
+            {
+                TestTrue(FString::Printf(TEXT("Spot A has begun play (%s)"), *Kind), A->HasActorBegunPlay());
+                TestEqual(FString::Printf(TEXT("Spot A begins at stage 0 (%s)"), *Kind), A->GetStage(), 0);
+                TestTrue(FString::Printf(TEXT("Spot A shows mesh 0 (%s)"), *Kind), A->GetMeshComponent()->GetStaticMesh() == Meshes[0]);
+                TestEqual(FString::Printf(TEXT("No find (%s)"), *Kind), CountTargetPoints(TestWorld.World), 0);
+            }
+            TestEqual(FString::Printf(TEXT("Beginning play logs nothing (%s)"), *Kind), Logged, 0);
+            TestTrue(FString::Printf(TEXT("The slot's bytes are unchanged (%s)"), *Kind), LoadRaw() == BadFiles[Index]);
         }
     }
     DeleteTestSlot();

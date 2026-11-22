@@ -30,7 +30,10 @@ public:
     /** True from the start of a collision cook until the newest one has finished. */
     bool IsCollisionCookPending() const;
 
-    /** True once a cook has succeeded: the component has collision of its own (perhaps older than its mesh). */
+    /**
+     * True once a cook has brought a body in: the component has collision of its own (perhaps older than its mesh). A
+     * cook that ends inside RebuildPhysicsData counts only if the body setup really holds collision data.
+     */
     bool HasCollision() const;
 
     /** True when the newest finished cook failed (the engine kept the previous body). */
@@ -69,7 +72,11 @@ struct FReflectionsDigTerrainTimings
     double CookFinishSeconds = 0.0;
     /** All the calls that tell navigation about pieces (some run inside CommitSeconds and SwapCheckSeconds). */
     double NavUpdateSeconds = 0.0;
-    /** Of those, the ones after a cook brought a piece's new body in (outside the commit and the swap check). */
+    /**
+     * Of those, the ones after a cook brought a piece's new body in. A cook that finishes later, in its own callback,
+     * is outside the commit and the swap check; one that finishes inside the commit's own collision update is counted
+     * inside CommitSeconds as well.
+     */
     double NavAfterCookSeconds = 0.0;
     /** Pieces given a new mesh and a new cook, and their vertices. */
     int32 CookStartPieces = 0;
@@ -141,6 +148,9 @@ public:
 
     int32 GetChunkPieceCount(FIntVector Chunk) const;
 
+    /** The chunk's current piece at Index (0 to GetChunkPieceCount - 1, lowest slab first), or null. */
+    UDynamicMeshComponent* GetChunkPiece(FIntVector Chunk, int32 Index) const;
+
     /** The chunk's retiring pieces: hidden, still colliding until their swap. */
     int32 GetRetiringPieceCount(FIntVector Chunk) const;
 
@@ -152,7 +162,8 @@ public:
 
     /**
      * Destroys retiring sets whose time has come: one replaced by pieces once every piece has cooked successfully,
-     * one replaced by nothing only when bTerrainQuiet (no task in flight, no queued commit, no cook pending anywhere).
+     * one replaced by nothing only when bTerrainQuiet (no task in flight, no queued commit, no cook pending anywhere and
+     * no wanted chunk dirty, so no mesh task is still to start).
      */
     void FinishCollisionSwaps(bool bTerrainQuiet);
 

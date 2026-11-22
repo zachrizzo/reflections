@@ -20,6 +20,10 @@ public:
     UPROPERTY()
     TMap<FName, uint8> DigSpotStages;
 
+    /** Ids of the dig spots whose find the player has taken. A spot restored at its last stage without one gives it again. */
+    UPROPERTY()
+    TSet<FName> DigSpotFindsCollected;
+
     /** Dug terrain (unused until stage 3). */
     UPROPERTY()
     TArray<uint8> DigTerrainBlob;
@@ -53,7 +57,7 @@ namespace ReflectionsSave
     REFLECTIONS_API EReflectionsLoadResult Read(const FString& Slot, UReflectionsSaveGame*& OutData);
 
     /**
-     * Reads ActiveSlot(), applies Mutate and writes it back. Refuses (returns false, no write, one LogReflectionsSave
+     * Reads ActiveSlot(), applies Mutate and writes it back under LatestVersion (whatever SaveVersion says). Refuses (returns false, no write, one LogReflectionsSave
      * warning per refused call) on a newer or corrupt file. The save object passed to Mutate is not rooted: use it
      * inside Mutate only, or hold what you need in a UPROPERTY.
      */

@@ -289,4 +289,44 @@ bool FReflectionsSaveUpdateLeavesBadFileAloneTest::RunTest(const FString& Parame
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsSaveUpdateStampsTheLatestVersionTest, "Reflections.Save.UpdateStampsTheLatestVersion", SaveTestFlags)
+bool FReflectionsSaveUpdateStampsTheLatestVersionTest::RunTest(const FString& Parameters)
+{
+    DeleteTestSlot();
+
+    {
+        ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+        if (!TestEqual(TEXT("ActiveSlot inside override"), ReflectionsSave::ActiveSlot(), TestSlot))
+        {
+            return false; // Never let Update reach the real slot.
+        }
+
+        TestTrue(TEXT("Write a valid file"), WriteVersion(ReflectionsSave::LatestVersion));
+        // While LatestVersion is 1 no older valid file exists, so the object's version is changed inside Mutate, after
+        // the read: whatever SaveVersion says when the object is written back, the header must say LatestVersion.
+        const int32 Stale = ReflectionsSave::LatestVersion + 1;
+        TestTrue(TEXT("Update succeeds"), ReflectionsSave::Update([Stale](UReflectionsSaveGame& Save)
+        {
+            Save.SaveVersion = Stale;
+            Save.DigSpotStages.Add(TEXT("Pump"), 1);
+        }));
+
+        const TArray<uint8> Raw = LoadRaw();
+        if (TestTrue(TEXT("Raw file holds more than the header"), Raw.Num() > 16))
+        {
+            TestEqual(TEXT("Header version after Update"), RawUint32(Raw, 4), static_cast<uint32>(ReflectionsSave::LatestVersion));
+        }
+        UReflectionsSaveGame* Loaded = nullptr;
+        TestEqual(TEXT("The updated file reads back"), ReflectionsSave::Read(TestSlot, Loaded), EReflectionsLoadResult::Loaded);
+        if (TestNotNull(TEXT("Loaded data"), Loaded))
+        {
+            TestEqual(TEXT("SaveVersion after reading back"), Loaded->SaveVersion, ReflectionsSave::LatestVersion);
+            TestTrue(TEXT("The update's change is kept"), Loaded->DigSpotStages.Contains(TEXT("Pump")));
+        }
+    }
+
+    DeleteTestSlot();
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

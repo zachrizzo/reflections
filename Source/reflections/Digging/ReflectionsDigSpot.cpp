@@ -27,15 +27,37 @@ bool AReflectionsDigSpot::DigOnce()
     ++Stage;
     ShowStage();
 
-    if (Stage == GetLastStage() && !bFindSpawned && BuriedFindClass != nullptr)
+    if (Stage == GetLastStage())
     {
-        bFindSpawned = true;
-        FActorSpawnParameters Params;
-        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        // Location and rotation only: a scaled ground patch must not scale what it uncovers.
-        GetWorld()->SpawnActor<AActor>(BuriedFindClass, GetActorLocation(), GetActorRotation(), Params);
+        SpawnFind();
     }
     return true;
+}
+
+void AReflectionsDigSpot::SpawnFind()
+{
+    UWorld* World = GetWorld();
+    if (bFindSpawned || BuriedFindClass == nullptr || World == nullptr)
+    {
+        return;
+    }
+    bFindSpawned = true;
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    // Location and rotation only: a scaled ground patch must not scale what it uncovers.
+    World->SpawnActor<AActor>(BuriedFindClass, GetActorLocation(), GetActorRotation(), Params);
+}
+
+void AReflectionsDigSpot::MarkFindCollected()
+{
+    if (SpotId == NAME_None)
+    {
+        return;
+    }
+    bFindCollected = true;
+    const FName Id = SpotId;
+    // A refused update logs its own warning.
+    ReflectionsSave::Update([Id](UReflectionsSaveGame& Save) { Save.DigSpotFindsCollected.Add(Id); });
 }
 
 int32 AReflectionsDigSpot::GetStage() const
@@ -78,6 +100,14 @@ void AReflectionsDigSpot::BeginPlay()
             if (const uint8* SavedStage = Data->DigSpotStages.Find(SpotId))
             {
                 SetStage(*SavedStage);
+                bFindCollected = Data->DigSpotFindsCollected.Contains(SpotId);
+                // Dug to the end but the find never taken (quit before picking it up): it is uncovered again, once.
+                // SetStage marked the find as given, so this restore hands it over itself.
+                if (GetLastStage() > 0 && Stage == GetLastStage() && BuriedFindClass != nullptr && !bFindCollected)
+                {
+                    bFindSpawned = false;
+                    SpawnFind();
+                }
                 return;
             }
         }

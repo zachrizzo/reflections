@@ -8,6 +8,10 @@
 
 class AReflectionsDigTerrain;
 class FReflectionsDigCommitQueue;
+struct FHitResult;
+
+/** Fired when HasTerrain()'s answer changes. */
+DECLARE_MULTICAST_DELEGATE(FReflectionsDigTerrainRegisteredChanged);
 
 /**
  * Runs the dig flow of the world's terrain: Dig stamps the grid at once and marks chunks dirty; each tick
@@ -27,6 +31,19 @@ public:
      */
     bool Dig(FVector Center, float RadiusCm, EReflectionsDigMode Mode);
 
+    /**
+     * Digs (Remove) or fills (Add) a ReflectionsDig::StampRadiusCm sphere at the hit's impact point. Returns false when
+     * no terrain is registered, when the hit is not a chunk piece of the registered terrain (its safety floor is not
+     * ground) or when the stamp changed nothing.
+     */
+    bool TryStampAtHit(const FHitResult& Hit, EReflectionsDigMode Mode);
+
+    /** True while a terrain is registered and has its grid. */
+    bool HasTerrain() const;
+
+    /** Fired when HasTerrain()'s answer changes: a terrain became the registered one, or its state was dropped. */
+    FReflectionsDigTerrainRegisteredChanged OnTerrainRegisteredChanged;
+
     /** Called by the terrain in BeginPlay. A second terrain while one is registered is ignored with a warning. */
     void RegisterTerrain(AReflectionsDigTerrain* Terrain);
 
@@ -36,7 +53,11 @@ public:
     /** Overrides the focus (normally the first local player's pawn); unset to go back to the pawn. */
     void SetFocusOverride(TOptional<FVector> Focus);
 
-    /** No task in flight, no queued commit, no wanted chunk dirty and no chunk waiting on a collision cook. */
+    /**
+     * No task in flight, no queued commit, no wanted chunk dirty, and the terrain not waiting on collision: no cook
+     * running and no retiring set still due for the swap check (one kept by a failed cook waits only until that check
+     * has handled the failure).
+     */
     bool IsIdle() const;
 
     int32 GetTasksInFlight() const;
@@ -70,7 +91,11 @@ private:
     void LaunchMeshTasks(AReflectionsDigTerrain& Terrain);
     /** Forgets the terrain; tasks still running move to DetachedTasks. */
     void DropTerrainState();
+    /** Fires OnTerrainRegisteredChanged if HasTerrain()'s answer differs from the one last announced. */
+    void AnnounceTerrainChange();
 
+    /** HasTerrain()'s answer when OnTerrainRegisteredChanged last fired (false before the first). */
+    bool bAnnouncedTerrain = false;
     TWeakObjectPtr<AReflectionsDigTerrain> RegisteredTerrain;
     TSharedPtr<FReflectionsDigCommitQueue, ESPMode::ThreadSafe> Queue;
     TMap<FIntVector, FChunkFlow> ChunkFlows;

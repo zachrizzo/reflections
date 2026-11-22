@@ -28,7 +28,12 @@ public class reflections : ModuleRules
 		});
 
 		// NPC rebuild: removed WebSockets, AudioCaptureCore, AudioCapture and Json (used only by the old Voice code)
-		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime", "Niagara", "RenderCore", "RHI" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime", "Niagara" });
+		// RenderCore and RHI are used only by the dig measurement tests (ReflectionsDigPerfTests.cpp), which Shipping does not build.
+		if (Target.Configuration != UnrealTargetConfiguration.Shipping)
+		{
+			PrivateDependencyModuleNames.AddRange(new string[] { "RenderCore", "RHI" });
+		}
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.AddRange(new string[] {

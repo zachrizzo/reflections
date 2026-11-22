@@ -1,15 +1,17 @@
 #include "Digging/ReflectionsDigComponent.h"
 
 #include "CollisionQueryParams.h"
+#include "Components/CapsuleComponent.h"
 #include "Digging/ReflectionsDigSpot.h"
 #include "Digging/ReflectionsDigSubsystem.h"
-#include "Digging/ReflectionsDigTerrain.h"
+#include "Digging/ReflectionsDigTypes.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/HitResult.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -17,14 +19,10 @@
 #include "InputActionValue.h"
 #include "InputCoreTypes.h"
 #include "InputMappingContext.h"
+#include "Math/Box.h"
+#include "Math/UnrealMathUtility.h"
 #include "Save/ReflectionsSaveGame.h"
 #include "UObject/UObjectGlobals.h"
-
-namespace
-{
-    /** The sphere one dig or fill of the terrain removes or adds. */
-    constexpr float TerrainStampRadiusCm = 100.0f;
-}
 
 UReflectionsDigComponent::UReflectionsDigComponent()
 {
@@ -64,12 +62,15 @@ bool UReflectionsDigComponent::TryDig()
     {
         return false;
     }
-    if (Cast<AReflectionsDigTerrain>(Hit.GetActor()) != nullptr)
-    {
-        return StampTerrain(Hit, EReflectionsDigMode::Remove);
-    }
     AReflectionsDigSpot* Spot = Cast<AReflectionsDigSpot>(Hit.GetActor());
-    if (Spot == nullptr || !Spot->DigOnce())
+    if (Spot == nullptr)
+    {
+        // Whether the hit is diggable ground is the subsystem's call; with no terrain in the world it never is.
+        UWorld* World = GetWorld();
+        UReflectionsDigSubsystem* Subsystem = World != nullptr ? World->GetSubsystem<UReflectionsDigSubsystem>() : nullptr;
+        return Subsystem != nullptr && Subsystem->TryStampAtHit(Hit, EReflectionsDigMode::Remove);
+    }
+    if (!Spot->DigOnce())
     {
         return false;
     }
@@ -86,19 +87,48 @@ bool UReflectionsDigComponent::TryDig()
 bool UReflectionsDigComponent::TryFill()
 {
     FHitResult Hit;
-    return TraceReach(Hit) && Cast<AReflectionsDigTerrain>(Hit.GetActor()) != nullptr && StampTerrain(Hit, EReflectionsDigMode::Add);
-}
-
-bool UReflectionsDigComponent::StampTerrain(const FHitResult& Hit, EReflectionsDigMode Mode) const
-{
-    // Only a chunk piece is ground: the terrain's safety floor under the grid is not.
-    if (Cast<UReflectionsDigChunkComponent>(Hit.GetComponent()) == nullptr)
+    // A fill reaching into the pawn would bury it in solid ground.
+    if (!TraceReach(Hit) || StampWouldReachPawn(Hit.ImpactPoint))
     {
         return false;
     }
     UWorld* World = GetWorld();
     UReflectionsDigSubsystem* Subsystem = World != nullptr ? World->GetSubsystem<UReflectionsDigSubsystem>() : nullptr;
-    return Subsystem != nullptr && Subsystem->Dig(Hit.ImpactPoint, TerrainStampRadiusCm, Mode);
+    return Subsystem != nullptr && Subsystem->TryStampAtHit(Hit, EReflectionsDigMode::Add);
+}
+
+bool UReflectionsDigComponent::IsFillMapped() const
+{
+    const ULocalPlayer* Player = BoundPlayer.Get();
+    const UEnhancedInputLocalPlayerSubsystem* Input = Player != nullptr ? Player->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
+    if (Input != nullptr && FillContext != nullptr)
+    {
+        return Input->HasMappingContext(FillContext);
+    }
+    return bWorldHasTerrain;
+}
+
+bool UReflectionsDigComponent::StampWouldReachPawn(const FVector& Center) const
+{
+    const APawn* Pawn = Cast<APawn>(GetOwner());
+    if (Pawn == nullptr)
+    {
+        return false;
+    }
+    const double StampRadius = ReflectionsDig::StampRadiusCm;
+    const ACharacter* Character = Cast<ACharacter>(Pawn);
+    if (const UCapsuleComponent* Capsule = Character != nullptr ? Character->GetCapsuleComponent() : nullptr)
+    {
+        // Sphere against capsule: the distance from the sphere's centre to the capsule's axis segment, against the
+        // two radii added.
+        const FVector Middle = Capsule->GetComponentLocation();
+        const FVector AxisHalf = Capsule->GetUpVector() * Capsule->GetScaledCapsuleHalfHeight_WithoutHemisphere();
+        const FVector OnAxis = FMath::ClosestPointOnSegment(Center, Middle - AxisHalf, Middle + AxisHalf);
+        return FVector::Dist(Center, OnAxis) < StampRadius + Capsule->GetScaledCapsuleRadius();
+    }
+    // Any other pawn: sphere against the box of its colliding components. With nothing colliding there is nothing to bury.
+    const FBox Bounds = Pawn->GetComponentsBoundingBox(/*bNonColliding=*/ false);
+    return Bounds.IsValid && Bounds.ComputeSquaredDistanceToPoint(Center) < FMath::Square(StampRadius);
 }
 
 bool UReflectionsDigComponent::TraceReach(FHitResult& OutHit) const
@@ -146,6 +176,16 @@ void UReflectionsDigComponent::BeginPlay()
         // Covers a pawn possessed after BeginPlay and a controller swapped later.
         Pawn->ReceiveControllerChangedDelegate.AddUniqueDynamic(this, &UReflectionsDigComponent::HandleControllerChanged);
     }
+    // H is mapped only while the world has a dig terrain; the subsystem says when that changes.
+    if (UWorld* World = GetWorld())
+    {
+        if (UReflectionsDigSubsystem* Subsystem = World->GetSubsystem<UReflectionsDigSubsystem>())
+        {
+            TerrainSource = Subsystem;
+            TerrainChangedHandle = Subsystem->OnTerrainRegisteredChanged.AddUObject(this, &UReflectionsDigComponent::HandleTerrainRegisteredChanged);
+            bWorldHasTerrain = Subsystem->HasTerrain();
+        }
+    }
     BindControls();
 }
 
@@ -155,6 +195,12 @@ void UReflectionsDigComponent::EndPlay(const EEndPlayReason::Type Reason)
     {
         Pawn->ReceiveControllerChangedDelegate.RemoveDynamic(this, &UReflectionsDigComponent::HandleControllerChanged);
     }
+    if (UReflectionsDigSubsystem* Subsystem = TerrainSource.Get())
+    {
+        Subsystem->OnTerrainRegisteredChanged.Remove(TerrainChangedHandle);
+    }
+    TerrainSource.Reset();
+    TerrainChangedHandle.Reset();
     UnbindControls();
     Super::EndPlay(Reason);
 }
@@ -191,7 +237,9 @@ void UReflectionsDigComponent::BindControls()
         FillAction->bConsumeInput = true;
         DigContext = NewObject<UInputMappingContext>(this, TEXT("IMC_Digging"));
         DigContext->MapKey(DigAction, EKeys::G);
-        DigContext->MapKey(FillAction, EKeys::H);
+        // H in a context of its own: it is added only while the world has a terrain, so no other map loses the key.
+        FillContext = NewObject<UInputMappingContext>(this, TEXT("IMC_DigFill"));
+        FillContext->MapKey(FillAction, EKeys::H);
     }
 
     DigInput = NewObject<UEnhancedInputComponent>(PC, MakeUniqueObjectName(PC, UEnhancedInputComponent::StaticClass(), TEXT("DigInput")));
@@ -202,6 +250,32 @@ void UReflectionsDigComponent::BindControls()
     Subsystem->AddMappingContext(DigContext, 1);
     BoundController = PC;
     BoundPlayer = Player;
+    ApplyFillMapping();
+}
+
+void UReflectionsDigComponent::ApplyFillMapping()
+{
+    ULocalPlayer* Player = BoundPlayer.Get();
+    UEnhancedInputLocalPlayerSubsystem* Input = Player != nullptr ? Player->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
+    if (Input == nullptr || FillContext == nullptr)
+    {
+        return;
+    }
+    if (bWorldHasTerrain && !Input->HasMappingContext(FillContext))
+    {
+        Input->AddMappingContext(FillContext, 1);
+    }
+    else if (!bWorldHasTerrain && Input->HasMappingContext(FillContext))
+    {
+        Input->RemoveMappingContext(FillContext);
+    }
+}
+
+void UReflectionsDigComponent::HandleTerrainRegisteredChanged()
+{
+    const UReflectionsDigSubsystem* Subsystem = TerrainSource.Get();
+    bWorldHasTerrain = Subsystem != nullptr && Subsystem->HasTerrain();
+    ApplyFillMapping();
 }
 
 void UReflectionsDigComponent::UnbindControls()
@@ -219,6 +293,10 @@ void UReflectionsDigComponent::UnbindControls()
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem = Player->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
         {
             Subsystem->RemoveMappingContext(DigContext);
+            if (FillContext != nullptr && Subsystem->HasMappingContext(FillContext))
+            {
+                Subsystem->RemoveMappingContext(FillContext);
+            }
         }
     }
     if (DigInput != nullptr)

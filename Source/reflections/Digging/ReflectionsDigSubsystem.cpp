@@ -7,6 +7,7 @@
 #include "Digging/ReflectionsDigPieces.h"
 #include "Digging/ReflectionsDigTerrain.h"
 #include "Digging/ReflectionsDigTypes.h"
+#include "Engine/HitResult.h"
 #include "Engine/World.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -21,8 +22,6 @@ namespace
         TEXT("reflections.Dig.MaxCommitsPerFrame"),
         2,
         TEXT("Finished dig chunk meshes committed to the terrain per frame. Values below 1 count as 1."));
-
-    constexpr double ChunkSizeCm = ReflectionsDig::ChunkCells * ReflectionsDig::CellSizeCm;
 
     bool IsInFlight(const UE::Tasks::FTask& Task)
     {
@@ -53,6 +52,35 @@ bool UReflectionsDigSubsystem::Dig(FVector Center, float RadiusCm, EReflectionsD
         }
     }
     return !DirtyChunks.IsEmpty();
+}
+
+bool UReflectionsDigSubsystem::TryStampAtHit(const FHitResult& Hit, EReflectionsDigMode Mode)
+{
+    // Only a chunk piece of the registered terrain is ground: its safety floor, another terrain's pieces and any
+    // other actor are not.
+    const AReflectionsDigTerrain* Terrain = RegisteredTerrain.Get();
+    const UReflectionsDigChunkComponent* Piece = Cast<UReflectionsDigChunkComponent>(Hit.GetComponent());
+    if (!HasTerrain() || Piece == nullptr || Piece->GetOwner() != Terrain)
+    {
+        return false;
+    }
+    return Dig(Hit.ImpactPoint, ReflectionsDig::StampRadiusCm, Mode);
+}
+
+bool UReflectionsDigSubsystem::HasTerrain() const
+{
+    const AReflectionsDigTerrain* Terrain = RegisteredTerrain.Get();
+    return Terrain != nullptr && Terrain->GetGrid() != nullptr;
+}
+
+void UReflectionsDigSubsystem::AnnounceTerrainChange()
+{
+    const bool bHasTerrain = HasTerrain();
+    if (bHasTerrain != bAnnouncedTerrain)
+    {
+        bAnnouncedTerrain = bHasTerrain;
+        OnTerrainRegisteredChanged.Broadcast();
+    }
 }
 
 void UReflectionsDigSubsystem::RegisterTerrain(AReflectionsDigTerrain* Terrain)
@@ -87,6 +115,7 @@ void UReflectionsDigSubsystem::RegisterTerrain(AReflectionsDigTerrain* Terrain)
             }
         }
     }
+    AnnounceTerrainChange();
 }
 
 void UReflectionsDigSubsystem::UnregisterTerrain(AReflectionsDigTerrain* Terrain)
@@ -242,7 +271,8 @@ void UReflectionsDigSubsystem::UpdateStreaming(AReflectionsDigTerrain& Terrain)
         FChunkFlow& Flow = Pair.Value;
         if (Focus.IsSet())
         {
-            const FBox ChunkBox(OriginCm + FVector(Pair.Key) * ChunkSizeCm, OriginCm + FVector(Pair.Key + FIntVector(1, 1, 1)) * ChunkSizeCm);
+            const FBox ChunkBox(OriginCm + FVector(Pair.Key) * ReflectionsDig::ChunkSizeCm,
+                OriginCm + FVector(Pair.Key + FIntVector(1, 1, 1)) * ReflectionsDig::ChunkSizeCm);
             Flow.bWanted = Terrain.MeshRadiusCm >= 0.0f && ChunkBox.ComputeSquaredDistanceToPoint(*Focus) <= RadiusSquared;
         }
         else
@@ -326,4 +356,5 @@ void UReflectionsDigSubsystem::DropTerrainState()
     ChunkFlows.Reset();
     Queue.Reset();
     RegisteredTerrain.Reset();
+    AnnounceTerrainChange();
 }

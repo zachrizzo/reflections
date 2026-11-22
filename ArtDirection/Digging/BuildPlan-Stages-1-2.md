@@ -116,7 +116,8 @@
 
 **Behaviour.** The last stage is `max(0, StageMeshes.Num() - 1)`.
 - `DigOnce`: at the last stage, or with no meshes, it returns false and changes nothing. Otherwise it adds one to the stage, shows `StageMeshes[Stage]`, and returns true. On reaching the last stage it spawns one `BuriedFindClass` actor at the spot's transform, if the class is set. It never spawns a second one.
-- `SetStage`: clamps to 0..last, shows that mesh, and never spawns the find. A spot restored from a save comes back dug and empty.
+- `SetStage`: clamps to 0..last, shows that mesh, and never spawns the find (landing on the last stage uses it up). Whether a spot restored from a save gives its find again is decided by the restore in task 1.4, not by `SetStage`.
+- `MarkFindCollected` (`UFUNCTION(BlueprintCallable, Category = "Digging")`): records the spot's id in `UReflectionsSaveGame::DigSpotFindsCollected` (`UPROPERTY() TSet<FName>`, no version bump) through `ReflectionsSave::Update` and remembers it locally; a no-op for a spot without an id. Whatever takes the find calls it.
 - A placed or spawned spot shows `StageMeshes[0]` (`OnConstruction` and `BeginPlay`).
 
 - [ ] **Step 1: Write five failing tests**, each in an `FReflectionsDigTestWorld`, with the three stage meshes `/Engine/BasicShapes/Cube.Cube`, `/Engine/BasicShapes/Cone.Cone`, `/Engine/BasicShapes/Cylinder.Cylinder`:
@@ -189,7 +190,7 @@
 - Consumes: `ReflectionsSave::Read`, `ActiveSlot`, `FScopedSlotOverride` (1.1); `UReflectionsDigComponent::TryDig`, `EnsureOnPawn` (1.3).
 - Produces: the map `/Game/Maps/DigSpike/L_DigSpike`, and a script that rebuilds it from nothing. Tasks 2.4 and 2.5 extend both.
 
-**`BeginPlay` rule.** If `SpotId` is not `NAME_None`, call `ReflectionsSave::Read(ReflectionsSave::ActiveSlot(), Data)`. On `Loaded` with an entry for `SpotId`, call `SetStage` with it. In every other case the spot stays at stage 0. `BeginPlay` never writes.
+**`BeginPlay` rule.** If `SpotId` is not `NAME_None`, call `ReflectionsSave::Read(ReflectionsSave::ActiveSlot(), Data)`. On `Loaded` with an entry for `SpotId`, call `SetStage` with it; in every other case the spot stays at stage 0. If the restored stage is the last stage, `BuriedFindClass` is set and `SpotId` is not in `DigSpotFindsCollected`, the find was uncovered but never taken: spawn it once, at the spot's location and rotation with unit scale, through the same code a live dig uses. If the id is in that set, spawn nothing. `BeginPlay` never writes.
 
 **Map contents (exact).** The script always builds a new level and overwrites the map file.
 
@@ -206,7 +207,7 @@
 The map uses the project's default game mode; it sets no override.
 
 - [ ] **Step 1: Write two failing tests** in `ReflectionsDigSpotTests.cpp`, inside `FScopedSlotOverride("ReflectionsTest")`:
-  - `Reflections.DigSpot.RestoresStageFromSave`: the slot holds `{SpikeA: 2}`. Spawn deferred a spot with `SpotId = SpikeA`, three meshes and `BuriedFindClass = ATargetPoint::StaticClass()`, and a second with `SpotId = SpikeB`. After `BeginPlay`, A is at stage 2 showing mesh 2 with no target point in the world, and B is at stage 0.
+  - `Reflections.DigSpot.RestoresStageFromSave`: the slot holds `{SpikeA: 2}`. Spawn deferred a spot with `SpotId = SpikeA`, three meshes and `BuriedFindClass = ATargetPoint::StaticClass()`, and a second with `SpotId = SpikeB`. After `BeginPlay`, A is at stage 2 showing mesh 2 with one target point in the world (its find was never taken), and B is at stage 0. The final fix wave adds `RestoredLastStageGivesUntakenFind`, `RestoredTakenFindIsNotGivenAgain`, `MarkFindCollectedSurvivesReload` and `BadSaveLeavesTheSpotUntouched`.
   - `Reflections.DigSpot.DigTwiceThenReloadKeepsStage`: in world 1 a pawn with the dig component digs spot `SpikeA` twice with `TryDig`. Destroy the world. In world 2, a new `SpikeA` spot begins play at stage 2 and a `SpikeB` spot at 0. Delete the slot. In world 3 both begin at 0.
 - [ ] **Step 2: Build and run** `test.ps1 -Filter Reflections.DigSpot`. Record RED.
 - [ ] **Step 3: Implement** the `BeginPlay` restore. Build and run again; both new tests pass.

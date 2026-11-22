@@ -10,6 +10,10 @@ namespace ReflectionsDig
     inline constexpr float CellSizeCm = 50.0f;
     /** Cells per chunk along each axis. */
     inline constexpr int32 ChunkCells = 32;
+    /** Edge of one chunk along each axis (16 m). */
+    inline constexpr float ChunkSizeCm = ChunkCells * CellSizeCm;
+    /** Radius of the sphere one dig or fill of the terrain removes or adds. */
+    inline constexpr float StampRadiusCm = 100.0f;
     /** Density units per cell of signed distance. */
     inline constexpr int32 DensityPerCell = 64;
     /** Largest density magnitude; density runs from -DensityMax to DensityMax. */
@@ -34,7 +38,7 @@ enum class EReflectionsDigMode : uint8
 struct FReflectionsDigStamp
 {
     FVector Center = FVector::ZeroVector;
-    float RadiusCm = 100.0f;
+    float RadiusCm = ReflectionsDig::StampRadiusCm;
     EReflectionsDigMode Mode = EReflectionsDigMode::Remove;
     /** Material given to cells an Add turns from not solid to solid. */
     uint8 Material = ReflectionsDig::MaterialTopsoil;

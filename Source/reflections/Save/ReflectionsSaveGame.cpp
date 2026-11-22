@@ -124,6 +124,8 @@ namespace ReflectionsSave
         }
 
         Mutate(*Data);
+        // Written back, an older file is migrated: it goes out in the latest format, under the latest version.
+        Data->SaveVersion = LatestVersion;
         return Write(*Data, Slot);
     }
 
