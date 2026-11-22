@@ -546,9 +546,8 @@ bool FReflectionsDigSpikeAiWalksIntoPitTest::RunTest(const FString& Parameters)
         FVector Floor = FVector::ZeroVector;
         FVector Goal = FVector::ZeroVector;
         double StartSeconds = 0.0;
-        /** Frames of the walk standing on a chunk piece, and standing on anything else. */
+        /** Frames of the walk walking on a chunk piece. */
         int32 FramesOnTerrain = 0;
-        int32 FramesOnOtherFloor = 0;
         int32 FramesWalking = 0;
         int32 Frames = 0;
         double LowestNpcFeetZ = TNumericLimits<double>::Max();
@@ -566,7 +565,7 @@ bool FReflectionsDigSpikeAiWalksIntoPitTest::RunTest(const FString& Parameters)
 
     AddAction(Scene, TEXT("Dig the ramp"), [Ramp](FDigGameScene& S)
     {
-        Ramp.Dig(*S.GetSubsystem());
+        S.Test->TestTrue(TEXT("The ramp's stamps change the grid"), Ramp.Dig(*S.GetSubsystem()) > 0);
     });
     AddStep(Scene, TEXT("Idle after the ramp"), ReadyTimeoutSeconds, [Ramp, Walk](FDigGameScene& S)
     {
@@ -644,9 +643,7 @@ bool FReflectionsDigSpikeAiWalksIntoPitTest::RunTest(const FString& Parameters)
             return true;
         }
         ++Walk->Frames;
-        const bool bOnTerrain = IsOnTerrain(*Npc);
-        Walk->FramesOnTerrain += bOnTerrain ? 1 : 0;
-        Walk->FramesOnOtherFloor += !bOnTerrain && Npc->GetCharacterMovement()->IsMovingOnGround() ? 1 : 0;
+        Walk->FramesOnTerrain += IsOnTerrain(*Npc) ? 1 : 0;
         Walk->FramesWalking += Npc->GetCharacterMovement()->MovementMode == MOVE_Walking ? 1 : 0;
         Walk->LowestNpcFeetZ = FMath::Min(Walk->LowestNpcFeetZ, NpcFeetZ(*Npc));
         const FVector Feet(Npc->GetActorLocation().X, Npc->GetActorLocation().Y, NpcFeetZ(*Npc));
@@ -657,10 +654,9 @@ bool FReflectionsDigSpikeAiWalksIntoPitTest::RunTest(const FString& Parameters)
         }
         const double Seconds = S.GetWorld()->GetTimeSeconds() - Walk->StartSeconds;
         S.Test->TestTrue(FString::Printf(TEXT("The AI character arrives within %.0f s (took %.2f s)"), ArriveTimeoutSeconds, Seconds), Seconds <= ArriveTimeoutSeconds);
-        S.Test->TestTrue(TEXT("On arrival the AI character walks on a chunk piece"), IsOnTerrain(*Npc));
-        S.Test->TestEqual(TEXT("Frames of the walk standing on anything but a chunk piece"), Walk->FramesOnOtherFloor, 0);
-        S.Test->TestTrue(FString::Printf(TEXT("The AI character walked on a chunk piece on at least 90%% of the walk's frames (%d of %d, %d walking)"),
-            Walk->FramesOnTerrain, Walk->Frames, Walk->FramesWalking), Walk->FramesOnTerrain * 10 >= Walk->Frames * 9);
+        // Every frame, the arrival one included: arriving by a fall, or by a frame off the terrain, does not count.
+        S.Test->TestEqual(FString::Printf(TEXT("Frames of the walk walking on a chunk piece, of %d (%d with MOVE_Walking)"), Walk->Frames, Walk->FramesWalking),
+            Walk->FramesOnTerrain, Walk->Frames);
         UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless AiWalksIntoPit: arrived %.1f cm from the lowest point %s in %.2f s game time (%d frames, %d on a chunk piece, %d walking, lowest feet %.1f)"),
             Distance, *Walk->Floor.ToString(), Seconds, Walk->Frames, Walk->FramesOnTerrain, Walk->FramesWalking, Walk->LowestNpcFeetZ);
         return true;

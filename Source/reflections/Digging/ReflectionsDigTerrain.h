@@ -36,6 +36,11 @@ public:
     /** True when the newest finished cook failed (the engine kept the previous body). */
     bool DidLastCookFail() const;
 
+#if WITH_DEV_AUTOMATION_TESTS
+    /** Tests only: the piece's next cook to finish is handed to the engine as failed, so it keeps its previous body. */
+    void FailNextCookForTest();
+#endif
+
 protected:
     virtual void RebuildPhysicsData() override;
     virtual void FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup) override;
@@ -47,6 +52,10 @@ private:
 
     bool bHasCollision = false;
     bool bLastCookFailed = false;
+
+#if WITH_DEV_AUTOMATION_TESTS
+    bool bFailNextCookForTest = false;
+#endif
 };
 
 /** The mesh components of one chunk. */
@@ -164,6 +173,9 @@ private:
      * retires stops affecting navigation at once: it is old collision.
      */
     void RetireCurrentSet(FReflectionsDigTerrainChunk& State, double& InOutDestroySeconds);
+
+    /** Lets the chunk's retiring set affect navigation, or not, telling navigation only for pieces that change. */
+    void SetRetiringSetNavigation(FReflectionsDigTerrainChunk& State, bool bAffects);
 
     UPROPERTY(VisibleAnywhere, Category = "Digging")
     TObjectPtr<UBoxComponent> SafetyFloor;

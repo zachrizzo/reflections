@@ -40,7 +40,9 @@ using UE::Geometry::FDynamicMesh3;
  *   quiet: a neighbouring chunk may still be showing the old hole into this chunk.
  * - Navigation follows the collision, not the mesh: a current piece asks for one navigation update per cook that
  *   brings its new body in (a failed cook asks for nothing), a set leaves navigation as it retires, and a destroyed
- *   piece leaves through the engine's unregister. The safety floor never affects navigation.
+ *   piece leaves through the engine's unregister. A retiring set kept by a failed cook is the chunk's only collision,
+ *   so it gets its navigation back once, until the next commit puts a new set in front of it or it is destroyed.
+ *   The safety floor never affects navigation.
  */
 
 namespace
@@ -112,10 +114,12 @@ namespace
 
     /**
      * Destroys the chunk's retiring set if its time has come (see the collision swap above). Returns true when the
-     * chunk was emptied and is now showing nothing at all, so its entry can go.
+     * chunk was emptied and is now showing nothing at all, so its entry can go. bOutNewlyKept is set when this call
+     * found, for the first time since the last commit, that a failed cook keeps the retiring set.
      */
-    bool FinishSwap(const FIntVector& Chunk, FReflectionsDigTerrainChunk& State, bool bTerrainQuiet)
+    bool FinishSwap(const FIntVector& Chunk, FReflectionsDigTerrainChunk& State, bool bTerrainQuiet, bool& bOutNewlyKept)
     {
+        bOutNewlyKept = false;
         if (State.Retiring.IsEmpty())
         {
             return false;
@@ -142,6 +146,7 @@ namespace
             if (!State.bCookFailureReported)
             {
                 State.bCookFailureReported = true;
+                bOutNewlyKept = true;
                 UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("Chunk %s: a collision cook failed or a piece has no collision; its previous collision stays until the next commit"),
                     *Chunk.ToString());
             }
@@ -192,8 +197,23 @@ void UReflectionsDigChunkComponent::RebuildPhysicsData()
     }
 }
 
+#if WITH_DEV_AUTOMATION_TESTS
+void UReflectionsDigChunkComponent::FailNextCookForTest()
+{
+    bFailNextCookForTest = true;
+}
+#endif
+
 void UReflectionsDigChunkComponent::FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup)
 {
+#if WITH_DEV_AUTOMATION_TESTS
+    if (bFailNextCookForTest && FinishedBodySetup != nullptr && FinishedBodySetup == PendingCook)
+    {
+        // The engine's own failure path: a non-empty mesh reported as not cooked keeps the previous body.
+        bFailNextCookForTest = false;
+        bSuccess = false;
+    }
+#endif
     Super::FinishPhysicsAsyncCook(bSuccess, FinishedBodySetup);
     // Older cooks are aborted when a newer one starts and never report back; only the newest ends the wait.
     if (FinishedBodySetup != nullptr && FinishedBodySetup == PendingCook)
@@ -315,7 +335,10 @@ void AReflectionsDigTerrain::CommitChunkPieces(FIntVector Chunk, FReflectionsDig
             // whose replacement (this piece) has finished cooking goes first: every later commit to this chunk takes
             // this path and starts a new cook, so a swap check that runs only between commits would never find the
             // piece idle and the retiring set would stay for the whole hold, an invisible lid.
-            FinishSwap(Chunk, State, /*bTerrainQuiet=*/ false);
+            bool bNewlyKept = false;
+            FinishSwap(Chunk, State, /*bTerrainQuiet=*/ false, bNewlyKept);
+            // A retiring set kept by a failed cook gets a new replacement cooking: it is old collision again.
+            SetRetiringSetNavigation(State, /*bAffects=*/ false);
             Targets.Add(State.Pieces[0]);
         }
         else
@@ -383,11 +406,33 @@ void AReflectionsDigTerrain::RetireCurrentSet(FReflectionsDigTerrainChunk& State
     }
     else
     {
-        // The current set never got collision of its own; the retiring set is still the newest that collides.
+        // The current set never got collision of its own; the retiring set is still the newest that collides. If a
+        // failed cook had given it its navigation back, the new set about to cook makes it old collision again.
         DestroyPieces(State.Pieces);
+        SetRetiringSetNavigation(State, /*bAffects=*/ false);
     }
     State.Pieces.Reset();
     InOutDestroySeconds += FPlatformTime::Seconds() - DestroyStart;
+}
+
+void AReflectionsDigTerrain::SetRetiringSetNavigation(FReflectionsDigTerrainChunk& State, bool bAffects)
+{
+    bool bChanged = false;
+    for (UReflectionsDigChunkComponent* Piece : State.Retiring)
+    {
+        if (Piece != nullptr && Piece->CanEverAffectNavigation() != bAffects)
+        {
+            // The engine adds the piece to the navigation octree with its current body, or removes it, and dirties
+            // its area.
+            Piece->SetCanEverAffectNavigation(bAffects);
+            bChanged = true;
+        }
+    }
+    const UWorld* World = GetWorld();
+    if (bChanged && World != nullptr)
+    {
+        LastNavUpdateSeconds = World->GetTimeSeconds();
+    }
 }
 
 void AReflectionsDigTerrain::ReleaseChunk(FIntVector Chunk)
@@ -447,9 +492,16 @@ void AReflectionsDigTerrain::FinishCollisionSwaps(bool bTerrainQuiet)
     TArray<FIntVector, TInlineAllocator<4>> Emptied;
     for (TPair<FIntVector, FReflectionsDigTerrainChunk>& Pair : Chunks)
     {
-        if (FinishSwap(Pair.Key, Pair.Value, bTerrainQuiet))
+        bool bNewlyKept = false;
+        if (FinishSwap(Pair.Key, Pair.Value, bTerrainQuiet, bNewlyKept))
         {
             Emptied.Add(Pair.Key);
+        }
+        if (bNewlyKept)
+        {
+            // The kept set is the chunk's only collision now: without navigation the navmesh would show a hole over
+            // ground that still collides. Once per failure; the next commit takes it out again, destroying takes it out.
+            SetRetiringSetNavigation(Pair.Value, /*bAffects=*/ true);
         }
     }
     for (const FIntVector& Chunk : Emptied)

@@ -1087,4 +1087,118 @@ bool FReflectionsDigTerrainReusePathClearsAFinishedRetiringSetTest::RunTest(cons
     return true;
 }
 
+namespace
+{
+    /** The terrain's retiring pieces, every chunk's: they are the hidden ones. */
+    TArray<UReflectionsDigChunkComponent*> GetHiddenPieces(const AReflectionsDigTerrain& Terrain)
+    {
+        TArray<UReflectionsDigChunkComponent*> Pieces;
+        Terrain.GetComponents(Pieces);
+        Pieces.RemoveAll([](const UReflectionsDigChunkComponent* Piece) { return Piece->IsVisible(); });
+        return Pieces;
+    }
+
+    /**
+     * Riddles chunk (1, 1, 0) until it is split, then commits its own mesh again directly, so the split set retires
+     * behind a new set that is still cooking. Returns false (reported) when a premise fails.
+     */
+    bool RetireTheRiddledChunk(FAutomationTestBase& Test, FReflectionsDigTestWorld& TestWorld, const FTerrainScene& Scene, FIntVector Busy)
+    {
+        RiddleBuriedChunk(*Scene.Dig);
+        if (!WaitForIdle(Test, TestWorld, Scene, TEXT("Idle after riddling the chunk")))
+        {
+            return false;
+        }
+        Test.TestTrue(TEXT("The riddled chunk is split"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+        Test.TestEqual(TEXT("Premise: no piece is hidden before the commit"), GetHiddenPieces(*Scene.Terrain).Num(), 0);
+        FReflectionsDigMeshData Again;
+        ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Again);
+        Scene.Terrain->CommitChunk(Busy, MoveTemp(Again));
+        return Test.TestTrue(TEXT("Premise: the new set is cooking"), Scene.Terrain->IsChunkCooking(Busy))
+            && Test.TestTrue(TEXT("Premise: the split set is retiring"), Scene.Terrain->GetRetiringPieceCount(Busy) >= 2);
+    }
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainRetiringPiecesLeaveNavigationAtOnceTest, "Reflections.Digging.Terrain.RetiringPiecesLeaveNavigationAtOnce", DigTerrainTestFlags)
+bool FReflectionsDigTerrainRetiringPiecesLeaveNavigationAtOnceTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    const FIntVector Busy(1, 1, 0);
+    if (!RetireTheRiddledChunk(*this, TestWorld, Scene, Busy))
+    {
+        return true;
+    }
+    // The swap window: the replacement is cooking, the old set still collides but is old collision.
+    const TArray<UReflectionsDigChunkComponent*> Retiring = GetHiddenPieces(*Scene.Terrain);
+    TestEqual(TEXT("The hidden pieces are the retiring set"), Retiring.Num(), Scene.Terrain->GetRetiringPieceCount(Busy));
+    for (const UReflectionsDigChunkComponent* Piece : Retiring)
+    {
+        TestFalse(FString::Printf(TEXT("Retiring piece %s cannot affect navigation"), *Piece->GetName()), Piece->CanEverAffectNavigation());
+    }
+    if (WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the commit")))
+    {
+        TestEqual(TEXT("The retiring set is gone once the new set has cooked"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainFailedCookGivesTheRetiringSetItsNavigationBackTest, "Reflections.Digging.Terrain.FailedCookGivesTheRetiringSetItsNavigationBack", DigTerrainTestFlags)
+bool FReflectionsDigTerrainFailedCookGivesTheRetiringSetItsNavigationBackTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    const FIntVector Busy(1, 1, 0);
+    if (!RetireTheRiddledChunk(*this, TestWorld, Scene, Busy))
+    {
+        return true;
+    }
+    // Every piece of the new set fails its cook, so the retiring set stays the chunk's only collision.
+    AddExpectedMessagePlain(TEXT("a collision cook failed or a piece has no collision"), ELogVerbosity::Warning,
+        EAutomationExpectedMessageFlags::Contains, 1);
+    TArray<UReflectionsDigChunkComponent*> All;
+    Scene.Terrain->GetComponents(All);
+    int32 Failing = 0;
+    for (UReflectionsDigChunkComponent* Piece : All)
+    {
+        if (Piece->IsCollisionCookPending())
+        {
+            Piece->FailNextCookForTest();
+            ++Failing;
+        }
+    }
+    TestEqual(TEXT("Premise: every cooking piece is the new set's"), Failing, Scene.Terrain->GetChunkPieceCount(Busy));
+    const int32 RetiringBefore = Scene.Terrain->GetRetiringPieceCount(Busy);
+
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("The terrain reaches idle after the failed cooks")))
+    {
+        return true;
+    }
+    TestEqual(TEXT("The retiring set is kept"), Scene.Terrain->GetRetiringPieceCount(Busy), RetiringBefore);
+    const TOptional<FHitResult> Hit = TraceDown(TestWorld.World, CavityTraceStart.X, CavityTraceStart.Y, CavityTraceStart.Z);
+    const UReflectionsDigChunkComponent* HitPiece = Hit.IsSet() ? Cast<UReflectionsDigChunkComponent>(Hit->GetComponent()) : nullptr;
+    const double FloorZ = CavityCentre.Z - CavityFloorBelowCentreCm;
+    if (TestTrue(TEXT("A trace into the cavity hits a terrain piece"), HitPiece != nullptr))
+    {
+        TestFalse(TEXT("It hits the kept retiring set (a hidden piece)"), HitPiece->IsVisible());
+        TestTrue(FString::Printf(TEXT("It hits the cavity floor near Z %.1f (hit at %.2f)"), FloorZ, Hit->ImpactPoint.Z),
+            FMath::Abs(Hit->ImpactPoint.Z - FloorZ) <= 25.0);
+    }
+    const TArray<UReflectionsDigChunkComponent*> Kept = GetHiddenPieces(*Scene.Terrain);
+    TestEqual(TEXT("The hidden pieces are the kept retiring set"), Kept.Num(), RetiringBefore);
+    for (const UReflectionsDigChunkComponent* Piece : Kept)
+    {
+        TestTrue(FString::Printf(TEXT("Kept retiring piece %s can affect navigation again"), *Piece->GetName()), Piece->CanEverAffectNavigation());
+    }
+    return true;
+}
+
 #endif
