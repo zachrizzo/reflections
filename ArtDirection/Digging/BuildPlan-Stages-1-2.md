@@ -492,4 +492,51 @@ These run with the real renderer, off screen: `test.ps1 -Game -Render -Map /Game
   - `Reflections.SpikePerf.CaveShots` also saves `tunnel_fixed_exposure_hwrt_on/off.png` with automatic exposure off and one fixed exposure for both, so the pair shows real brightness.
   - The results file says in plain words: that the process was the editor program run as a game and not a packaged game; that game-thread time leaves out time spent waiting for other threads; for each pass-mark row whether the mark is met on the 99th percentile and on the worst frame, leading with any run that does not meet it; and nothing is called background noise unless it comes from frames with no dig-related event.
 
+### Task 2.7: Navigation never builds a piece's collision on the main thread
+
+Added after a profiler capture. It is a defect fix, not the tuning round the plan doc keeps for the owner.
+
+**What the capture showed.** `Reflections.SpikePerf.BusyChunkCost` was run once with CPU tracing (`-trace=cpu,frame,bookmark -statnamedevents`, log `test-101716.log`) and the trace was read with Unreal Insights. In the frame after every chunk update, the navigation tick (`Nav Tick Time`) took 46 to 68 ms. Inside it, `STAT_Navigation_ProcessPendingOctreeUpdates` called `UBodySetup::CreatePhysicsMeshes` three times, once per new piece, and each call was a full collision build on the game thread (`FChaosDerivedDataCooker::Build`, 12 to 21 ms each). 101 navigation ticks held exactly three such builds each and total 4.74 s; the unexplained cost in `SpikeResults.md` was 4.7 to 4.8 s per 100 digs.
+
+**The engine path** (UE 5.9 source): a navigation element captures the component's `GetBodySetup()` when the component registers or is updated (`FNavigationElement::InitializeFromInterface`, `NavigationElement.cpp`). When the navmesh generator exports the element (`ExportObject`, `RecastNavMeshGenerator.cpp`), it calls `ExportRigidBodySetup`, whose first line is `BodySetup.CreatePhysicsMeshes()`, unless the element's custom export says the default export is not required. `UDynamicMeshComponent::InternalOnMeshUpdated` clears the current body setup's built data when deferred collision updates are on. A new piece registers navigation-relevant while empty and then receives its mesh, so at the next navigation tick the generator builds that body on the spot, while the background build of the same data is still running.
+
+**Files:**
+- Modify: `Source/reflections/Digging/ReflectionsDigPieces.h` and `.cpp`
+- Modify: `Source/reflections/Digging/ReflectionsDigTerrain.h` and `.cpp`
+- Modify tests: `Tests/ReflectionsDigPiecesTests.cpp`, `Tests/ReflectionsDigTerrainTests.cpp`, `Tests/ReflectionsDigGameTests.cpp`, `Tests/ReflectionsDigPerfTests.cpp`
+
+**Interfaces:**
+- Consumes: `FReflectionsDigChunkResult`, `ReflectionsDigPieces::Build`, `UReflectionsDigChunkComponent`, `AReflectionsDigTerrain::UpdatePieceNavigation`.
+- Produces:
+  - `struct FReflectionsDigNavGeometry { TArray<FVector> Vertices; TArray<int32> Indices; };` (vertices in the piece's local space, three indices per triangle) and `TArray<FReflectionsDigNavGeometry> NavGeometry` in `FReflectionsDigChunkResult`, parallel to `Pieces`, built on the worker by `ReflectionsDigPieces::Build` from the same triangles as each piece.
+  - `void UReflectionsDigChunkComponent::SetNavGeometry(FReflectionsDigNavGeometry&& InGeometry)`, called by the commit together with `SetMesh`.
+  - `virtual bool UReflectionsDigChunkComponent::DoCustomNavigableGeometryExport(FNavigableGeometryExport& GeomExport) const override`: exports the stored arrays with `ExportCustomMesh` and the component's transform, and returns `false`.
+  - `int32 AReflectionsDigTerrain::GetGameThreadCookCount() const` (read-only detector, see rule 3).
+
+**Rules:**
+1. Navigation never reads a piece's body setup. Pieces are created with `SetCustomNavigableGeometry(EHasCustomNavigableGeometry::Yes)` and export their own triangles; returning `false` from the export tells the generator that the default body-setup export is not required. The export must be safe whichever geometry gathering mode the project uses: check `GetGeometryGatheringMode` in the engine and force gathering on the game thread for pieces if the default could run it elsewhere.
+2. A brand-new piece does not count for navigation until its first successful collision build is in. The existing order stays: navigation is told about a piece when its new collision arrives; a retiring piece leaves navigation at once; a retiring set kept after a failed build gets its navigation back. The piece carries its own "should count for navigation" state, so these rules do not depend on what `CanEverAffectNavigation` happens to be while a piece waits for its first build.
+3. `GetGameThreadCookCount()` counts every time a background collision build finishes and finds that the body setup it is about to replace was built by someone else in the meantime: it reports its physics meshes as created and holds at least one triangle mesh, although this piece's mesh changed after a background build last produced that body, or no background build ever produced it. Checked before the engine's `FinishPhysicsAsyncCook` runs. It must stay 0.
+
+- [ ] **Step 1: Write the failing tests.**
+  - `Reflections.DigSpike.NavigationNeverBuildsCollision` (game context, the spike map's real navmesh): riddle one chunk until its mesh is above 12,000 vertices, dig inside it ten times 0.1 s apart, wait until the terrain is idle; `GetGameThreadCookCount()` is 0, and a navigation projection onto the last dug floor succeeds within 1 s. Before the fix the count is above 0: show it.
+  - `Reflections.Digging.Pieces.NavGeometryMatchesEachPiece`: for every piece of a split chunk, the index count is three times the piece's triangle count, every index is valid, and the bounds of the navigation vertices equal the bounds of the piece's mesh.
+  - `Reflections.Digging.Terrain.PieceExportsItsOwnNavigationGeometry`: with a recording `FNavigableGeometryExport` written in the test, a committed piece's export returns `false`, calls `ExportCustomMesh` once with three indices per triangle, and never calls `ExportRigidBodySetup`.
+  - `Reflections.Digging.Terrain.NewPieceWaitsForCollisionBeforeNavigation`: between the commit that creates a piece and the finish of its first build, `IsNavigationRelevant()` is false; after the finish it is true; a retiring piece is false.
+- [ ] **Step 2: Run them**; the game-context test and the two terrain tests fail (or do not compile) for the stated reasons.
+- [ ] **Step 3: Implement** rules 1 to 3. Add `game_thread_cooks=<n>` to every whole-window `DIGSPIKE` line of the measurement tests (the count over that window).
+- [ ] **Step 4: Run** the build, the editor-context suite and the game-context suite; all pass with clean output. Run the render command once and report the busy-chunk, corner, open-ground and streaming whole-window lines beside the same lines of `test-091739.log`. Restore the screenshots (`git checkout -- ArtDirection/Digging/SpikeShots/`). Do not edit `SpikeResults.md`.
+- [ ] **Step 5: Commit.**
+
+### Task 2.8: Measure again and rewrite the numbers
+
+**Files:**
+- Create: `Tools/Digging/summarize_spike_log.py`
+- Modify: `ArtDirection/Digging/SpikeResults.md`
+
+- [ ] **Step 1: Write** `Tools/Digging/summarize_spike_log.py <log> [<log> ...]` (Python 3, standard library only): it reads the `DIGSPIKE` lines of each log and prints, one column per log, every figure the results file shows: each whole-window row (average, middle frame, 99 in 100, worst frame raw and above idle, worst dig-related frame, cost per dig, frames, `game_thread_cooks`), the split of the heavy cases, the noise level, navmesh, collision size, seams, shadows, graphics card, the run length and the screenshot brightness. Check it first against the three old logs (`test-090807`, `test-091247`, `test-091739`): its output must reproduce the numbers now in `SpikeResults.md`; list any figure it cannot reproduce.
+- [ ] **Step 2: Run** the render command three times (`test.ps1 -Game -Render -Map /Game/Maps/DigSpike/L_DigSpike -Filter Reflections.SpikePerf -TimeoutSec 2400`), 10 of 10 passing each time, and restore the screenshots after each run.
+- [ ] **Step 3: Rewrite the numbers** in `SpikeResults.md` from the three new logs with the script: every table, every figure in a sentence, the log names, the run lengths, "Read this first", and each "Met / Not met" result. Keep the old busy-chunk, corner and streaming figures in one short table headed "Before the navigation fix" that names the three old logs. Leave the section "Where the cost of a heavy dig goes" with its new split table only; the controller writes its explanation and the Verdict. State nothing about a cause.
+- [ ] **Step 4: Commit** the script and the results file.
+
 **Gate 2:** every measured row meets the plan doc's pass mark and the user accepts the cave lighting.
