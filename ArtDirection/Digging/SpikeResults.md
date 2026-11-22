@@ -19,6 +19,12 @@ navigation fix", which keeps the figures of the three runs before them.
 - **Two things changed since the three runs before these:** navigation no longer builds collision on the game thread,
   and the engine's embedded web browser is switched off for the measurement. The earlier figures are in "Before the
   navigation fix".
+- **Why the first measurement was so slow is known, and it is fixed.** Navigation was building each new piece's
+  collision a second time, on the main thread: about 47 ms of every heavy dig. See "What the profiler showed".
+- **The slow single frames that were traced were not digging.** They were screenshots, the desktop's window messages,
+  garbage collections and the editor's embedded web browser. In the traced run the game's own work never took more than
+  10.7 ms in a frame. See "What the single slow frames are".
+- **The controller's verdict, at the end of this page, is: continue with named changes.**
 - **The parts the test times** (the terrain's chunk updates and clean-up of old pieces, the engine's swap-in of the new
   collision, the navigation update) add up to 24 to 36 percent of the busy chunk's cost and 29 to 31 percent of the
   corner's. See "Where the cost of a heavy dig goes".
@@ -28,9 +34,9 @@ navigation fix", which keeps the figures of the three runs before them.
 - The game ran with its real renderer, drawn off screen at 1280 x 720, capped at 60 frames a second, on an RTX 5080.
   Another full Unreal editor was running on the same machine the whole time, so the computer was not quiet.
 - Hardware ray tracing was on, except where a screenshot turned it off on purpose.
-- **The engine's embedded web browser was switched off for these runs** (the command line option `-nocef`). A traced
-  run before them (`test-110014.log`) showed that every remaining stall was the tick of the engine's embedded web
-  browser (56, 65, 63 and 215 ms, in frames with no dig work in them; 0.93 s over the run). The browser is loaded by the
+- **The engine's embedded web browser was switched off for these runs** (the command line option `-nocef`). In a traced
+  run before them (`test-110014.log`) the four stalls that were read were all the tick of the engine's embedded web
+  browser (56, 60, 65 and 215 ms, in frames with no dig work in them; 0.93 s over the run). The browser is loaded by the
   editor tooling plugin `UnrealCanvasBridge`, not by the game. The engine still loads the browser's library at start
   (the log line `LogWebBrowser: Loaded CEF3` is in every run), but the browser itself did not start (no `LogCEFBrowser`
   line, which the earlier runs have).
@@ -53,6 +59,7 @@ navigation fix", which keeps the figures of the three runs before them.
   (`game_thread_cooks=0`).
 - Log files: run 1 `test-111229.log`, run 2 `test-111733.log`, run 3 `test-112230.log`, run 4 `test-112757.log` (in
   `.superpowers/logs/` of the digging worktree). The numbers were read with `Tools/Digging/summarize_spike_log.py`.
+  The measurement lines of every log this page names are kept in `ArtDirection/Digging/SpikeLogs/`.
 
 ## Results with the renderer on
 
@@ -98,7 +105,7 @@ Frames with no dig-related event and no garbage collection reached at most 3.2, 
 the open-ground digging windows and 3.3, 42.4, 2.8 and 4.1 ms in the streaming windows. The idle windows (same spot,
 nothing being dug) reached 896, 112 and 119 ms (runs 1 to 3) and 13 ms (run 4) in the open-ground test and up to 30 ms
 in the other tests. So on this machine a single frame of tens of milliseconds, and four times over 100 ms, happened
-with no digging at all. That is why the 99-in-100 figure is the steadier one; the worst-frame figure is kept as the
+in frames with no dig-related event. That is why the 99-in-100 figure is the steadier one; the worst-frame figure is kept as the
 plan asks.
 
 ### Digging in open ground
@@ -169,7 +176,66 @@ the whole window's extra main-thread time:
 | ... rest, in the frame right after | 170 ms | 176 ms | 151 ms | 162 ms |
 | ... rest, all other frames | 107 ms | 123 ms | 99 ms | 93 ms |
 
-The controller's explanation of the heavy-dig cost follows.
+### What the profiler showed
+
+Three runs were traced with Unreal Insights and read by the controller: the busy-chunk test alone before the
+navigation fix (`test-101716.log`), and the whole suite after it, once with the embedded web browser still on
+(`test-110014.log`) and once with it off (`test-113818.log`). Traced runs are not in the tables, because tracing adds a
+little work to every frame.
+
+- **The missing time was navigation building collision a second time.** Before the fix, the frame after every chunk
+  update spent 47 ms on average (up to 68 ms) in the navigation tick. Inside it the engine built the collision of each of
+  the chunk's three new pieces on the main thread, about 12.5 ms per build (up to 21.5 ms), while the same collision was already being built in the
+  background. 101 navigation ticks held exactly three such builds each and add up to 4.7 s. That is the 4.7 to 4.8 s per
+  100 digs that the split table of the first measurement could not name.
+- **Why it happened.** A new piece joined navigation while it was still empty. When navigation then asked for the
+  piece's shape, the engine's default answer was to read the piece's collision data, and to build that data on the spot
+  if it was not built yet.
+- **The fix.** Each piece now hands navigation its own triangles, so navigation never touches collision data, and a new
+  piece joins navigation only once its background-built collision is in. A counter in the terrain guards it: 42
+  main-thread builds in ten digs before the fix, none after, and none in any window on this page
+  (`game_thread_cooks=0`). In both traced runs after the fix the navigation tick never took more than 2.7 ms.
+- **What a heavy dig still costs.** In the traced run after the fix, one dig in the busy chunk added about 6.5 ms of
+  main-thread work, spread over two or three frames: about 2.3 ms making the three changed pieces drawable again, about
+  1.7 ms in the terrain's own update, about 1.5 ms in navigation and about 0.9 ms finishing the background builds. None
+  of it is a stall or duplicate work. All of it grows with how much mesh is replaced, and each dig replaces all three
+  pieces of the chunk, about 30,000 vertices, although the dig itself changes a ball 2 m across.
+- **What a corner dig costs.** One dig where eight chunks meet updates all eight. In the traced run it added about
+  7.7 ms: about 2.0 ms in the terrain's own update, about 1.9 ms in navigation, about 2.0 ms in the frame's other tick
+  work (about half of that was the main thread waiting for worker threads that were busy with the dig's own background
+  jobs) and about 0.9 ms making the pieces drawable.
+
+### What the single slow frames are
+
+In the traced run with the browser off, 22 frames after start-up held more than 15 ms of main-thread work:
+
+| What the frame was | Frames | Main-thread work | How it was identified |
+|---|---|---|---|
+| A screenshot being taken | 8 | 90 to 107 ms (the first one 618 ms) | 8.1 s apart inside the screenshot test |
+| The Windows message pump of the process (window messages from the desktop) | 10 | 21 to 135 ms | nine read in the trace; the tenth has the same shape (an engine tick under 2 ms) |
+| A garbage collection | 4 | 20 to 26 ms | the collection itself took 17 to 22 ms; about one a minute |
+| Terrain, collision or navigation work | 0 | | |
+
+The message pump runs outside the game's own tick. In the one collection read in full, 14.6 of its 22.3 ms were the
+editor's Python plugin. In the traced run with the browser still on, the four stalls read (56 to 215 ms) were all the
+embedded web browser's tick. So every slow single frame that was traced came from the desktop, the editor program, a
+collection or a screenshot. That does not prove the same of the slow frames in the untraced runs on this page; it is
+the only evidence there is about what such frames are.
+
+### The game's own work per frame
+
+The engine tick is everything the game itself does in a frame. Over the whole traced run with the browser off, leaving
+out the screenshot test and the collections (11,105 frames), it took:
+
+| Part of the run | Middle frame | 99 in 100 | Worst frame |
+|---|---|---|---|
+| Busy-chunk test | 1.5 ms | 5.7 ms | 10.7 ms |
+| Collision-size and corner tests | 1.6 ms | 4.6 ms | 8.6 ms |
+| Everything after them (open ground, navmesh, seams, shadows, streaming) | 1.4 ms | 3.0 ms | 5.9 ms |
+
+These are raw times, not "above idle"; an idle frame's engine tick is about 1.4 ms. So with the desktop, the editor
+program and screenshots left out, the worst frame of heavy digging was about 9 ms above idle, the worst corner frame
+about 7 ms, and no frame of any other test more than about 4.5 ms.
 
 ### Streaming
 
@@ -263,6 +329,13 @@ was in use; for each "off" shot they said it was not; the images agree. It was s
   uses a plain engine material when none is set, and the test map sets one.
 - **Hardware ray tracing matters underground.** Without it, tunnels and pits are lit brighter and blue-grey, most likely
   by sky light leaking in (see "Cave lighting").
+- **Navigation built collision twice.** A new piece of dug ground joined navigation before its collision was built, and
+  the engine then built that collision on the main thread while the background build of the same data was running:
+  about 47 ms of every dig in a heavily dug chunk. Fixed: pieces hand navigation their own triangles and join it only
+  once their collision is in.
+- **The editor's embedded web browser stalls the main thread.** In the traced run it took 56 to 215 ms at a time, in
+  two bursts a minute apart. It is loaded by the editor tooling plugin `UnrealCanvasBridge`. The measurement switches
+  it off. The project still loads it, so play in the editor is likely to have the same stalls; that was not measured.
 - **Heavily dug chunks.** Each change to a chunk of about 29,700 vertices costs 5.3 to 10.3 ms on the main thread, and
   99 frames in 100 stay under 4.4 to 9.1 ms above idle while digging in it.
 
@@ -284,11 +357,12 @@ These come from tasks 2.3 to 2.5, run without any graphics. They are not compara
 ## What was not measured
 
 - **A packaged build.** This copy of the project has no game content, so nothing can be packaged. Nothing measured
-  here says whether a packaged game would be faster or slower.
+  here says whether a packaged game would be faster or slower. Two things seen in the traces belong to the editor
+  program and its plugins: the embedded web browser, and the Python plugin's share of each garbage collection.
 - **The real hero and the real town.** They are not in this copy. All tests used a plain stand-in character on a small
   test map.
-- **A machine without a ray-tracing graphics card.** Only this machine (RTX 5080) was used. Given the sky-light leak
-  above, caves on such a machine would likely look blue-grey.
+- **A machine without a ray-tracing graphics card.** Only this machine (RTX 5080) was used. If sky light does reach underground
+  there, as the screenshots suggest, caves on such a machine would likely look blue-grey.
 - **Flicker.** Nobody watched the game running.
 - **A quiet machine.** Another Unreal editor was running throughout, and idle frames alone (nothing being dug) reached
   112 and 119 ms and once 896 ms above idle. A quiet machine is needed to bound single slow frames.
@@ -300,4 +374,54 @@ installed.
 
 ## Verdict
 
-Verdict: to be written by the controller after review.
+**Verdict: continue with named changes.** This is the controller's recommendation. The decision at this gate is the
+owner's.
+
+### Where the gate stands
+
+- **By the letter, gate 2 is not passed.** The plan asks that the worst frame of digging and of streaming be at most
+  4 ms above idle. No run meets that. The two heavy cases added during review also miss 4 ms on 99 frames in 100.
+- **The stall that failed the first measurement is gone.** About 60 ms per dig in a heavily dug chunk was a defect in
+  the terrain code: navigation built each new piece's collision a second time, on the main thread. It is fixed and a
+  test guards it. The same dig now costs 5 to 10 ms, spread over two or three frames, and the game held 60 frames a
+  second through it.
+- **The worst-frame mark cannot be judged from these runs.** Single frames of 100 to 900 ms appear with nothing being
+  dug. Every slow single frame that was traced was a screenshot, the desktop's window messages, a garbage collection or
+  the editor's embedded web browser. None was terrain, collision or navigation work. In the traced run the game's own
+  work never took more than 10.7 ms in a frame.
+- **What can be judged is close to the mark.** On 99 frames in 100, open ground (1.6 to 2.6 ms) and streaming (1.1 to
+  1.8 ms) meet 4 ms. The heavily dug chunk (4.4 to 5.0 ms in three runs, 9.1 ms in the fourth) and the eight-chunk
+  corner (4.2 to 5.5 ms) miss it.
+- **The other rows.** Collision size and seams meet their marks. The navmesh follows a dig in 0.07 to 0.13 s against a
+  mark of 1 s; one run had one 73 ms frame while it rebuilt. Cave lighting is the owner's to judge. A packaged build
+  was not measured.
+
+### A stricter reading the owner may prefer
+
+The plan says that if gate 2 still fails after one round of fixes, full digging stops. The navigation fix could be
+counted as that round. The controller does not count it: it repaired a defect, and the round the plan names for this
+result (smaller chunks and a lower commit budget, then one more measurement) has not been tried.
+
+### The named changes
+
+To be done first in stage 3, before anything is built on the terrain:
+
+1. **Replace only what a dig touches.** Today one dig swaps every piece of a 16 m chunk, about 30,000 vertices in the
+   worst case, for a hole 2 m across. Cut chunks into fixed smaller pieces, or use smaller chunks, so that a dig
+   replaces only the pieces it changes.
+2. **Make digs at chunk borders cheaper.** Tighten the rule for which chunks a dig updates, set the commit budget to 1
+   per frame, and run the terrain's worker jobs at background priority so the frame's own tasks do not wait behind them.
+3. **Measure once more where the worst frame means something:** a packaged build of the spike map, or a quiet machine
+   with the embedded web browser off. Decide then whether a garbage-collection frame counts against the 4 ms mark.
+4. **Keep the stop rule.** If the heavy cases still miss 4 ms on 99 frames in 100 after that round, the plan's stop
+   condition applies: full digging stops, stage 1's dig spots stay, and diggable zones are the fallback.
+
+### Also open
+
+- **Before a terrain goes into a map with characters,** collision and navigation must stay loaded farther out than the
+  visuals. Today both are dropped 24 m from the player.
+- **For the owner to judge:** the cave screenshots in `ArtDirection/Digging/SpikeShots/`. With hardware ray tracing on,
+  the tunnel is a dim neutral grey. With it off, it is brighter and blue-grey.
+- **Not covered by this spike:** a packaged build, the real hero and town, a graphics card without ray tracing, flicker.
+
+Stage 1 (dig spots, buried finds and the save) does not depend on any of this.

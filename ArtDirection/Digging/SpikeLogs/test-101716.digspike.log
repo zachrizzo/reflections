@@ -1,0 +1,236 @@
+﻿Log file open, 11/22/26 10:17:17
+LogInit: Command Line: /Game/Maps/DigSpike/L_DigSpike -game -ExecCmds="t.MaxFPS 60, Automation RunTests Reflections.SpikePerf.BusyChunkCost; Quit" -unattended -nosplash -nosound -nopause -NoLiveCoding -abslog="C:\Users\zachc\Documents\Unreal Projects\reflections\.worktrees\digging\.superpowers\logs\test-101716.log" -RenderOffScreen -windowed -ResX=1280 -ResY=720 -trace=cpu,frame,bookmark -statnamedevents -tracefile=C:\Users\zachc\AppData\Local\Temp\claude\79559c54b34378d8\c0c1386b-d971-49e9-a765-4e92391dfe83\scratchpad\busy.utrace
+[2026.11.22-17.17.25:119][  0]LogWebBrowser: Loaded CEF3 version 147.0.14.3516 from C:/Program Files/Epic Games/UE_5.9/Engine/Binaries/ThirdParty/CEF3/Win64/147.0.14+g76d2442+chromium-147.0.7727.138
+[2026.11.22-17.17.25:120][  0]LogCEFBrowser: CEF GPU acceleration enabled
+[2026.11.22-17.17.40:214][651]LogTemp: Display: DIGSPIKE BUSY_RIDDLE chunk=X=2 Y=0 Z=0 pass=1 stamps_changed=512
+[2026.11.22-17.17.40:354][657]LogTemp: Display: DIGSPIKE BUSY_BEFORE chunk=X=2 Y=0 Z=0 pieces=3 vertices=29672 largest_piece_vertices=10320
+[2026.11.22-17.17.42:406][780]LogTemp: Display: DIGSPIKE QUIET test=BusyChunkCost waited_s=2.1 most_shader_jobs=0 lumen_hwrt=1
+[2026.11.22-17.17.52:497][382]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.86 ms, components 0.48, set mesh 0.39, cook start 0.95, destroy 0.03
+[2026.11.22-17.17.52:553][383]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.52:607][387]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.99 ms, components 0.60, set mesh 0.38, cook start 0.96, destroy 0.04
+[2026.11.22-17.17.52:674][388]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.17.52:730][392]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.04 ms, components 0.56, set mesh 0.39, cook start 1.05, destroy 0.04
+[2026.11.22-17.17.52:798][393]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.17.52:852][397]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.92 ms, components 0.47, set mesh 0.37, cook start 1.05, destroy 0.04
+[2026.11.22-17.17.52:911][398]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.15 ms
+[2026.11.22-17.17.52:938][400]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.16 ms, components 0.55, set mesh 0.40, cook start 1.17, destroy 0.04
+[2026.11.22-17.17.52:990][401]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.09 ms
+[2026.11.22-17.17.53:028][404]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.84 ms, components 0.49, set mesh 0.33, cook start 0.98, destroy 0.03
+[2026.11.22-17.17.53:078][405]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.53:134][409]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.86 ms, components 0.45, set mesh 0.38, cook start 0.99, destroy 0.04
+[2026.11.22-17.17.53:197][410]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.53:226][412]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.46 ms, components 0.79, set mesh 0.45, cook start 1.18, destroy 0.04
+[2026.11.22-17.17.53:287][413]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.53:341][417]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.13 ms, components 0.42, set mesh 0.38, cook start 1.30, destroy 0.04
+[2026.11.22-17.17.53:403][418]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.53:441][421]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.57 ms, components 0.38, set mesh 0.31, cook start 0.84, destroy 0.03
+[2026.11.22-17.17.53:498][422]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.53:536][425]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.32 ms, components 0.59, set mesh 0.66, cook start 1.03, destroy 0.04
+[2026.11.22-17.17.53:603][426]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.53:628][428]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.02 ms, components 0.42, set mesh 0.45, cook start 1.12, destroy 0.03
+[2026.11.22-17.17.53:688][429]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.14 ms
+[2026.11.22-17.17.53:745][433]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.50 ms, components 0.87, set mesh 0.48, cook start 1.11, destroy 0.04
+[2026.11.22-17.17.53:811][434]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.17.53:850][437]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.10 ms, components 0.62, set mesh 0.39, cook start 1.05, destroy 0.04
+[2026.11.22-17.17.53:922][438]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.14 ms
+[2026.11.22-17.17.53:951][440]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.39 ms, components 0.64, set mesh 0.56, cook start 1.15, destroy 0.04
+[2026.11.22-17.17.54:014][441]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.09 ms
+[2026.11.22-17.17.54:053][444]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.15 ms, components 0.51, set mesh 0.42, cook start 1.19, destroy 0.04
+[2026.11.22-17.17.54:107][445]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.54:132][447]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.79 ms, components 0.44, set mesh 0.30, cook start 1.02, destroy 0.03
+[2026.11.22-17.17.54:188][448]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.54:242][452]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.64 ms, components 0.38, set mesh 0.34, cook start 0.89, destroy 0.03
+[2026.11.22-17.17.54:299][453]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.54:337][456]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.94 ms, components 0.46, set mesh 0.37, cook start 1.08, destroy 0.02
+[2026.11.22-17.17.54:401][457]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.16 ms
+[2026.11.22-17.17.54:438][460]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.99 ms, components 0.53, set mesh 0.38, cook start 1.05, destroy 0.03
+[2026.11.22-17.17.54:498][461]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.22 ms
+[2026.11.22-17.17.54:536][464]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.71 ms, components 0.40, set mesh 0.31, cook start 0.97, destroy 0.03
+[2026.11.22-17.17.54:590][465]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.54:614][467]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.96 ms, components 0.51, set mesh 0.36, cook start 1.06, destroy 0.03
+[2026.11.22-17.17.54:667][468]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.15 ms
+[2026.11.22-17.17.54:721][472]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.15 ms, components 0.82, set mesh 0.33, cook start 0.87, destroy 0.14
+[2026.11.22-17.17.54:789][473]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.54:845][477]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.97 ms, components 0.48, set mesh 0.42, cook start 1.03, destroy 0.04
+[2026.11.22-17.17.54:920][478]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.14 ms
+[2026.11.22-17.17.54:958][481]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.55 ms, components 0.40, set mesh 0.26, cook start 0.86, destroy 0.03
+[2026.11.22-17.17.55:016][482]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.14 ms
+[2026.11.22-17.17.55:039][484]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.45 ms, components 0.78, set mesh 0.53, cook start 1.10, destroy 0.03
+[2026.11.22-17.17.55:102][485]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.17.55:141][488]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.85 ms, components 0.42, set mesh 0.37, cook start 1.02, destroy 0.03
+[2026.11.22-17.17.55:199][489]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.55:223][491]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.84 ms, components 0.46, set mesh 0.32, cook start 1.02, destroy 0.03
+[2026.11.22-17.17.55:270][492]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.09 ms
+[2026.11.22-17.17.55:325][496]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.23 ms, components 0.73, set mesh 0.39, cook start 1.07, destroy 0.03
+[2026.11.22-17.17.55:388][497]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.17.55:444][501]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.97 ms, components 0.59, set mesh 0.35, cook start 1.00, destroy 0.04
+[2026.11.22-17.17.55:503][502]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.55:541][505]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.97 ms, components 0.44, set mesh 0.79, cook start 1.70, destroy 0.03
+[2026.11.22-17.17.55:598][506]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.55:636][509]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.93 ms, components 0.46, set mesh 0.43, cook start 1.01, destroy 0.03
+[2026.11.22-17.17.55:690][510]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.55:727][513]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.89 ms, components 0.64, set mesh 0.30, cook start 0.92, destroy 0.03
+[2026.11.22-17.17.55:778][514]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.55:833][518]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.96 ms, components 0.57, set mesh 0.35, cook start 1.01, destroy 0.04
+[2026.11.22-17.17.55:890][519]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.17.55:928][522]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.69 ms, components 0.39, set mesh 0.36, cook start 0.91, destroy 0.03
+[2026.11.22-17.17.55:982][523]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.56:036][527]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.50 ms, components 0.38, set mesh 0.26, cook start 0.83, destroy 0.03
+[2026.11.22-17.17.56:096][528]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.56:134][531]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.65 ms, components 0.45, set mesh 0.28, cook start 0.88, destroy 0.04
+[2026.11.22-17.17.56:197][532]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.17.56:236][535]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.94 ms, components 0.48, set mesh 0.39, cook start 1.03, destroy 0.04
+[2026.11.22-17.17.56:300][536]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.17.56:338][539]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.90 ms, components 0.40, set mesh 0.39, cook start 1.08, destroy 0.03
+[2026.11.22-17.17.56:407][540]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.17.56:446][543]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.36 ms, components 0.68, set mesh 0.52, cook start 1.12, destroy 0.04
+[2026.11.22-17.17.56:516][544]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.56:554][547]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.76 ms, components 0.42, set mesh 0.33, cook start 0.97, destroy 0.03
+[2026.11.22-17.17.56:620][548]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.17.56:647][550]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.59 ms, components 0.74, set mesh 0.55, cook start 1.26, destroy 0.04
+[2026.11.22-17.17.56:707][551]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.17.56:744][554]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.66 ms, components 0.41, set mesh 0.30, cook start 0.91, destroy 0.03
+[2026.11.22-17.17.56:797][555]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.17.56:834][558]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.71 ms, components 0.39, set mesh 0.33, cook start 0.97, destroy 0.03
+[2026.11.22-17.17.56:908][559]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.15 ms
+[2026.11.22-17.17.56:962][563]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.78 ms, components 0.41, set mesh 0.33, cook start 0.99, destroy 0.04
+[2026.11.22-17.17.57:026][564]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.17.57:050][566]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.24 ms, components 0.64, set mesh 0.42, cook start 1.14, destroy 0.04
+[2026.11.22-17.17.57:111][567]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.57:149][570]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.72 ms, components 0.44, set mesh 0.36, cook start 0.89, destroy 0.03
+[2026.11.22-17.17.57:211][571]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.57:238][573]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.38 ms, components 0.67, set mesh 0.50, cook start 1.16, destroy 0.05
+[2026.11.22-17.17.57:289][574]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.09 ms
+[2026.11.22-17.17.57:326][577]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.43 ms, components 0.37, set mesh 0.27, cook start 0.76, destroy 0.03
+[2026.11.22-17.17.57:392][578]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.17.57:448][582]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.33 ms, components 0.67, set mesh 0.44, cook start 1.18, destroy 0.05
+[2026.11.22-17.17.57:521][583]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.16 ms
+[2026.11.22-17.17.57:561][586]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 3.18 ms, components 1.48, set mesh 0.47, cook start 1.18, destroy 0.04
+[2026.11.22-17.17.57:639][587]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.15 ms
+[2026.11.22-17.17.57:671][589]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 3.00 ms, components 1.29, set mesh 0.49, cook start 1.18, destroy 0.04
+[2026.11.22-17.17.57:750][590]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.16 ms
+[2026.11.22-17.17.57:795][593]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.88 ms, components 0.81, set mesh 0.51, cook start 1.51, destroy 0.04
+[2026.11.22-17.17.57:861][594]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.16 ms
+[2026.11.22-17.17.57:862][594]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.82 ms, components 0.45, set mesh 0.33, cook start 1.03, destroy 0.01
+[2026.11.22-17.17.57:912][595]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.09 ms
+[2026.11.22-17.17.57:950][598]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.92 ms, components 0.49, set mesh 0.37, cook start 1.02, destroy 0.04
+[2026.11.22-17.17.58:017][599]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.58:048][601]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 6.39 ms, components 4.11, set mesh 0.53, cook start 1.71, destroy 0.04
+[2026.11.22-17.17.58:105][602]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.58:144][605]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.19 ms, components 0.62, set mesh 0.41, cook start 1.12, destroy 0.04
+[2026.11.22-17.17.58:208][606]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.58:247][609]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.94 ms, components 0.42, set mesh 0.41, cook start 1.08, destroy 0.03
+[2026.11.22-17.17.58:305][610]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.17.58:343][613]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.83 ms, components 0.52, set mesh 0.31, cook start 0.96, destroy 0.04
+[2026.11.22-17.17.58:397][614]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.58:424][616]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.94 ms, components 0.52, set mesh 0.37, cook start 1.02, destroy 0.03
+[2026.11.22-17.17.58:472][617]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.58:528][621]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.37 ms, components 0.91, set mesh 0.40, cook start 1.00, destroy 0.05
+[2026.11.22-17.17.58:587][622]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.58:641][626]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.90 ms, components 0.53, set mesh 0.37, cook start 0.95, destroy 0.04
+[2026.11.22-17.17.58:701][627]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.46 ms
+[2026.11.22-17.17.58:739][630]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.14 ms, components 0.74, set mesh 0.39, cook start 0.97, destroy 0.03
+[2026.11.22-17.17.58:806][631]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.16 ms
+[2026.11.22-17.17.58:845][634]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.06 ms, components 0.59, set mesh 0.38, cook start 1.05, destroy 0.03
+[2026.11.22-17.17.58:901][635]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.58:926][637]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.86 ms, components 0.48, set mesh 0.33, cook start 1.02, destroy 0.03
+[2026.11.22-17.17.58:973][638]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.09 ms
+[2026.11.22-17.17.59:011][641]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.81 ms, components 0.63, set mesh 0.30, cook start 0.84, destroy 0.03
+[2026.11.22-17.17.59:069][642]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.17.59:123][646]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.81 ms, components 0.38, set mesh 0.37, cook start 1.02, destroy 0.03
+[2026.11.22-17.17.59:183][647]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.17.59:237][651]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.72 ms, components 0.42, set mesh 0.32, cook start 0.95, destroy 0.03
+[2026.11.22-17.17.59:296][652]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.17.59:334][655]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.87 ms, components 0.52, set mesh 0.32, cook start 1.00, destroy 0.03
+[2026.11.22-17.17.59:391][656]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.59:430][659]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.05 ms, components 0.65, set mesh 0.37, cook start 1.00, destroy 0.03
+[2026.11.22-17.17.59:496][660]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.59:550][664]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.00 ms, components 0.56, set mesh 0.36, cook start 1.02, destroy 0.05
+[2026.11.22-17.17.59:601][665]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.17.59:630][667]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.95 ms, components 0.49, set mesh 0.44, cook start 0.99, destroy 0.03
+[2026.11.22-17.17.59:680][668]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.09 ms
+[2026.11.22-17.17.59:717][671]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.52 ms, components 0.35, set mesh 0.25, cook start 0.89, destroy 0.03
+[2026.11.22-17.17.59:767][672]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.17.59:822][676]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.98 ms, components 0.52, set mesh 0.36, cook start 1.07, destroy 0.03
+[2026.11.22-17.17.59:894][677]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.15 ms
+[2026.11.22-17.17.59:948][681]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.92 ms, components 0.50, set mesh 0.36, cook start 1.02, destroy 0.03
+[2026.11.22-17.18.00:022][682]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.29 ms
+[2026.11.22-17.18.00:051][684]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.96 ms, components 0.50, set mesh 0.40, cook start 1.02, destroy 0.03
+[2026.11.22-17.18.00:116][685]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.18.00:153][688]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.64 ms, components 0.35, set mesh 0.31, cook start 0.95, destroy 0.02
+[2026.11.22-17.18.00:205][689]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.18.00:243][692]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.95 ms, components 0.51, set mesh 0.35, cook start 1.06, destroy 0.03
+[2026.11.22-17.18.00:315][693]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.44 ms
+[2026.11.22-17.18.00:355][696]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.70 ms, components 0.91, set mesh 0.51, cook start 1.25, destroy 0.04
+[2026.11.22-17.18.00:429][697]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.14 ms
+[2026.11.22-17.18.00:469][700]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 3.37 ms, components 1.43, set mesh 0.54, cook start 1.37, destroy 0.04
+[2026.11.22-17.18.00:540][701]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.18.00:542][701]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.06 ms, components 0.50, set mesh 0.39, cook start 1.16, destroy 0.01
+[2026.11.22-17.18.00:605][702]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.18.00:644][705]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.11 ms, components 0.52, set mesh 0.38, cook start 1.17, destroy 0.03
+[2026.11.22-17.18.00:710][706]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.18.00:748][709]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.05 ms, components 0.72, set mesh 0.27, cook start 1.03, destroy 0.03
+[2026.11.22-17.18.00:817][710]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.24 ms
+[2026.11.22-17.18.00:855][713]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.75 ms, components 0.43, set mesh 0.39, cook start 0.90, destroy 0.03
+[2026.11.22-17.18.00:913][714]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.18.00:950][717]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.95 ms, components 0.51, set mesh 0.41, cook start 0.99, destroy 0.04
+[2026.11.22-17.18.01:006][718]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.09 ms
+[2026.11.22-17.18.01:030][720]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.75 ms, components 0.46, set mesh 0.36, cook start 0.90, destroy 0.03
+[2026.11.22-17.18.01:086][721]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.18.01:140][725]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.99 ms, components 0.56, set mesh 0.37, cook start 1.02, destroy 0.03
+[2026.11.22-17.18.01:201][726]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.09 ms
+[2026.11.22-17.18.01:226][728]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.82 ms, components 0.42, set mesh 0.34, cook start 1.03, destroy 0.03
+[2026.11.22-17.18.01:273][729]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.09 ms
+[2026.11.22-17.18.01:310][732]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.58 ms, components 0.35, set mesh 0.29, cook start 0.92, destroy 0.03
+[2026.11.22-17.18.01:372][733]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.18.01:426][737]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.95 ms, components 0.46, set mesh 0.39, cook start 1.06, destroy 0.03
+[2026.11.22-17.18.01:492][738]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.18.01:547][742]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.75 ms, components 0.40, set mesh 0.33, cook start 0.99, destroy 0.03
+[2026.11.22-17.18.01:602][743]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.10 ms
+[2026.11.22-17.18.01:640][746]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.95 ms, components 0.37, set mesh 0.33, cook start 1.23, destroy 0.03
+[2026.11.22-17.18.01:696][747]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.11 ms
+[2026.11.22-17.18.01:722][749]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.83 ms, components 0.50, set mesh 0.30, cook start 1.00, destroy 0.03
+[2026.11.22-17.18.01:770][750]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.09 ms
+[2026.11.22-17.18.01:808][753]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.45 ms, components 0.91, set mesh 0.40, cook start 1.09, destroy 0.04
+[2026.11.22-17.18.01:881][754]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.15 ms
+[2026.11.22-17.18.01:935][758]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.99 ms, components 0.52, set mesh 0.39, cook start 1.05, destroy 0.04
+[2026.11.22-17.18.02:003][759]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.16 ms
+[2026.11.22-17.18.02:042][762]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 2.25 ms, components 0.69, set mesh 0.45, cook start 1.07, destroy 0.04
+[2026.11.22-17.18.02:118][763]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.18.02:157][766]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 2.35 ms, components 0.81, set mesh 0.43, cook start 1.04, destroy 0.06
+[2026.11.22-17.18.02:224][767]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.13 ms
+[2026.11.22-17.18.02:265][770]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.86 ms, components 0.43, set mesh 0.32, cook start 1.08, destroy 0.03
+[2026.11.22-17.18.02:322][771]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.12 ms
+[2026.11.22-17.18.02:323][771]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28152 vertices): total 1.78 ms, components 0.39, set mesh 0.36, cook start 1.02, destroy 0.01
+[2026.11.22-17.18.02:372][772]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.09 ms
+[2026.11.22-17.18.02:409][775]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless commit X=2 Y=0 Z=0 (replace, 3 pieces, 28160 vertices): total 1.69 ms, components 0.38, set mesh 0.31, cook start 0.98, destroy 0.03
+[2026.11.22-17.18.02:473][776]LogReflectionsDigTerrain: Verbose: DIGSPIKE headless swap X=2 Y=0 Z=0: destroyed 3 retiring pieces in 0.14 ms
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WHOLE idle_median_ms=2.317 above_mean_ms=15.252 above_median_ms=3.892 above_p99_ms=63.967 above_max_ms=75.911 raw_max_ms=78.228 max_is_collection=0 frames=399 digs=100 cost_per_dig_ms=60.123 dig_related_frames=393 dig_related_max_ms=75.911 collection_frames=0 collection_max_ms=0.000 background_frames=6 background_max_ms=2.047 idle_background_max_ms=7.389 collections_window=0 collections_idle=0 commits=100 cooks_finished=300 nav_updates=600 releases=0 restores=0 release_ms_total=0.000 release_ms_max_frame=0.000
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE SPLIT test=BUSY cook_finish_ms_total=22.53 cook_finish_ms_max_frame=0.74 nav_ms_total=7.69 nav_after_cook_ms_total=5.16 commit_ms_total=210.48 swap_ms_total=16.13 frames=399 digs=100 window_above_idle_ms_total=6012.30 parts_ms_total=254.30 rest_ms_total=5758.00 rest_commit_frames=100 rest_commit_ms=289.81 rest_after_commit_frames=97 rest_after_commit_ms=4817.80 rest_cook_frames=0 rest_cook_ms=0.00 rest_other_frames=202 rest_other_ms=650.39 commits=100 cooks_finished=300 pieces_recooked=300 vertices_recooked=2984800 pieces_per_commit=3.00 vertices_per_commit=29848
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_EXTRA attempts=100 digs_changed=100 lumen_hwrt=1
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_IDLE frames=600 game_mean=2.501 game_median=2.317 game_p99=6.024 game_max=9.705 game_top5=9.71,7.74,7.36,7.03,6.24 busy_mean=2.505 busy_p99=6.199 busy_max=9.837 render_mean=5.248 render_max=19.456 gpu_mean=1.854 gpu_max=3.649 frames_over_16ms=0 collections=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW frames=399 game_mean=17.569 game_median=6.208 game_p99=66.283 game_max=78.228 game_top5=78.23,70.02,68.35,66.28,66.25 busy_mean=17.662 busy_p99=65.333 busy_max=74.876 render_mean=5.975 render_max=10.860 gpu_mean=2.046 gpu_max=4.387 frames_over_16ms=101 collections=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_TERRAIN commits=100 commit_ms_total=206.32 commit_ms_max=6.39 swaps=100 swap_ms_total=12.80 swap_ms_max=0.46
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=4 game_ms=44.53 busy_ms=43.04 render_ms=6.20 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.04 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=8 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=9 game_ms=57.77 busy_ms=55.00 render_ms=8.36 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.04 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=8 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=14 game_ms=59.39 busy_ms=56.40 render_ms=8.82 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.07 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=8 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=19 game_ms=48.82 busy_ms=46.82 render_ms=6.56 digs=1 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.04 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=8 tasks_in_flight=1
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=22 game_ms=47.23 busy_ms=44.91 render_ms=7.24 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.04 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=0 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=26 game_ms=39.75 busy_ms=38.20 render_ms=5.17 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.04 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=8 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=31 game_ms=53.77 busy_ms=51.92 render_ms=6.42 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.07 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=8 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=34 game_ms=60.43 busy_ms=56.86 render_ms=7.03 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.04 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=0 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=39 game_ms=51.54 busy_ms=49.51 render_ms=6.32 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.04 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=8 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=43 game_ms=46.18 busy_ms=44.37 render_ms=6.65 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.07 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=7 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=47 game_ms=57.73 busy_ms=55.17 render_ms=7.15 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.05 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=8 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=50 game_ms=54.08 busy_ms=52.22 render_ms=7.64 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.05 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=0 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=55 game_ms=59.01 busy_ms=56.09 render_ms=7.52 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.07 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=7 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=59 game_ms=63.83 busy_ms=61.34 render_ms=7.96 digs=1 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.05 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=5 tasks_in_flight=1
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=62 game_ms=62.04 busy_ms=57.08 render_ms=7.87 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.04 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=2 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=66 game_ms=46.02 busy_ms=42.40 render_ms=6.20 digs=1 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.04 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=8 tasks_in_flight=1
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=69 game_ms=50.11 busy_ms=47.87 render_ms=6.89 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.20 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=0 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=74 game_ms=45.85 busy_ms=43.94 render_ms=5.88 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.05 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=8 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=78 game_ms=54.04 busy_ms=51.74 render_ms=9.68 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.05 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=8 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_WINDOW_SPIKE frame=82 game_ms=50.66 busy_ms=47.33 render_ms=6.76 digs=0 commits=0 cooks_finished=3 nav_updates=3 nav_ms=0.04 releases=0 restores=0 gc=0 previous_frame_dig_related=1 nav_tasks_running=6 tasks_in_flight=0
+[2026.11.22-17.18.02:485][777]LogTemp: Display: DIGSPIKE BUSY_AFTER chunk=X=2 Y=0 Z=0 pieces=3 vertices=29816 largest_piece_vertices=10320 largest_collision_vertices=10320
+[2026.11.22-17.18.02:509][779]LogAutomationController: Display: Test Completed. Result={Success} Name={BusyChunkCost} Path={Reflections.SpikePerf.BusyChunkCost}
+[2026.11.22-17.18.02:529][780]LogCore: Engine exit requested (reason: Win RequestExit)
