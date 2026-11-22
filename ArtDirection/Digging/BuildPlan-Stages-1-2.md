@@ -27,7 +27,7 @@
 - **Save slots in tests:** tests never touch the real slot `Reflections`. They use slot `ReflectionsTest` and delete it before and after.
 - **Fixed numbers:** cell 50 cm; chunk 32 cells (16 m); density is `int8`, positive is solid, range -127 to 127; `DensityPerCell = 64`; `SampleBorder = 2`; topsoil material 0; bedrock material 255; dig radius 100 cm; reach 250 cm; commit budget default 2 per frame; mesh radius 2400 cm.
 - **Scope limits:** single-player only, no replication. No third-party code, no new plugins, no `.uproject` change.
-- **Git:** one commit per task (a fix round adds a commit). Stage only the task's files by path, never `git add -A`. Never stash, reset, rebase, switch branches or push. Commit messages are one plain sentence in the imperative ("Add a versioned save with a checked file format") and end with the line `Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>`.
+- **Git:** one commit per task (a fix round adds a commit). Stage only the task's files by path, never `git add -A`. Never stash, reset, rebase, switch branches or push. Commit messages are one plain sentence in the imperative ("Add a versioned save with a checked file format") and end with a `Co-Authored-By:` line naming the model that wrote the commit (for an Opus subagent: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`).
 
 ## Review Focus
 
@@ -77,7 +77,7 @@
 - Otherwise `Loaded`, and `OutData->SaveVersion` is the header version.
 - `Read` never writes, deletes or renames the file.
 
-**Update rules.** `Update` reads `ActiveSlot()`. On `Loaded` or `NoFile` it calls `Mutate`, writes the result to `ActiveSlot()` and returns the write result. On `NewerVersion` or `Corrupt` it does not call `Mutate`, does not write, logs one `LogReflectionsSave` warning (at most once per process run for each result kind) and returns false.
+**Update rules.** `Update` reads `ActiveSlot()`. On `Loaded` or `NoFile` it calls `Mutate`, writes the result to `ActiveSlot()` and returns the write result. On `NewerVersion` or `Corrupt` it does not call `Mutate`, does not write, logs one `LogReflectionsSave` warning on every such call and returns false. (No once-per-run limit: other tests in the same process expect the same warning.)
 
 - [ ] **Step 1: Write seven failing tests** in `ReflectionsSaveTests.cpp`, all on slot `ReflectionsTest`, each deleting the slot before and after:
   - `Reflections.Save.RoundTrip`: write `DigSpotStages = {Well: 2}`; `Read` returns `Loaded`, the value is 2 and `SaveVersion` is 1.
@@ -86,7 +86,7 @@
   - `Reflections.Save.CorruptFileIsRefused`: store 256 bytes from `FRandomStream(1234)`; `Read` returns `Corrupt` with null `OutData`; bytes unchanged.
   - `Reflections.Save.TruncatedFileIsRefused`: write a valid save with 50 entries, cut its raw bytes to half, store them; `Read` returns `Corrupt`.
   - `Reflections.Save.UpdateWritesThroughActiveSlot`: inside `FScopedSlotOverride("ReflectionsTest")`, `Update` adding `Pump: 1` returns true; a second `Update` adding `Well: 2` returns true and a `Read` shows both entries; after the override leaves scope `ActiveSlot()` equals `DefaultSlot`.
-  - `Reflections.Save.UpdateLeavesBadFileAlone`: with the override alive, once with the 256 random bytes and once with a version 2 file: `Update` returns false, `Mutate` is not called, bytes unchanged. Declare the expected warning.
+  - `Reflections.Save.UpdateLeavesBadFileAlone`: with the override alive, once with the 256 random bytes and once with a version 2 file: `Update` returns false, `Mutate` is not called, bytes unchanged. Declare the expected warning with an exact count of 2.
 - [ ] **Step 2: Build and run** `test.ps1 -Filter Reflections.Save`. Expected: the build fails on the missing symbols, or the tests fail. Record that output as the RED evidence.
 - [ ] **Step 3: Implement** `ReflectionsSaveGame.h/.cpp` to the interface, format and rules above.
 - [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections.Save`. Expected: `TESTS: 7 ran, 7 passed, 0 failed`.
