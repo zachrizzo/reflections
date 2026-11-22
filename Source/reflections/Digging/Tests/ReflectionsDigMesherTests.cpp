@@ -159,6 +159,72 @@ namespace
     {
         return FVector3f::DistSquared(A, B) <= 0.01f * 0.01f;
     }
+
+    /** The cube a vertex lies in (a cube has at most one vertex, strictly inside it): floor(position / 50). */
+    FIntVector CubeOf(const FVector3f& Position)
+    {
+        return FIntVector(
+            FMath::FloorToInt32(Position.X / ReflectionsDig::CellSizeCm),
+            FMath::FloorToInt32(Position.Y / ReflectionsDig::CellSizeCm),
+            FMath::FloorToInt32(Position.Z / ReflectionsDig::CellSizeCm));
+    }
+
+    /**
+     * Pairs the vertices of chunks (0, 1, 1) and (1, 1, 1) by cube. Every pair must agree within 0.01 cm and
+     * 0.1 degree, and every pair must be in a cube with X index 31, the only cubes both chunks can hold.
+     * A cube used only by edges one chunk owns has a vertex in that chunk alone, which is correct.
+     * Returns the number of pairs.
+     */
+    int32 CheckBorderPairs(FAutomationTestBase& Test, const FReflectionsDigMeshData& Left, const FReflectionsDigMeshData& Right, const FString& Label)
+    {
+        TMap<FIntVector, int32> LeftByCube;
+        FMismatchLog Cubes;
+        for (int32 Vertex = 0; Vertex < Left.Positions.Num(); ++Vertex)
+        {
+            const FIntVector Cube = CubeOf(Left.Positions[Vertex]);
+            if (LeftByCube.Contains(Cube))
+            {
+                Cubes.Note(FString::Printf(TEXT("cube %s has two vertices in chunk (0, 1, 1)"), *Cube.ToString()));
+            }
+            LeftByCube.Add(Cube, Vertex);
+        }
+
+        int32 Pairs = 0;
+        FMismatchLog Twins;
+        TSet<FIntVector> RightCubes;
+        for (int32 Vertex = 0; Vertex < Right.Positions.Num(); ++Vertex)
+        {
+            const FIntVector Cube = CubeOf(Right.Positions[Vertex]);
+            bool bAlreadyInSet = false;
+            RightCubes.Add(Cube, &bAlreadyInSet);
+            if (bAlreadyInSet)
+            {
+                Cubes.Note(FString::Printf(TEXT("cube %s has two vertices in chunk (1, 1, 1)"), *Cube.ToString()));
+            }
+            const int32* Twin = LeftByCube.Find(Cube);
+            if (!Twin)
+            {
+                continue;
+            }
+            ++Pairs;
+            const FVector3f& Position = Right.Positions[Vertex];
+            if (Cube.X != ReflectionsDig::ChunkCells - 1)
+            {
+                Twins.Note(FString::Printf(TEXT("cube %s is in both chunks but its X index is not 31"), *Cube.ToString()));
+            }
+            else if (!PositionsMatch(Position, Left.Positions[*Twin]))
+            {
+                Twins.Note(FString::Printf(TEXT("cube %s: positions %s and %s"), *Cube.ToString(), *Position.ToString(), *Left.Positions[*Twin].ToString()));
+            }
+            else if (!(AngleDegrees(Right.Normals[Vertex], Left.Normals[*Twin]) <= 0.1))
+            {
+                Twins.Note(FString::Printf(TEXT("cube %s: normals %s and %s"), *Cube.ToString(), *Right.Normals[Vertex].ToString(), *Left.Normals[*Twin].ToString()));
+            }
+        }
+        Cubes.Check(Test, Label + TEXT(" one vertex per cube"));
+        Twins.Check(Test, Label + TEXT(" vertex pairs"));
+        return Pairs;
+    }
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigMesherUniformChunkIsEmptyTest, "Reflections.Digging.Mesher.UniformChunkIsEmpty", DigMesherTestFlags)
@@ -241,43 +307,8 @@ bool FReflectionsDigMesherNeighboursShareBorderVerticesTest::RunTest(const FStri
         return true;
     }
 
-    const double MaxNormalAngle = 0.1;
-    auto CheckTwins = [&](const FReflectionsDigMeshData& From, const FReflectionsDigMeshData& To, const TCHAR* Label)
-    {
-        FMismatchLog Twins;
-        int32 BorderVertices = 0;
-        for (int32 Vertex = 0; Vertex < From.Positions.Num(); ++Vertex)
-        {
-            const FVector3f& Position = From.Positions[Vertex];
-            if (Position.X < 1550.0f || Position.X > 1600.0f)
-            {
-                continue;
-            }
-            ++BorderVertices;
-            int32 Twin = INDEX_NONE;
-            for (int32 Other = 0; Other < To.Positions.Num(); ++Other)
-            {
-                if (PositionsMatch(Position, To.Positions[Other]))
-                {
-                    Twin = Other;
-                    break;
-                }
-            }
-            if (Twin == INDEX_NONE)
-            {
-                Twins.Note(FString::Printf(TEXT("vertex %d at %s has no twin"), Vertex, *Position.ToString()));
-            }
-            else if (!(AngleDegrees(From.Normals[Vertex], To.Normals[Twin]) <= MaxNormalAngle))
-            {
-                Twins.Note(FString::Printf(TEXT("vertex %d at %s: normal %s, twin's %s"),
-                    Vertex, *Position.ToString(), *From.Normals[Vertex].ToString(), *To.Normals[Twin].ToString()));
-            }
-        }
-        TestTrue(FString::Printf(TEXT("%s has border vertices"), Label), BorderVertices > 0);
-        Twins.Check(*this, Label);
-    };
-    CheckTwins(Left, Right, TEXT("chunk (0, 1, 1) border vertices"));
-    CheckTwins(Right, Left, TEXT("chunk (1, 1, 1) border vertices"));
+    const int32 Pairs = CheckBorderPairs(*this, Left, Right, TEXT("crater border"));
+    TestTrue(FString::Printf(TEXT("at least 8 cubes with X index 31 have a vertex in both chunks (got %d)"), Pairs), Pairs >= 8);
     return true;
 }
 
@@ -422,6 +453,48 @@ bool FReflectionsDigMesherCellCentredDigsMakeNoDegenerateTrianglesTest::RunTest(
         ReflectionsDigMesher::BuildChunk(Grid, Chunk, Mesh);
         TestFalse(Label + TEXT(" has triangles"), Mesh.IsEmpty());
         CheckMeshInvariants(*this, Mesh, Label);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigMesherDenseDigFieldsKeepEveryTriangleFacingAirTest, "Reflections.Digging.Mesher.DenseDigFieldsKeepEveryTriangleFacingAir", DigMesherTestFlags)
+bool FReflectionsDigMesherDenseDigFieldsKeepEveryTriangleFacingAirTest::RunTest(const FString& Parameters)
+{
+    // Twelve fields of radius-100 Remove stamps: lattices 150, 200 and 250 cm apart, with centres on cells
+    // or 17 cm off them, buried (ground 6400) or cutting the surface (ground 2800). The lattice fills a box
+    // across the x = 1600 border of chunks (0, 1, 1) and (1, 1, 1), up through the 2800 surface, so the
+    // box's faces stay inside the two chunks (a 150 cm lattice on cells clears every cell it covers).
+    for (const float GroundHeightCm : { BuriedGroundHeightCm, FlatGroundHeightCm })
+    {
+        for (const double Spacing : { 150.0, 200.0, 250.0 })
+        {
+            for (const double Offset : { 0.0, 17.0 })
+            {
+                FReflectionsDigGrid Grid = MakeTestGrid(GroundHeightCm);
+                for (double Z = 1900.0; Z <= 3000.0; Z += Spacing)
+                {
+                    for (double Y = 1900.0; Y <= 2900.0; Y += Spacing)
+                    {
+                        for (double X = 1000.0; X <= 2200.0; X += Spacing)
+                        {
+                            Remove(Grid, FVector(X, Y, Z) + FVector(Offset), 100.0f);
+                        }
+                    }
+                }
+
+                const FString Field = FString::Printf(TEXT("ground %.0f, spacing %.0f, offset %.0f"), GroundHeightCm, Spacing, Offset);
+                FReflectionsDigMeshData Left;
+                FReflectionsDigMeshData Right;
+                ReflectionsDigMesher::BuildChunk(Grid, FIntVector(0, 1, 1), Left);
+                ReflectionsDigMesher::BuildChunk(Grid, FIntVector(1, 1, 1), Right);
+                TestFalse(Field + TEXT(": chunk (0, 1, 1) has triangles"), Left.IsEmpty());
+                TestFalse(Field + TEXT(": chunk (1, 1, 1) has triangles"), Right.IsEmpty());
+                CheckMeshInvariants(*this, Left, Field + TEXT(": chunk (0, 1, 1)"));
+                CheckMeshInvariants(*this, Right, Field + TEXT(": chunk (1, 1, 1)"));
+                const int32 Pairs = CheckBorderPairs(*this, Left, Right, Field);
+                TestTrue(Field + TEXT(": cubes with X index 31 have a vertex in both chunks"), Pairs > 0);
+            }
+        }
     }
     return true;
 }

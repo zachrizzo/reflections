@@ -31,8 +31,8 @@ public:
 
     /**
      * Digs (Remove) or fills (Add) a sphere. Appends, once each, every chunk with a changed cell
-     * inside its cell range grown by SampleBorder cells on every side. A radius of 0 or less or a
-     * centre that is not finite changes nothing.
+     * inside its cell range grown by SampleBorder cells on every side. A radius of 0 or less, a radius
+     * that is not finite (infinite or NaN) or a centre that is not finite changes nothing.
      */
     void ApplyStamp(const FReflectionsDigStamp& Stamp, TArray<FIntVector>& OutDirtyChunks);
 

@@ -13,6 +13,9 @@ namespace
     constexpr int32 CubesPerAxis = ChunkCells + 1;
     constexpr int32 FirstCube = -1;
 
+    /** The density level the surface passes through. Solid is still density above 0. */
+    constexpr float SurfaceLevel = 0.5f;
+
     /** Steps in the sample arrays for +1 on X, Y and Z. */
     constexpr int32 AxisStride[3] = { 1, Side, Side * Side };
 
@@ -71,12 +74,29 @@ namespace
         }
 
     private:
+        /** Component along +Axis of the plain cross product (B - A) x (C - A). */
+        float CrossAlongAxis(int32 A, int32 B, int32 C, int32 Axis) const
+        {
+            const FVector3f Cross = (Out.Positions[B] - Out.Positions[A]) ^ (Out.Positions[C] - Out.Positions[A]);
+            return Cross[Axis];
+        }
+
         /**
          * The quad of the owned edge from Cell one step along Axis, joining the four cubes around it.
          * With U and V the next two axes in cyclic order, the cubes C00 = Cell, C10 = Cell - U,
          * C11 = Cell - U - V and C01 = Cell - V go counter-clockwise around +Axis.
-         * VectorUtil::Normal(A, B, C) is the normalised (C - A) x (B - A), so a triangle (C00, C11, C10)
-         * faces +Axis: that is the winding when Cell is solid (air lies along +Axis), reversed otherwise.
+         *
+         * Winding: VectorUtil::Normal(A, B, C) is the normalised (C - A) x (B - A), the reverse of the plain
+         * (B - A) x (C - A). A triangle listed counter-clockwise around +Axis therefore faces -Axis. When Cell
+         * is solid, air lies along +Axis, so each counter-clockwise triangle is emitted reversed; otherwise
+         * it is emitted as it is. Either way a triangle faces air exactly when its counter-clockwise listing
+         * has a positive plain cross product along +Axis.
+         *
+         * Diagonal: the split through the edge's own cube (C00 to C11) or the other one (C10 to C01),
+         * whichever makes both triangles face air; the shorter when both do; C00 to C11 on an exact tie.
+         * The four vertices lie strictly inside four different cubes, in counter-clockwise order around the
+         * edge, so the quad is simple and at least one diagonal always qualifies. The choice uses only the
+         * four vertex positions, which any chunk computes alike.
          */
         void EmitQuad(const FIntVector& Cell, int32 Axis, bool bStartSolid)
         {
@@ -87,38 +107,34 @@ namespace
             const int32 V11 = FindOrAddVertex(Cell - U - V);
             const int32 V01 = FindOrAddVertex(Cell - V);
 
-            if (bStartSolid)
+            const bool bOwnDiagonalFacesAir = CrossAlongAxis(V00, V10, V11, Axis) > 0.0f && CrossAlongAxis(V00, V11, V01, Axis) > 0.0f;
+            const bool bOtherDiagonalFacesAir = CrossAlongAxis(V00, V10, V01, Axis) > 0.0f && CrossAlongAxis(V10, V11, V01, Axis) > 0.0f;
+            bool bUseOwnDiagonal = bOwnDiagonalFacesAir;
+            if (bOwnDiagonalFacesAir && bOtherDiagonalFacesAir)
             {
-                Out.Triangles.Append({ V00, V11, V10, V00, V01, V11 });
+                const float OwnLengthSquared = FVector3f::DistSquared(Out.Positions[V00], Out.Positions[V11]);
+                const float OtherLengthSquared = FVector3f::DistSquared(Out.Positions[V10], Out.Positions[V01]);
+                bUseOwnDiagonal = OwnLengthSquared <= OtherLengthSquared;
+            }
+
+            // The two triangles, counter-clockwise around +Axis.
+            int32 Triangles[6];
+            if (bUseOwnDiagonal)
+            {
+                const int32 Split[6] = { V00, V10, V11, V00, V11, V01 };
+                FMemory::Memcpy(Triangles, Split, sizeof(Triangles));
             }
             else
             {
-                Out.Triangles.Append({ V00, V10, V11, V00, V11, V01 });
+                const int32 Split[6] = { V00, V10, V01, V10, V11, V01 };
+                FMemory::Memcpy(Triangles, Split, sizeof(Triangles));
             }
-
-            // A vertex whose gradient vanished takes the normal of the first quad that uses it: this one.
-            const int32 QuadVertices[4] = { V00, V10, V11, V01 };
-            for (int32 Vertex : QuadVertices)
+            if (bStartSolid)
             {
-                if (Out.Normals[Vertex].IsZero())
-                {
-                    Out.Normals[Vertex] = QuadNormal(V00, V10, V11, V01, Axis, bStartSolid);
-                }
+                Swap(Triangles[1], Triangles[2]);
+                Swap(Triangles[4], Triangles[5]);
             }
-        }
-
-        /** Unit normal of the quad from solid toward air; the edge's direction when the quad is degenerate. */
-        FVector3f QuadNormal(int32 V00, int32 V10, int32 V11, int32 V01, int32 Axis, bool bStartSolid) const
-        {
-            const float Sign = bStartSolid ? 1.0f : -1.0f;
-            // For C00, C10, C11, C01 counter-clockwise around +Axis the diagonal cross product points along +Axis.
-            const FVector3f Cross = (Out.Positions[V11] - Out.Positions[V00]) ^ (Out.Positions[V01] - Out.Positions[V10]);
-            const float LengthSquared = Cross.SizeSquared();
-            if (LengthSquared > UE_SMALL_NUMBER)
-            {
-                return Cross * (Sign / FMath::Sqrt(LengthSquared));
-            }
-            return FVector3f(AxisStep(Axis)) * Sign;
+            Out.Triangles.Append(Triangles, 6);
         }
 
         int32 FindOrAddVertex(const FIntVector& Cube)
@@ -134,9 +150,9 @@ namespace
 
         /**
          * The vertex of a cube with both solid and non-solid corners: the mean of the 0.5-level crossings
-         * on its sign-changing edges, strictly inside the cube. Everything is computed relative to the cube from its own samples, so
-         * a neighbouring chunk computes the same vertex for the same cube bit for bit. Leaves the normal
-         * zero when the gradient vanishes; EmitQuad then fills it in.
+         * on its sign-changing edges, strictly inside the cube. Everything (position, normal, material) is
+         * computed relative to the cube from its own samples, so a neighbouring chunk computes the same
+         * vertex for the same cube bit for bit.
          */
         int32 AddCubeVertex(const FIntVector& Cube)
         {
@@ -153,6 +169,8 @@ namespace
             }
 
             FVector3f CrossingSum = FVector3f::ZeroVector;
+            // Sum of the unit directions from solid to non-solid corner: the normal when the gradient vanishes.
+            FVector3f SolidToAirSum = FVector3f::ZeroVector;
             int32 CrossingCount = 0;
             for (const int32 (&Edge)[2] : EdgeCorners)
             {
@@ -166,9 +184,11 @@ namespace
                 const int32 SolidCorner = bFirstSolid ? Edge[0] : Edge[1];
                 const int32 AirCorner = bFirstSolid ? Edge[1] : Edge[0];
                 const float DSolid = CornerDensity[SolidCorner];
-                const float T = (DSolid - 0.5f) / (DSolid - CornerDensity[AirCorner]);
+                const float T = (DSolid - SurfaceLevel) / (DSolid - CornerDensity[AirCorner]);
                 const FVector3f PSolid = CornerOffset(SolidCorner);
-                CrossingSum += PSolid + (CornerOffset(AirCorner) - PSolid) * T;
+                const FVector3f SolidToAir = CornerOffset(AirCorner) - PSolid;
+                CrossingSum += PSolid + SolidToAir * T;
+                SolidToAirSum += SolidToAir;
                 ++CrossingCount;
             }
             // Only cubes around a sign-changing edge get here, so CrossingCount is at least 1.
@@ -188,12 +208,21 @@ namespace
                     * (((Corner >> 2) & 1) ? Offset.Z : 1.0f - Offset.Z);
                 Gradient += CornerGradient * Weight;
             }
+            // Negated and normalised; if it vanishes, the summed solid-to-air edge directions; if those cancel, +Z.
+            FVector3f Normal(0.0f, 0.0f, 1.0f);
             const float GradientLengthSquared = Gradient.SizeSquared();
-            const FVector3f Normal = GradientLengthSquared > UE_SMALL_NUMBER
-                ? Gradient * (-1.0f / FMath::Sqrt(GradientLengthSquared))
-                : FVector3f::ZeroVector;
+            const float SolidToAirLengthSquared = SolidToAirSum.SizeSquared();
+            if (GradientLengthSquared > UE_SMALL_NUMBER)
+            {
+                Normal = Gradient * (-1.0f / FMath::Sqrt(GradientLengthSquared));
+            }
+            else if (SolidToAirLengthSquared > UE_SMALL_NUMBER)
+            {
+                Normal = SolidToAirSum * (1.0f / FMath::Sqrt(SolidToAirLengthSquared));
+            }
 
             // Material of the densest solid corner; ties go to the lowest corner index.
+            // The strict > below keeps the earlier (lower-index) corner on a tie.
             int32 MaterialCorner = INDEX_NONE;
             for (int32 Corner = 0; Corner < 8; ++Corner)
             {
