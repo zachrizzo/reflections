@@ -2,17 +2,32 @@
 
 #include "CoreMinimal.h"
 #include "Components/StaticMeshComponent.h"
+#include "Digging/ReflectionsDigComponent.h"
 #include "Digging/Tests/ReflectionsDigTestWorld.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/TargetPoint.h"
 #include "EngineUtils.h"
+#include "GameFramework/DefaultPawn.h"
+#include "Kismet/GameplayStatics.h"
 #include "Misc/AutomationTest.h"
+#include "Save/ReflectionsSaveGame.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
 namespace
 {
     constexpr EAutomationTestFlags DigSpotTestFlags = EAutomationTestFlags::EditorContext | EAutomationTestFlags::ProductFilter;
+    const FString TestSlot = TEXT("ReflectionsTest");
+    const FName SpikeA(TEXT("SpikeA"));
+    const FName SpikeB(TEXT("SpikeB"));
+
+    void DeleteTestSlot()
+    {
+        if (UGameplayStatics::DoesSaveGameExist(TestSlot, 0))
+        {
+            UGameplayStatics::DeleteGameInSlot(TestSlot, 0);
+        }
+    }
 
     TArray<UStaticMesh*> LoadStageMeshes()
     {
@@ -33,6 +48,21 @@ namespace
             return nullptr;
         }
         Spot->StageMeshes.Append(Meshes);
+        Spot->BuriedFindClass = FindClass;
+        return TestWorld.FinishSpawning(Spot);
+    }
+
+    /** Spawns a spot with an id and the three stage meshes at Location; it begins play (and restores) at once. */
+    AReflectionsDigSpot* SpawnSpotWithId(FReflectionsDigTestWorld& TestWorld, const TArray<UStaticMesh*>& Meshes,
+        FName SpotId, const FVector& Location = FVector::ZeroVector, TSubclassOf<AActor> FindClass = nullptr)
+    {
+        AReflectionsDigSpot* Spot = TestWorld.SpawnDeferred<AReflectionsDigSpot>(Location);
+        if (Spot == nullptr)
+        {
+            return nullptr;
+        }
+        Spot->StageMeshes.Append(Meshes);
+        Spot->SpotId = SpotId;
         Spot->BuriedFindClass = FindClass;
         return TestWorld.FinishSpawning(Spot);
     }
@@ -154,11 +184,18 @@ bool FReflectionsDigSpotSpawnsBuriedFindOnceTest::RunTest(const FString& Paramet
     {
         return false;
     }
-    AReflectionsDigSpot* Spot = SpawnSpot(TestWorld, Meshes, ATargetPoint::StaticClass());
+    // A scaled patch away from the origin: the find must take the spot's location but not its scale.
+    const FVector SpotLocation(300.0, -200.0, 50.0);
+    AReflectionsDigSpot* Spot = TestWorld.SpawnDeferred<AReflectionsDigSpot>(SpotLocation);
     if (!TestNotNull(TEXT("Spot"), Spot))
     {
         return false;
     }
+    Spot->StageMeshes.Append(Meshes);
+    Spot->BuriedFindClass = ATargetPoint::StaticClass();
+    TestWorld.FinishSpawning(Spot);
+    Spot->SetActorScale3D(FVector(2.0, 2.0, 1.0));
+    TestEqual(TEXT("Spot is scaled"), Spot->GetActorScale3D(), FVector(2.0, 2.0, 1.0));
 
     TestEqual(TEXT("No find before digging"), CountTargetPoints(TestWorld.World), 0);
     Spot->DigOnce();
@@ -168,6 +205,13 @@ bool FReflectionsDigSpotSpawnsBuriedFindOnceTest::RunTest(const FString& Paramet
     Spot->DigOnce();
     TestEqual(TEXT("Still one find after a third dig"), CountTargetPoints(TestWorld.World), 1);
 
+    TActorIterator<ATargetPoint> Find(TestWorld.World);
+    if (TestTrue(TEXT("The find exists"), static_cast<bool>(Find)))
+    {
+        TestEqual(TEXT("Find is at the spot's location"), Find->GetActorLocation(), Spot->GetActorLocation());
+        TestEqual(TEXT("Find has unit scale"), Find->GetActorScale3D(), FVector::OneVector);
+    }
+
     AReflectionsDigSpot* Restored = SpawnSpot(TestWorld, Meshes, ATargetPoint::StaticClass());
     if (!TestNotNull(TEXT("Second spot"), Restored))
     {
@@ -176,6 +220,18 @@ bool FReflectionsDigSpotSpawnsBuriedFindOnceTest::RunTest(const FString& Paramet
     Restored->SetStage(2);
     TestEqual(TEXT("Second spot is at the last stage"), Restored->GetStage(), 2);
     TestEqual(TEXT("SetStage spawns no find"), CountTargetPoints(TestWorld.World), 1);
+
+    // Restored as fully dug, then set back: digging to the end again must not give the find.
+    AReflectionsDigSpot* Rewound = SpawnSpot(TestWorld, Meshes, ATargetPoint::StaticClass());
+    if (!TestNotNull(TEXT("Third spot"), Rewound))
+    {
+        return false;
+    }
+    Rewound->SetStage(2);
+    Rewound->SetStage(1);
+    TestTrue(TEXT("Third spot digs from stage 1"), Rewound->DigOnce());
+    TestEqual(TEXT("Third spot is at the last stage"), Rewound->GetStage(), 2);
+    TestEqual(TEXT("A spot restored as fully dug never gives its find"), CountTargetPoints(TestWorld.World), 1);
     return true;
 }
 
@@ -196,6 +252,102 @@ bool FReflectionsDigSpotNoMeshesMeansNothingToDigTest::RunTest(const FString& Pa
     TestFalse(TEXT("DigOnce with no meshes is refused"), Spot->DigOnce());
     TestEqual(TEXT("Stage stays 0"), Spot->GetStage(), 0);
     TestEqual(TEXT("No find spawned"), CountTargetPoints(TestWorld.World), 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigSpotRestoresStageFromSaveTest, "Reflections.DigSpot.RestoresStageFromSave", DigSpotTestFlags)
+bool FReflectionsDigSpotRestoresStageFromSaveTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    {
+        UReflectionsSaveGame* Data = NewObject<UReflectionsSaveGame>();
+        Data->DigSpotStages.Add(SpikeA, 2);
+        TestTrue(TEXT("Write the slot"), ReflectionsSave::Write(*Data, TestSlot));
+
+        FReflectionsDigTestWorld TestWorld;
+        const TArray<UStaticMesh*> Meshes = LoadStageMeshes();
+        if (TestNotNull(TEXT("Test world"), TestWorld.World) && TestFalse(TEXT("A stage mesh failed to load"), Meshes.Contains(nullptr)))
+        {
+            AReflectionsDigSpot* A = SpawnSpotWithId(TestWorld, Meshes, SpikeA, FVector::ZeroVector, ATargetPoint::StaticClass());
+            AReflectionsDigSpot* B = SpawnSpotWithId(TestWorld, Meshes, SpikeB, FVector(0.0, 300.0, 0.0));
+            if (TestNotNull(TEXT("Spot A"), A) && TestNotNull(TEXT("Spot B"), B))
+            {
+                TestTrue(TEXT("A has begun play"), A->HasActorBegunPlay());
+                TestEqual(TEXT("A is restored to stage 2"), A->GetStage(), 2);
+                TestTrue(TEXT("A shows mesh 2"), A->GetMeshComponent()->GetStaticMesh() == Meshes[2]);
+                TestEqual(TEXT("Restoring gives no find"), CountTargetPoints(TestWorld.World), 0);
+                TestEqual(TEXT("B has no entry and stays at stage 0"), B->GetStage(), 0);
+                TestTrue(TEXT("B shows mesh 0"), B->GetMeshComponent()->GetStaticMesh() == Meshes[0]);
+            }
+        }
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigSpotDigTwiceThenReloadKeepsStageTest, "Reflections.DigSpot.DigTwiceThenReloadKeepsStage", DigSpotTestFlags)
+bool FReflectionsDigSpotDigTwiceThenReloadKeepsStageTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    const TArray<UStaticMesh*> Meshes = LoadStageMeshes();
+    if (!TestFalse(TEXT("A stage mesh failed to load"), Meshes.Contains(nullptr)))
+    {
+        return false;
+    }
+    {
+        // World 1: a pawn 150 cm behind spot A, eye level with it, digs it twice.
+        FReflectionsDigTestWorld TestWorld;
+        if (TestNotNull(TEXT("World 1"), TestWorld.World))
+        {
+            AReflectionsDigSpot* A = SpawnSpotWithId(TestWorld, Meshes, SpikeA);
+            ADefaultPawn* Pawn = TestWorld.Spawn<ADefaultPawn>(FVector(-150.0, 0.0, 0.0));
+            if (TestNotNull(TEXT("World 1 spot A"), A) && TestNotNull(TEXT("Pawn"), Pawn))
+            {
+                Pawn->BaseEyeHeight = 0.0f;
+                UReflectionsDigComponent* Dig = UReflectionsDigComponent::EnsureOnPawn(Pawn);
+                if (TestNotNull(TEXT("Dig component"), Dig))
+                {
+                    TestWorld.Tick();
+                    TestTrue(TEXT("First dig"), Dig->TryDig());
+                    TestWorld.Tick();
+                    TestTrue(TEXT("Second dig"), Dig->TryDig());
+                    TestEqual(TEXT("World 1 spot A stage"), A->GetStage(), 2);
+                }
+            }
+        }
+    }
+    {
+        // World 2: fresh spots restore from the save.
+        FReflectionsDigTestWorld TestWorld;
+        if (TestNotNull(TEXT("World 2"), TestWorld.World))
+        {
+            AReflectionsDigSpot* A = SpawnSpotWithId(TestWorld, Meshes, SpikeA);
+            AReflectionsDigSpot* B = SpawnSpotWithId(TestWorld, Meshes, SpikeB, FVector(0.0, 300.0, 0.0));
+            if (TestNotNull(TEXT("World 2 spot A"), A) && TestNotNull(TEXT("World 2 spot B"), B))
+            {
+                TestEqual(TEXT("World 2 spot A begins at stage 2"), A->GetStage(), 2);
+                TestEqual(TEXT("World 2 spot B begins at stage 0"), B->GetStage(), 0);
+            }
+        }
+    }
+    DeleteTestSlot();
+    {
+        // World 3: with no save both begin untouched.
+        FReflectionsDigTestWorld TestWorld;
+        if (TestNotNull(TEXT("World 3"), TestWorld.World))
+        {
+            AReflectionsDigSpot* A = SpawnSpotWithId(TestWorld, Meshes, SpikeA);
+            AReflectionsDigSpot* B = SpawnSpotWithId(TestWorld, Meshes, SpikeB, FVector(0.0, 300.0, 0.0));
+            if (TestNotNull(TEXT("World 3 spot A"), A) && TestNotNull(TEXT("World 3 spot B"), B))
+            {
+                TestEqual(TEXT("World 3 spot A begins at stage 0"), A->GetStage(), 0);
+                TestEqual(TEXT("World 3 spot B begins at stage 0"), B->GetStage(), 0);
+            }
+        }
+    }
+    DeleteTestSlot();
     return true;
 }
 

@@ -120,6 +120,8 @@ private:
      * The spell VFX world subsystem starts in every game world and warns when its /Game assets are absent, as they
      * are in a content-less checkout. Those warnings say nothing about the test, so the running test ignores them
      * (negative occurrences: any number, including none, so a full checkout passes too).
+     * The expected-message verbosity is a minimum, so Error-level lines matching those two patterns are ignored as
+     * well; a test that loads those assets on purpose must not rely on this helper to report a failure.
      */
     static void IgnoreMissingProjectContent()
     {
