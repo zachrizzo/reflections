@@ -4,6 +4,8 @@ Execute this file in the editor with the characters standing in their neutral po
 Run audit_posed_surfaces.py in Blender on the resulting surfaces directory.
 """
 import json
+import struct
+from array import array
 from pathlib import Path
 
 import unreal
@@ -16,6 +18,36 @@ MOTIONS = {
     "crouch": "/Game/Characters/Hero/Animation/Locomotion/AS_Hero_CrouchWalk",
     "cast": "/Game/Characters/Hero/Animation/CombatCasts/AS_Hero_CombatHealRaise",
 }
+
+
+def capture_body_mask(body, directory):
+    """Keep the actual LOD 0 UVs and the skin material's assigned coverage map."""
+    lod = unreal.GeometryScriptMeshReadLOD(lod_type=unreal.GeometryScriptLODType.RENDER_DATA, lod_index=0)
+    mesh, result = unreal.GeometryScript_AssetUtils.copy_mesh_from_skeletal_mesh(
+        body.get_skinned_asset(), unreal.DynamicMesh(), unreal.GeometryScriptCopyMeshFromAssetOptions(), lod)
+    if result != unreal.GeometryScriptOutcomePins.SUCCESS:
+        raise ValueError("Cannot read body render UVs")
+    _, layer, valid, gaps, split = mesh.get_mesh_per_vertex_u_vs(0)
+    uvs = layer.convert_uv_list_to_array()
+    with (directory / "rest_body.bin").open("rb") as stream:
+        count, indices = struct.unpack("<II", stream.read(8))
+        if not valid or gaps or split or len(uvs) != count or mesh.get_triangle_count() * 3 != indices:
+            raise ValueError("UVs and captured render vertices differ")
+        for triangle in range(0, indices // 3, max(1, indices // 512)):
+            stream.seek(8 + count * 12 + triangle * 12)
+            expected = struct.unpack("<III", stream.read(12))
+            actual, found = mesh.get_triangle_indices(triangle)
+            if not found or (actual.x, actual.y, actual.z) != expected:
+                raise ValueError("UV triangle order differs from the captured surface")
+    with (directory / "body_uv.bin").open("wb") as stream:
+        array("f", (v for uv in uvs for v in (uv.x, uv.y))).tofile(stream)
+    material = body.get_material(0)
+    key = "HideMaskTexture"
+    texture = material.get_texture_parameter_value(key)
+    state = {"texture": texture.get_path_name() if texture else None,
+             "declared_by_material": key in [str(n) for n in unreal.MaterialEditingLibrary.get_texture_parameter_names(material)],
+             "max_cull": material.get_scalar_parameter_value("HideMaskMaxCullValue")}
+    (directory / "body_mask.json").write_text(json.dumps(state))
 
 
 def capture_actor(actor, clips, directory, library):
@@ -51,6 +83,7 @@ def capture_actor(actor, clips, directory, library):
         library.refresh_sample_pose(body)
         library.refresh_sample_pose(face)
         record("rest")
+        capture_body_mask(body, directory)
         # The manual editor actor has no facial performance. Follow the same neck
         # for this body-only pose sample and restore the original face driver below.
         face.set_leader_pose_component(body, True)

@@ -59,6 +59,37 @@ def front_profile(coords, triangles, width, hem, neck):
     return lambda z, lateral: float(np.interp(z, heights, envelope)) + arc * lateral ** 2
 
 
+def fit_waist_girth(bm, skin, waist, shoulder_width):
+    """Fit the circumference of the complete waist ring to 55 mm of wearing ease."""
+    directions = [Vector((np.cos(t), np.sin(t), 0)) for t in np.linspace(0, 2*pi, 128, endpoint=False)]
+    def girth(tree):
+        points = [tree.ray_cast(waist, direction, 0.75)[0] for direction in directions]
+        if any(point is None for point in points):
+            raise ValueError("Open waist ring on reference body or garment")
+        return sum((p - points[i-1]).length for i, p in enumerate(points))
+
+    desired = girth(skin) + 0.055
+    for _ in range(4):
+        current = girth(BVHTree.FromBMesh(bm))
+        if abs(desired - current) < 0.0008:
+            break
+        for vert in bm.verts:
+            delta = vert.co - waist
+            weight = 1 - smoothstep((abs(delta.z) - 0.025) / 0.155)
+            weight *= 1 - smoothstep((abs(delta.x) / shoulder_width - 1.0) / 0.25)
+            if weight <= 0:
+                continue
+            change = weight * (desired / current - 1)
+            vert.co.x += delta.x * change
+            vert.co.y += delta.y * change
+            nearest, normal, _, distance = skin.find_nearest(vert.co)
+            if nearest is not None and distance < 0.025:
+                gap = (vert.co - nearest).dot(normal)
+                if gap < 0.005:
+                    vert.co += normal * (0.005 - gap)
+    return round(1000 * (girth(BVHTree.FromBMesh(bm)) - girth(skin)), 1)
+
+
 def build(name):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.fbx(filepath=str(ROOT / f'{name}_FullBody.fbx'), use_custom_normals=True)
@@ -165,6 +196,11 @@ def build(name):
         yoke = smoothstep((p.z - joints['spine_05'].z) / max(0.05, neck_base - joints['spine_05'].z))
         yoke *= 1 - smoothstep((lateral - 0.82) / 0.42)
         ease += 0.014 * yoke
+        # At an underarm the facing wall may be closer than the ordinary ease.
+        # Keep the two cloth surfaces on their own sides of that narrow gap.
+        opposing = skin.ray_cast(p + normal * 0.0006, normal, 0.085)
+        if opposing[0] is not None and opposing[1].dot(normal) < -0.10:
+            ease = min(ease, max(0.0012, 0.32 * opposing[3]))
         q = p + normal * ease
         q.z += 0.012 * yoke
         # The underside of the chest can face down or back. Its position
@@ -173,13 +209,22 @@ def build(name):
         front_weight *= 1 - smoothstep((lateral - 0.67) / 0.47)
         front_weight *= smoothstep((neck_base + 0.015 - p.z) / 0.085)
         if front_weight:
-            target = front(p.z, lateral) - ease
-            q.y += min(0, target - q.y) * front_weight
+            target = front(q.z, abs(q.x) / width) - ease
+            # Bound local depth in each column. A single transverse arc made
+            # the waist up to six centimeters too wide toward the flanks.
+            local = skin.ray_cast(Vector((q.x, -1.5, q.z)), Vector((0, 1, 0)), 3)[0]
+            if local is not None:
+                chest = smoothstep((q.z - joints['spine_03'].z - 0.025) / 0.13)
+                center = 1 - smoothstep((lateral - 0.10) / 0.65)
+                allowance = 0.019 + 0.013 * chest * center
+                target = max(target, local.y - allowance)
+                target = min(target, local.y - min(ease, 0.009))
+            q.y += (target - q.y) * front_weight
         # Keep the top panel outside the actual shoulder on either side of the neck.
         if lateral > 0.55 and normal.z > 0.16 and p.z > shoulder.z - 0.035:
             top = skin.ray_cast(Vector((q.x, q.y, neck_base + 0.4)), Vector((0, 0, -1)), 0.65)[0]
             if top is not None and abs(top.z - p.z) < 0.044:
-                q.z = max(q.z, top.z + 0.012)
+                q.z = max(top.z + 0.010, min(q.z, top.z + 0.017))
         positions.append(q)
     # Construct a surface with open cuffs, collar and hem. The two regions share vertices.
     mesh = bpy.data.meshes.new('WayfarersTunic_Pattern')
@@ -236,8 +281,19 @@ def build(name):
         if hit is None:
             continue
         gap = (v.co - hit).dot(n)
-        if distance < 0.045 and gap < 0.008 and (v.co.z > joints['spine_05'].z or n.dot(v.normal) > 0.35):
-            v.co += n * min(0.020, 0.008 - gap)
+        facing = skin.ray_cast(hit + n * 0.0006, n, 0.080)
+        clearance = (min(0.008, max(0.001, 0.32 * facing[3]))
+                     if facing[0] is not None and facing[1].dot(n) < -0.1 else 0.008)
+        if distance < 0.045 and gap < clearance and (v.co.z > joints['spine_05'].z or n.dot(v.normal) > 0.35):
+            v.co += n * min(0.020, clearance - gap)
+        # Bound top clearance after smoothing as well. Sloped shoulders can
+        # turn a small normal offset into several centimeters of vertical gap.
+        lateral = abs(v.co.x) / width
+        if 0.56 < lateral < 1.17 and v.co.z > shoulder.z - 0.035 and v.normal.z > 0.12:
+            top = skin.ray_cast(Vector((v.co.x, v.co.y, neck_base + 0.40)), Vector((0, 0, -1)), 0.65)[0]
+            if top is not None and abs(v.co.z - top.z) < 0.065:
+                v.co.z = max(top.z + 0.010, min(v.co.z, top.z + 0.017))
+    waist_ease_mm = fit_waist_girth(bm, skin, joints['spine_03'], width)
     bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
     boundary_count = sum(edge.is_boundary for edge in bm.edges)
     nonmanifold_count = sum(not edge.is_manifold and not edge.is_boundary for edge in bm.edges)
@@ -258,7 +314,7 @@ def build(name):
                 other.hide_render = True
         bpy.ops.wm.save_as_mainfile(filepath=str(ROOT / 'WayfarersTunic_Source.blend'))
     (ROOT / f'mask_uv_{name}.json').write_text(json.dumps(captured_uv), encoding='utf-8')
-    return {'faces': len(mesh.polygons), 'verts': len(mesh.vertices), 'boundary_edges': boundary_count,
+    return {'waist_ease_mm': waist_ease_mm, 'faces': len(mesh.polygons), 'verts': len(mesh.vertices), 'boundary_edges': boundary_count,
             'nonmanifold_interior_edges': nonmanifold_count, 'materials': list({p.material_index for p in mesh.polygons}),
             'bounds': [[round(fn(v.co[i] for v in mesh.vertices),4) for i in range(3)] for fn in (min,max)]}
 

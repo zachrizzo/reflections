@@ -1,23 +1,25 @@
 # Wayfarer’s Tunic
 
-The same Wardrobe Item fits the Test Town lineup and new MetaHumans. Select `WI_WayfarersTunic` in the character’s **Outfits** slot and assemble the preview. Unreal picks a reference size, resizes the garment to the current body and transfers skin weights. The four reference sizes are BridgeGuard, Dwarf, Elf and Orc. The new character, `MHC_TunicFieldTest`, has a 170 cm height target and was held out of garment authoring.
+One Wardrobe Item assembles the tunic on the Test Town lineup and new MetaHumans. Select `WI_WayfarersTunic` in the character’s **Outfits** slot and assemble the preview. Unreal picks a reference size, resizes the garment to the current body and transfers skin weights. The four reference sizes are BridgeGuard, Dwarf, Elf and Orc. The new character, `MHC_TunicFieldTest`, has a 170 cm height target and was held out of garment authoring.
 
-[All 24 standing fits](Review/Standing24.jpg) · [Five characters in four poses](Review/MotionReview.jpg) · [New MetaHuman in motion](Review/NewMetaHumanMotion.gif) · [Measurements by character](FitReview.json)
+[Numeric fit scorecard](Review/FitScorecard.md) · [All 24 standing previews](Review/Standing24.jpg) · [Five characters in four poses](Review/MotionReview.jpg) · [New MetaHuman in motion](Review/NewMetaHumanMotion.gif) · [Measurements by character](FitReview.json)
 
 ## Sizing and motion in Test Town
 
-The original pattern carried the deepest chest measurement down to the hem. The revised front smooths across each horizontal section and slopes gradually from chest to waist. A shared neckline, sleeve openings and skin coverage maps apply to every character. The orc’s median front-waist clearance on the authoring mesh went from 93.5 mm to 17.0 mm.
+The original pattern carried the deepest chest measurement down to the hem. The revised front smooths across each horizontal section and slopes gradually from chest to waist. A shared neckline, sleeve openings and skin coverage maps apply to every character. The orc’s median front-waist clearance on the authoring mesh went from 93.5 mm to 11.8 mm.
 
 | Authoring mesh | Median front chest gap (mm) | Median front waist gap (mm) |
 | --- | ---: | ---: |
-| BridgeGuard | 20.6 | 14.8 |
-| Dwarf | 13.7 | 14.8 |
-| Elf | 19.4 | 20.9 |
-| Orc | 19.4 | 17.0 |
+| BridgeGuard | 18.4 | 9.1 |
+| Dwarf | 12.6 | 6.3 |
+| Elf | 18.5 | 13.6 |
+| Orc | 18.1 | 11.8 |
 
-Unreal resized the garment separately onto 24 bodies from that one item. Across the resized outputs, neutral median front-waist clearance ranged from 12.4 to 20.9 mm. The new MetaHuman measured 13.8 mm. Each character was sampled at rest and at 22%, 50% and 78% of a walk, crouch walk and healing cast. The actual tunic vertices moved in all 216 animated samples. For cloth vertices initially within 40 mm of the skin, the largest per-pose 95th-percentile change in distance to the same point on the skin was 1.0 mm.
+Unreal resized the garment on all 24 targets. The earlier panel bridged across the widest point of an entire chest or waist section. Bounding the fabric depth at individual columns reduced the orc’s maximum front chest gap from 76.4 to 32.9 mm and its maximum front waist gap from 59.2 to 14.8 mm. A separate clearance limit on top of the shoulder addresses excess height after smoothing. The pattern measures the full 128-ray waist ring against each reference body and adjusts the garment toward 55 mm of extra circumference. The same rule runs for all four sizes. Across the final lineup, the largest sampled front chest, front waist and shoulder gaps were 34.3, 20.9 and 24.8 mm, respectively.
 
-The test uses LOD 0 render geometry, including underlying body and face triangles. It measures bone-driven deformation. Movement of loose fabric under gravity or wind requires a Chaos simulation mesh. The manual editor actors followed the body at the neck during motion sampling and returned to their original face driver afterward. The worst sample had 9.2% of garment triangles intersect the underlying skin (GiltBarnaby, cast 50). That includes skin covered by wardrobe masks. Inspect the open edges around the collar and underarms in the captures. Cooked gameplay and additional LODs remain unverified.
+Each character was sampled at rest and at 22%, 50% and 78% of a walk, crouch walk and healing cast. The body-following test passed on 24 of 24. Independent fabric swing would require a simulation mesh. The full numeric fit verdict is **0 of 24 passing**. The scorecard identifies remaining contacts with unmasked body triangles and separately reports bare-body self-intersections in the same poses. The gray preview material on the new character does not declare the coverage parameter in its material interface, so the audit conservatively treats its black-mask contacts as unresolved. Facial skin and mask transitions also remain unclassified. The face temporarily followed the body during motion sampling. Cooked gameplay and additional LODs remain unverified.
+
+Across the full lineup, extra waist circumference ranged from 3.9 to 5.9 cm. At the waist of the new character, the 128-ray horizontal section measured 91.7 cm around the body and 96.7 cm around the tunic. The extra circumference was 4.9 cm.
 
 ## Reproduce the checks
 
@@ -34,8 +36,11 @@ runpy.run_path(str(tools / "capture_lineup_motion.py"), run_name="__main__")
 ```
 
 ```powershell
-blender --background --python-exit-code 2 --python Tools/ClothingFit/audit_posed_surfaces.py -- Intermediate/WayfarerReview/surfaces FitSamples.json
+blender --background --python-exit-code 2 --python Tools/ClothingFit/audit_posed_surfaces.py -- Intermediate/WayfarerReview/surfaces FitSamples.json --body-mask ArtDirection/WayfarersTunic/Source/T_WayfarersTunic_BodyMask.png
+python Tools/ClothingFit/score_tunic_fit.py FitSamples.json FitScorecard.json --markdown FitScorecard.md
 ```
+
+The score command returns exit status 1 when any wearer fails the numeric checks. The defaults are working limits for this tailored tunic. Pass the limit arguments to evaluate a different fit specification.
 
 ## Rebuild the shared garment
 
