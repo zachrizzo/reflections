@@ -89,7 +89,7 @@
   - `Reflections.Save.UpdateLeavesBadFileAlone`: with the override alive, once with the 256 random bytes and once with a version 2 file: `Update` returns false, `Mutate` is not called, bytes unchanged. Declare the expected warning with an exact count of 2.
 - [ ] **Step 2: Build and run** `test.ps1 -Filter Reflections.Save`. Expected: the build fails on the missing symbols, or the tests fail. Record that output as the RED evidence.
 - [ ] **Step 3: Implement** `ReflectionsSaveGame.h/.cpp` to the interface, format and rules above.
-- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections.Save`. Expected: `TESTS: 7 ran, 7 passed, 0 failed`.
+- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections.Save`. Expected: `TESTS: 7 ran, 7 passed, 0 failed`. (A later review pass added an eighth test, `Reflections.Save.VersionZeroIsCorrupt`.)
 - [ ] **Step 5: Commit** the three files.
 
 ---
@@ -167,7 +167,7 @@
   - `Reflections.DigInput.BadSaveDoesNotBlockDigging`: the slot holds 256 random bytes; `TryDig` returns true, stage 1, and the bytes are unchanged. Declare the expected warning.
 - [ ] **Step 2: Build and run** `test.ps1 -Filter Reflections.DigInput`. Record RED.
 - [ ] **Step 3: Implement** the component, the hero constructor line and the game mode override.
-- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections`. Expected: all tests from tasks 1.1 to 1.3 pass (18).
+- [ ] **Step 4: Build and run** `test.ps1 -Filter Reflections`. Expected: all tests from tasks 1.1 to 1.3 pass (19).
 - [ ] **Step 5: Commit** the listed files. In the report, say plainly that the `G` key binding itself is not covered by a test and needs a manual check in the real editor.
 
 ---
@@ -208,7 +208,7 @@ The map uses the project's default game mode; it sets no override.
 - [ ] **Step 3: Implement** the `BeginPlay` restore. Build and run again; both new tests pass.
 - [ ] **Step 4: Write** `Tools/Digging/build_dig_spike_map.py` to the table above, and run it with `editor-python.ps1 -Script "C:\Users\zachc\Documents\Unreal Projects\reflections\.worktrees\digging\Tools\Digging\build_dig_spike_map.py"`. Expected: the script prints `DIG SPIKE MAP SAVED` and `Content/Maps/DigSpike/L_DigSpike.umap` exists.
 - [ ] **Step 5: Write the map test** `Reflections.DigSpike.MapIsBuiltAsSpecified`: load the map package and check its persistent level holds exactly two dig spots with ids `DigSpike_A` and `DigSpike_B`, three non-null stage meshes each, one `APlayerStart`, one `ADirectionalLight`, one `ASkyLight`, and a `AStaticMeshActor` labelled `DigSpike_Ground`.
-- [ ] **Step 6: Build and run** `test.ps1 -Filter Reflections`. Expected: every test passes (21).
+- [ ] **Step 6: Build and run** `test.ps1 -Filter Reflections`. Expected: every test passes (22).
 - [ ] **Step 7: Commit** the code, the script and the map (the map goes through Git LFS; `git add` handles it).
 
 **Gate 1:** every `Reflections.*` test passes. The `G` key and the look of the map are checked by hand in the real editor after the branch is merged.
