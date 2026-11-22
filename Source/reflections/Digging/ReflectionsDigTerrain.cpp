@@ -13,6 +13,7 @@
 #include "Engine/EngineTypes.h"
 #include "Engine/World.h"
 #include "HAL/PlatformTime.h"
+#include "Misc/ScopeExit.h"
 #include "Materials/MaterialInterface.h"
 #include "UObject/ConstructorHelpers.h"
 #include "PhysicsEngine/BodySetup.h"
@@ -224,7 +225,12 @@ void UReflectionsDigChunkComponent::FinishPhysicsAsyncCook(bool bSuccess, UBodyS
         bSuccess = false;
     }
 #endif
+    const double CookFinishStart = FPlatformTime::Seconds();
     Super::FinishPhysicsAsyncCook(bSuccess, FinishedBodySetup);
+    if (AReflectionsDigTerrain* Timed = Cast<AReflectionsDigTerrain>(GetOwner()))
+    {
+        Timed->CookFinishSeconds += FPlatformTime::Seconds() - CookFinishStart;
+    }
     // Older cooks are aborted when a newer one starts and never report back; only the newest ends the wait.
     if (FinishedBodySetup != nullptr && FinishedBodySetup == PendingCook)
     {
@@ -396,6 +402,8 @@ void AReflectionsDigTerrain::CommitChunkPieces(FIntVector Chunk, FReflectionsDig
         {
             // With bDeferCollisionUpdates, SetMesh only invalidates the current body setup's cooked meshes; the body
             // in the physics scene keeps its own reference to them and goes on colliding.
+            ++CookStartPieces;
+            CookStartVertices += Result.Pieces[Index].VertexCount();
             const double SetStart = FPlatformTime::Seconds();
             Targets[Index]->SetMesh(MoveTemp(Result.Pieces[Index]));
             SetMeshSeconds += FPlatformTime::Seconds() - SetStart;
@@ -410,6 +418,7 @@ void AReflectionsDigTerrain::CommitChunkPieces(FIntVector Chunk, FReflectionsDig
         TEXT("DIGSPIKE headless commit %s (%s, %d pieces, %d vertices): total %.2f ms, components %.2f, set mesh %.2f, cook start %.2f, destroy %.2f"),
         *Chunk.ToString(), Kind, Result.Pieces.Num(), Result.SourceVertexCount, MillisecondsSince(StartSeconds),
         ComponentSeconds * 1000.0, SetMeshSeconds * 1000.0, CookStartSeconds * 1000.0, DestroySeconds * 1000.0);
+    CommitSeconds += FPlatformTime::Seconds() - StartSeconds;
 }
 
 void AReflectionsDigTerrain::RetireCurrentSet(FReflectionsDigTerrainChunk& State, double& InOutDestroySeconds)
@@ -489,6 +498,19 @@ void AReflectionsDigTerrain::ReleaseChunk(FIntVector Chunk)
     }
 }
 
+FReflectionsDigTerrainTimings AReflectionsDigTerrain::GetTimings() const
+{
+    FReflectionsDigTerrainTimings Timings;
+    Timings.CommitSeconds = CommitSeconds;
+    Timings.SwapCheckSeconds = SwapCheckSeconds;
+    Timings.CookFinishSeconds = CookFinishSeconds;
+    Timings.NavUpdateSeconds = NavUpdateSeconds;
+    Timings.NavAfterCookSeconds = NavAfterCookSeconds;
+    Timings.CookStartPieces = CookStartPieces;
+    Timings.CookStartVertices = CookStartVertices;
+    return Timings;
+}
+
 int32 AReflectionsDigTerrain::GetCookCompletionCount() const
 {
     return CookCompletionCount;
@@ -548,6 +570,11 @@ int32 AReflectionsDigTerrain::GetLargestCollisionVertexCount() const
 
 void AReflectionsDigTerrain::FinishCollisionSwaps(bool bTerrainQuiet)
 {
+    const double SwapStart = FPlatformTime::Seconds();
+    ON_SCOPE_EXIT
+    {
+        SwapCheckSeconds += FPlatformTime::Seconds() - SwapStart;
+    };
     TArray<FIntVector, TInlineAllocator<4>> Emptied;
     for (TPair<FIntVector, FReflectionsDigTerrainChunk>& Pair : Chunks)
     {
@@ -632,6 +659,7 @@ void AReflectionsDigTerrain::UpdatePieceNavigation(UReflectionsDigChunkComponent
     const double NavStart = FPlatformTime::Seconds();
     FNavigationSystem::UpdateComponentData(Piece);
     NavUpdateSeconds += FPlatformTime::Seconds() - NavStart;
+    NavAfterCookSeconds += FPlatformTime::Seconds() - NavStart;
     ++NavUpdateCount;
     LastNavUpdateSeconds = World->GetTimeSeconds();
 }

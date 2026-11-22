@@ -58,6 +58,24 @@ private:
 #endif
 };
 
+/** The terrain's own game-thread time, summed since BeginPlay, by kind of work. For measurements; it changes nothing. */
+struct FReflectionsDigTerrainTimings
+{
+    /** CommitChunkPieces: creating or reusing components, setting meshes, starting cooks (and the reuse path's swap check). */
+    double CommitSeconds = 0.0;
+    /** FinishCollisionSwaps: the swap check, destroying retiring sets. */
+    double SwapCheckSeconds = 0.0;
+    /** The engine's own work when a piece's cook finishes (UDynamicMeshComponent::FinishPhysicsAsyncCook). */
+    double CookFinishSeconds = 0.0;
+    /** All the calls that tell navigation about pieces (some run inside CommitSeconds and SwapCheckSeconds). */
+    double NavUpdateSeconds = 0.0;
+    /** Of those, the ones after a cook brought a piece's new body in (outside the commit and the swap check). */
+    double NavAfterCookSeconds = 0.0;
+    /** Pieces given a new mesh and a new cook, and their vertices. */
+    int32 CookStartPieces = 0;
+    int64 CookStartVertices = 0;
+};
+
 /** The mesh components of one chunk. */
 USTRUCT()
 struct FReflectionsDigTerrainChunk
@@ -172,6 +190,8 @@ public:
     int32 GetChunkReleaseCount() const;
     /** How many newest collision cooks of its pieces have finished, failed ones included. For measurements. */
     int32 GetCookCompletionCount() const;
+    /** The terrain's own game-thread time by kind of work, summed since BeginPlay. For measurements. */
+    FReflectionsDigTerrainTimings GetTimings() const;
     double GetChunkReleaseSeconds() const;
 
 protected:
@@ -215,6 +235,12 @@ private:
     double NavUpdateSeconds = 0.0;
     int32 ReleaseCount = 0;
     int32 CookCompletionCount = 0;
+    double CommitSeconds = 0.0;
+    double SwapCheckSeconds = 0.0;
+    double CookFinishSeconds = 0.0;
+    double NavAfterCookSeconds = 0.0;
+    int32 CookStartPieces = 0;
+    int64 CookStartVertices = 0;
     double ReleaseSeconds = 0.0;
 
     /** Rebuilt from the grid at run time, never saved. */

@@ -10,16 +10,19 @@ Every number in the results tables comes from the same three measurement runs.
   game's main thread at the end of each frame; a packaged game does that work elsewhere. A packaged game may
   therefore be faster. These numbers are the cautious reading.
 - **Two cases break the 4 ms mark clearly:** digging in a chunk that is already full of holes (about 60 ms of extra
-  main-thread work per dig, frames of 65 to 75 ms) and digging where eight chunks meet (about 11 ms per dig, 99 frames
-  in 100 under 5.6 to 7.5 ms). Streaming also has a single slow frame of 40 to 46 ms each run when a heavily dug chunk
-  comes back. Digging in open ground meets the mark on 99 frames in 100 but not on the worst frame.
+  main-thread work per dig, worst frames of 64 to 89 ms) and digging where eight chunks meet (about 11 to 15 ms per
+  dig, 99 frames in 100 under 6.5 to 8.8 ms). Streaming also has a single slow frame of 42 to 65 ms each run when a
+  heavily dug chunk comes back. Digging in open ground meets the mark on 99 frames in 100 but not on the worst frame.
+- **Where the heavy cost goes:** almost all of it is in the frame right after a chunk is updated, outside the terrain's
+  own code. The terrain's own work is about 2.5 ms per dig in a busy chunk and about 3 ms per corner dig. See "Where
+  the cost of a heavy dig goes".
 
 ## How it was measured
 
 - The game ran with its real renderer, drawn off screen at 1280 x 720, capped at 60 frames a second, on an RTX 5080.
   Another full Unreal editor was running on the same machine the whole time, so the computer was not quiet.
 - Hardware ray tracing was on, except where a screenshot turned it off on purpose.
-- The test ran three times; each run took about 4.6 minutes (278, 279 and 278 seconds). Before each measurement the
+- The test ran three times; each run took about 4.7 minutes (279, 293 and 282 seconds). Before each measurement the
   test waited until no shaders were being compiled, the terrain was settled and navigation was not rebuilding.
 - **Game-thread time** is the time the game's main thread spends working in one frame, in milliseconds (ms). It leaves
   out time the main thread spends waiting: for the 60-frames cap, and for other threads (the renderer, the graphics
@@ -33,7 +36,7 @@ Every number in the results tables comes from the same three measurement runs.
 - Each frame was also tagged with what happened in it or in the frame before (a dig, a chunk put on screen, a collision
   finishing, a navigation update, a chunk dropped or rebuilt) and whether the engine cleaned up memory (garbage
   collection). Frames with none of these are "background": that is the only place the machine's noise is read from.
-- Log files: run 1 `test-084533.log`, run 2 `test-085012.log`, run 3 `test-085450.log` (in `.superpowers/logs/` of the
+- Log files: run 1 `test-090807.log`, run 2 `test-091247.log`, run 3 `test-091739.log` (in `.superpowers/logs/` of the
   digging worktree).
 
 ## Results with the renderer on
@@ -43,28 +46,29 @@ The 4 ms mark is judged two ways, as the plan document asks: on the worst frame 
 
 | What | Run 1 | Run 2 | Run 3 | Pass mark | Result |
 |---|---|---|---|---|---|
-| Digging in a busy chunk: 99 in 100 / worst frame (above idle) | 63.8 / 71.1 ms | 68.2 / 78.0 ms | 65.8 / 73.1 ms | 4 ms or less | **Not met** on both, all runs |
-| Digging at an eight-chunk corner: 99 in 100 / worst frame | 7.5 / 20.7 ms (a) | 5.6 / 26.6 ms (a) | 7.1 / 153.3 ms | 4 ms or less | **Not met** on both, all runs |
-| Digging in open ground: 99 in 100 / worst frame | 2.6 / 35.7 ms (a) | 3.2 / 25.8 ms (a) | 2.8 / 231.8 ms (b) | 4 ms or less | Met on 99 in 100; **not met** on the worst frame, all runs |
-| Streaming: 99 in 100 / worst frame | 3.0 / 39.7 ms | 2.2 / 41.5 ms | 3.6 / 45.8 ms | 4 ms or less | Met on 99 in 100; **not met** on the worst frame, all runs |
+| Digging in a busy chunk: 99 in 100 / worst frame (above idle) | 60.2 / 63.5 ms | 67.5 / 88.6 ms | 61.1 / 75.8 ms | 4 ms or less | **Not met** on both, all runs |
+| Digging at an eight-chunk corner: 99 in 100 / worst frame | 8.8 / 392.8 ms (b) | 6.5 / 22.5 ms | 7.9 / 44.3 ms (a) | 4 ms or less | **Not met** on both, all runs |
+| Digging in open ground: 99 in 100 / worst frame | 2.2 / 22.0 ms (a) | 2.7 / 24.4 ms (a) | 2.4 / 45.4 ms | 4 ms or less | Met on 99 in 100; **not met** on the worst frame, all runs |
+| Streaming: 99 in 100 / worst frame | 2.7 / 51.3 ms | 2.9 / 64.8 ms | 2.8 / 42.4 ms | 4 ms or less | Met on 99 in 100; **not met** on the worst frame, all runs |
 | Collision size per chunk (largest collision mesh) | 10,320 vertices | 10,320 vertices | 10,320 vertices | under 16,384 | Met |
 | Seams (missed downward traces out of 500) | 0 | 0 | 0 | no missed traces | Met |
-| Navmesh: dig to walkable floor | 0.067 s | 0.067 s | 0.067 s | 1 s or less, no stall | Met; worst frame while it rebuilt 3.1 to 3.5 ms above idle |
-| Shadows: render thread / graphics card, average while digging (idle) | 5.5 (5.4) / 2.70 (2.59) ms | 5.7 (5.5) / 2.67 (2.60) ms | 5.2 (5.2) / 2.68 (2.62) ms | frame cost recorded, no flicker | Cost recorded; not judged (flicker) |
+| Navmesh: dig to walkable floor | 0.067 s | 0.083 s | 0.067 s | 1 s or less, no stall | Met; worst frame while it rebuilt 1.8 to 3.7 ms above idle |
+| Shadows: render thread / graphics card, average while digging (idle) | 5.3 (5.2) / 2.63 (2.59) ms | 5.3 (5.5) / 2.67 (2.60) ms | 5.5 (5.2) / 2.63 (2.57) ms | frame cost recorded, no flicker | Cost recorded; not judged (flicker) |
 | Cave lighting | screenshots | screenshots | screenshots | judged by the owner | For the owner |
 | Packaged build | not measured | not measured | not measured | same checks repeated | Not measured |
 
 (a) The worst frame was a garbage collection (the engine cleaning up memory). It is kept in the row.
-(b) The worst frame (234 ms) was the frame after a dig call, so it counts as dig-related; nothing else of the dig
-happened in it (no chunk update, no collision, no navigation), and the dig call itself took at most 0.04 ms. It was
+(b) The worst frame (395 ms) was the frame after a dig call, so it counts as dig-related; nothing else of the dig
+happened in it (no chunk update, no collision, no navigation), and the dig call itself takes well under 0.1 ms. It was
 most likely the machine stalling, but by the rule above it counts.
 
 ### The machine's noise level
 
-Frames with no dig-related event and no garbage collection, and the idle windows, reached at most these values above
-idle: 11.6, 7.8 and 7.2 ms in the open-ground digging windows, 9.1, 9.8 and 10.9 ms in the streaming windows, and up
-to 17.4 ms in the idle windows, with one idle frame of 54.8 ms (run 2, before the busy-chunk test). So on this machine a single frame of about 10 to 17 ms above idle, and once 55 ms, happened
-with no digging at all. That is why the 99-in-100 figure is the steadier one; the worst-frame figure is kept as the plan asks.
+Frames with no dig-related event and no garbage collection reached at most 4.8, 4.3 and 6.5 ms above idle in the
+open-ground digging windows and 4.3, 4.8 and 3.5 ms in the streaming windows. The idle windows (same spot, nothing
+being dug) reached up to 29 ms in the open-ground test and once 103 ms (run 1, before the streaming test). So on this
+machine a single frame of tens of milliseconds, and once over 100 ms, happened with no digging at all. That is why the
+99-in-100 figure is the steadier one; the worst-frame figure is kept as the plan asks.
 
 ### Digging in open ground
 
@@ -74,11 +78,11 @@ changing the ground. For the first 7 to 8 seconds it dug straight down until the
 
 | Whole window, above idle | Run 1 | Run 2 | Run 3 |
 |---|---|---|---|
-| Average / middle frame | 0.40 / 0.21 ms | 0.38 / 0.20 ms | 0.52 / 0.21 ms |
-| 99 in 100 at or under | 2.6 ms | 3.2 ms | 2.8 ms |
-| Worst frame (raw) | 35.7 ms (37.8) | 25.8 ms (27.9) | 231.8 ms (233.9) |
-| Worst dig-related frame | 10.1 ms | 9.8 ms | 231.8 ms |
-| Cost per dig | 1.9 ms | 1.6 ms | 2.7 ms |
+| Average / middle frame | 0.35 / 0.21 ms | 0.36 / 0.19 ms | 0.37 / 0.20 ms |
+| 99 in 100 at or under | 2.2 ms | 2.7 ms | 2.4 ms |
+| Worst frame (raw) | 22.0 ms (24.1) | 24.4 ms (26.5) | 45.4 ms (47.5) |
+| Worst dig-related frame | 8.4 ms | 20.9 ms | 45.4 ms |
+| Cost per dig | 1.6 ms | 1.5 ms | 1.5 ms |
 
 ### Digging at an eight-chunk corner
 
@@ -87,11 +91,11 @@ seconds. Each dig rebuilds all eight chunks.
 
 | Whole window, above idle | Run 1 | Run 2 | Run 3 |
 |---|---|---|---|
-| Average / middle frame | 2.0 / 1.7 ms | 1.9 / 1.7 ms | 2.3 / 1.8 ms |
-| 99 in 100 at or under | 7.5 ms | 5.6 ms | 7.1 ms |
-| Worst frame (raw) | 20.7 ms (22.9) | 26.6 ms (28.6) | 153.3 ms (155.4) |
-| Worst dig-related frame | 10.1 ms | 12.3 ms | 153.3 ms |
-| Cost per dig | 11.4 ms | 11.1 ms | 13.1 ms |
+| Average / middle frame | 2.7 / 1.7 ms | 2.0 / 1.7 ms | 2.0 / 1.7 ms |
+| 99 in 100 at or under | 8.8 ms | 6.5 ms | 7.9 ms |
+| Worst frame (raw) | 392.8 ms (395.0) | 22.5 ms (24.6) | 44.3 ms (46.4) |
+| Worst dig-related frame | 392.8 ms | 22.5 ms | 9.8 ms |
+| Cost per dig | 15.1 ms | 11.0 ms | 11.1 ms |
 
 ### Digging in a busy chunk
 
@@ -101,17 +105,60 @@ The buried chunk at X 4225 to 5825, Y -2375 to -775 was first riddled with 512 r
 
 | Whole window, above idle | Run 1 | Run 2 | Run 3 |
 |---|---|---|---|
-| Average / middle frame | 14.4 / 3.5 ms | 15.7 / 3.6 ms | 15.2 / 3.7 ms |
-| 99 in 100 at or under | 63.8 ms | 68.2 ms | 65.8 ms |
-| Worst frame (raw) | 71.1 ms (73.2) | 78.0 ms (80.1) | 73.1 ms (75.2) |
-| Cost per dig | 58.5 ms | 60.7 ms | 60.2 ms |
-| Frames in the 10 seconds | 410 | 392 | 398 |
+| Average / middle frame | 14.4 / 3.7 ms | 15.7 / 3.8 ms | 14.2 / 3.5 ms |
+| 99 in 100 at or under | 60.2 ms | 67.5 ms | 61.1 ms |
+| Worst frame (raw) | 63.5 ms (65.6) | 88.6 ms (90.6) | 75.8 ms (77.9) |
+| Cost per dig | 58.8 ms | 61.2 ms | 57.8 ms |
+| Frames in the 10 seconds | 412 | 393 | 410 |
 
-Each of the 100 digs gave one frame over 16 ms (the logged ones were 40 to 75 ms), and every logged one was the frame
-in which the new collision of the chunk's three large pieces finished. The game dropped to about 40 frames a second
-while digging. The terrain's own code took little of it (about 2 ms per chunk update, at most 6.9 ms); the time goes
-to the engine taking in the new collision, navigation and drawing data for pieces of about 10,000 vertices each. This
-is the most important result on the page.
+The game dropped to about 40 frames a second while digging. Where that time goes is the next section; it is the most
+important result on the page.
+
+## Where the cost of a heavy dig goes
+
+For the busy chunk and the corner, the test also timed the terrain's own work, piece by piece, and compared it with
+the whole window's extra main-thread time:
+
+- **chunk updates**: the terrain putting new meshes on its pieces and starting their new collision;
+- **swap check**: the terrain retiring and destroying old pieces;
+- **collision finishing**: the engine's own work when a piece's new collision is ready (swapping it in);
+- **navigation**: the terrain telling navigation about the new collision;
+- **rest**: everything else in those frames. The test cannot see inside it. In this mode (the editor program run as a
+  game) it includes the renderer rebuilding the drawing data of changed pieces on the main thread, which happens in the
+  frame after a chunk update.
+
+| Total over the 10-second window, 100 digs | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| **Busy chunk**: whole window, extra main-thread time | 5,878 ms | 6,122 ms | 5,785 ms |
+| ... chunk updates / swap check | 196 / 16 ms | 208 / 15 ms | 207 / 15 ms |
+| ... collision finishing / navigation | 21 / 5 ms | 23 / 5 ms | 23 / 5 ms |
+| ... rest, in the frame right after a chunk update | 4,826 ms | 4,722 ms | 4,681 ms |
+| ... rest, all other frames | 814 ms | 1,149 ms | 854 ms |
+| **Corner**: whole window, extra main-thread time | 1,508 ms | 1,101 ms | 1,115 ms |
+| ... chunk updates / swap check | 195 / 9 ms | 204 / 8 ms | 195 / 8 ms |
+| ... collision finishing / navigation | 62 / 18 ms | 63 / 17 ms | 61 / 16 ms |
+| ... rest, in the frames with a chunk update | 470 ms | 435 ms | 418 ms |
+| ... rest, in the frame right after | 238 ms | 261 ms | 246 ms |
+| ... rest, all other frames | 516 ms | 112 ms | 170 ms |
+
+What this shows, in plain words:
+
+- **Busy chunk.** Every dig rebuilt all three pieces of the chunk, about 29,800 vertices in all, even though one dig
+  touches a small part of it. The terrain's own work was about 2.2 ms per dig. The engine's work when the new collision
+  came in was about 0.2 ms per dig. About 47 ms per dig sat in the frame right after the chunk update, outside
+  everything the test times. Only about 4% of the cost is in parts the test can name.
+- **Corner.** Each dig updates eight small chunks (about 620 vertices each). The terrain's own work was about 2 ms per
+  dig, collision finishing and navigation about 0.8 ms. The rest is spread over the update frame and the frame after.
+  About a fifth to a quarter of the cost is in named parts. Run 1's total includes one 395 ms frame (see note (b) above).
+
+What it does not show:
+
+- It does not say what the "rest" is. The likely cause is the renderer rebuilding the drawing data of the changed
+  pieces on the main thread, because that is the work this mode does in the frame after an update. It may also include
+  the engine's physics and navigation work outside the timed calls. Splitting it needs a profiler capture.
+- It does not say whether a packaged game is faster. If the "rest" is the renderer's rebuild, a packaged game does it
+  elsewhere and may be much faster; that is not measured.
+- It does not include waiting: game-thread time leaves out time the main thread spends waiting for other threads.
 
 ### Streaming
 
@@ -120,19 +167,20 @@ over 20 seconds. Ten chunks were dropped behind it and eleven rebuilt in front o
 
 | Whole window, above idle | Run 1 | Run 2 | Run 3 |
 |---|---|---|---|
-| Average / middle frame | 0.23 / 0.04 ms | 0.24 / 0.06 ms | 0.25 / 0.05 ms |
-| 99 in 100 at or under | 3.0 ms | 2.2 ms | 3.6 ms |
-| Worst frame (raw) | 39.7 ms (41.8) | 41.5 ms (43.6) | 45.8 ms (47.9) |
-| Time spent dropping chunks, all ten | 1.1 ms | 1.0 ms | 0.8 ms |
+| Average / middle frame | 0.25 / 0.06 ms | 0.29 / 0.10 ms | 0.24 / 0.05 ms |
+| 99 in 100 at or under | 2.7 ms | 2.9 ms | 2.8 ms |
+| Worst frame (raw) | 51.3 ms (53.4) | 64.8 ms (66.9) | 42.4 ms (44.4) |
+| Time spent dropping chunks, all ten | 0.9 ms | 0.9 ms | 0.9 ms |
 
-The worst frame in each run was the frame in which the collision of three large pieces finished: the riddled busy
-chunk coming back into range.
+The worst frame in each run was the frame after the riddled busy chunk came back into range, when its three large
+pieces were rebuilt.
 
 ### Navmesh
 
 A walkable ramp (12 digs at once, from (3600, -1700) down to (3000, -1700, -300)) was dug in each run. From the dig to
-the first successful navigation query on the new floor: 0.067 s in all three runs (collision ready after 0.050 s,
-walkable 0.017 s later). The worst frame while navigation rebuilt was 3.3, 3.1 and 3.5 ms above idle. No stall.
+the first successful navigation query on the new floor: 0.067, 0.083 and 0.067 s (collision ready after 0.050 s,
+walkable 0.017 to 0.033 s later). The worst frame while navigation rebuilt was 3.7, 2.3 and 1.8 ms above idle. No
+stall.
 
 ### Collision size
 
@@ -148,9 +196,9 @@ the code splits a chunk into pieces of at most 12,000.
 ### Shadows
 
 A pit at (3000, 0) in sunlight, seen by a fixed camera, with a dig every 0.1 seconds along its sunlit rim for 10
-seconds (100 digs). The render thread and the graphics card each rose by about 0.1 ms on average while digging. On the
-game thread, the worst frame minus the worst idle frame was 3.7, -2.7 and 123.7 ms (run 3 had one 131 ms frame with one
-chunk update in it). Flicker was not judged: nobody watched the game running.
+seconds (100 digs). The render thread and the graphics card each changed by less than 0.25 ms on average while
+digging. On the game thread, the worst frame minus the worst idle frame was 1.9, -1.0 and 0.6 ms. Flicker was not
+judged: nobody watched the game running.
 
 ### Graphics card (for information)
 

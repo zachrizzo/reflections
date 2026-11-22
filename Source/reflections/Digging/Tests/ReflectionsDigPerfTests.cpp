@@ -275,6 +275,18 @@ namespace
         double LastNavSeconds = 0.0;
         /** Frames over SpikeMs, with what happened in them. */
         TArray<FString> Spikes;
+        /** Per frame: the terrain's own time in it, by kind (ms), and whether it had a commit or a cook finishing. */
+        TArray<double> CommitMsF;
+        TArray<double> SwapMsF;
+        TArray<double> CookFinishMsF;
+        TArray<double> NavAfterCookMsF;
+        TArray<double> NavAllMsF;
+        TArray<bool> CommitFrame;
+        TArray<bool> CookFrame;
+        FReflectionsDigTerrainTimings LastTimings;
+        bool bHaveTimings = false;
+        int32 CookStartPiecesWindow = 0;
+        int64 CookStartVerticesWindow = 0;
         TUniquePtr<FGarbageCollectionWatch> CollectionWatch;
         /** Set while the window is measured (Start/Stop); null for the idle baseline. */
         TUniquePtr<FTerrainTimingWatch> Watch;
@@ -360,6 +372,24 @@ namespace
             ReleaseMsTotal += FrameReleaseMs;
             ReleaseMsMaxFrame = FMath::Max(ReleaseMsMaxFrame, FrameReleaseMs);
             Events.Add(FrameDigs + FrameCommits + FrameCooks + FrameNav + FrameReleases + FrameRestores > 0);
+            // The terrain's own time since the previous sample, by kind.
+            FReflectionsDigTerrainTimings Timings;
+            if (Terrain != nullptr)
+            {
+                Timings = Terrain->GetTimings();
+            }
+            const bool bDelta = bHaveTimings && Terrain != nullptr;
+            CommitMsF.Add(bDelta ? (Timings.CommitSeconds - LastTimings.CommitSeconds) * 1000.0 : 0.0);
+            SwapMsF.Add(bDelta ? (Timings.SwapCheckSeconds - LastTimings.SwapCheckSeconds) * 1000.0 : 0.0);
+            CookFinishMsF.Add(bDelta ? (Timings.CookFinishSeconds - LastTimings.CookFinishSeconds) * 1000.0 : 0.0);
+            NavAfterCookMsF.Add(bDelta ? (Timings.NavAfterCookSeconds - LastTimings.NavAfterCookSeconds) * 1000.0 : 0.0);
+            NavAllMsF.Add(bDelta ? (Timings.NavUpdateSeconds - LastTimings.NavUpdateSeconds) * 1000.0 : 0.0);
+            CookStartPiecesWindow += bDelta ? Timings.CookStartPieces - LastTimings.CookStartPieces : 0;
+            CookStartVerticesWindow += bDelta ? Timings.CookStartVertices - LastTimings.CookStartVertices : 0;
+            LastTimings = Timings;
+            bHaveTimings = Terrain != nullptr;
+            CommitFrame.Add(FrameCommits > 0);
+            CookFrame.Add(FrameCooks > 0);
             Collected.Add(NewCollections > 0);
             if (Game > SpikeMs && Spikes.Num() < 20)
             {
@@ -441,6 +471,58 @@ namespace
                 CostPerDig, DigRelated.Num(), DigRelated.IsEmpty() ? 0.0 : FMath::Max(DigRelated), Collection.Num(), Collection.IsEmpty() ? 0.0 : FMath::Max(Collection),
                 BackgroundFrames, Background, IdleBackground, Collections, Idle.Collections, Commits, CooksFinished, NavUpdates, Releases, Restores,
                 ReleaseMsTotal, ReleaseMsMaxFrame);
+        }
+
+        /**
+         * Where the window's extra game-thread time went: the terrain's own parts (commit, swap check, the engine's
+         * cook-finish work, navigation after a cook) and the rest of each frame above the idle mean, by frame kind:
+         * a commit frame, the frame after a commit, a cook-finish frame (a frame can be more than one kind; it is counted
+         * under the first that applies in that order), and other frames.
+         */
+        FString DescribeSplit(const FFrameWindow& Idle, const FString& Test) const
+        {
+            const double IdleMean = MeanOf(Idle.GameMs);
+            double CookTotal = 0.0, CookMaxFrame = 0.0, NavAfterCook = 0.0, NavAll = 0.0, Commit = 0.0, Swap = 0.0;
+            double RestCommit = 0.0, RestAfterCommit = 0.0, RestCook = 0.0, RestOther = 0.0;
+            int32 NCommit = 0, NAfterCommit = 0, NCook = 0, NOther = 0;
+            for (int32 Index = 0; Index < GameMs.Num(); ++Index)
+            {
+                const double Parts = CommitMsF[Index] + SwapMsF[Index] + CookFinishMsF[Index] + NavAfterCookMsF[Index];
+                const double Rest = GameMs[Index] - IdleMean - Parts;
+                CookTotal += CookFinishMsF[Index];
+                CookMaxFrame = FMath::Max(CookMaxFrame, CookFinishMsF[Index]);
+                NavAfterCook += NavAfterCookMsF[Index];
+                NavAll += NavAllMsF[Index];
+                Commit += CommitMsF[Index];
+                Swap += SwapMsF[Index];
+                if (CommitFrame[Index])
+                {
+                    RestCommit += Rest;
+                    ++NCommit;
+                }
+                else if (Index > 0 && CommitFrame[Index - 1])
+                {
+                    RestAfterCommit += Rest;
+                    ++NAfterCommit;
+                }
+                else if (CookFrame[Index])
+                {
+                    RestCook += Rest;
+                    ++NCook;
+                }
+                else
+                {
+                    RestOther += Rest;
+                    ++NOther;
+                }
+            }
+            const double Whole = (MeanOf(GameMs) - IdleMean) * Num();
+            const double Parts = Commit + Swap + CookTotal + NavAfterCook;
+            return FString::Printf(TEXT("test=%s cook_finish_ms_total=%.2f cook_finish_ms_max_frame=%.2f nav_ms_total=%.2f nav_after_cook_ms_total=%.2f commit_ms_total=%.2f swap_ms_total=%.2f frames=%d digs=%d window_above_idle_ms_total=%.2f parts_ms_total=%.2f rest_ms_total=%.2f rest_commit_frames=%d rest_commit_ms=%.2f rest_after_commit_frames=%d rest_after_commit_ms=%.2f rest_cook_frames=%d rest_cook_ms=%.2f rest_other_frames=%d rest_other_ms=%.2f commits=%d cooks_finished=%d pieces_recooked=%d vertices_recooked=%lld pieces_per_commit=%.2f vertices_per_commit=%.0f"),
+                *Test, CookTotal, CookMaxFrame, NavAll, NavAfterCook, Commit, Swap, Num(), Digs, Whole, Parts, Whole - Parts, NCommit, RestCommit,
+                NAfterCommit, RestAfterCommit, NCook, RestCook, NOther, RestOther, Commits, CooksFinished, CookStartPiecesWindow,
+                static_cast<long long>(CookStartVerticesWindow), Commits > 0 ? static_cast<double>(CookStartPiecesWindow) / Commits : 0.0,
+                Commits > 0 ? static_cast<double>(CookStartVerticesWindow) / Commits : 0.0);
         }
 
         /** Logs the window's summary, its terrain timings and its spikes under DIGSPIKE <Tag>. */
@@ -911,6 +993,7 @@ namespace
         AddAction(Scene, FString::Printf(TEXT("%s: log"), *Name), [Name, Idle, Window, Timer](FDigGameScene& S)
         {
             UE_LOG(LogTemp, Display, TEXT("DIGSPIKE %s_WHOLE %s"), *Name, *Window->DescribeWhole(*Idle));
+            UE_LOG(LogTemp, Display, TEXT("DIGSPIKE SPLIT %s"), *Window->DescribeSplit(*Idle, Name));
             UE_LOG(LogTemp, Display, TEXT("DIGSPIKE %s_EXTRA attempts=%d digs_changed=%d lumen_hwrt=%d"), *Name, Timer->Attempts, Timer->Changed,
                 IsLumenHardwareRayTracingActive() ? 1 : 0);
             Idle->Log(*(Name + TEXT("_IDLE")));
