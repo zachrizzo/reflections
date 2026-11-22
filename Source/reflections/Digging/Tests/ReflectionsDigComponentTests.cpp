@@ -1,15 +1,19 @@
 #include "Digging/ReflectionsDigComponent.h"
 
 #include "CoreMinimal.h"
+#include "Digging/ReflectionsDigGrid.h"
 #include "Digging/ReflectionsDigSpot.h"
 #include "Digging/ReflectionsDigSubsystem.h"
 #include "Digging/ReflectionsDigTerrain.h"
+#include "Digging/ReflectionsDigTypes.h"
 #include "Digging/Tests/ReflectionsDigTestTraces.h"
 #include "Digging/Tests/ReflectionsDigTestWorld.h"
+#include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "GameFramework/DefaultPawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "Math/RandomStream.h"
@@ -126,7 +130,8 @@ namespace
     }
 
     /** Builds the scene and waits until the terrain is meshed; returns false (after reporting why) if any part is missing. */
-    bool MakeTerrainScene(FAutomationTestBase& Test, FReflectionsDigTestWorld& TestWorld, FTerrainDigScene& Out)
+    bool MakeTerrainScene(FAutomationTestBase& Test, FReflectionsDigTestWorld& TestWorld, FTerrainDigScene& Out,
+        const FVector& PawnLocation = TerrainPawnLocation)
     {
         if (!Test.TestNotNull(TEXT("Test world"), TestWorld.World))
         {
@@ -139,7 +144,7 @@ namespace
             return false;
         }
         // Eye height 0: the view point is the actor location, and pitch -90 looks straight down.
-        Out.Pawn = TestWorld.Spawn<ADefaultPawn>(TerrainPawnLocation, FRotator(-90.0, 0.0, 0.0));
+        Out.Pawn = TestWorld.Spawn<ADefaultPawn>(PawnLocation, FRotator(-90.0, 0.0, 0.0));
         if (!Test.TestNotNull(TEXT("Pawn"), Out.Pawn))
         {
             return false;
@@ -158,6 +163,24 @@ namespace
     {
         return FReflectionsDigTestTraces::TraceDownToChunkZ(TestWorld.World, TerrainPawnLocation.X, TerrainPawnLocation.Y,
             1000.0, -3100.0, Scene.Pawn);
+    }
+
+    /** A copy of every chunk's samples (cells plus borders), in chunk order. */
+    TArray<FReflectionsDigChunkSamples> CopyAllSamples(const FReflectionsDigGrid& Grid)
+    {
+        TArray<FReflectionsDigChunkSamples> All;
+        const FIntVector Size = Grid.GetSizeInChunks();
+        for (int32 Z = 0; Z < Size.Z; ++Z)
+        {
+            for (int32 Y = 0; Y < Size.Y; ++Y)
+            {
+                for (int32 X = 0; X < Size.X; ++X)
+                {
+                    Grid.CopyChunkSamples(FIntVector(X, Y, Z), All.AddDefaulted_GetRef());
+                }
+            }
+        }
+        return All;
     }
 }
 
@@ -471,6 +494,50 @@ bool FReflectionsDigInputFillRestoresTerrainTest::RunTest(const FString& Paramet
             TestTrue(FString::Printf(TEXT("After %d fills the ground is within 60 cm of Z 0 (at %s)"), Fills,
                 Ground.IsSet() ? *FString::SanitizeFloat(*Ground) : TEXT("no terrain hit")),
                 Ground.IsSet() && FMath::Abs(*Ground) <= 60.0);
+        }
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigInputSafetyFloorIsNotTerrainTest, "Reflections.DigInput.SafetyFloorIsNotTerrain", DigInputTestFlags)
+bool FReflectionsDigInputSafetyFloorIsNotTerrainTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    {
+        // Inside the solid interior of the lower chunk, 100 cm above the safety floor's top (30 cm under the grid
+        // floor at Z -2800): looking down, the first thing within reach is the safety floor, not a chunk piece.
+        FReflectionsDigTestWorld TestWorld;
+        FTerrainDigScene Scene;
+        if (MakeTerrainScene(*this, TestWorld, Scene, FVector(TerrainPawnLocation.X, TerrainPawnLocation.Y, -2730.0)))
+        {
+            AReflectionsDigTerrain* Terrain = nullptr;
+            for (TActorIterator<AReflectionsDigTerrain> It(TestWorld.World); It; ++It)
+            {
+                Terrain = *It;
+            }
+            if (TestNotNull(TEXT("Terrain"), Terrain) && TestNotNull(TEXT("Grid"), Terrain->GetGrid()))
+            {
+                FHitResult Hit;
+                const FCollisionQueryParams Params(SCENE_QUERY_STAT(DigInputTest), false, Scene.Pawn);
+                const FVector Start = Scene.Pawn->GetActorLocation();
+                const bool bHit = TestWorld.World->LineTraceSingleByChannel(Hit, Start, Start - FVector(0.0, 0.0, 250.0), ECC_Visibility, Params);
+                TestTrue(TEXT("Looking down, the pawn sees the safety floor within reach"), bHit && Hit.GetComponent() == Terrain->GetSafetyFloor());
+
+                const TArray<FReflectionsDigChunkSamples> Before = CopyAllSamples(*Terrain->GetGrid());
+                TestFalse(TEXT("TryDig on the safety floor returns false"), Scene.Dig->TryDig());
+                TestFalse(TEXT("TryFill on the safety floor returns false"), Scene.Dig->TryFill());
+                const TArray<FReflectionsDigChunkSamples> After = CopyAllSamples(*Terrain->GetGrid());
+                if (TestEqual(TEXT("Chunk count"), After.Num(), Before.Num()))
+                {
+                    for (int32 Index = 0; Index < Before.Num(); ++Index)
+                    {
+                        TestTrue(FString::Printf(TEXT("Chunk %s samples are unchanged"), *Before[Index].Chunk.ToString()),
+                            Before[Index].Density == After[Index].Density && Before[Index].Material == After[Index].Material);
+                    }
+                }
+            }
         }
     }
     DeleteTestSlot();

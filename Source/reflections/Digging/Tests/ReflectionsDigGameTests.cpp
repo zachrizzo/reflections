@@ -294,6 +294,30 @@ bool FReflectionsDigSpikeHarnessRunsInGameTest::RunTest(const FString& Parameter
     TestTrue(TEXT("GWorld is a game world"), World->IsGameWorld());
     const FString PackageName = World->GetOutermost()->GetName();
     TestTrue(FString::Printf(TEXT("The map %s is L_DigSpike"), *PackageName), PackageName.EndsWith(TEXT("L_DigSpike")));
+
+    // The wrapper caps the game process at 60 frames a second; 60 consecutive frames must take about a second.
+    struct FFrameClock
+    {
+        int32 Frames = -1;
+        double StartSeconds = 0.0;
+    };
+    TSharedRef<FFrameClock> Clock = MakeShared<FFrameClock>();
+    FAutomationTestFramework::Get().EnqueueLatentCommand(MakeShared<FFunctionLatentCommand>([this, Clock]()
+    {
+        const double Now = FPlatformTime::Seconds();
+        if (Clock->Frames < 0)
+        {
+            Clock->StartSeconds = Now;
+        }
+        if (++Clock->Frames < 60)
+        {
+            return false;
+        }
+        const double Elapsed = Now - Clock->StartSeconds;
+        TestTrue(FString::Printf(TEXT("60 consecutive frames take between 0.8 and 1.5 s (took %.3f s)"), Elapsed), Elapsed >= 0.8 && Elapsed <= 1.5);
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless HarnessRunsInGame: 60 frames in %.3f s"), Elapsed);
+        return true;
+    }));
     return true;
 }
 
@@ -489,6 +513,11 @@ bool FReflectionsDigSpikeFloorStaysWhileCollisionRecooksTest::RunTest(const FStr
         int32 Frame = 0;
         int32 Digs = 0;
         double StartFeetZ = 0.0;
+        double StartSeconds = 0.0;
+        /** Frames whose trace was answered by old collision (a retiring piece, or a piece whose new mesh is still cooking), and the longest run of them. */
+        int32 OldCollisionRun = 0;
+        int32 LongestOldCollisionRun = 0;
+        int32 OldCollisionFrames = 0;
     };
     TSharedRef<FRecook> Recook = MakeShared<FRecook>();
     AddStep(Scene, TEXT("Dig under the feet for 300 frames"), 120.0, [Recook](FDigGameScene& S)
@@ -497,6 +526,7 @@ bool FReflectionsDigSpikeFloorStaysWhileCollisionRecooksTest::RunTest(const FStr
         if (Recook->Frame == 0)
         {
             Recook->StartFeetZ = S.GetFeetZ();
+            Recook->StartSeconds = FPlatformTime::Seconds();
         }
         else
         {
@@ -509,6 +539,18 @@ bool FReflectionsDigSpikeFloorStaysWhileCollisionRecooksTest::RunTest(const FStr
                     Recook->Frame, Location.Z, Hit.IsSet() ? *GetNameSafe(Hit->GetComponent()) : TEXT("nothing"),
                     Hit.IsSet() ? *Hit->ImpactPoint.ToString() : TEXT("-")));
                 return true;
+            }
+            // Old collision answers when the hit piece is retiring (hidden, colliding until its replacement has
+            // cooked) or is a reused piece whose new mesh is still cooking (its body is still the previous mesh's).
+            const UReflectionsDigChunkComponent* Piece = Cast<UReflectionsDigChunkComponent>(Hit->GetComponent());
+            if (!Piece->IsVisible() || Piece->IsCollisionCookPending())
+            {
+                ++Recook->OldCollisionFrames;
+                Recook->LongestOldCollisionRun = FMath::Max(Recook->LongestOldCollisionRun, ++Recook->OldCollisionRun);
+            }
+            else
+            {
+                Recook->OldCollisionRun = 0;
             }
         }
         if (Recook->Frame == Frames)
@@ -524,8 +566,9 @@ bool FReflectionsDigSpikeFloorStaysWhileCollisionRecooksTest::RunTest(const FStr
         S.Test->TestTrue(FString::Printf(TEXT("The character ends above the grid floor (feet %.1f)"), S.GetFeetZ()), S.GetFeetZ() > GridFloorZ);
         S.Test->TestTrue(FString::Printf(TEXT("The character's feet were never below the grid floor (lowest %.1f)"), S.LowestFeetZ),
             S.LowestFeetZ > GridFloorZ);
-        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless FloorStaysWhileCollisionRecooks: %d frames, %d digs changed the grid, feet from %.1f to %.1f"),
-            Recook->Frame, Recook->Digs, Recook->StartFeetZ, S.GetFeetZ());
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless FloorStaysWhileCollisionRecooks: %d frames in %.2f s, %d digs changed the grid, feet from %.1f to %.1f (%.1f cm); trace answered by old collision on %d frames, at most %d in a row"),
+            Recook->Frame, FPlatformTime::Seconds() - Recook->StartSeconds, Recook->Digs, Recook->StartFeetZ, S.GetFeetZ(),
+            Recook->StartFeetZ - S.GetFeetZ(), Recook->OldCollisionFrames, Recook->LongestOldCollisionRun);
     });
     AddCleanup(Scene);
     return true;
