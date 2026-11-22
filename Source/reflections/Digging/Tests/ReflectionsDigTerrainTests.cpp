@@ -1030,4 +1030,61 @@ bool FReflectionsDigTerrainDirectCommitWhileCookingKeepsTheRetiringFloorTest::Ru
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainReusePathClearsAFinishedRetiringSetTest, "Reflections.Digging.Terrain.ReusePathClearsAFinishedRetiringSet", DigTerrainTestFlags)
+bool FReflectionsDigTerrainReusePathClearsAFinishedRetiringSetTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    const FIntVector Busy(1, 1, 0);
+    RiddleBuriedChunk(*Scene.Dig);
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after riddling the chunk")))
+    {
+        return true;
+    }
+    TestTrue(TEXT("The riddled chunk is split"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+
+    // Fill it back so it meshes to one piece, and commit that directly: the split set retires behind one new piece.
+    for (double Z = -2500.0; Z <= -1300.0; Z += 200.0)
+    {
+        for (double Y = 1700.0; Y <= 3100.0; Y += 200.0)
+        {
+            for (double X = 1700.0; X <= 3100.0; X += 200.0)
+            {
+                Scene.Dig->Dig(FVector(X, Y, Z), 150.0f, EReflectionsDigMode::Add);
+            }
+        }
+    }
+    FReflectionsDigMeshData Filled;
+    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Filled);
+    Scene.Terrain->CommitChunk(Busy, MoveTemp(Filled));
+    TestEqual(TEXT("Premise: the filled chunk is one piece"), Scene.Terrain->GetChunkPieceCount(Busy), 1);
+    const int32 RetiringBefore = Scene.Terrain->GetRetiringPieceCount(Busy);
+    TestTrue(FString::Printf(TEXT("Premise: the split set is retiring (%d pieces)"), RetiringBefore), RetiringBefore >= 2);
+
+    // Let the one piece's cook finish without ticking the world, so no swap check runs.
+    const double Deadline = FPlatformTime::Seconds() + IdleTimeoutSeconds;
+    while (Scene.Terrain->IsChunkCooking(Busy) && FPlatformTime::Seconds() < Deadline)
+    {
+        PumpGameThread();
+    }
+    if (!TestFalse(TEXT("The one piece's cook finishes while the game thread is pumped"), Scene.Terrain->IsChunkCooking(Busy)))
+    {
+        return true;
+    }
+    TestEqual(TEXT("Premise: with no tick the split set is still retiring"), Scene.Terrain->GetRetiringPieceCount(Busy), RetiringBefore);
+
+    // A direct commit onto the one piece takes the reuse path, which must finish the swap that is due first.
+    FReflectionsDigMeshData Again;
+    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Again);
+    Scene.Terrain->CommitChunk(Busy, MoveTemp(Again));
+    TestEqual(TEXT("The chunk is still one piece"), Scene.Terrain->GetChunkPieceCount(Busy), 1);
+    TestEqual(TEXT("The reuse commit destroyed the finished retiring set"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
+    WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the reuse commit"));
+    return true;
+}
+
 #endif

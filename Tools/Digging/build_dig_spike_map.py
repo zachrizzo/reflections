@@ -23,10 +23,30 @@ CAVE_LIGHT_LOCATIONS = (
 )
 CAVE_LIGHT_INTENSITY = 5000.0
 CAVE_LIGHT_ATTENUATION_RADIUS = 1500.0
+# The navmesh bounds: the patch (X 1000 to 5800, Y -2400 to 2400, Z -2800 to 400) with a 200 cm margin.
+NAV_BOUNDS_MIN = (800.0, -2600.0, -3000.0)
+NAV_BOUNDS_MAX = (6000.0, 2600.0, 600.0)
+# A box volume spawned from Python gets the editor's default cube brush, 200 cm on a side; scaling sizes it.
+DEFAULT_VOLUME_BRUSH_CM = 200.0
 
 
 def fail(message):
     raise RuntimeError("build_dig_spike_map: " + message)
+
+
+def check_close(label, actual, expected, tolerance=0.01):
+    if abs(actual - expected) > tolerance:
+        fail("%s is %s, expected %s" % (label, actual, expected))
+
+
+def check_vector(label, actual, expected, tolerance=0.01):
+    for axis, a, e in zip("xyz", (actual.x, actual.y, actual.z), expected):
+        check_close(label + "." + axis, a, e, tolerance)
+
+
+def check_movable(component, label):
+    if component.get_editor_property("mobility") != unreal.ComponentMobility.MOVABLE:
+        fail(label + " mobility did not stick")
 
 
 def load_mesh(path):
@@ -77,7 +97,36 @@ def spawn_cave_light(label, location):
     component.set_editor_property("intensity_units", unreal.LightUnits.UNITLESS)
     component.set_editor_property("intensity", CAVE_LIGHT_INTENSITY)
     component.set_editor_property("attenuation_radius", CAVE_LIGHT_ATTENUATION_RADIUS)
+    check_movable(component, label)
+    if component.get_editor_property("intensity_units") != unreal.LightUnits.UNITLESS:
+        fail(label + " intensity_units did not stick")
+    check_close(label + " intensity", component.get_editor_property("intensity"), CAVE_LIGHT_INTENSITY)
+    check_close(label + " attenuation_radius", component.get_editor_property("attenuation_radius"), CAVE_LIGHT_ATTENUATION_RADIUS)
     return light
+
+
+def spawn_nav_bounds(label):
+    centre = tuple((lo + hi) * 0.5 for lo, hi in zip(NAV_BOUNDS_MIN, NAV_BOUNDS_MAX))
+    half = tuple((hi - lo) * 0.5 for lo, hi in zip(NAV_BOUNDS_MIN, NAV_BOUNDS_MAX))
+    volume = spawn(unreal.NavMeshBoundsVolume, label, centre)
+    _, brush_extent = volume.get_actor_bounds(False)
+    check_vector(label + " default brush extent", brush_extent, (DEFAULT_VOLUME_BRUSH_CM * 0.5,) * 3)
+    volume.set_actor_scale3d(unreal.Vector(*(2.0 * h / DEFAULT_VOLUME_BRUSH_CM for h in half)))
+    origin, extent = volume.get_actor_bounds(False)
+    check_vector(label + " bounds origin", origin, centre)
+    check_vector(label + " bounds extent", extent, half)
+    return volume
+
+
+def spawn_nav_mesh(label):
+    # The editor's navigation system would spawn a navmesh for the bounds only on a later editor tick, and in a
+    # -game process it spawns a missing one as Static (the project default). So the map carries its own, set to
+    # rebuild itself at run time; the project's navigation settings stay untouched.
+    nav_mesh = spawn(unreal.RecastNavMesh, label)
+    nav_mesh.set_editor_property("runtime_generation", unreal.RuntimeGenerationType.DYNAMIC)
+    if nav_mesh.get_editor_property("runtime_generation") != unreal.RuntimeGenerationType.DYNAMIC:
+        fail(label + " runtime_generation did not stick")
+    return nav_mesh
 
 
 def build():
@@ -97,9 +146,11 @@ def build():
     # The patch covers X 1000 to 5800 and Y -2400 to 2400, its ground at Z 0 (default size: 3 x 3 x 2 chunks).
     terrain = spawn(unreal.ReflectionsDigTerrain, "DigSpike_Terrain", (1000.0, -2400.0, 0.0))
     terrain.set_editor_property("ground_height_cm", 0.0)
+    check_close("DigSpike_Terrain ground_height_cm", terrain.get_editor_property("ground_height_cm"), 0.0)
 
     sun = spawn(unreal.DirectionalLight, "DigSpike_Sun", rotation=unreal.Rotator(roll=0.0, pitch=-45.0, yaw=30.0))
     make_movable(sun.root_component, "DigSpike_Sun")
+    check_movable(sun.root_component, "DigSpike_Sun")
 
     spawn(unreal.SkyAtmosphere, "DigSpike_Sky")
 
@@ -107,9 +158,15 @@ def build():
     sky_light_component = sky_light.get_component_by_class(unreal.SkyLightComponent)
     make_movable(sky_light_component, "DigSpike_SkyLight")
     sky_light_component.set_editor_property("real_time_capture", True)
+    check_movable(sky_light_component, "DigSpike_SkyLight")
+    if not sky_light_component.get_editor_property("real_time_capture"):
+        fail("DigSpike_SkyLight real_time_capture did not stick")
 
     for index, location in enumerate(CAVE_LIGHT_LOCATIONS):
         spawn_cave_light("DigSpike_CaveLight" + str(index + 1), location)
+
+    spawn_nav_bounds("DigSpike_NavBounds")
+    spawn_nav_mesh("DigSpike_NavMesh")
 
     # Yaw 0 faces +X, towards the patch.
     spawn(unreal.PlayerStart, "DigSpike_Start", (400.0, 0.0, 100.0))

@@ -1,6 +1,7 @@
 #include "Digging/ReflectionsDigTerrain.h"
 
 #include "CoreMinimal.h"
+#include "AI/NavigationSystemBase.h"
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
 #include "Digging/ReflectionsDigMesher.h"
@@ -37,6 +38,9 @@ using UE::Geometry::FDynamicMesh3;
  *   the launches; a commit that reuses a chunk's single piece checks its own chunk first.
  * - A retiring set replaced by nothing (the chunk became all solid or all air) goes only when the whole terrain is
  *   quiet: a neighbouring chunk may still be showing the old hole into this chunk.
+ * - Navigation follows the collision, not the mesh: a current piece asks for one navigation update per cook that
+ *   brings its new body in (a failed cook asks for nothing), a set leaves navigation as it retires, and a destroyed
+ *   piece leaves through the engine's unregister. The safety floor never affects navigation.
  */
 
 namespace
@@ -89,7 +93,10 @@ namespace
         });
     }
 
-    /** Whether a chunk's retiring set still waits for a swap that will come (a failed cook stops the wait). */
+    /**
+     * Whether a chunk's retiring set still waits for a swap that will come: a cook is running, or every piece has
+     * collision of its own and the swap is due. A failed cook, or a piece that never received a body, stops the wait.
+     */
     bool IsSwapWaiting(const FReflectionsDigTerrainChunk& State)
     {
         if (State.Retiring.IsEmpty())
@@ -100,7 +107,7 @@ namespace
         {
             return true;
         }
-        return AnyCookPending(State.Pieces) || !AnyCookFailed(State.Pieces);
+        return AnyCookPending(State.Pieces) || (!AnyCookFailed(State.Pieces) && AllHaveCollision(State.Pieces));
     }
 
     /**
@@ -129,12 +136,13 @@ namespace
         {
             return false;
         }
-        else if (AnyCookFailed(State.Pieces))
+        else if (AnyCookFailed(State.Pieces) || !AllHaveCollision(State.Pieces))
         {
+            // A piece that never received a body cannot stand in for the old set any more than a failed cook can.
             if (!State.bCookFailureReported)
             {
                 State.bCookFailureReported = true;
-                UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("Chunk %s: a collision cook failed; its previous collision stays until the next commit"),
+                UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("Chunk %s: a collision cook failed or a piece has no collision; its previous collision stays until the next commit"),
                     *Chunk.ToString());
             }
             return false;
@@ -177,6 +185,10 @@ void UReflectionsDigChunkComponent::RebuildPhysicsData()
         // Cooked on the spot (a world without async cooking): the body is in place.
         bHasCollision = true;
         bLastCookFailed = false;
+        if (AReflectionsDigTerrain* Terrain = Cast<AReflectionsDigTerrain>(GetOwner()))
+        {
+            Terrain->UpdatePieceNavigation(*this);
+        }
     }
 }
 
@@ -190,6 +202,13 @@ void UReflectionsDigChunkComponent::FinishPhysicsAsyncCook(bool bSuccess, UBodyS
         // The engine swaps a finished body in only when the cook succeeded (or needed no cooking).
         bLastCookFailed = MeshBodySetup != FinishedBodySetup;
         bHasCollision |= !bLastCookFailed;
+        // Navigation exports the body setup it is handed, so it is told only now that the new one is in; a failed
+        // cook kept the old body, which navigation already has.
+        AReflectionsDigTerrain* Terrain = Cast<AReflectionsDigTerrain>(GetOwner());
+        if (!bLastCookFailed && Terrain != nullptr)
+        {
+            Terrain->UpdatePieceNavigation(*this);
+        }
     }
 }
 
@@ -289,7 +308,6 @@ void AReflectionsDigTerrain::CommitChunkPieces(FIntVector Chunk, FReflectionsDig
     else
     {
         FReflectionsDigTerrainChunk& State = Chunks.FindOrAdd(Chunk);
-        State.bCookFailureReported = false;
         TArray<UReflectionsDigChunkComponent*, TInlineAllocator<4>> Targets;
         if (Result.Pieces.Num() == 1 && State.Pieces.Num() == 1 && State.Pieces[0] != nullptr)
         {
@@ -313,6 +331,9 @@ void AReflectionsDigTerrain::CommitChunkPieces(FIntVector Chunk, FReflectionsDig
             }
             ComponentSeconds += FPlatformTime::Seconds() - CreateStart;
         }
+        // Only now, after the swap check above has reported a failure it found: the cooks started below are new,
+        // and a failure of theirs is reported again.
+        State.bCookFailureReported = false;
         for (int32 Index = 0; Index < Targets.Num(); ++Index)
         {
             // With bDeferCollisionUpdates, SetMesh only invalidates the current body setup's cooked meshes; the body
@@ -350,7 +371,14 @@ void AReflectionsDigTerrain::RetireCurrentSet(FReflectionsDigTerrainChunk& State
             if (Old != nullptr)
             {
                 Old->SetVisibility(false);
+                // Old collision: it leaves navigation now (the engine removes it from the navigation octree and
+                // dirties its area), not when it is destroyed after the swap.
+                Old->SetCanEverAffectNavigation(false);
             }
+        }
+        if (const UWorld* World = GetWorld())
+        {
+            LastNavUpdateSeconds = World->GetTimeSeconds();
         }
     }
     else
@@ -463,6 +491,25 @@ bool AReflectionsDigTerrain::IsWaitingOnCollision() const
 UBoxComponent* AReflectionsDigTerrain::GetSafetyFloor() const
 {
     return SafetyFloor;
+}
+
+double AReflectionsDigTerrain::GetLastNavUpdateSeconds() const
+{
+    return LastNavUpdateSeconds;
+}
+
+void AReflectionsDigTerrain::UpdatePieceNavigation(UReflectionsDigChunkComponent& Piece)
+{
+    UWorld* World = GetWorld();
+    // A retiring piece no longer affects navigation; a destroyed one has unregistered. Between EndPlay and the
+    // world's end the grid is gone, so a late cook asks for nothing either.
+    if (Grid == nullptr || World == nullptr || World->bIsTearingDown || !Piece.IsRegistered() || Piece.IsBeingDestroyed()
+        || !Piece.CanEverAffectNavigation())
+    {
+        return;
+    }
+    FNavigationSystem::UpdateComponentData(Piece);
+    LastNavUpdateSeconds = World->GetTimeSeconds();
 }
 
 UReflectionsDigChunkComponent* AReflectionsDigTerrain::CreatePieceComponent()

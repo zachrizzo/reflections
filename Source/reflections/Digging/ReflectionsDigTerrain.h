@@ -18,7 +18,8 @@ DECLARE_LOG_CATEGORY_EXTERN(LogReflectionsDigTerrain, Log, All);
 /**
  * The mesh component of one chunk piece. It knows whether its newest async collision cook is still running and how
  * its cooks ended: the engine keeps that queue protected, so this subclass watches RebuildPhysicsData and
- * FinishPhysicsAsyncCook.
+ * FinishPhysicsAsyncCook. When a cook brings its new body in, it has its terrain tell navigation (a dynamic mesh
+ * component does not do that by itself).
  */
 UCLASS(Transient)
 class REFLECTIONS_API UReflectionsDigChunkComponent : public UDynamicMeshComponent
@@ -135,22 +136,41 @@ public:
     /** True while any cook runs or any retiring set still waits for its swap (a set kept by a failed cook does not wait). */
     bool IsWaitingOnCollision() const;
 
-    /** The blocking box under the whole patch, its top 30 cm below the grid floor. */
+    /** The blocking box under the whole patch, its top 30 cm below the grid floor. It never affects navigation. */
     UBoxComponent* GetSafetyFloor() const;
+
+    /**
+     * World time of the last navigation update the terrain asked for: a piece's collision came in, or a set retired.
+     * Negative before the first.
+     */
+    double GetLastNavUpdateSeconds() const;
 
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
+    friend class UReflectionsDigChunkComponent;
+
+    /**
+     * A piece's new body is in place: navigation reads the piece's collision again. Only for a current piece of a
+     * live terrain; a retiring or unregistered piece, or a world being torn down, asks for nothing.
+     */
+    void UpdatePieceNavigation(UReflectionsDigChunkComponent& Piece);
+
     UReflectionsDigChunkComponent* CreatePieceComponent();
-    /** Moves the current set out of the way of a new one, keeping the newest set that really collides. */
+    /**
+     * Moves the current set out of the way of a new one, keeping the newest set that really collides. A set that
+     * retires stops affecting navigation at once: it is old collision.
+     */
     void RetireCurrentSet(FReflectionsDigTerrainChunk& State, double& InOutDestroySeconds);
 
     UPROPERTY(VisibleAnywhere, Category = "Digging")
     TObjectPtr<UBoxComponent> SafetyFloor;
 
     TUniquePtr<FReflectionsDigGrid> Grid;
+
+    double LastNavUpdateSeconds = -1.0;
 
     /** Rebuilt from the grid at run time, never saved. */
     UPROPERTY(Transient)

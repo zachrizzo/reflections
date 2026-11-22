@@ -1,8 +1,10 @@
 #include "Digging/ReflectionsDigSubsystem.h"
 
 #include "CoreMinimal.h"
+#include "AIController.h"
 #include "CollisionQueryParams.h"
 #include "CollisionShape.h"
+#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Digging/ReflectionsDigComponent.h"
 #include "Digging/ReflectionsDigTerrain.h"
@@ -18,6 +20,9 @@
 #include "GameFramework/PlayerController.h"
 #include "HAL/PlatformTime.h"
 #include "Misc/AutomationTest.h"
+#include "Navigation/PathFollowingComponent.h"
+#include "NavigationData.h"
+#include "NavigationSystem.h"
 #include "UObject/Package.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
@@ -281,6 +286,82 @@ namespace
         const FVector Local = (Position - Terrain.GetGrid()->GetOriginCm()) / ChunkSizeCm;
         return FIntVector(FMath::FloorToInt(Local.X), FMath::FloorToInt(Local.Y), FMath::FloorToInt(Local.Z));
     }
+
+    /** How far around a point the navmesh is searched: 50 cm across, 100 cm up and down (the untouched ground is 300 cm above a ramp's bottom). */
+    const FVector NavProbeExtent(50.0, 50.0, 100.0);
+    /** How long the navigation system may take to cover the patch after the map loads. */
+    constexpr double NavReadyTimeoutSeconds = 30.0;
+
+    /**
+     * A ramp into the ground: stamps of radius 150 every 50 cm along its direction, each 25 cm lower (a 27 degree
+     * slope, walkable), from the ground at its start down to 300 cm deep.
+     */
+    struct FDigRamp
+    {
+        static constexpr float StampRadiusCm = 150.0f;
+        static constexpr double StepAlongCm = 50.0;
+        static constexpr double StepDownCm = 25.0;
+        static constexpr int32 Steps = 12;
+
+        FVector2D Start;
+        FVector2D Direction;
+
+        /** The bottom of the last stamp: 600 cm along, 300 cm deep. */
+        FVector GetLowestPoint() const
+        {
+            const FVector2D At = Start + Direction * (StepAlongCm * Steps);
+            return FVector(At.X, At.Y, GroundZ - StepDownCm * Steps);
+        }
+
+        /** Digs every stamp; returns how many changed the grid (none when the ramp is already dug). */
+        int32 Dig(UReflectionsDigSubsystem& Subsystem) const
+        {
+            int32 Changed = 0;
+            for (int32 Step = 1; Step <= Steps; ++Step)
+            {
+                const FVector2D At = Start + Direction * (StepAlongCm * Step);
+                const double CentreZ = GroundZ + StampRadiusCm - StepDownCm * Step;
+                Changed += Subsystem.Dig(FVector(At.X, At.Y, CentreZ), StampRadiusCm, EReflectionsDigMode::Remove) ? 1 : 0;
+            }
+            return Changed;
+        }
+    };
+
+    UNavigationSystemV1* GetNavigation(const FDigGameScene& Scene)
+    {
+        return FNavigationSystem::GetCurrent<UNavigationSystemV1>(Scene.GetWorld());
+    }
+
+    /** The navmesh point near Point (within NavProbeExtent), if there is one. */
+    TOptional<FVector> ProjectToNavigation(const FDigGameScene& Scene, const FVector& Point)
+    {
+        FNavLocation Projected;
+        const UNavigationSystemV1* Navigation = GetNavigation(Scene);
+        if (Navigation != nullptr && Navigation->ProjectPointToNavigation(Point, Projected, NavProbeExtent))
+        {
+            return Projected.Location;
+        }
+        return TOptional<FVector>();
+    }
+
+    /** The terrain floor under a ramp's lowest point (a chunk-only trace), or the planned depth when the trace finds none. */
+    FVector GetRampFloor(const FDigGameScene& Scene, const FDigRamp& Ramp)
+    {
+        const FVector Lowest = Ramp.GetLowestPoint();
+        const TOptional<double> FloorZ = Scene.TraceGroundZ(Lowest.X, Lowest.Y);
+        return FVector(Lowest.X, Lowest.Y, FloorZ.IsSet() ? *FloorZ : Lowest.Z);
+    }
+
+    /** Queues a wait until the navigation system has no build work left and the navmesh covers Point. */
+    void AddWaitForNavigationAt(const FDigGameSceneRef& Scene, const FString& Label, const FVector& Point)
+    {
+        AddStep(Scene, Label, NavReadyTimeoutSeconds, [Point](FDigGameScene& S)
+        {
+            UNavigationSystemV1* Navigation = GetNavigation(S);
+            return Navigation != nullptr && !Navigation->IsNavigationBuildInProgress() && S.GetSubsystem()->IsIdle()
+                && ProjectToNavigation(S, Point).IsSet();
+        });
+    }
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigSpikeHarnessRunsInGameTest, "Reflections.DigSpike.HarnessRunsInGame", DigGameTestFlags)
@@ -361,14 +442,19 @@ bool FReflectionsDigSpikePitTunnelAndFillTest::RunTest(const FString& Parameters
             Bottom.IsSet() ? *FString::SanitizeFloat(*Bottom) : TEXT("no terrain hit"), *StartFeetZ, FeetZ);
     });
 
-    // The sweep of the character's capsule along the tunnel axis; before the tunnel it must hit the pit wall.
-    auto SweepTunnel = [](const FDigGameScene& S, FHitResult& OutHit)
+    // The sweep of the character's capsule along the tunnel at capsule-centre height CentreZ; before the tunnel,
+    // along the axis, it must hit the pit wall.
+    auto SweepTunnelAt = [](const FDigGameScene& S, double CentreZ, FHitResult& OutHit)
     {
         const UCapsuleComponent* Capsule = S.GetCharacter()->GetCapsuleComponent();
         const FCollisionShape Shape = FCollisionShape::MakeCapsule(Capsule->GetScaledCapsuleRadius(), Capsule->GetScaledCapsuleHalfHeight());
         const FCollisionQueryParams Params(SCENE_QUERY_STAT(ReflectionsDigGameTunnel), false, S.GetCharacter());
-        return S.GetWorld()->SweepSingleByChannel(OutHit, FVector(X, Y, TunnelZ), FVector(X + TunnelLengthCm, Y, TunnelZ), FQuat::Identity,
+        return S.GetWorld()->SweepSingleByChannel(OutHit, FVector(X, Y, CentreZ), FVector(X + TunnelLengthCm, Y, CentreZ), FQuat::Identity,
             ECC_Pawn, Shape, Params);
+    };
+    auto SweepTunnel = [SweepTunnelAt](const FDigGameScene& S, FHitResult& OutHit)
+    {
+        return SweepTunnelAt(S, TunnelZ, OutHit);
     };
     AddAction(Scene, TEXT("Dig the tunnel"), [SweepTunnel](FDigGameScene& S)
     {
@@ -384,12 +470,34 @@ bool FReflectionsDigSpikePitTunnelAndFillTest::RunTest(const FString& Parameters
         S.Test->TestTrue(TEXT("Every tunnel stamp digs"), bAllDug);
     });
     AddWaitForRest(Scene, TEXT("The character rests after the tunnel"));
-    AddAction(Scene, TEXT("Sweep the tunnel"), [SweepTunnel](FDigGameScene& S)
+    AddAction(Scene, TEXT("Sweep the tunnel"), [SweepTunnel, SweepTunnelAt](FDigGameScene& S)
     {
         FHitResult Hit;
         const bool bBlocked = SweepTunnel(S, Hit);
         S.Test->TestFalse(FString::Printf(TEXT("A capsule sweep along the tunnel is clear (hit %s at %s)"),
             bBlocked ? *GetNameSafe(Hit.GetComponent()) : TEXT("nothing"), *Hit.ImpactPoint.ToString()), bBlocked);
+
+        // Walkable, not only clear: the capsule resting on the tunnel floor (its highest point along the tunnel, plus
+        // the half-height and the 2.4 cm a walking character keeps above its floor) gets through too.
+        TOptional<double> HighestFloorZ;
+        for (double Along = 0.0; Along <= TunnelLengthCm; Along += 25.0)
+        {
+            const TOptional<double> FloorZ = FReflectionsDigTestTraces::TraceDownToChunkZ(S.GetWorld(), X + Along, Y, TunnelZ, TraceEndZ, S.GetCharacter());
+            if (!FloorZ.IsSet())
+            {
+                S.Abort(FString::Printf(TEXT("No tunnel floor under X %.0f"), X + Along));
+                return;
+            }
+            HighestFloorZ = FMath::Max(HighestFloorZ.Get(*FloorZ), *FloorZ);
+        }
+        const double HalfHeight = S.GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+        const double RestingZ = *HighestFloorZ + HalfHeight + 2.4;
+        FHitResult FloorHit;
+        const bool bFloorBlocked = SweepTunnelAt(S, RestingZ, FloorHit);
+        S.Test->TestFalse(FString::Printf(TEXT("A capsule sweep resting on the tunnel floor (floor %.1f, centre %.1f) is clear (hit %s at %s)"),
+            *HighestFloorZ, RestingZ, bFloorBlocked ? *GetNameSafe(FloorHit.GetComponent()) : TEXT("nothing"), *FloorHit.ImpactPoint.ToString()), bFloorBlocked);
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless PitTunnelAndFill: tunnel floor highest at %.1f, resting capsule centre %.1f, floor-level sweep %s"),
+            *HighestFloorZ, RestingZ, bFloorBlocked ? *FString::Printf(TEXT("blocked at %s"), *FloorHit.ImpactPoint.ToString()) : TEXT("clear"));
         Teleport(S, 2400.0, 0.0);
     });
     AddLetDown(Scene, 2400.0, 0.0);
@@ -485,6 +593,9 @@ bool FReflectionsDigSpikeDigDownToBedrockTest::RunTest(const FString& Parameters
         const double Expected = BedrockTopZ + HalfHeight;
         S.Test->TestTrue(FString::Printf(TEXT("The character rests within 60 cm of the bedrock top plus its half-height (Z %.1f, expected %.1f)"), Z, Expected),
             FMath::Abs(Z - Expected) <= 60.0);
+        const UCharacterMovementComponent* Movement = S.GetCharacter()->GetCharacterMovement();
+        S.Test->TestTrue(FString::Printf(TEXT("At rest the character walks on a chunk piece (floor %s)"), *GetNameSafe(Movement->CurrentFloor.HitResult.GetComponent())),
+            Movement->IsMovingOnGround() && Cast<UReflectionsDigChunkComponent>(Movement->CurrentFloor.HitResult.GetComponent()) != nullptr);
         S.Test->TestTrue(FString::Printf(TEXT("The character's feet were never below the grid floor (lowest %.1f)"), S.LowestFeetZ),
             S.LowestFeetZ > GridFloorZ);
         UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless DigDownToBedrock: feet from %.1f to %.1f (%.1f cm) in %.2f s game time with %d digs; longest dig-to-idle %.1f ms wall clock"),
@@ -647,6 +758,261 @@ bool FReflectionsDigSpikePitSurvivesUnloadAndReturnTest::RunTest(const FString& 
         S.Test->TestTrue(FString::Printf(TEXT("The pit bottom is within 5 cm of the recorded %.1f (at %s)"), Pit->BottomZ,
             Bottom.IsSet() ? *FString::SanitizeFloat(*Bottom) : TEXT("no terrain hit")), Bottom.IsSet() && FMath::Abs(*Bottom - Pit->BottomZ) <= 5.0);
     });
+    AddCleanup(Scene);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigSpikeNavmeshFollowsNewPitTest, "Reflections.DigSpike.NavmeshFollowsNewPit", DigGameTestFlags)
+bool FReflectionsDigSpikeNavmeshFollowsNewPitTest::RunTest(const FString& Parameters)
+{
+    /** The brief's ramp: from (1800, 1600) along +X, its lowest point at (2400, 1600, -300). */
+    const FDigRamp Ramp{ FVector2D(1800.0, 1600.0), FVector2D(1.0, 0.0) };
+    /** On the ramp's line, 200 cm from its start: untouched ground before the dig. */
+    const FVector GroundPoint(2000.0, 1600.0, GroundZ);
+    constexpr double FollowLimitSeconds = 1.0;
+    /** Long enough to measure a slow update; the limit above is what the test asserts. */
+    constexpr double FollowTimeoutSeconds = 10.0;
+    // The character only gives the terrain its focus; it stands clear of the ramp.
+    const TSharedPtr<FDigGameScene> Started = StartScene(*this, 2400.0, 600.0);
+    if (!Started.IsValid())
+    {
+        return false;
+    }
+    const FDigGameSceneRef Scene = Started.ToSharedRef();
+
+    struct FFollow
+    {
+        double NavUpdateBeforeDig = 0.0;
+        /** World time of the last navigation update the terrain asked for once the ramp's collision was in. */
+        double CollisionReadySeconds = 0.0;
+        double CollisionReadyWallSeconds = 0.0;
+        FVector Floor = FVector::ZeroVector;
+        int32 Frames = 0;
+    };
+    TSharedRef<FFollow> Follow = MakeShared<FFollow>();
+    AddWaitForNavigationAt(Scene, TEXT("The navmesh covers the ground at (2000, 1600)"), GroundPoint);
+    AddAction(Scene, TEXT("Dig the ramp"), [Ramp, GroundPoint, Follow](FDigGameScene& S)
+    {
+        const AReflectionsDigTerrain* Terrain = S.Terrain.Get();
+        if (Terrain == nullptr)
+        {
+            S.Abort(TEXT("The terrain is gone"));
+            return;
+        }
+        const TOptional<FVector> OnGround = ProjectToNavigation(S, GroundPoint);
+        S.Test->TestTrue(FString::Printf(TEXT("Before the dig a projection at (2000, 1600, 0) succeeds (at %s)"),
+            OnGround.IsSet() ? *OnGround->ToString() : TEXT("none")), OnGround.IsSet());
+        const TOptional<FVector> AtBottom = ProjectToNavigation(S, Ramp.GetLowestPoint());
+        S.Test->TestFalse(FString::Printf(TEXT("Before the dig a projection at the ramp's lowest point %s fails (found %s)"),
+            *Ramp.GetLowestPoint().ToString(), AtBottom.IsSet() ? *AtBottom->ToString() : TEXT("none")), AtBottom.IsSet());
+        S.Test->TestFalse(TEXT("The safety floor can never affect navigation"), Terrain->GetSafetyFloor()->CanEverAffectNavigation());
+        Follow->NavUpdateBeforeDig = Terrain->GetLastNavUpdateSeconds();
+        S.Test->TestTrue(TEXT("The ramp's stamps change the grid"), Ramp.Dig(*S.GetSubsystem()) > 0);
+    });
+    AddStep(Scene, TEXT("The ramp's collision is ready"), ReadyTimeoutSeconds, [Ramp, Follow](FDigGameScene& S)
+    {
+        const AReflectionsDigTerrain* Terrain = S.Terrain.Get();
+        if (Terrain == nullptr)
+        {
+            S.Abort(TEXT("The terrain is gone"));
+            return true;
+        }
+        if (!S.GetSubsystem()->IsIdle())
+        {
+            return false;
+        }
+        Follow->CollisionReadySeconds = Terrain->GetLastNavUpdateSeconds();
+        Follow->CollisionReadyWallSeconds = FPlatformTime::Seconds();
+        Follow->Floor = GetRampFloor(S, Ramp);
+        S.Test->TestTrue(FString::Printf(TEXT("The terrain asked navigation for an update after the dig (%.3f, before %.3f)"),
+            Follow->CollisionReadySeconds, Follow->NavUpdateBeforeDig), Follow->CollisionReadySeconds > Follow->NavUpdateBeforeDig);
+        S.Test->TestTrue(FString::Printf(TEXT("The ramp's floor at its lowest point is at least 250 cm deep (%.1f)"), Follow->Floor.Z),
+            Follow->Floor.Z <= GroundZ - 250.0);
+        UNavigationSystemV1* Navigation = GetNavigation(S);
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless NavmeshFollowsNewPit: collision ready at world %.3f s (now %.3f), navigation building %s, %d build tasks left, %d running"),
+            Follow->CollisionReadySeconds, S.GetWorld()->GetTimeSeconds(),
+            Navigation != nullptr && Navigation->IsNavigationBuildInProgress() ? TEXT("yes") : TEXT("no"),
+            Navigation != nullptr ? Navigation->GetNumRemainingBuildTasks() : -1, Navigation != nullptr ? Navigation->GetNumRunningBuildTasks() : -1);
+        return true;
+    });
+    AddStep(Scene, TEXT("The navmesh reaches the ramp's lowest point"), FollowTimeoutSeconds, [Follow, FollowLimitSeconds](FDigGameScene& S)
+    {
+        ++Follow->Frames;
+        const TOptional<FVector> AtBottom = ProjectToNavigation(S, Follow->Floor);
+        if (!AtBottom.IsSet())
+        {
+            return false;
+        }
+        const double Seconds = S.GetWorld()->GetTimeSeconds() - Follow->CollisionReadySeconds;
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE NAV SECONDS=%.3f"), Seconds);
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless NavmeshFollowsNewPit: projection onto %s succeeded at %s, %.3f s game time after the collision was ready (%.3f s wall clock after idle, frame %d of the wait)"),
+            *Follow->Floor.ToString(), *AtBottom->ToString(), Seconds, FPlatformTime::Seconds() - Follow->CollisionReadyWallSeconds, Follow->Frames);
+        S.Test->TestTrue(FString::Printf(TEXT("The navmesh reaches the ramp's lowest point within %.0f s of its collision being ready (took %.3f s)"),
+            FollowLimitSeconds, Seconds), Seconds <= FollowLimitSeconds);
+        return true;
+    });
+    AddCleanup(Scene);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigSpikeAiWalksIntoPitTest, "Reflections.DigSpike.AiWalksIntoPit", DigGameTestFlags)
+bool FReflectionsDigSpikeAiWalksIntoPitTest::RunTest(const FString& Parameters)
+{
+    /**
+     * Its own ramp, from the same start as NavmeshFollowsNewPit's but along -Y (tests run in name order, so this one
+     * comes first and must leave that ramp's ground untouched): its lowest point is at (1800, 1000, -300).
+     */
+    const FDigRamp Ramp{ FVector2D(1800.0, 1600.0), FVector2D(0.0, -1.0) };
+    /** The AI starts on untouched ground beyond the ramp's start and walks down it. */
+    const FVector2D NpcStart(1800.0, 2100.0);
+    constexpr double ArriveWithinCm = 100.0;
+    constexpr double ArriveTimeoutSeconds = 10.0;
+    const TSharedPtr<FDigGameScene> Started = StartScene(*this, 2400.0, 600.0);
+    if (!Started.IsValid())
+    {
+        return false;
+    }
+    const FDigGameSceneRef Scene = Started.ToSharedRef();
+
+    struct FWalk
+    {
+        TWeakObjectPtr<ACharacter> Npc;
+        TWeakObjectPtr<AAIController> Brain;
+        FVector Floor = FVector::ZeroVector;
+        FVector Goal = FVector::ZeroVector;
+        double StartSeconds = 0.0;
+        /** Frames of the walk standing on a chunk piece, and standing on anything else. */
+        int32 FramesOnTerrain = 0;
+        int32 FramesOnOtherFloor = 0;
+        int32 FramesWalking = 0;
+        int32 Frames = 0;
+        double LowestNpcFeetZ = TNumericLimits<double>::Max();
+    };
+    TSharedRef<FWalk> Walk = MakeShared<FWalk>();
+    auto NpcFeetZ = [](const ACharacter& Npc)
+    {
+        return Npc.GetActorLocation().Z - Npc.GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+    };
+    auto IsOnTerrain = [](const ACharacter& Npc)
+    {
+        const UCharacterMovementComponent* Movement = Npc.GetCharacterMovement();
+        return Movement->IsMovingOnGround() && Cast<UReflectionsDigChunkComponent>(Movement->CurrentFloor.HitResult.GetComponent()) != nullptr;
+    };
+
+    AddAction(Scene, TEXT("Dig the ramp"), [Ramp](FDigGameScene& S)
+    {
+        Ramp.Dig(*S.GetSubsystem());
+    });
+    AddStep(Scene, TEXT("Idle after the ramp"), ReadyTimeoutSeconds, [Ramp, Walk](FDigGameScene& S)
+    {
+        if (!S.GetSubsystem()->IsIdle())
+        {
+            return false;
+        }
+        Walk->Floor = GetRampFloor(S, Ramp);
+        S.Test->TestTrue(FString::Printf(TEXT("The ramp's floor at its lowest point is at least 250 cm deep (%.1f)"), Walk->Floor.Z),
+            Walk->Floor.Z <= GroundZ - 250.0);
+        return true;
+    });
+    AddStep(Scene, TEXT("The navmesh reaches the ramp's lowest point"), NavReadyTimeoutSeconds, [Walk](FDigGameScene& S)
+    {
+        const TOptional<FVector> Goal = ProjectToNavigation(S, Walk->Floor);
+        if (!Goal.IsSet())
+        {
+            return false;
+        }
+        Walk->Goal = *Goal;
+        return true;
+    });
+    AddAction(Scene, TEXT("Spawn the AI character"), [NpcStart, Walk](FDigGameScene& S)
+    {
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        ACharacter* Npc = S.GetWorld()->SpawnActor<ACharacter>(ACharacter::StaticClass(), FVector(NpcStart.X, NpcStart.Y, GroundZ + 200.0),
+            FRotator::ZeroRotator, Params);
+        AAIController* Brain = S.GetWorld()->SpawnActor<AAIController>(AAIController::StaticClass(), FVector(NpcStart.X, NpcStart.Y, GroundZ + 200.0),
+            FRotator::ZeroRotator, Params);
+        Walk->Npc = Npc;
+        Walk->Brain = Brain;
+        if (Npc == nullptr || Brain == nullptr)
+        {
+            S.Abort(TEXT("Could not spawn the AI character and its controller"));
+            return;
+        }
+        Brain->Possess(Npc);
+        S.Test->TestTrue(TEXT("The AI controller possesses the AI character"), Npc->GetController() == Brain);
+    });
+    AddStep(Scene, TEXT("The AI character stands on the terrain"), ReadyTimeoutSeconds, [Walk, IsOnTerrain](FDigGameScene& S)
+    {
+        const ACharacter* Npc = Walk->Npc.Get();
+        if (Npc == nullptr)
+        {
+            S.Abort(TEXT("The AI character is gone"));
+            return true;
+        }
+        return IsOnTerrain(*Npc);
+    });
+    AddAction(Scene, TEXT("Send the AI character to the ramp's lowest point"), [Walk](FDigGameScene& S)
+    {
+        AAIController* Brain = Walk->Brain.Get();
+        if (Brain == nullptr)
+        {
+            S.Abort(TEXT("The AI controller is gone"));
+            return;
+        }
+        const EPathFollowingRequestResult::Type Result = Brain->MoveToLocation(Walk->Goal, /*AcceptanceRadius=*/ 30.0f,
+            /*bStopOnOverlap=*/ false, /*bUsePathfinding=*/ true, /*bProjectDestinationToNavigation=*/ false, /*bCanStrafe=*/ true,
+            /*FilterClass=*/ {}, /*bAllowPartialPath=*/ false);
+        S.Test->TestEqual(TEXT("The move request is accepted"), static_cast<int32>(Result), static_cast<int32>(EPathFollowingRequestResult::RequestSuccessful));
+        const UPathFollowingComponent* Following = Brain->GetPathFollowingComponent();
+        const FNavPathSharedPtr Path = Following != nullptr ? Following->GetPath() : FNavPathSharedPtr();
+        S.Test->TestTrue(TEXT("The path is a full navmesh path"), Path.IsValid() && Path->IsValid() && !Path->IsPartial());
+        Walk->StartSeconds = S.GetWorld()->GetTimeSeconds();
+    });
+    AddStep(Scene, TEXT("The AI character arrives within 100 cm of the ramp's lowest point"), ArriveTimeoutSeconds,
+        [Walk, NpcFeetZ, IsOnTerrain, ArriveWithinCm, ArriveTimeoutSeconds](FDigGameScene& S)
+    {
+        const ACharacter* Npc = Walk->Npc.Get();
+        if (Npc == nullptr)
+        {
+            S.Abort(TEXT("The AI character is gone"));
+            return true;
+        }
+        ++Walk->Frames;
+        const bool bOnTerrain = IsOnTerrain(*Npc);
+        Walk->FramesOnTerrain += bOnTerrain ? 1 : 0;
+        Walk->FramesOnOtherFloor += !bOnTerrain && Npc->GetCharacterMovement()->IsMovingOnGround() ? 1 : 0;
+        Walk->FramesWalking += Npc->GetCharacterMovement()->MovementMode == MOVE_Walking ? 1 : 0;
+        Walk->LowestNpcFeetZ = FMath::Min(Walk->LowestNpcFeetZ, NpcFeetZ(*Npc));
+        const FVector Feet(Npc->GetActorLocation().X, Npc->GetActorLocation().Y, NpcFeetZ(*Npc));
+        const double Distance = FVector::Dist(Feet, Walk->Floor);
+        if (Distance > ArriveWithinCm)
+        {
+            return false;
+        }
+        const double Seconds = S.GetWorld()->GetTimeSeconds() - Walk->StartSeconds;
+        S.Test->TestTrue(FString::Printf(TEXT("The AI character arrives within %.0f s (took %.2f s)"), ArriveTimeoutSeconds, Seconds), Seconds <= ArriveTimeoutSeconds);
+        S.Test->TestTrue(TEXT("On arrival the AI character walks on a chunk piece"), IsOnTerrain(*Npc));
+        S.Test->TestEqual(TEXT("Frames of the walk standing on anything but a chunk piece"), Walk->FramesOnOtherFloor, 0);
+        S.Test->TestTrue(FString::Printf(TEXT("The AI character walked on a chunk piece on at least 90%% of the walk's frames (%d of %d, %d walking)"),
+            Walk->FramesOnTerrain, Walk->Frames, Walk->FramesWalking), Walk->FramesOnTerrain * 10 >= Walk->Frames * 9);
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless AiWalksIntoPit: arrived %.1f cm from the lowest point %s in %.2f s game time (%d frames, %d on a chunk piece, %d walking, lowest feet %.1f)"),
+            Distance, *Walk->Floor.ToString(), Seconds, Walk->Frames, Walk->FramesOnTerrain, Walk->FramesWalking, Walk->LowestNpcFeetZ);
+        return true;
+    });
+    AddStep(Scene, TEXT("Remove the AI character"), 1.0, [Walk](FDigGameScene& S)
+    {
+        if (AAIController* Brain = Walk->Brain.Get())
+        {
+            Brain->UnPossess();
+            Brain->Destroy();
+        }
+        if (ACharacter* Npc = Walk->Npc.Get())
+        {
+            Npc->Destroy();
+        }
+        return true;
+    }, /*bAlwaysRun=*/ true);
     AddCleanup(Scene);
     return true;
 }

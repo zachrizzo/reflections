@@ -1,6 +1,7 @@
 #include "Digging/ReflectionsDigSpot.h"
 
 #include "CoreMinimal.h"
+#include "Components/BrushComponent.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/SkyAtmosphereComponent.h"
@@ -19,6 +20,9 @@
 #include "GameFramework/WorldSettings.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/PackageName.h"
+#include "NavigationData.h"
+#include "NavMesh/NavMeshBoundsVolume.h"
+#include "NavMesh/RecastNavMesh.h"
 #include "UObject/Package.h"
 #include "UObject/UObjectGlobals.h"
 
@@ -46,6 +50,12 @@ namespace
         {TEXT("DigSpike_CaveLight3"), FVector(4000.0, -600.0, 250.0)},
         {TEXT("DigSpike_CaveLight4"), FVector(4000.0, 600.0, 250.0)},
     };
+
+    /**
+     * The whole table: ground, terrain, sun, sky, sky light, the cave lights, player start, two dig spots, the navmesh
+     * bounds and the navmesh.
+     */
+    constexpr int32 ExpectedActorCount = 8 + static_cast<int32>(UE_ARRAY_COUNT(CaveLights)) + 2;
 
     /** The level's one actor of class T labelled Label, or null (reported) when there is none or more than one. */
     template <typename T>
@@ -132,7 +142,21 @@ bool FReflectionsDigSpikeMapIsBuiltAsSpecifiedTest::RunTest(const FString& Param
         TestNull(TEXT("The level sets no game mode override"), Settings->DefaultGameMode.Get());
     }
 
-    // Counts: nothing beyond the table below.
+    // Every actor the map file holds, but the world settings and the default brush, is one of the table below, so an
+    // actor of any other class, or a second one of these, fails the total. Transient actors the editor spawns into a
+    // loaded level (its default physics volume, a debug-draw actor) are not in the file and are not counted.
+    TArray<FString> Counted;
+    for (const AActor* Actor : Level.Actors)
+    {
+        if (Actor != nullptr && !Actor->HasAnyFlags(RF_Transient) && Actor != Level.GetWorldSettings(/*bChecked=*/ false)
+            && Actor != Level.GetDefaultBrush())
+        {
+            Counted.Add(FString::Printf(TEXT("%s %s"), *Actor->GetClass()->GetName(), *Actor->GetActorLabel()));
+        }
+    }
+    TestEqual(FString::Printf(TEXT("Saved actors besides the world settings and the default brush (%s)"), *FString::Join(Counted, TEXT(", "))),
+        Counted.Num(), ExpectedActorCount);
+
     int32 Spots = 0;
     int32 Terrains = 0;
     int32 PlayerStarts = 0;
@@ -141,12 +165,16 @@ bool FReflectionsDigSpikeMapIsBuiltAsSpecifiedTest::RunTest(const FString& Param
     int32 SkyAtmospheres = 0;
     int32 PointLights = 0;
     int32 StaticMeshActors = 0;
+    int32 NavBoundsVolumes = 0;
+    int32 NavigationDatas = 0;
     for (const AActor* Actor : Level.Actors)
     {
-        if (Actor == nullptr)
+        if (Actor == nullptr || Actor->HasAnyFlags(RF_Transient))
         {
             continue;
         }
+        NavBoundsVolumes += Actor->IsA<ANavMeshBoundsVolume>() ? 1 : 0;
+        NavigationDatas += Actor->IsA<ANavigationData>() ? 1 : 0;
         Spots += Actor->IsA<AReflectionsDigSpot>() ? 1 : 0;
         Terrains += Actor->IsA<AReflectionsDigTerrain>() ? 1 : 0;
         PlayerStarts += Actor->IsA<APlayerStart>() ? 1 : 0;
@@ -164,6 +192,30 @@ bool FReflectionsDigSpikeMapIsBuiltAsSpecifiedTest::RunTest(const FString& Param
     TestEqual(TEXT("Sky atmospheres"), SkyAtmospheres, 1);
     TestEqual(TEXT("Point lights"), PointLights, static_cast<int32>(UE_ARRAY_COUNT(CaveLights)));
     TestEqual(TEXT("Static mesh actors"), StaticMeshActors, 1);
+    TestEqual(TEXT("Navmesh bounds volumes"), NavBoundsVolumes, 1);
+    TestEqual(TEXT("Navigation data actors"), NavigationDatas, 1);
+
+    // The bounds cover the whole patch (X 1000 to 5800, Y -2400 to 2400, Z -2800 to 400) with a 200 cm margin.
+    if (const ANavMeshBoundsVolume* Bounds = FindByLabel<ANavMeshBoundsVolume>(*this, Level, TEXT("DigSpike_NavBounds")))
+    {
+        const FBox Expected(FVector(800.0, -2600.0, -3000.0), FVector(6000.0, 2600.0, 600.0));
+        // The level is loaded, not registered in a world, so the brush's bounds are computed from its saved shape.
+        const UBrushComponent* Brush = Bounds->GetBrushComponent();
+        const FBox Actual = Brush != nullptr
+            ? Brush->CalcBounds(FTransform(Brush->GetRelativeRotation(), Brush->GetRelativeLocation(), Brush->GetRelativeScale3D())).GetBox()
+            : FBox(ForceInit);
+        TestTrue(FString::Printf(TEXT("DigSpike_NavBounds covers %s (it covers %s)"), *Expected.ToString(), *Actual.ToString()),
+            Actual.IsValid && Actual.Min.Equals(Expected.Min, 0.5) && Actual.Max.Equals(Expected.Max, 0.5));
+        TestTrue(TEXT("DigSpike_NavBounds is unrotated"), Bounds->GetActorRotation().Equals(FRotator::ZeroRotator, 0.01));
+    }
+
+    // The navmesh rebuilds itself at run time; the project's navigation settings stay untouched.
+    if (const ARecastNavMesh* NavMesh = FindByLabel<ARecastNavMesh>(*this, Level, TEXT("DigSpike_NavMesh")))
+    {
+        TestTrue(TEXT("DigSpike_NavMesh is exactly an ARecastNavMesh"), NavMesh->GetClass() == ARecastNavMesh::StaticClass());
+        TestTrue(FString::Printf(TEXT("DigSpike_NavMesh runtime generation is Dynamic (%s)"), *UEnum::GetValueAsString(NavMesh->GetRuntimeGenerationMode())),
+            NavMesh->GetRuntimeGenerationMode() == ERuntimeGenerationType::Dynamic);
+    }
 
     // The ground ends at X = 1000, flush against the patch.
     if (const AStaticMeshActor* Ground = FindByLabel<AStaticMeshActor>(*this, Level, TEXT("DigSpike_Ground")))

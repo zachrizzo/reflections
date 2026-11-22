@@ -109,9 +109,11 @@ bool FReflectionsDigQueueSkippedChunkKeepsItsPlaceTest::RunTest(const FString& P
     const FIntVector A(0, 0, 1);
     const FIntVector B(1, 0, 1);
     const FIntVector C(2, 0, 1);
+    const FIntVector D(0, 1, 1);
     Queue.Push(A, MakeResult(1));
     Queue.Push(B, MakeResult(2));
     Queue.Push(C, MakeResult(3));
+    Queue.Push(D, MakeResult(4));
 
     TArray<FIntVector> Committed;
     const int32 Count = Queue.PopUpTo(2, [A](FIntVector Chunk) { return Chunk != A; },
@@ -125,11 +127,10 @@ bool FReflectionsDigQueueSkippedChunkKeepsItsPlaceTest::RunTest(const FString& P
         TestEqual(TEXT("First committed is B"), Committed[0], B);
         TestEqual(TEXT("Second committed is C"), Committed[1], C);
     }
-    TestEqual(TEXT("A is still queued"), Queue.Num(), 1);
+    TestEqual(TEXT("A and D are still queued"), Queue.Num(), 2);
 
-    // A chunk queued after the skip must come after A: A kept its place at the front.
-    const FIntVector D(0, 1, 1);
-    Queue.Push(D, MakeResult(4));
+    // D was queued behind A before the skip; A kept its place at the front (a queue that re-appends a skipped chunk
+    // would now give D first).
     const TArray<FPopped> Next = PopAll(Queue, 10);
     if (TestEqual(TEXT("Next call pops two"), Next.Num(), 2))
     {
