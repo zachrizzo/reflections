@@ -553,6 +553,9 @@ bool FReflectionsDigInputSafetyFloorIsNotTerrainTest::RunTest(const FString& Par
                 const TArray<FReflectionsDigChunkSamples> Before = CopyAllSamples(*Terrain->GetGrid());
                 TestFalse(TEXT("TryDig on the safety floor returns false"), Scene.Dig->TryDig());
                 TestFalse(TEXT("TryFill on the safety floor returns false"), Scene.Dig->TryFill());
+                // TryFill is refused by the pawn-overlap rule first here, so the subsystem's own rule is checked directly.
+                TestFalse(TEXT("TryStampAtHit (Add) on the safety floor returns false"),
+                    bHit && Scene.Subsystem->TryStampAtHit(Hit, EReflectionsDigMode::Add));
                 const TArray<FReflectionsDigChunkSamples> After = CopyAllSamples(*Terrain->GetGrid());
                 if (TestEqual(TEXT("Chunk count"), After.Num(), Before.Num()))
                 {

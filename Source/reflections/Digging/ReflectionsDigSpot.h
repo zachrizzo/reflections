@@ -46,7 +46,8 @@ public:
 
     /**
      * Records in the active save that the player took this spot's find, so a restored spot no longer uncovers it.
-     * Does nothing for a spot without a SpotId.
+     * Does nothing for a spot without a SpotId. The find is spawned owned by its spot (in the spot's level), so whatever
+     * takes it reaches the spot through the find's GetOwner().
      */
     UFUNCTION(BlueprintCallable, Category = "Digging")
     void MarkFindCollected();

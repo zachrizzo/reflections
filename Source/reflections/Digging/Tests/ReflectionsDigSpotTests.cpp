@@ -275,6 +275,8 @@ bool FReflectionsDigSpotSpawnsBuriedFindOnceTest::RunTest(const FString& Paramet
     {
         TestEqual(TEXT("Find is at the spot's location"), Find->GetActorLocation(), Spot->GetActorLocation());
         TestEqual(TEXT("Find has unit scale"), Find->GetActorScale3D(), FVector::OneVector);
+        TestTrue(TEXT("The find's owner is its spot"), Find->GetOwner() == Spot);
+        TestTrue(TEXT("The find is in its spot's level"), Find->GetLevel() == Spot->GetLevel());
     }
 
     AReflectionsDigSpot* Restored = SpawnSpot(TestWorld, Meshes, ATargetPoint::StaticClass());
@@ -438,6 +440,8 @@ bool FReflectionsDigSpotRestoredLastStageGivesUntakenFindTest::RunTest(const FSt
                 {
                     TestEqual(TEXT("The find is at the spot's location"), Find->GetActorLocation(), Location);
                     TestEqual(TEXT("The find has unit scale"), Find->GetActorScale3D(), FVector::OneVector);
+                    TestTrue(TEXT("The find's owner is its spot"), Find->GetOwner() == A);
+                    TestTrue(TEXT("The find is in its spot's level"), Find->GetLevel() == A->GetLevel());
                 }
                 TestFalse(TEXT("A restored spot at its last stage digs no further"), A->DigOnce());
                 A->SetStage(2);

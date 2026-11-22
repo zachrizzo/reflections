@@ -44,6 +44,10 @@ void AReflectionsDigSpot::SpawnFind()
     bFindSpawned = true;
     FActorSpawnParameters Params;
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    // In the spot's own level, so it streams in and out with the spot (a restore would otherwise add one each time
+    // the spot's cell loads), and owned by the spot, so the find can call MarkFindCollected through GetOwner().
+    Params.OverrideLevel = GetLevel();
+    Params.Owner = this;
     // Location and rotation only: a scaled ground patch must not scale what it uncovers.
     World->SpawnActor<AActor>(BuriedFindClass, GetActorLocation(), GetActorRotation(), Params);
 }
