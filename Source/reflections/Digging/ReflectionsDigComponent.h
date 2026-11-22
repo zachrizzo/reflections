@@ -10,6 +10,7 @@ class APlayerController;
 class UEnhancedInputComponent;
 class UInputAction;
 class UInputMappingContext;
+class ULocalPlayer;
 struct FHitResult;
 struct FInputActionValue;
 
@@ -36,12 +37,19 @@ public:
     /** Returns the pawn's dig component, adding and registering one if it has none. Null pawn gives null. */
     static UReflectionsDigComponent* EnsureOnPawn(APawn* Pawn);
 
+    /**
+     * The dig ray: it starts level with the pawn along the view direction (never behind the view point), so nothing
+     * between a third-person camera and the pawn can be hit, and runs ReachCm from there.
+     */
+    static void ComputeReachTrace(const FVector& ViewLocation, const FVector& ViewDirection, const FVector& PawnLocation,
+        float ReachCm, FVector& OutStart, FVector& OutEnd);
+
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
 private:
-    /** Traces from the view point; true with OutHit filled when something is hit within ReachCm of the pawn. */
+    /** Traces the ComputeReachTrace ray; true with OutHit filled when something is hit within ReachCm of the pawn. */
     bool TraceReach(FHitResult& OutHit) const;
 
     void BindControls();
@@ -62,4 +70,7 @@ private:
 
     /** The controller DigInput and DigContext were added to. */
     TWeakObjectPtr<APlayerController> BoundController;
+
+    /** The local player DigContext was added for; kept separately so the context is removed after the controller is gone. */
+    TWeakObjectPtr<ULocalPlayer> BoundPlayer;
 };

@@ -41,6 +41,14 @@ UReflectionsDigComponent* UReflectionsDigComponent::EnsureOnPawn(APawn* Pawn)
     return Added;
 }
 
+void UReflectionsDigComponent::ComputeReachTrace(const FVector& ViewLocation, const FVector& ViewDirection,
+    const FVector& PawnLocation, float ReachCm, FVector& OutStart, FVector& OutEnd)
+{
+    const double Forward = FMath::Max(0.0, FVector::DotProduct(PawnLocation - ViewLocation, ViewDirection));
+    OutStart = ViewLocation + ViewDirection * Forward;
+    OutEnd = OutStart + ViewDirection * ReachCm;
+}
+
 bool UReflectionsDigComponent::TryDig()
 {
     FHitResult Hit;
@@ -83,12 +91,17 @@ bool UReflectionsDigComponent::TraceReach(FHitResult& OutHit) const
         Pawn->GetActorEyesViewPoint(ViewLocation, ViewRotation);
     }
 
-    // Measure reach from the pawn, not the camera: the trace is lengthened by the camera's distance from the pawn.
     const FVector PawnLocation = Pawn->GetActorLocation();
-    const double Length = FVector::Dist(ViewLocation, PawnLocation) + ReachCm;
-    const FVector End = ViewLocation + ViewRotation.Vector() * Length;
-    const FCollisionQueryParams Params(SCENE_QUERY_STAT(ReflectionsDigTrace), /*bTraceComplex=*/ false, Pawn);
-    if (!World->LineTraceSingleByChannel(OutHit, ViewLocation, End, ECC_Visibility, Params))
+    FVector Start;
+    FVector End;
+    ComputeReachTrace(ViewLocation, ViewRotation.Vector(), PawnLocation, ReachCm, Start, End);
+
+    // Like the spell aim: skip the pawn and everything it carries.
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(ReflectionsDigTrace), /*bTraceComplex=*/ false, Pawn);
+    TArray<AActor*> Attached;
+    Pawn->GetAttachedActors(Attached, /*bResetArray=*/ true, /*bRecursivelyIncludeAttachedActors=*/ true);
+    Params.AddIgnoredActors(Attached);
+    if (!World->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility, Params))
     {
         return false;
     }
@@ -153,6 +166,7 @@ void UReflectionsDigComponent::BindControls()
     PC->PushInputComponent(DigInput);
     Subsystem->AddMappingContext(DigContext, 1);
     BoundController = PC;
+    BoundPlayer = Player;
 }
 
 void UReflectionsDigComponent::UnbindControls()
@@ -163,12 +177,13 @@ void UReflectionsDigComponent::UnbindControls()
         {
             PC->PopInputComponent(DigInput);
         }
-        if (ULocalPlayer* Player = PC->GetLocalPlayer())
+    }
+    // Through the local player, not the controller: the context must go even if the controller was destroyed first.
+    if (ULocalPlayer* Player = BoundPlayer.Get())
+    {
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = Player->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
         {
-            if (UEnhancedInputLocalPlayerSubsystem* Subsystem = Player->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-            {
-                Subsystem->RemoveMappingContext(DigContext);
-            }
+            Subsystem->RemoveMappingContext(DigContext);
         }
     }
     if (DigInput != nullptr)
@@ -177,6 +192,7 @@ void UReflectionsDigComponent::UnbindControls()
         DigInput = nullptr;
     }
     BoundController.Reset();
+    BoundPlayer.Reset();
 }
 
 void UReflectionsDigComponent::OnDigAction(const FInputActionValue& Value)

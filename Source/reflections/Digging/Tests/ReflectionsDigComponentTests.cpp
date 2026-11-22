@@ -3,7 +3,10 @@
 #include "CoreMinimal.h"
 #include "Digging/ReflectionsDigSpot.h"
 #include "Digging/Tests/ReflectionsDigTestWorld.h"
+#include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/StaticMeshActor.h"
+#include "Engine/World.h"
 #include "GameFramework/DefaultPawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "Math/RandomStream.h"
@@ -64,7 +67,7 @@ namespace
 
     /** Builds the scene; returns false (after reporting why) if any part is missing. */
     bool MakeScene(FAutomationTestBase& Test, FReflectionsDigTestWorld& TestWorld, const FVector& PawnLocation,
-        const FRotator& PawnRotation, FName SpotId, FDigScene& Out)
+        const FRotator& PawnRotation, FName SpotId, FDigScene& Out, float EyeHeight = 0.0f)
     {
         if (!Test.TestNotNull(TEXT("Test world"), TestWorld.World))
         {
@@ -84,14 +87,14 @@ namespace
         Out.Spot->SpotId = SpotId;
         TestWorld.FinishSpawning(Out.Spot);
 
-        // ADefaultPawn rather than APawn: it has a root component, so it can be placed. Eye height 0 puts the
-        // view point at the actor location, so the trace runs level at the cube.
+        // ADefaultPawn rather than APawn: it has a root component, so it can be placed. Eye height 0 (the default
+        // here) puts the view point at the actor location, so the trace runs level at the cube.
         Out.Pawn = TestWorld.Spawn<ADefaultPawn>(PawnLocation, PawnRotation);
         if (!Test.TestNotNull(TEXT("Pawn"), Out.Pawn))
         {
             return false;
         }
-        Out.Pawn->BaseEyeHeight = 0.0f;
+        Out.Pawn->BaseEyeHeight = EyeHeight;
         Out.Dig = UReflectionsDigComponent::EnsureOnPawn(Out.Pawn);
         if (!Test.TestNotNull(TEXT("Dig component"), Out.Dig))
         {
@@ -223,7 +226,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigInputBadSaveDoesNotBlockDiggingT
 bool FReflectionsDigInputBadSaveDoesNotBlockDiggingTest::RunTest(const FString& Parameters)
 {
     // The refused save update logs exactly one LogReflectionsSave warning.
-    AddExpectedError(TEXT("LogReflectionsSave"), EAutomationExpectedErrorFlags::Contains, 1);
+    AddExpectedError(TEXT("not updating it"), EAutomationExpectedErrorFlags::Contains, 1);
 
     ReflectionsSave::FScopedSlotOverride Override(TestSlot);
     DeleteTestSlot();
@@ -239,6 +242,100 @@ bool FReflectionsDigInputBadSaveDoesNotBlockDiggingTest::RunTest(const FString& 
             TestEqual(TEXT("Spot stage"), Scene.Spot->GetStage(), 1);
         }
         TestTrue(TEXT("Bytes unchanged"), LoadRaw() == Bad);
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigInputReachIsMeasuredFromThePawnTest, "Reflections.DigInput.ReachIsMeasuredFromThePawn", DigInputTestFlags)
+bool FReflectionsDigInputReachIsMeasuredFromThePawnTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    {
+        // The eye is level with the cube in both cases; only the pawn's distance from the hit differs.
+        FReflectionsDigTestWorld TestWorld;
+        FDigScene Scene;
+        if (MakeScene(*this, TestWorld, FVector(-150.0, 0.0, -300.0), FRotator::ZeroRotator, TestSpotId, Scene, 300.0f))
+        {
+            TestFalse(TEXT("Cube face about 316 cm from the pawn is out of reach"), Scene.Dig->TryDig());
+            TestEqual(TEXT("Spot stage after the far dig"), Scene.Spot->GetStage(), 0);
+        }
+    }
+    DeleteTestSlot();
+    {
+        FReflectionsDigTestWorld TestWorld;
+        FDigScene Scene;
+        if (MakeScene(*this, TestWorld, FVector(-150.0, 0.0, -100.0), FRotator::ZeroRotator, TestSpotId, Scene, 100.0f))
+        {
+            TestTrue(TEXT("Cube face about 141 cm from the pawn is in reach"), Scene.Dig->TryDig());
+            TestEqual(TEXT("Spot stage after the near dig"), Scene.Spot->GetStage(), 1);
+        }
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigInputTraceStartsLevelWithThePawnTest, "Reflections.DigInput.TraceStartsLevelWithThePawn", DigInputTestFlags)
+bool FReflectionsDigInputTraceStartsLevelWithThePawnTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    {
+        FReflectionsDigTestWorld TestWorld;
+        TestNotNull(TEXT("Test world"), TestWorld.World);
+
+        FVector Start;
+        FVector End;
+        UReflectionsDigComponent::ComputeReachTrace(FVector(-565.0, 0.0, 100.0), FVector::ForwardVector,
+            FVector(-150.0, 0.0, 0.0), 250.0f, Start, End);
+        TestEqual(TEXT("Camera behind: start is level with the pawn"), Start, FVector(-150.0, 0.0, 100.0));
+        TestEqual(TEXT("Camera behind: end is reach past the start"), End, FVector(100.0, 0.0, 100.0));
+
+        UReflectionsDigComponent::ComputeReachTrace(FVector(50.0, 0.0, 0.0), FVector::ForwardVector,
+            FVector(-150.0, 0.0, 0.0), 250.0f, Start, End);
+        TestEqual(TEXT("View ahead of the pawn: start is the view location"), Start, FVector(50.0, 0.0, 0.0));
+        TestEqual(TEXT("View ahead of the pawn: end is reach past the start"), End, FVector(300.0, 0.0, 0.0));
+    }
+    DeleteTestSlot();
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigInputIgnoresActorsAttachedToThePawnTest, "Reflections.DigInput.IgnoresActorsAttachedToThePawn", DigInputTestFlags)
+bool FReflectionsDigInputIgnoresActorsAttachedToThePawnTest::RunTest(const FString& Parameters)
+{
+    ReflectionsSave::FScopedSlotOverride Override(TestSlot);
+    DeleteTestSlot();
+    {
+        FReflectionsDigTestWorld TestWorld;
+        FDigScene Scene;
+        if (MakeScene(*this, TestWorld, FVector(-150.0, 0.0, 0.0), FRotator::ZeroRotator, TestSpotId, Scene))
+        {
+            // A 20 cm blocking cube carried 60 cm in front of the pawn: it spans x -100..-80, across the dig ray.
+            AStaticMeshActor* Carried = TestWorld.SpawnDeferred<AStaticMeshActor>(FVector(-90.0, 0.0, 0.0));
+            if (TestNotNull(TEXT("Carried cube"), Carried))
+            {
+                UStaticMeshComponent* Mesh = Carried->GetStaticMeshComponent();
+                Mesh->SetMobility(EComponentMobility::Movable);
+                Mesh->SetStaticMesh(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube")));
+                Mesh->SetCollisionProfileName(TEXT("BlockAll"));
+                Carried->SetActorScale3D(FVector(0.2));
+                TestWorld.FinishSpawning(Carried);
+                Carried->AttachToActor(Scene.Pawn, FAttachmentTransformRules::KeepWorldTransform);
+                TestTrue(TEXT("Cube is attached to the pawn"), Carried->GetAttachParentActor() == Scene.Pawn);
+                TestWorld.Tick();
+
+                // Without the attached-actor ignore the dig ray would stop on the cube.
+                FHitResult Blocker;
+                const FCollisionQueryParams PawnOnly(SCENE_QUERY_STAT(DigInputTest), false, Scene.Pawn);
+                TestWorld.World->LineTraceSingleByChannel(Blocker, FVector(-150.0, 0.0, 0.0), FVector(100.0, 0.0, 0.0),
+                    ECC_Visibility, PawnOnly);
+                TestTrue(TEXT("The cube blocks a ray that ignores only the pawn"), Blocker.GetActor() == Carried);
+
+                TestTrue(TEXT("TryDig reaches past the carried cube"), Scene.Dig->TryDig());
+                TestEqual(TEXT("Spot stage"), Scene.Spot->GetStage(), 1);
+            }
+        }
     }
     DeleteTestSlot();
     return true;
