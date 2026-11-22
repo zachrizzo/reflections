@@ -32,7 +32,7 @@ This page holds the numbers from the digging spike. They decide whether the full
 | Collision size per chunk (largest collision mesh) | 7,466 vertices | 7,466 vertices | 7,466 vertices | under 16,384 | Met (not a worst case) |
 | Seams (missed downward traces out of 500) | 0 | 0 | 0 | no missed traces | Met |
 | Navmesh: dig to walkable floor | 0.033 s | | | 1 s or less, no stall | Met (one renderer run) |
-| Cave lighting | screenshots | screenshots | screenshots | judged by the owner | For the owner; the view down the tunnel is black (see below) |
+| Cave lighting | screenshots | screenshots | screenshots | judged by the owner | For the owner; judge the "plain material" tunnel shots (the default material makes the tunnel view black, see below) |
 | Shadows: worst frame while digging (minus worst idle frame) | 9.3 ms | 13.5 ms | 1.5 ms | frame cost recorded, no flicker | Cost recorded; flicker not judged |
 | Packaged build | not measured | not measured | not measured | same checks repeated | Not measured |
 
@@ -142,11 +142,18 @@ a person watching moving pictures; nobody did.
 
 ## Cave lighting: what the screenshots show
 
-The screenshots are in `ArtDirection/Digging/SpikeShots/` (from run 3; all three runs gave the same brightness).
+The screenshots are in `ArtDirection/Digging/SpikeShots/`. They come from one run of the cave test made after the
+three measurement runs (`test-075449.log`); every shot had the same brightness in all runs.
 A 500 cm tunnel was dug from the bottom of a 4 m pit at (1800, 1400), and cave light 1 was put inside it.
 
 - `tunnel_hwrt_on.png`, `tunnel_hwrt_off.png`: **completely black.** The camera stands in the pit looking down
-  the length of the tunnel. This is a defect, not darkness: see "The black tunnel view" below.
+  the length of the tunnel. The dug ground here has no material of its own, so the engine draws it with its default
+  grid material, and that material goes wrong on this ground: see "The black tunnel view" below.
+- `tunnel_plain_material_hwrt_on.png`, `tunnel_plain_material_hwrt_off.png`: **the shots to judge.** The same view,
+  with a plain engine material put on the dug ground. The tunnel is lit: a bright glow in the middle where the cave
+  light hangs about 3 m in, the end of the tunnel visible as a soft, slightly darker square behind it, a smooth pale
+  wall on the right with angular (faceted) edges, and darker grey towards the edges of the picture. The whole image
+  is bright and washed out, with very soft, blurry shading. With and without hardware ray tracing it looks the same.
 - `tunnel_wall_hwrt_on.png`, `tunnel_wall_hwrt_off.png`: from inside the tunnel, looking at its side wall from
   about 2 m. The wall is drawn and lit: a smooth, plain grey surface, brighter on the left (towards the light),
   with no detail. The two look the same.
@@ -164,14 +171,20 @@ back on afterwards.
 
 ### The black tunnel view
 
-The tunnel is there and is drawn: with lighting switched off the same view shows its walls, and a view of the
-side wall from inside the tunnel is lit normally. But every lit view looking down the length of the tunnel comes
-out completely black, whatever else is changed: a light 1,000 times brighter, the light moved behind the camera
-or switched off, Lumen off, automatic exposure off, anti-aliasing off, all post-processing off, or the ground drawn
-from both sides. Putting an ordinary object in the middle of that view brings the whole picture back; the same
-object out of view does not. The cause was not found within the time allowed. What the tests point to is
-something in the middle of that view (the far part of the tunnel) that spoils the lighting of the whole picture.
-It needs fixing before the cave lighting can be judged, and it may affect any long underground view.
+**Cause found: the material.** The dug ground has no material set, so the engine uses its default grid material.
+On this ground that material makes the view down the tunnel come out completely black. Put a plain engine material
+(`/Engine/BasicShapes/BasicShapeMaterial`) on the same ground and the same view is lit, with ray tracing on and off.
+Nothing else changed between the black shots and the plain-material shots.
+
+Why the default material misbehaves here: the dug ground carries only positions and normals. When a mesh like this
+is drawn, the engine fills in texture coordinates of zero for every point and makes up a tangent direction from the
+normal. The default grid material evidently needs one of those to be real. Which one was not tested. Every other
+explanation was tested first and ruled out: brighter or moved lights, Lumen off, automatic exposure off,
+anti-aliasing off, all post-processing off, the ground drawn from both sides, and broken normals.
+
+What to do about it is a decision still to make. The likely fix is to always give the dug ground a plain material,
+both in the terrain's code and on the test map. Until that is done, any player view looking down a long tunnel may
+go black.
 
 ## Numbers from earlier tests, without the renderer (headless)
 
@@ -196,6 +209,8 @@ These come from tasks 2.3 to 2.5, run without any graphics. They are not compara
 - **A machine without a ray-tracing graphics card.** Only this machine (RTX 5080) was used.
 - **Flicker.** Nobody watched the game running.
 - **A quiet machine.** Another Unreal editor was running throughout; single slow frames reflect that.
+- **Which part of the default material fails on the dug ground** (no texture coordinates or no real tangents). The
+  cave lighting was judged with a plain material instead, so this only matters for choosing the fix.
 
 ## Plugin check
 

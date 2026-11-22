@@ -26,6 +26,7 @@
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformTime.h"
 #include "ImageUtils.h"
+#include "Materials/MaterialInterface.h"
 #include "Math/RandomStream.h"
 #include "Misc/App.h"
 #include "Misc/AutomationTest.h"
@@ -57,7 +58,8 @@
  *
  * The tests share one world and run one after another, each at its own site (at least 1000 cm from the others' digs):
  *   CaveShots      pit and tunnel at (1800, 1400), tunnel along +X; character at (1800, 400); the four shots, a view of
- *                  the tunnel wall, and the tunnel view with an engine cube in it (removed in the cleanup)
+ *                  the tunnel wall, the tunnel view with an engine cube in it, and the tunnel view with a plain
+ *                  engine material on the pieces (cube and material removed in the cleanup)
  *   CollisionSize  200 digs inside the column X 4225..5800, Y 825..2400; character at (5000, -400)
  *   DigCost        shaft at (1800, -1600), then a pocket at (2000, -1600) at the bottom
  *   Seams          no digs; character at (3400, 0)
@@ -556,6 +558,23 @@ namespace
             Actor->Destroy();
         }
         Camera.Reset();
+    }
+
+    /** Sets the terrain's GroundMaterial (for pieces made later) and the material of every piece it has now. */
+    void SetPieceMaterial(FDigGameScene& Scene, UMaterialInterface* Material)
+    {
+        AReflectionsDigTerrain* Terrain = Scene.Terrain.Get();
+        if (Terrain == nullptr)
+        {
+            return;
+        }
+        Terrain->GroundMaterial = Material;
+        TArray<UReflectionsDigChunkComponent*> Pieces;
+        Terrain->GetComponents(Pieces);
+        for (UReflectionsDigChunkComponent* Piece : Pieces)
+        {
+            Piece->SetMaterial(0, Material);
+        }
     }
 
     /** Digs a pit at (X, Y): stamps of RadiusCm from the ground down to DepthCm, every 100 cm. Returns how many changed the grid. */
@@ -1131,6 +1150,8 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
         return false;
     }
     const FDigGameSceneRef Scene = Started.ToSharedRef();
+    // Changing the material of pieces that already have physics bodies makes Chaos warn once per piece.
+    AddExpectedMessagePlain(TEXT("request for Material Array on single-material ShapeInstance"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 0);
 
     struct FCave
     {
@@ -1138,6 +1159,7 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
         FVector LightHome = FVector::ZeroVector;
         TWeakObjectPtr<ACameraActor> Camera;
         TWeakObjectPtr<AStaticMeshActor> Cube;
+        bool bPlainMaterial = false;
         FSavedConsoleInt Hwrt{ TEXT("r.Lumen.HardwareRayTracing") };
     };
     TSharedRef<FCave> Cave = MakeShared<FCave>();
@@ -1247,6 +1269,28 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
     AddShot(Scene, Capture, TEXT("tunnel_with_cube_hwrt_off"), 0, SettleSeconds);
     AddView(TunnelCamera, TunnelLookAt, 1);
     AddShot(Scene, Capture, TEXT("tunnel_with_cube_hwrt_on"), 1, SettleSeconds);
+    // The black view comes from the engine's default material on this mesh (the terrain's GroundMaterial is null):
+    // with a plain engine material on the pieces the same view, without the cube, is lit. The cleanup puts it back.
+    AddAction(Scene, TEXT("Remove the test cube and give the pieces a plain material"), [Cave](FDigGameScene& S)
+    {
+        if (AStaticMeshActor* Cube = Cave->Cube.Get())
+        {
+            Cube->Destroy();
+        }
+        Cave->Cube.Reset();
+        UMaterialInterface* Plain = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+        if (Plain == nullptr)
+        {
+            S.Abort(TEXT("Could not load /Engine/BasicShapes/BasicShapeMaterial"));
+            return;
+        }
+        SetPieceMaterial(S, Plain);
+        Cave->bPlainMaterial = true;
+    });
+    AddView(TunnelCamera, TunnelLookAt, 1);
+    AddShot(Scene, Capture, TEXT("tunnel_plain_material_hwrt_on"), 1, SettleSeconds);
+    AddView(TunnelCamera, TunnelLookAt, 0);
+    AddShot(Scene, Capture, TEXT("tunnel_plain_material_hwrt_off"), 0, SettleSeconds);
     AddStep(Scene, TEXT("Restore the light, the view and the settings"), 1.0, [Cave, Capture](FDigGameScene& S)
     {
         Cave->Hwrt.Restore();
@@ -1266,6 +1310,11 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
         if (AStaticMeshActor* Cube = Cave->Cube.Get())
         {
             Cube->Destroy();
+        }
+        if (Cave->bPlainMaterial)
+        {
+            SetPieceMaterial(S, nullptr);
+            Cave->bPlainMaterial = false;
         }
         if (S.GetWorld() != nullptr)
         {
