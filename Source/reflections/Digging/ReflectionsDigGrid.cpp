@@ -240,22 +240,51 @@ void FReflectionsDigGrid::ApplyStamp(const FReflectionsDigStamp& Stamp, TArray<F
 void FReflectionsDigGrid::CopyChunkSamples(FIntVector Chunk, FReflectionsDigChunkSamples& Out) const
 {
     constexpr int32 Side = FReflectionsDigChunkSamples::Side;
-    const FIntVector Base = Chunk * ReflectionsDig::ChunkCells;
+    constexpr int32 Border = ReflectionsDig::SampleBorder;
+    constexpr int32 Cells = ReflectionsDig::ChunkCells;
+    const FIntVector Base = Chunk * Cells;
     Out.Chunk = Chunk;
     Out.LocalOriginCm = FVector3f(Base) * ReflectionsDig::CellSizeCm;
     Out.Density.SetNumUninitialized(Side * Side * Side);
     Out.Material.SetNumUninitialized(Side * Side * Side);
+    int8* const OutDensity = Out.Density.GetData();
+    uint8* const OutMaterial = Out.Material.GetData();
 
-    for (int32 Z = -ReflectionsDig::SampleBorder; Z < ReflectionsDig::ChunkCells + ReflectionsDig::SampleBorder; ++Z)
+    // Row by row along X: runs inside the grid are copied from each chunk's storage (rows are contiguous in X
+    // there too); cells outside the grid get what GetDensity and GetMaterial give them (initial density, bedrock).
+    for (int32 Z = -Border; Z < Cells + Border; ++Z)
     {
-        for (int32 Y = -ReflectionsDig::SampleBorder; Y < ReflectionsDig::ChunkCells + ReflectionsDig::SampleBorder; ++Y)
+        const int32 CellZ = Base.Z + Z;
+        const int8 OutsideDensity = InitialDensity(CellZ);
+        for (int32 Y = -Border; Y < Cells + Border; ++Y)
         {
-            for (int32 X = -ReflectionsDig::SampleBorder; X < ReflectionsDig::ChunkCells + ReflectionsDig::SampleBorder; ++X)
+            const int32 CellY = Base.Y + Y;
+            const int32 RowStart = FReflectionsDigChunkSamples::IndexOf(-Border, Y, Z);
+            const bool bRowInGrid = CellY >= 0 && CellY < SizeInCells.Y && CellZ >= 0 && CellZ < SizeInCells.Z;
+            if (!bRowInGrid)
             {
-                const FIntVector Cell = Base + FIntVector(X, Y, Z);
-                const int32 Index = FReflectionsDigChunkSamples::IndexOf(X, Y, Z);
-                Out.Density[Index] = GetDensity(Cell);
-                Out.Material[Index] = GetMaterial(Cell);
+                FMemory::Memset(OutDensity + RowStart, static_cast<uint8>(OutsideDensity), Side);
+                FMemory::Memset(OutMaterial + RowStart, ReflectionsDig::MaterialBedrock, Side);
+                continue;
+            }
+            for (int32 X = -Border; X < Cells + Border;)
+            {
+                const int32 CellX = Base.X + X;
+                const int32 OutIndex = RowStart + X + Border;
+                if (CellX < 0 || CellX >= SizeInCells.X)
+                {
+                    OutDensity[OutIndex] = OutsideDensity;
+                    OutMaterial[OutIndex] = ReflectionsDig::MaterialBedrock;
+                    ++X;
+                    continue;
+                }
+                const int32 LocalX = CellX % Cells;
+                const int32 Run = FMath::Min3(Cells - LocalX, Cells + Border - X, SizeInCells.X - CellX);
+                const FChunkCells& Source = Chunks[ChunkIndex(FIntVector(CellX / Cells, CellY / Cells, CellZ / Cells))];
+                const int32 SourceIndex = LocalCellIndex(LocalX, CellY % Cells, CellZ % Cells);
+                FMemory::Memcpy(OutDensity + OutIndex, Source.Density.GetData() + SourceIndex, Run);
+                FMemory::Memcpy(OutMaterial + OutIndex, Source.Material.GetData() + SourceIndex, Run);
+                X += Run;
             }
         }
     }

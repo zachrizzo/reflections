@@ -17,22 +17,41 @@ void FReflectionsDigCommitQueue::Push(FIntVector Chunk, FReflectionsDigChunkResu
     Entries.Add(FEntry{ Chunk, MoveTemp(Result) });
 }
 
-int32 FReflectionsDigCommitQueue::PopUpTo(int32 Max, TFunctionRef<void(FIntVector, FReflectionsDigChunkResult&&)> Commit)
+int32 FReflectionsDigCommitQueue::PopUpTo(int32 Max, TFunctionRef<bool(FIntVector)> CanCommit, TFunctionRef<void(FIntVector, FReflectionsDigChunkResult&&)> Commit)
 {
-    int32 Committed = 0;
-    while (Committed < Max)
+    // The order as it stands now; chunks pushed while this runs wait for the next call.
+    TArray<FIntVector, TInlineAllocator<32>> Order;
     {
-        FEntry Entry;
+        FScopeLock Guard(&Lock);
+        for (const FEntry& Entry : Entries)
+        {
+            Order.Add(Entry.Chunk);
+        }
+    }
+    int32 Committed = 0;
+    for (const FIntVector& Chunk : Order)
+    {
+        if (Committed >= Max)
+        {
+            break;
+        }
+        // Skipped chunks stay where they are, so they keep their place in line.
+        if (!CanCommit(Chunk))
+        {
+            continue;
+        }
+        FReflectionsDigChunkResult Result;
         {
             FScopeLock Guard(&Lock);
-            if (Entries.IsEmpty())
+            const int32 Index = Entries.IndexOfByPredicate([&Chunk](const FEntry& Entry) { return Entry.Chunk == Chunk; });
+            if (Index == INDEX_NONE)
             {
-                break;
+                continue;
             }
-            Entry = MoveTemp(Entries[0]);
-            Entries.RemoveAt(0);
+            Result = MoveTemp(Entries[Index].Result);
+            Entries.RemoveAt(Index);
         }
-        Commit(Entry.Chunk, MoveTemp(Entry.Result));
+        Commit(Chunk, MoveTemp(Result));
         ++Committed;
     }
     return Committed;

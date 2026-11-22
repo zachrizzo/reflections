@@ -28,7 +28,7 @@ namespace
     TArray<FPopped> PopAll(FReflectionsDigCommitQueue& Queue, int32 Max)
     {
         TArray<FPopped> Popped;
-        Queue.PopUpTo(Max, [&Popped](FIntVector Chunk, FReflectionsDigChunkResult&& Result)
+        Queue.PopUpTo(Max, [](FIntVector) { return true; }, [&Popped](FIntVector Chunk, FReflectionsDigChunkResult&& Result)
         {
             Popped.Add({ Chunk, Result.SourceTriangleCount });
         });
@@ -67,7 +67,7 @@ bool FReflectionsDigQueuePopRespectsBudgetTest::RunTest(const FString& Parameter
     }
 
     TArray<FIntVector> Committed;
-    const int32 Count = Queue.PopUpTo(2, [&Committed](FIntVector Chunk, FReflectionsDigChunkResult&& Result)
+    const int32 Count = Queue.PopUpTo(2, [](FIntVector) { return true; }, [&Committed](FIntVector Chunk, FReflectionsDigChunkResult&& Result)
     {
         Committed.Add(Chunk);
     });
@@ -98,6 +98,40 @@ bool FReflectionsDigQueueReplacingKeepsPlaceInLineTest::RunTest(const FString& P
         TestEqual(TEXT("A's popped mesh is the newer one (3 triangles)"), Popped[0].Triangles, 3);
         TestEqual(TEXT("Second popped is B"), Popped[1].Chunk, B);
         TestEqual(TEXT("B's mesh (2 triangles)"), Popped[1].Triangles, 2);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigQueueSkippedChunkKeepsItsPlaceTest, "Reflections.Digging.Queue.SkippedChunkKeepsItsPlace", DigQueueTestFlags)
+bool FReflectionsDigQueueSkippedChunkKeepsItsPlaceTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigCommitQueue Queue;
+    const FIntVector A(0, 0, 1);
+    const FIntVector B(1, 0, 1);
+    const FIntVector C(2, 0, 1);
+    Queue.Push(A, MakeResult(1));
+    Queue.Push(B, MakeResult(2));
+    Queue.Push(C, MakeResult(3));
+
+    TArray<FIntVector> Committed;
+    const int32 Count = Queue.PopUpTo(2, [A](FIntVector Chunk) { return Chunk != A; },
+        [&Committed](FIntVector Chunk, FReflectionsDigChunkResult&& Result)
+        {
+            Committed.Add(Chunk);
+        });
+    TestEqual(TEXT("PopUpTo(2) with A skipped returns"), Count, 2);
+    if (TestEqual(TEXT("Chunks committed"), Committed.Num(), 2))
+    {
+        TestEqual(TEXT("First committed is B"), Committed[0], B);
+        TestEqual(TEXT("Second committed is C"), Committed[1], C);
+    }
+    TestEqual(TEXT("A is still queued"), Queue.Num(), 1);
+
+    const TArray<FPopped> Next = PopAll(Queue, 10);
+    if (TestEqual(TEXT("Next call pops one"), Next.Num(), 1))
+    {
+        TestEqual(TEXT("A is first on the next call"), Next[0].Chunk, A);
+        TestEqual(TEXT("A's result is unchanged (1 triangle)"), Next[0].Triangles, 1);
     }
     return true;
 }

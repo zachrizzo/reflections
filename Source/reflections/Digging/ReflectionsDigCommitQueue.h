@@ -15,10 +15,11 @@ public:
     void Push(FIntVector Chunk, FReflectionsDigChunkResult&& Result);
 
     /**
-     * Game thread. Takes up to Max entries, oldest-queued chunk first, and hands each to Commit (called
-     * outside the lock). Returns how many it committed.
+     * Game thread. Takes up to Max entries, oldest-queued chunk first, and hands each to Commit. A chunk for which
+     * CanCommit is false is skipped and keeps its place in line. Both callbacks run outside the lock. Returns how
+     * many it committed (skipped chunks do not count).
      */
-    int32 PopUpTo(int32 Max, TFunctionRef<void(FIntVector, FReflectionsDigChunkResult&&)> Commit);
+    int32 PopUpTo(int32 Max, TFunctionRef<bool(FIntVector)> CanCommit, TFunctionRef<void(FIntVector, FReflectionsDigChunkResult&&)> Commit);
 
     /** Chunks waiting. */
     int32 Num() const;

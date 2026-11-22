@@ -459,13 +459,14 @@ bool FReflectionsDigTerrainSplitChunkCollisionFollowsEachCookTest::RunTest(const
         Scene.Terrain->CommitChunk(Busy, MoveTemp(Filled));
         double HitZ = 0.0;
         const double Deadline = FPlatformTime::Seconds() + 5.0;
-        bool bFillCooked = HitsFillTop(HitZ);
+        // Every piece of the fill set must finish its cook, not only the one under the trace.
+        bool bFillCooked = !Scene.Terrain->IsChunkCooking(Busy) && HitsFillTop(HitZ);
         while (!bFillCooked && FPlatformTime::Seconds() < Deadline)
         {
             PumpGameThread();
-            bFillCooked = HitsFillTop(HitZ);
+            bFillCooked = !Scene.Terrain->IsChunkCooking(Busy) && HitsFillTop(HitZ);
         }
-        if (TestTrue(FString::Printf(TEXT("The fill's collision cooks without a world tick (last hit %.2f)"), HitZ), bFillCooked))
+        if (TestTrue(FString::Printf(TEXT("Every piece of the fill set cooks without a world tick (last hit %.2f)"), HitZ), bFillCooked))
         {
             TestTrue(TEXT("The second change changes the grid"), Scene.Dig->Dig(Elsewhere, 100.0f, EReflectionsDigMode::Add));
             FReflectionsDigMeshData Next;
@@ -647,7 +648,11 @@ bool FReflectionsDigTerrainWorldTornDownWithTasksInFlightTest::RunTest(const FSt
             return true;
         }
         TestTrue(TEXT("Dig at the eight-chunk corner returns true"), Scene.Dig->Dig(FVector(1600.0, 1600.0, -1200.0), 100.0f, EReflectionsDigMode::Remove));
-        TickWithoutPumping(TestWorld);
+        // The subsystem's tick here copies and launches all eight chunks; time it (headless, informal).
+        const double Start = FPlatformTime::Seconds();
+        Scene.Dig->Tick(1.0f / 60.0f);
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless subsystem tick that copies and launches 8 chunks: %.2f ms"),
+            (FPlatformTime::Seconds() - Start) * 1000.0);
         const int32 InFlight = Scene.Dig->GetTasksInFlight();
         TestTrue(FString::Printf(TEXT("Tasks are in flight when the world goes (%d)"), InFlight), InFlight > 0);
         // The world is destroyed here, without waiting; its destructor checks that nothing still holds the world.
@@ -802,6 +807,116 @@ bool FReflectionsDigTerrainSafetyFloorLiesBelowTheGridTest::RunTest(const FStrin
     // It spans the whole patch: a trace at a corner of the patch hits it too.
     const TOptional<FHitResult> Corner = TraceDown(TestWorld.World, 25.0, 4775.0, -2000.0);
     TestTrue(TEXT("The safety floor covers the patch's corner"), Corner.IsSet() && Corner->GetComponent() == Scene.Terrain->GetSafetyFloor());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainChunkWaitsForItsCookBeforeTheNextCommitTest, "Reflections.Digging.Terrain.ChunkWaitsForItsCookBeforeTheNextCommit", DigTerrainTestFlags)
+bool FReflectionsDigTerrainChunkWaitsForItsCookBeforeTheNextCommitTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    // The subsystem is ticked directly here, without a world tick and without running the game thread's queued
+    // tasks, so a cook it starts cannot finish until the test pumps the game thread. Both digs touch chunk
+    // (1, 1, 1) only.
+    const FIntVector Chunk(1, 1, 1);
+    const FVector Point(2400.0, 2400.0, 0.0);
+    constexpr float DeltaSeconds = 1.0f / 60.0f;
+    UReflectionsDigSubsystem* Dig = Scene.Dig;
+    auto PieceCooking = [&Scene, Chunk]()
+    {
+        const UReflectionsDigChunkComponent* Piece = Cast<UReflectionsDigChunkComponent>(Scene.Terrain->FindChunkComponent(Chunk));
+        return Piece != nullptr && Piece->IsCollisionCookPending();
+    };
+    auto WaitWithoutPumping = [](TFunctionRef<bool()> IsDone)
+    {
+        const double Deadline = FPlatformTime::Seconds() + 5.0;
+        while (!IsDone())
+        {
+            if (FPlatformTime::Seconds() > Deadline)
+            {
+                return false;
+            }
+            FPlatformProcess::Sleep(0.001f);
+        }
+        return true;
+    };
+
+    // 1. A first dig is meshed and committed: its cook starts.
+    TestTrue(TEXT("The first dig changes the grid"), Dig->Dig(Point, 100.0f, EReflectionsDigMode::Remove));
+    const bool bFirstCommitted = WaitWithoutPumping([Dig, DeltaSeconds, &PieceCooking]()
+    {
+        Dig->Tick(DeltaSeconds);
+        return PieceCooking();
+    });
+    if (!TestTrue(TEXT("The first result is committed and its cook is pending"), bFirstCommitted))
+    {
+        return true;
+    }
+
+    // 2. A newer result arrives while that cook is pending.
+    TestTrue(TEXT("The second dig changes the grid"), Dig->Dig(Point - FVector(0.0, 0.0, 50.0), 100.0f, EReflectionsDigMode::Remove));
+    Dig->Tick(DeltaSeconds);
+    if (!TestTrue(TEXT("The second result is built"), WaitWithoutPumping([Dig]() { return Dig->GetTasksInFlight() == 0; })))
+    {
+        return true;
+    }
+    TestEqual(TEXT("The second result is queued"), Dig->GetQueuedCommits(), 1);
+    TestTrue(TEXT("The first cook is still pending"), PieceCooking());
+    const int32 PiecesBefore = Scene.Terrain->GetChunkPieceCount(Chunk);
+    const UDynamicMeshComponent* FirstBefore = Scene.Terrain->FindChunkComponent(Chunk);
+    const int32 VerticesBefore = FirstBefore != nullptr ? FirstBefore->GetMesh()->VertexCount() : -1;
+    for (int32 Frame = 0; Frame < 3; ++Frame)
+    {
+        Dig->Tick(DeltaSeconds);
+        TestEqual(FString::Printf(TEXT("Tick %d while cooking commits nothing"), Frame), Dig->GetCommitsLastTick(), 0);
+        TestEqual(FString::Printf(TEXT("Tick %d while cooking keeps the result queued"), Frame), Dig->GetQueuedCommits(), 1);
+        TestEqual(FString::Printf(TEXT("Tick %d while cooking keeps the piece count"), Frame), Scene.Terrain->GetChunkPieceCount(Chunk), PiecesBefore);
+        const UDynamicMeshComponent* First = Scene.Terrain->FindChunkComponent(Chunk);
+        TestTrue(FString::Printf(TEXT("Tick %d while cooking keeps the current piece"), Frame), First == FirstBefore);
+        TestEqual(FString::Printf(TEXT("Tick %d while cooking keeps the piece's mesh"), Frame),
+            First != nullptr ? First->GetMesh()->VertexCount() : -1, VerticesBefore);
+        FPlatformProcess::Sleep(0.001f);
+    }
+
+    // 3. Once the cook has finished, the next tick commits the waiting result.
+    const bool bCooked = WaitWithoutPumping([&PieceCooking]()
+    {
+        FTaskGraphInterface::Get().ProcessThreadUntilIdle(ENamedThreads::GameThread);
+        return !PieceCooking();
+    });
+    if (TestTrue(TEXT("The first cook finishes once the game thread runs"), bCooked))
+    {
+        Dig->Tick(DeltaSeconds);
+        TestEqual(TEXT("The next tick commits the waiting result"), Dig->GetCommitsLastTick(), 1);
+        TestEqual(TEXT("Nothing is left queued"), Dig->GetQueuedCommits(), 0);
+        TestTrue(TEXT("The committed result's cook has started"), PieceCooking());
+    }
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the two digs")))
+    {
+        return true;
+    }
+
+    // 4. A held dig at a point that moves down 10 cm a tick: the collision under it keeps moving.
+    int32 Changes = 0;
+    TOptional<double> LastZ = TraceDownZ(TestWorld.World, Point.X, Point.Y);
+    for (int32 Frame = 0; Frame < 120; ++Frame)
+    {
+        Dig->Dig(Point - FVector(0.0, 0.0, 100.0 + 10.0 * Frame), 100.0f, EReflectionsDigMode::Remove);
+        TickWithoutPumping(TestWorld);
+        PumpGameThread();
+        const TOptional<double> Z = TraceDownZ(TestWorld.World, Point.X, Point.Y);
+        if (Z.IsSet() && (!LastZ.IsSet() || FMath::Abs(*Z - *LastZ) > 1.0))
+        {
+            ++Changes;
+        }
+        LastZ = Z;
+    }
+    TestTrue(FString::Printf(TEXT("The collision under the held dig changed at least 10 times (%d)"), Changes), Changes >= 10);
+    WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the held dig"));
     return true;
 }
 

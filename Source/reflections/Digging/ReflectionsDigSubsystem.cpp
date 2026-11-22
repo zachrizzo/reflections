@@ -248,7 +248,8 @@ void UReflectionsDigSubsystem::UpdateStreaming(AReflectionsDigTerrain& Terrain)
 void UReflectionsDigSubsystem::CommitFinishedMeshes(AReflectionsDigTerrain& Terrain)
 {
     const int32 Budget = FMath::Max(1, CVarMaxCommitsPerFrame.GetValueOnGameThread());
-    Queue->PopUpTo(Budget, [this, &Terrain](FIntVector Chunk, FReflectionsDigChunkResult&& Result)
+    // One cook at a time per chunk: a chunk whose current pieces are still cooking waits, its result keeps its place.
+    Queue->PopUpTo(Budget, [&Terrain](FIntVector Chunk) { return !Terrain.IsChunkCooking(Chunk); }, [this, &Terrain](FIntVector Chunk, FReflectionsDigChunkResult&& Result)
     {
         const FChunkFlow* Flow = ChunkFlows.Find(Chunk);
         if (Flow == nullptr || !Flow->bWanted)

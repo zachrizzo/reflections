@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Digging/ReflectionsDigTypes.h"
+#include "HAL/PlatformTime.h"
 #include "Misc/AutomationTest.h"
 
 #include <limits>
@@ -540,6 +541,27 @@ bool FReflectionsDigGridDirtyChunksIncludeBorderNeighboursTest::RunTest(const FS
         TestEqual(TEXT("middle stamp: dirty chunk count"), Dirty.Num(), 1);
         TestTrue(TEXT("middle stamp: chunk (0, 0, 0) is dirty"), Dirty.Contains(FIntVector(0, 0, 0)));
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigGridCopyChunkSamplesIsFastTest, "Reflections.Digging.Grid.CopyChunkSamplesIsFast", DigGridTestFlags)
+bool FReflectionsDigGridCopyChunkSamplesIsFastTest::RunTest(const FString& Parameters)
+{
+    // Three chunks on every axis, so chunk (1, 1, 1) is interior: every border cell comes from a neighbour chunk.
+    const FReflectionsDigGrid Grid(FIntVector(3, 3, 3), FVector::ZeroVector, TestGroundHeightCm);
+    const FIntVector Chunk(1, 1, 1);
+    FReflectionsDigChunkSamples Samples;
+    Grid.CopyChunkSamples(Chunk, Samples);
+
+    constexpr int32 Copies = 200;
+    const double Start = FPlatformTime::Seconds();
+    for (int32 Copy = 0; Copy < Copies; ++Copy)
+    {
+        Grid.CopyChunkSamples(Chunk, Samples);
+    }
+    const double TotalMs = (FPlatformTime::Seconds() - Start) * 1000.0;
+    UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless CopyChunkSamples: %d copies in %.2f ms, %.4f ms per copy"), Copies, TotalMs, TotalMs / Copies);
+    TestTrue(FString::Printf(TEXT("%d copies of an interior chunk take under 20 ms (%.2f ms)"), Copies, TotalMs), TotalMs < 20.0);
     return true;
 }
 

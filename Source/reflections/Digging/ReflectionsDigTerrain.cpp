@@ -21,13 +21,17 @@ using UE::Geometry::FDynamicMesh3;
 
 /*
  * Collision swap. Each chunk has a current set of pieces and at most one retiring set, hidden but still colliding.
+ * The subsystem commits a chunk only when none of its current pieces is cooking (one cook at a time per chunk), so
+ * every cook finishes and the engine never aborts one. The rules below still hold for a direct CommitChunk call,
+ * which may land while a cook runs, and after a failed cook.
  * - A commit with one piece onto a chunk showing one piece reuses that component. With deferred, async collision the
  *   engine keeps its body in the scene until FinishPhysicsAsyncCook swaps the new one in.
  * - Any other commit replaces the set. Whether the current set is the newest collision that really exists is
  *   decided at commit time from the pieces' own cook state: if every current piece has collision of its own (a
  *   finished, successful cook; a reused piece still cooking keeps its older body), the retiring set is destroyed
  *   and the current set retires; otherwise the current set is destroyed and the retiring set stays. With no
- *   retiring set the current set always retires: it is the only collision there is.
+ *   retiring set the current set always retires: it is the only collision there is. Through the subsystem the
+ *   second case arises only after a failed cook.
  * - A retiring set replaced by pieces goes once every piece has finished cooking successfully. A failed cook keeps
  *   it, with one warning.
  * - A retiring set replaced by nothing (the chunk became all solid or all air) goes only when the whole terrain is
@@ -400,6 +404,12 @@ void AReflectionsDigTerrain::FinishCollisionSwaps(bool bTerrainQuiet)
     {
         Chunks.Remove(Chunk);
     }
+}
+
+bool AReflectionsDigTerrain::IsChunkCooking(FIntVector Chunk) const
+{
+    const FReflectionsDigTerrainChunk* State = Chunks.Find(Chunk);
+    return State != nullptr && AnyCookPending(State->Pieces);
 }
 
 bool AReflectionsDigTerrain::HasCookPending() const

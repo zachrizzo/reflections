@@ -123,6 +123,9 @@ public:
      */
     void FinishCollisionSwaps(bool bTerrainQuiet);
 
+    /** True while any of the chunk's current pieces has a collision cook running (the subsystem then holds its next commit). */
+    bool IsChunkCooking(FIntVector Chunk) const;
+
     /** True while any piece, current or retiring, has a collision cook running. */
     bool HasCookPending() const;
 
