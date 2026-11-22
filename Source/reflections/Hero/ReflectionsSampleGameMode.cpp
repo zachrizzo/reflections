@@ -1,5 +1,6 @@
 #include "Hero/ReflectionsSampleGameMode.h"
 
+#include "Digging/ReflectionsDigComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 #include "UObject/SoftObjectPath.h"
@@ -19,4 +20,11 @@ void AReflectionsSampleGameMode::InitGame(const FString& MapName, const FString&
 	{
 		PlayerControllerClass = Controller;
 	}
+}
+
+void AReflectionsSampleGameMode::SetPlayerDefaults(APawn* PlayerPawn)
+{
+	Super::SetPlayerDefaults(PlayerPawn);
+	// The live player pawn is a Blueprint this code cannot edit, so the dig component is added at runtime.
+	UReflectionsDigComponent::EnsureOnPawn(PlayerPawn);
 }

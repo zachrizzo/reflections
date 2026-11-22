@@ -2,6 +2,7 @@
 #include "ReflectionsHeroAnimInstance.h"
 #include "ReflectionsSpellCatalog.h"
 #include "ReflectionsSpellCombat.h"
+#include "Digging/ReflectionsDigComponent.h"
 
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -59,6 +60,8 @@ AReflectionsHeroCharacter::AReflectionsHeroCharacter()
     SpellPreview->SetVisibility(false);
     SpellPreview->SetCastShadow(false);
     SpellPreview->SetAbsolute(true, true, true);
+
+    DigComponent = CreateDefaultSubobject<UReflectionsDigComponent>(TEXT("DigComponent"));
 }
 
 void AReflectionsHeroCharacter::BeginPlay()

@@ -8,6 +8,7 @@ class UAnimMontage;
 class UAnimSequenceBase;
 class UChildActorComponent;
 class UMaterialInterface;
+class UReflectionsDigComponent;
 class USkeletalMeshComponent;
 class UAnimInstance;
 class UStaticMesh;
@@ -160,6 +161,9 @@ private:
 
     UPROPERTY(VisibleAnywhere, Category = "Hero|Spells")
     TObjectPtr<UStaticMeshComponent> SpellPreview;
+
+    UPROPERTY(VisibleAnywhere, Category = "Digging")
+    TObjectPtr<UReflectionsDigComponent> DigComponent;
 
     EHeroSpell ActiveSpell = EHeroSpell::Healing;
     TMap<EHeroSpell, double> SpellCooldownUntil;
