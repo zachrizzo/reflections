@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Digging/ReflectionsDigGrid.h"
 #include "Digging/ReflectionsDigTypes.h"
+#include "VectorUtil.h"
 
 namespace
 {
@@ -74,67 +75,32 @@ namespace
         }
 
     private:
-        /** Component along +Axis of the plain cross product (B - A) x (C - A). */
-        float CrossAlongAxis(int32 A, int32 B, int32 C, int32 Axis) const
-        {
-            const FVector3f Cross = (Out.Positions[B] - Out.Positions[A]) ^ (Out.Positions[C] - Out.Positions[A]);
-            return Cross[Axis];
-        }
-
         /**
          * The quad of the owned edge from Cell one step along Axis, joining the four cubes around it.
          * With U and V the next two axes in cyclic order, the cubes C00 = Cell, C10 = Cell - U,
-         * C11 = Cell - U - V and C01 = Cell - V go counter-clockwise around +Axis.
-         *
-         * Winding: VectorUtil::Normal(A, B, C) is the normalised (C - A) x (B - A), the reverse of the plain
-         * (B - A) x (C - A). A triangle listed counter-clockwise around +Axis therefore faces -Axis. When Cell
-         * is solid, air lies along +Axis, so each counter-clockwise triangle is emitted reversed; otherwise
-         * it is emitted as it is. Either way a triangle faces air exactly when its counter-clockwise listing
-         * has a positive plain cross product along +Axis.
-         *
-         * Diagonal: the split through the edge's own cube (C00 to C11) or the other one (C10 to C01),
-         * whichever makes both triangles face air; the shorter when both do; C00 to C11 on an exact tie.
-         * The four vertices lie strictly inside four different cubes, in counter-clockwise order around the
-         * edge, so the quad is simple and at least one diagonal always qualifies. The choice uses only the
-         * four vertex positions, which any chunk computes alike.
+         * C11 = Cell - U - V and C01 = Cell - V go counter-clockwise around +Axis. Air lies along +Axis
+         * when Cell is solid, along -Axis otherwise; in that case C10 and C01 swap places so the four
+         * go counter-clockwise around the air direction, as SplitsAlongOwnCubeDiagonal expects. Its
+         * triangle lists then face air: VectorUtil::Normal(A, B, C) is the normalised (C - A) x (B - A).
          */
         void EmitQuad(const FIntVector& Cell, int32 Axis, bool bStartSolid)
         {
             const FIntVector U = AxisStep((Axis + 1) % 3);
             const FIntVector V = AxisStep((Axis + 2) % 3);
-            const int32 V00 = FindOrAddVertex(Cell);
-            const int32 V10 = FindOrAddVertex(Cell - U);
-            const int32 V11 = FindOrAddVertex(Cell - U - V);
-            const int32 V01 = FindOrAddVertex(Cell - V);
+            const int32 Q0 = FindOrAddVertex(Cell);
+            const int32 Q1 = FindOrAddVertex(bStartSolid ? Cell - U : Cell - V);
+            const int32 Q2 = FindOrAddVertex(Cell - U - V);
+            const int32 Q3 = FindOrAddVertex(bStartSolid ? Cell - V : Cell - U);
+            const FVector3f AirDirection = FVector3f(AxisStep(Axis)) * (bStartSolid ? 1.0f : -1.0f);
 
-            const bool bOwnDiagonalFacesAir = CrossAlongAxis(V00, V10, V11, Axis) > 0.0f && CrossAlongAxis(V00, V11, V01, Axis) > 0.0f;
-            const bool bOtherDiagonalFacesAir = CrossAlongAxis(V00, V10, V01, Axis) > 0.0f && CrossAlongAxis(V10, V11, V01, Axis) > 0.0f;
-            bool bUseOwnDiagonal = bOwnDiagonalFacesAir;
-            if (bOwnDiagonalFacesAir && bOtherDiagonalFacesAir)
+            if (ReflectionsDigMesher::SplitsAlongOwnCubeDiagonal(Out.Positions[Q0], Out.Positions[Q1], Out.Positions[Q2], Out.Positions[Q3], AirDirection))
             {
-                const float OwnLengthSquared = FVector3f::DistSquared(Out.Positions[V00], Out.Positions[V11]);
-                const float OtherLengthSquared = FVector3f::DistSquared(Out.Positions[V10], Out.Positions[V01]);
-                bUseOwnDiagonal = OwnLengthSquared <= OtherLengthSquared;
-            }
-
-            // The two triangles, counter-clockwise around +Axis.
-            int32 Triangles[6];
-            if (bUseOwnDiagonal)
-            {
-                const int32 Split[6] = { V00, V10, V11, V00, V11, V01 };
-                FMemory::Memcpy(Triangles, Split, sizeof(Triangles));
+                Out.Triangles.Append({ Q0, Q2, Q1, Q0, Q3, Q2 });
             }
             else
             {
-                const int32 Split[6] = { V00, V10, V01, V10, V11, V01 };
-                FMemory::Memcpy(Triangles, Split, sizeof(Triangles));
+                Out.Triangles.Append({ Q0, Q3, Q1, Q1, Q3, Q2 });
             }
-            if (bStartSolid)
-            {
-                Swap(Triangles[1], Triangles[2]);
-                Swap(Triangles[4], Triangles[5]);
-            }
-            Out.Triangles.Append(Triangles, 6);
         }
 
         int32 FindOrAddVertex(const FIntVector& Cube)
@@ -274,6 +240,24 @@ void ReflectionsDigMesher::BuildFromSamples(const FReflectionsDigChunkSamples& S
     }
     FChunkMesher Mesher(Samples, Out);
     Mesher.Build();
+}
+
+bool ReflectionsDigMesher::SplitsAlongOwnCubeDiagonal(const FVector3f& P00, const FVector3f& P10, const FVector3f& P11, const FVector3f& P01, const FVector3f& AirDirection)
+{
+    // VectorUtil::Normal's direction, unnormalised: a triangle faces air when it points along AirDirection.
+    auto FacesAir = [&AirDirection](const FVector3f& A, const FVector3f& B, const FVector3f& C)
+    {
+        return (UE::Geometry::VectorUtil::NormalDirection(A, B, C) | AirDirection) > 0.0f;
+    };
+    const bool bOwnFacesAir = FacesAir(P00, P11, P10) && FacesAir(P00, P01, P11);
+    const bool bOtherFacesAir = FacesAir(P00, P01, P10) && FacesAir(P10, P01, P11);
+    // The four vertices lie strictly inside four different cubes around the edge, so the quad is simple
+    // and at least one split qualifies.
+    if (bOwnFacesAir && bOtherFacesAir)
+    {
+        return FVector3f::DistSquared(P00, P11) <= FVector3f::DistSquared(P10, P01);
+    }
+    return bOwnFacesAir;
 }
 
 void ReflectionsDigMesher::BuildChunk(const FReflectionsDigGrid& Grid, FIntVector Chunk, FReflectionsDigMeshData& Out)

@@ -35,4 +35,14 @@ namespace ReflectionsDigMesher
 
     /** Copies the chunk's samples from the grid, then calls BuildFromSamples. Game thread (it reads the grid). */
     REFLECTIONS_API void BuildChunk(const FReflectionsDigGrid& Grid, FIntVector Chunk, FReflectionsDigMeshData& Out);
+
+    /**
+     * The mesher's quad diagonal choice, exposed so tests can pin it. P00 is the vertex of the edge's own
+     * cube, and P00, P10, P11, P01 go counter-clockwise around AirDirection (the unit direction along the
+     * edge from solid to air). The split along P00-P11 emits triangles (P00, P11, P10) and (P00, P01, P11);
+     * the split along P10-P01 emits (P00, P01, P10) and (P10, P01, P11). Returns true for P00-P11 when both
+     * of its triangles face air (VectorUtil::Normal has a positive component along AirDirection) and the
+     * other split's do not, or both qualify and P00-P11 is not longer; false for P10-P01 otherwise.
+     */
+    REFLECTIONS_API bool SplitsAlongOwnCubeDiagonal(const FVector3f& P00, const FVector3f& P10, const FVector3f& P11, const FVector3f& P01, const FVector3f& AirDirection);
 }

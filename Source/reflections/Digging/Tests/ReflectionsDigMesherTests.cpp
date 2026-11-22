@@ -457,6 +457,62 @@ bool FReflectionsDigMesherCellCentredDigsMakeNoDegenerateTrianglesTest::RunTest(
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigMesherFoldedQuadTakesTheOtherDiagonalTest, "Reflections.Digging.Mesher.FoldedQuadTakesTheOtherDiagonal", DigMesherTestFlags)
+bool FReflectionsDigMesherFoldedQuadTakesTheOtherDiagonalTest::RunTest(const FString& Parameters)
+{
+    struct FQuadCase
+    {
+        const TCHAR* Label;
+        /** Counter-clockwise around +Z in the plane across the edge: P00, P10, P11, P01. */
+        FVector3f P00, P10, P11, P01;
+        bool bExpectOwnDiagonal;
+        /** The rejected split folds: one of its triangles faces away from air. */
+        bool bRejectedFolds;
+    };
+    const FQuadCase Cases[] = {
+        { TEXT("folded on the own-cube diagonal"), FVector3f(10, 45, 0), FVector3f(-2, 2, 0), FVector3f(-45, -10, 0), FVector3f(30, -30, 0), false, true },
+        { TEXT("folded on the other diagonal"), FVector3f(2, 2, 0), FVector3f(-10, 45, 0), FVector3f(-30, -30, 0), FVector3f(45, -10, 0), true, true },
+        { TEXT("both qualify, other diagonal shorter"), FVector3f(40, 40, 0), FVector3f(-10, 10, 0), FVector3f(-40, -40, 0), FVector3f(10, -10, 0), false, false },
+        { TEXT("both qualify, exact tie"), FVector3f(25, 25, 0), FVector3f(-25, 25, 0), FVector3f(-25, -25, 0), FVector3f(25, -25, 0), true, false },
+    };
+
+    // Component along the air direction of VectorUtil::Normal for the triangle lists the header documents.
+    auto Facing = [](const FVector3f& A, const FVector3f& B, const FVector3f& C, const FVector3f& Air)
+    {
+        return UE::Geometry::VectorUtil::Normal(A, B, C) | Air;
+    };
+
+    for (const FQuadCase& Case : Cases)
+    {
+        // Air along +Z (solid corner at the start of the edge): EmitQuad passes P00, P10, P11, P01.
+        // Air along -Z (solid corner at the end): EmitQuad swaps P10 and P01 so the four go
+        // counter-clockwise around the air direction.
+        for (const bool bAirUp : { true, false })
+        {
+            const FVector3f Air(0.0f, 0.0f, bAirUp ? 1.0f : -1.0f);
+            const FVector3f& Q0 = Case.P00;
+            const FVector3f& Q1 = bAirUp ? Case.P10 : Case.P01;
+            const FVector3f& Q2 = Case.P11;
+            const FVector3f& Q3 = bAirUp ? Case.P01 : Case.P10;
+            const FString Label = FString::Printf(TEXT("%s, air %s"), Case.Label, bAirUp ? TEXT("+Z") : TEXT("-Z"));
+
+            const float Own[2] = { Facing(Q0, Q2, Q1, Air), Facing(Q0, Q3, Q2, Air) };
+            const float Other[2] = { Facing(Q0, Q3, Q1, Air), Facing(Q1, Q3, Q2, Air) };
+            const bool bOwn = ReflectionsDigMesher::SplitsAlongOwnCubeDiagonal(Q0, Q1, Q2, Q3, Air);
+            TestEqual(Label + TEXT(": splits along the own-cube diagonal"), bOwn, Case.bExpectOwnDiagonal);
+
+            const float* Chosen = bOwn ? Own : Other;
+            const float* Rejected = bOwn ? Other : Own;
+            TestTrue(Label + TEXT(": both chosen triangles face air"), Chosen[0] > 0.0f && Chosen[1] > 0.0f);
+            if (Case.bRejectedFolds)
+            {
+                TestTrue(Label + TEXT(": the rejected split has a triangle facing away from air"), Rejected[0] < 0.0f || Rejected[1] < 0.0f);
+            }
+        }
+    }
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigMesherDenseDigFieldsKeepEveryTriangleFacingAirTest, "Reflections.Digging.Mesher.DenseDigFieldsKeepEveryTriangleFacingAir", DigMesherTestFlags)
 bool FReflectionsDigMesherDenseDigFieldsKeepEveryTriangleFacingAirTest::RunTest(const FString& Parameters)
 {
