@@ -4,7 +4,10 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Async/TaskGraphInterfaces.h"
 #include "Engine/World.h"
+#include "HAL/PlatformProcess.h"
+#include "HAL/PlatformTime.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/WorldSettings.h"
@@ -68,6 +71,31 @@ struct FReflectionsDigTestWorld
         {
             Wrapper.TickTestWorld(DeltaSeconds);
         }
+    }
+
+    /**
+     * Ticks one frame at a time until IsDone() is true. Each loop ticks the world, runs the game thread's pending
+     * tasks (async collision cooks finish there), sleeps about a millisecond so worker tasks get real time, then
+     * asks IsDone(). Returns true as soon as IsDone() is true, false once TimeoutSeconds of wall-clock time pass.
+     */
+    bool TickUntil(TFunctionRef<bool()> IsDone, double TimeoutSeconds = 10.0, float DeltaSeconds = 1.0f / 60.0f)
+    {
+        const double Deadline = FPlatformTime::Seconds() + TimeoutSeconds;
+        while (World != nullptr)
+        {
+            Tick(1, DeltaSeconds);
+            FTaskGraphInterface::Get().ProcessThreadUntilIdle(ENamedThreads::GameThread);
+            FPlatformProcess::Sleep(0.001f);
+            if (IsDone())
+            {
+                return true;
+            }
+            if (FPlatformTime::Seconds() > Deadline)
+            {
+                return false;
+            }
+        }
+        return false;
     }
 
     /** Spawns a T and runs its construction and BeginPlay. Spawning ignores collision. */

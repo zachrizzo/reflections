@@ -23,7 +23,8 @@ public class reflections : ModuleRules
 			"Slate",
 			"SlateCore",
 			"PhysicsCore",
-			"GeometryCore"
+			"GeometryCore",
+			"GeometryFramework"
 		});
 
 		// NPC rebuild: removed WebSockets, AudioCaptureCore, AudioCapture and Json (used only by the old Voice code)

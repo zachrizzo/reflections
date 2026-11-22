@@ -18,6 +18,8 @@ namespace ReflectionsDig
     inline constexpr int32 SampleBorder = 2;
     inline constexpr uint8 MaterialTopsoil = 0;
     inline constexpr uint8 MaterialBedrock = 255;
+    /** Most vertices one chunk piece (one mesh component and its collision) may hold. */
+    inline constexpr int32 MaxPieceVertices = 12000;
 }
 
 /** Whether a stamp digs ground away or fills it in. */
