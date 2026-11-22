@@ -1003,7 +1003,10 @@ namespace
         });
     }
 
-    /** The chunk's pieces (current, visible ones): their count, total vertices and largest vertex count. */
+    /**
+     * The chunk's own current pieces, as the terrain holds them (not found by bounds, which can pick up a neighbouring
+     * chunk's piece): their count, total vertices and largest vertex count.
+     */
     struct FChunkMeshSize
     {
         int32 Pieces = 0;
@@ -1013,16 +1016,13 @@ namespace
         static FChunkMeshSize Of(const AReflectionsDigTerrain& Terrain, const FIntVector& Chunk)
         {
             FChunkMeshSize Size;
-            TArray<UReflectionsDigChunkComponent*> Pieces;
-            Terrain.GetComponents(Pieces);
-            for (const UReflectionsDigChunkComponent* Piece : Pieces)
+            Size.Pieces = Terrain.GetChunkPieceCount(Chunk);
+            for (int32 Index = 0; Index < Size.Pieces; ++Index)
             {
-                if (Piece->IsVisible() && Piece->GetMesh() != nullptr && ChunkAt(Terrain, Piece->Bounds.Origin) == Chunk)
-                {
-                    ++Size.Pieces;
-                    Size.Vertices += Piece->GetMesh()->VertexCount();
-                    Size.LargestPiece = FMath::Max(Size.LargestPiece, Piece->GetMesh()->VertexCount());
-                }
+                const UDynamicMeshComponent* Piece = Terrain.GetChunkPiece(Chunk, Index);
+                const int32 PieceVertices = Piece != nullptr && Piece->GetMesh() != nullptr ? Piece->GetMesh()->VertexCount() : 0;
+                Size.Vertices += PieceVertices;
+                Size.LargestPiece = FMath::Max(Size.LargestPiece, PieceVertices);
             }
             return Size;
         }
