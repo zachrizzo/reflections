@@ -233,6 +233,8 @@ bool FReflectionsDigSpikeMapIsBuiltAsSpecifiedTest::RunTest(const FString& Param
         TestLocation(*this, *Terrain, FVector(1000.0, -2400.0, 0.0));
         TestUnrotatedUnscaled(*this, *Terrain);
         TestEqual(TEXT("DigSpike_Terrain GroundHeightCm"), Terrain->GroundHeightCm, 0.0f);
+        TestEqual(TEXT("DigSpike_Terrain GroundMaterial is the plain engine material"), GetPathNameSafe(Terrain->GroundMaterial.Get()),
+            FString(TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial")));
         TestTrue(FString::Printf(TEXT("DigSpike_Terrain size %s is the default (3, 3, 2)"), *Terrain->SizeInChunks.ToString()),
             Terrain->SizeInChunks == FIntVector(3, 3, 2) && Terrain->SizeInChunks == GetDefault<AReflectionsDigTerrain>()->SizeInChunks);
     }

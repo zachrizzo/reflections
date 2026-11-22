@@ -101,6 +101,7 @@ public:
     UPROPERTY(EditAnywhere, Category = "Digging")
     float MeshRadiusCm = 2400.0f;
 
+    /** What the pieces draw with. When null they use the plain engine material /Engine/BasicShapes/BasicShapeMaterial, never the engine default. */
     UPROPERTY(EditAnywhere, Category = "Digging")
     TObjectPtr<UMaterialInterface> GroundMaterial;
 
@@ -198,6 +199,10 @@ private:
     TObjectPtr<UBoxComponent> SafetyFloor;
 
     TUniquePtr<FReflectionsDigGrid> Grid;
+
+    /** GroundMaterial, or the plain engine material when that is null; resolved at BeginPlay and set on each new piece. */
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterialInterface> PieceMaterial;
 
     double LastNavUpdateSeconds = -1.0;
     int32 NavUpdateCount = 0;

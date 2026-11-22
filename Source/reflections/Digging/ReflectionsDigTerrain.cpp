@@ -53,6 +53,8 @@ namespace
     /** The safety floor's top lies this far below the grid floor, and it is this thick. */
     constexpr float SafetyFloorGapCm = 30.0f;
     constexpr float SafetyFloorThicknessCm = 100.0f;
+    /** What the pieces draw with when GroundMaterial is null. */
+    const TCHAR* const PlainGroundMaterialPath = TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial");
 
     double MillisecondsSince(double StartSeconds)
     {
@@ -268,6 +270,19 @@ void AReflectionsDigTerrain::BeginPlay()
     const double HalfCellCm = ReflectionsDig::CellSizeCm * 0.5;
     const FVector OriginCm(Location.X + HalfCellCm, Location.Y + HalfCellCm, GroundHeightCm - SizeInChunks.Z * ChunkHeightCm + GroundBelowGridTopCm);
     Grid = MakeUnique<FReflectionsDigGrid>(SizeInChunks, OriginCm, GroundHeightCm);
+
+    // The pieces never draw with the engine's default material: on this mesh (normals only, no texture coordinates,
+    // no tangents) it turned a lit view along a tunnel pure black. GroundMaterial itself is left as it is.
+    PieceMaterial = GroundMaterial;
+    if (PieceMaterial == nullptr)
+    {
+        PieceMaterial = LoadObject<UMaterialInterface>(nullptr, PlainGroundMaterialPath);
+        if (PieceMaterial == nullptr)
+        {
+            UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("%s has no GroundMaterial and %s could not be loaded; its pieces use the engine default material."),
+                *GetName(), PlainGroundMaterialPath);
+        }
+    }
 
     // The safety floor spans the whole patch (from the actor's corner, not the grid origin), under the grid floor.
     const FVector HalfSize(SizeInChunks.X * ChunkHeightCm * 0.5, SizeInChunks.Y * ChunkHeightCm * 0.5, SafetyFloorThicknessCm * 0.5);
@@ -625,9 +640,9 @@ UReflectionsDigChunkComponent* AReflectionsDigTerrain::CreatePieceComponent()
     Piece->SetCollisionObjectType(ECC_WorldStatic);
     Piece->SetCollisionResponseToAllChannels(ECR_Block);
     Piece->SetCanEverAffectNavigation(true);
-    if (GroundMaterial != nullptr)
+    if (PieceMaterial != nullptr)
     {
-        Piece->SetMaterial(0, GroundMaterial);
+        Piece->SetMaterial(0, PieceMaterial);
     }
     // Registered while still empty, so creating its physics state cooks nothing on the game thread.
     Piece->RegisterComponent();

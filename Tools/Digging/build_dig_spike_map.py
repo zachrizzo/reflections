@@ -21,6 +21,7 @@ CAVE_LIGHT_LOCATIONS = (
     (4000.0, -600.0, 250.0),
     (4000.0, 600.0, 250.0),
 )
+GROUND_MATERIAL_PATH = "/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"
 CAVE_LIGHT_INTENSITY = 5000.0
 CAVE_LIGHT_ATTENUATION_RADIUS = 1500.0
 # The navmesh bounds: the patch (X 1000 to 5800, Y -2400 to 2400, Z -2800 to 400) with a 200 cm margin.
@@ -147,6 +148,14 @@ def build():
     terrain = spawn(unreal.ReflectionsDigTerrain, "DigSpike_Terrain", (1000.0, -2400.0, 0.0))
     terrain.set_editor_property("ground_height_cm", 0.0)
     check_close("DigSpike_Terrain ground_height_cm", terrain.get_editor_property("ground_height_cm"), 0.0)
+    # A plain engine material: the engine's default material turned a lit view along a dug tunnel pure black.
+    ground_material = unreal.load_asset(GROUND_MATERIAL_PATH)
+    if not isinstance(ground_material, unreal.MaterialInterface):
+        fail("could not load material " + GROUND_MATERIAL_PATH)
+    terrain.set_editor_property("ground_material", ground_material)
+    stored_material = terrain.get_editor_property("ground_material")
+    if stored_material is None or stored_material.get_path_name() != ground_material.get_path_name():
+        fail("DigSpike_Terrain ground_material did not stick")
 
     sun = spawn(unreal.DirectionalLight, "DigSpike_Sun", rotation=unreal.Rotator(roll=0.0, pitch=-45.0, yaw=30.0))
     make_movable(sun.root_component, "DigSpike_Sun")

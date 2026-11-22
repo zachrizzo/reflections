@@ -14,6 +14,8 @@
 #include "DynamicMesh/DynamicMesh3.h"
 #include "Engine/HitResult.h"
 #include "Engine/World.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialInterface.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformProcess.h"
 #include "HAL/PlatformTime.h"
@@ -260,6 +262,76 @@ bool FReflectionsDigTerrainSurfaceSpansExactlyThePatchTest::RunTest(const FStrin
         const TOptional<double> Z = TraceDownZ(TestWorld.World, At.X, At.Y);
         TestFalse(FString::Printf(TEXT("5 cm outside the patch at (%.0f, %.0f) a trace hits no chunk piece (hit at %s)"), At.X, At.Y,
             Z.IsSet() ? *FString::SanitizeFloat(*Z) : TEXT("none")), Z.IsSet());
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainPiecesNeverUseTheDefaultMaterialTest, "Reflections.Digging.Terrain.PiecesNeverUseTheDefaultMaterial", DigTerrainTestFlags)
+bool FReflectionsDigTerrainPiecesNeverUseTheDefaultMaterialTest::RunTest(const FString& Parameters)
+{
+    const UMaterialInterface* EngineDefault = UMaterial::GetDefaultMaterial(MD_Surface);
+    const UMaterialInterface* Plain = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+    UMaterialInterface* Chosen = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial_Inst.BasicShapeMaterial_Inst"));
+    if (!TestNotNull(TEXT("The plain engine material loads"), Plain) || !TestNotNull(TEXT("The chosen test material loads"), Chosen))
+    {
+        return true;
+    }
+    auto TestEveryPiece = [this](const AReflectionsDigTerrain& Terrain, const UMaterialInterface* Expected, const UMaterialInterface* Default, const TCHAR* When)
+    {
+        TArray<UReflectionsDigChunkComponent*> Pieces;
+        Terrain.GetComponents(Pieces);
+        TestTrue(FString::Printf(TEXT("%s: the terrain has pieces"), When), Pieces.Num() > 0);
+        for (const UReflectionsDigChunkComponent* Piece : Pieces)
+        {
+            const UMaterialInterface* Material = Piece->GetMaterial(0);
+            TestTrue(FString::Printf(TEXT("%s: piece %s draws with %s (has %s)"), When, *Piece->GetName(), *GetNameSafe(Expected), *GetNameSafe(Material)),
+                Material == Expected);
+            TestTrue(FString::Printf(TEXT("%s: piece %s does not draw with the engine default material"), When, *Piece->GetName()),
+                Material != nullptr && Material != Default);
+        }
+    };
+
+    // GroundMaterial null: the plain engine material, and GroundMaterial itself stays null.
+    {
+        FReflectionsDigTestWorld TestWorld;
+        FTerrainScene Scene;
+        if (!MakeTerrainScene(*this, TestWorld, Scene))
+        {
+            return true;
+        }
+        TestNull(TEXT("GroundMaterial is not overwritten"), Scene.Terrain->GroundMaterial.Get());
+        TestEveryPiece(*Scene.Terrain, Plain, EngineDefault, TEXT("GroundMaterial null"));
+    }
+
+    // GroundMaterial set: that material, also on pieces a later dig creates (the riddled buried chunk had none).
+    {
+        FReflectionsDigTestWorld TestWorld;
+        if (!TestNotNull(TEXT("Test world"), TestWorld.World))
+        {
+            return true;
+        }
+        FTerrainScene Scene;
+        Scene.Dig = TestWorld.World->GetSubsystem<UReflectionsDigSubsystem>();
+        AReflectionsDigTerrain* Terrain = TestWorld.SpawnDeferred<AReflectionsDigTerrain>(FVector::ZeroVector);
+        if (!TestNotNull(TEXT("Dig subsystem"), Scene.Dig) || !TestNotNull(TEXT("Terrain"), Terrain))
+        {
+            return true;
+        }
+        Terrain->GroundMaterial = Chosen;
+        Scene.Terrain = TestWorld.FinishSpawning(Terrain);
+        if (!TestNotNull(TEXT("Terrain begins play"), Scene.Terrain) || !WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the terrain begins play")))
+        {
+            return true;
+        }
+        TestEveryPiece(*Scene.Terrain, Chosen, EngineDefault, TEXT("GroundMaterial set"));
+        const FIntVector Busy(1, 1, 0);
+        TestEqual(TEXT("Premise: the buried chunk has no pieces before the dig"), Scene.Terrain->GetChunkPieceCount(Busy), 0);
+        RiddleBuriedChunk(*Scene.Dig);
+        if (WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after riddling the buried chunk")))
+        {
+            TestTrue(TEXT("Premise: the dig created pieces in the buried chunk"), Scene.Terrain->GetChunkPieceCount(Busy) > 0);
+            TestEveryPiece(*Scene.Terrain, Chosen, EngineDefault, TEXT("After a later dig"));
+        }
     }
     return true;
 }

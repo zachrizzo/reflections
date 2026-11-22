@@ -15,9 +15,7 @@
 #include "Engine/GameViewportClient.h"
 #include "Engine/HitResult.h"
 #include "Engine/PointLight.h"
-#include "Engine/StaticMesh.h"
 #include "Engine/StaticMeshActor.h"
-#include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
@@ -26,7 +24,6 @@
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformTime.h"
 #include "ImageUtils.h"
-#include "Materials/MaterialInterface.h"
 #include "Math/RandomStream.h"
 #include "Misc/App.h"
 #include "Misc/AutomationTest.h"
@@ -57,9 +54,8 @@
  * wall time from one sample to the next minus only the frame-cap wait (FApp::GetIdleTime), which keeps every other wait.
  *
  * The tests share one world and run one after another, each at its own site (at least 1000 cm from the others' digs):
- *   CaveShots      pit and tunnel at (1800, 1400), tunnel along +X; character at (1800, 400); the four shots, a view of
- *                  the tunnel wall, the tunnel view with an engine cube in it, and the tunnel view with a plain
- *                  engine material on the pieces (cube and material removed in the cleanup)
+ *   CaveShots      pit and tunnel at (1800, 1400), tunnel along +X; character at (1800, 400); the tunnel, the pit and
+ *                  the tunnel wall, each with hardware ray tracing on and off
  *   CollisionSize  200 digs inside the column X 4225..5800, Y 825..2400; character at (5000, -400)
  *   DigCost        shaft at (1800, -1600), then a pocket at (2000, -1600) at the bottom
  *   Seams          no digs; character at (3400, 0)
@@ -558,23 +554,6 @@ namespace
             Actor->Destroy();
         }
         Camera.Reset();
-    }
-
-    /** Sets the terrain's GroundMaterial (for pieces made later) and the material of every piece it has now. */
-    void SetPieceMaterial(FDigGameScene& Scene, UMaterialInterface* Material)
-    {
-        AReflectionsDigTerrain* Terrain = Scene.Terrain.Get();
-        if (Terrain == nullptr)
-        {
-            return;
-        }
-        Terrain->GroundMaterial = Material;
-        TArray<UReflectionsDigChunkComponent*> Pieces;
-        Terrain->GetComponents(Pieces);
-        for (UReflectionsDigChunkComponent* Piece : Pieces)
-        {
-            Piece->SetMaterial(0, Material);
-        }
     }
 
     /** Digs a pit at (X, Y): stamps of RadiusCm from the ground down to DepthCm, every 100 cm. Returns how many changed the grid. */
@@ -1130,18 +1109,21 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
     /** The tunnel runs along +X at the height of the pit's lowest stamp. */
     constexpr double TunnelZ = -300.0;
     constexpr double TunnelLengthCm = 500.0;
-    /** Lumen needs a moment after a light, the view or a setting changes. */
-    constexpr double SettleSeconds = 5.0;
-    const FVector LightInTunnel(PitX + 300.0, PitY, TunnelZ);
+    /** Lumen and the automatic exposure need a moment after a light, the view or a setting changes. */
+    constexpr double SettleSeconds = 8.0;
+    /**
+     * For the shots only: the cave light just inside the tunnel's mouth, under its roof, and dimmed from the map's
+     * 5000, so the walls fade with distance down the tunnel instead of glowing around a light in the middle of the
+     * view. Put back in the cleanup.
+     */
+    const FVector LightInTunnel(PitX + 100.0, PitY, TunnelZ + 80.0);
+    constexpr float ShotLightIntensity = 300.0f;
     const FVector TunnelCamera(PitX - 50.0, PitY, TunnelZ + 40.0);
     const FVector TunnelLookAt(PitX + TunnelLengthCm, PitY, TunnelZ);
     /** From above the rim, looking down into the pit towards the tunnel's mouth. */
     const FVector PitCamera(PitX - 250.0, PitY - 150.0, 220.0);
     const FVector PitLookAt(PitX + 50.0, PitY, TunnelZ);
-    /**
-     * Inside the tunnel, 150 cm along it, looking across at its +Y wall: a view down the tunnel's length renders black
-     * (see SpikeResults.md), a view of the wall does not.
-     */
+    /** Inside the tunnel, 150 cm along it, looking across at its +Y wall. */
     const FVector WallCamera(PitX + 150.0, PitY, TunnelZ + 20.0);
     const FVector WallLookAt(PitX + 150.0, PitY + 300.0, TunnelZ + 20.0);
     const TSharedPtr<FDigGameScene> Started = StartScene(*this, PitX, PitY - 1000.0);
@@ -1150,16 +1132,13 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
         return false;
     }
     const FDigGameSceneRef Scene = Started.ToSharedRef();
-    // Changing the material of pieces that already have physics bodies makes Chaos warn once per piece.
-    AddExpectedMessagePlain(TEXT("request for Material Array on single-material ShapeInstance"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 0);
 
     struct FCave
     {
         TWeakObjectPtr<APointLight> Light;
         FVector LightHome = FVector::ZeroVector;
         TWeakObjectPtr<ACameraActor> Camera;
-        TWeakObjectPtr<AStaticMeshActor> Cube;
-        bool bPlainMaterial = false;
+        float LightIntensityHome = 0.0f;
         FSavedConsoleInt Hwrt{ TEXT("r.Lumen.HardwareRayTracing") };
     };
     TSharedRef<FCave> Cave = MakeShared<FCave>();
@@ -1179,7 +1158,7 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
         S.Test->TestTrue(TEXT("The tunnel digs"), Changed > 0);
     });
     AddWaitForQuiet(Scene, TEXT("CaveShots"));
-    AddAction(Scene, TEXT("Put the cave light in the tunnel and bind the screenshot"), [Cave, Capture, LightInTunnel, TunnelCamera, TunnelLookAt](FDigGameScene& S)
+    AddAction(Scene, TEXT("Put the cave light in the tunnel and bind the screenshot"), [Cave, Capture, LightInTunnel, ShotLightIntensity, TunnelCamera, TunnelLookAt](FDigGameScene& S)
     {
         APointLight* Light = nullptr;
         for (TActorIterator<APointLight> It(S.GetWorld()); It; ++It)
@@ -1204,7 +1183,9 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
         }
         Cave->Light = Light;
         Cave->LightHome = Light->GetActorLocation();
+        Cave->LightIntensityHome = Light->GetLightComponent()->Intensity;
         Light->SetActorLocation(LightInTunnel);
+        Light->GetLightComponent()->SetIntensity(ShotLightIntensity);
         Cave->Camera = SpawnViewCamera(S, TunnelCamera, TunnelLookAt);
         if (!Cave->Camera.IsValid())
         {
@@ -1221,7 +1202,9 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
                 Capture->bCaptured = true;
             }
         });
-        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE CAVE light=%s moved from %s to %s"), *Light->GetName(), *Cave->LightHome.ToString(), *LightInTunnel.ToString());
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE CAVE light=%s moved from %s to %s, intensity %.0f (unitless) instead of %.0f; ground material %s"),
+            *Light->GetName(), *Cave->LightHome.ToString(), *LightInTunnel.ToString(), ShotLightIntensity, Cave->LightIntensityHome,
+            *GetNameSafe(S.Terrain.IsValid() ? S.Terrain->GroundMaterial.Get() : nullptr));
     });
     auto AddView = [Scene, Cave](const FVector& Location, const FVector& LookAt, int32 Hwrt)
     {
@@ -1247,50 +1230,6 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
     AddShot(Scene, Capture, TEXT("pit_hwrt_off"), 0, SettleSeconds);
     AddView(WallCamera, WallLookAt, 0);
     AddShot(Scene, Capture, TEXT("tunnel_wall_hwrt_off"), 0, SettleSeconds);
-    // A view down the tunnel renders black (see SpikeResults.md); with an ordinary mesh in the middle of that view it
-    // draws and is lit. These two show the tunnel lit by the cave light that way, with hardware ray tracing off and on.
-    AddAction(Scene, TEXT("Put a test cube in the tunnel"), [Cave](FDigGameScene& S)
-    {
-        FActorSpawnParameters Params;
-        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-        AStaticMeshActor* Cube = S.GetWorld()->SpawnActor<AStaticMeshActor>(FVector(PitX + 200.0, PitY, TunnelZ), FRotator::ZeroRotator, Params);
-        UStaticMesh* Mesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
-        if (Cube == nullptr || Mesh == nullptr)
-        {
-            S.Abort(TEXT("Could not place the test cube"));
-            return;
-        }
-        Cube->SetMobility(EComponentMobility::Movable);
-        Cube->GetStaticMeshComponent()->SetStaticMesh(Mesh);
-        Cube->SetActorScale3D(FVector(0.5));
-        Cave->Cube = Cube;
-    });
-    AddView(TunnelCamera, TunnelLookAt, 0);
-    AddShot(Scene, Capture, TEXT("tunnel_with_cube_hwrt_off"), 0, SettleSeconds);
-    AddView(TunnelCamera, TunnelLookAt, 1);
-    AddShot(Scene, Capture, TEXT("tunnel_with_cube_hwrt_on"), 1, SettleSeconds);
-    // The black view comes from the engine's default material on this mesh (the terrain's GroundMaterial is null):
-    // with a plain engine material on the pieces the same view, without the cube, is lit. The cleanup puts it back.
-    AddAction(Scene, TEXT("Remove the test cube and give the pieces a plain material"), [Cave](FDigGameScene& S)
-    {
-        if (AStaticMeshActor* Cube = Cave->Cube.Get())
-        {
-            Cube->Destroy();
-        }
-        Cave->Cube.Reset();
-        UMaterialInterface* Plain = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
-        if (Plain == nullptr)
-        {
-            S.Abort(TEXT("Could not load /Engine/BasicShapes/BasicShapeMaterial"));
-            return;
-        }
-        SetPieceMaterial(S, Plain);
-        Cave->bPlainMaterial = true;
-    });
-    AddView(TunnelCamera, TunnelLookAt, 1);
-    AddShot(Scene, Capture, TEXT("tunnel_plain_material_hwrt_on"), 1, SettleSeconds);
-    AddView(TunnelCamera, TunnelLookAt, 0);
-    AddShot(Scene, Capture, TEXT("tunnel_plain_material_hwrt_off"), 0, SettleSeconds);
     AddStep(Scene, TEXT("Restore the light, the view and the settings"), 1.0, [Cave, Capture](FDigGameScene& S)
     {
         Cave->Hwrt.Restore();
@@ -1306,15 +1245,7 @@ bool FReflectionsSpikePerfCaveShotsTest::RunTest(const FString& Parameters)
         if (APointLight* Light = Cave->Light.Get())
         {
             Light->SetActorLocation(Cave->LightHome);
-        }
-        if (AStaticMeshActor* Cube = Cave->Cube.Get())
-        {
-            Cube->Destroy();
-        }
-        if (Cave->bPlainMaterial)
-        {
-            SetPieceMaterial(S, nullptr);
-            Cave->bPlainMaterial = false;
+            Light->GetLightComponent()->SetIntensity(Cave->LightIntensityHome);
         }
         if (S.GetWorld() != nullptr)
         {
