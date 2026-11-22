@@ -356,6 +356,7 @@ The map uses the project's default game mode; it sets no override.
   - `Reflections.Digging.Queue.KeepsOnlyNewestPerChunk`: five pushes for one chunk, with 1 to 5 triangles; `Num()` is 1 and the one popped mesh has 5 triangles.
   - `Reflections.Digging.Queue.PopRespectsBudget`: six chunks queued; `PopUpTo(2)` returns 2, commits the first two pushed, and `Num()` is 4.
   - `Reflections.Digging.Queue.ReplacingKeepsPlaceInLine`: push A, push B, push A again; the pop order is A (the newer mesh), then B.
+  - `Reflections.Digging.Queue.SkippedChunkKeepsItsPlace` (added in review): push A, B, C; with `CanCommit` false for A, `PopUpTo(2)` commits B then C and returns 2; A is still queued and comes first on the next call.
 - [ ] **Step 2: Write the failing terrain tests** (fourteen after review), each in an `FReflectionsDigTestWorld` with one terrain at (0, 0, 0), `GroundHeightCm = 0`, default size, waiting for `IsIdle()` through the helper's new `bool TickUntil(TFunctionRef<bool()> IsDone, double TimeoutSeconds = 10.0, float DeltaSeconds = 1.0f / 60.0f)` (ticks the world, pumps game-thread tasks, sleeps about a millisecond; false on timeout) and asserting its result:
   - `Reflections.Digging.Terrain.MeshesAllChunksWithNoFocus`: the nine chunks with Z = 1 have components with triangles; the nine with Z = 0 have none.
   - `Reflections.Digging.Terrain.DigChangesCollision`: a downward visibility trace at (2400, 2400) hits within 5 cm of Z = 0. `Dig((2400, 2400, 0), 100, Remove)` returns true. After idle the same trace hits below Z = -50.
