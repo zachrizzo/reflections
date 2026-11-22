@@ -1,7 +1,6 @@
 #include "SpellVFX/ReflectionsTarnishMagic.h"
 #include "SpellVFX/ReflectionsSpellVfxSubsystem.h"
 #include "Hero/ReflectionsSpellCombat.h"
-#include "NPC/ReflectionsNpcReactionComponent.h"
 #include "Components/DecalComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -18,10 +17,7 @@ namespace
 
     FVector TarnishAimPoint(const AActor* Target)
     {
-        if (const UReflectionsNpcReactionComponent* Npc = Target->FindComponentByClass<UReflectionsNpcReactionComponent>())
-        {
-            return Npc->GetAimPoint();
-        }
+        // NPC rebuild: removed the NPC reaction component aim point
         if (Target->IsA<APawn>())
         {
             return Target->GetActorLocation() + FVector(0.0f, 0.0f, 25.0f);
@@ -124,13 +120,7 @@ TArray<AActor*> UReflectionsTarnishCasterComponent::OwnActors() const
     if (AActor* Owner = GetOwner())
     {
         Own.Add(Owner);
-        if (const UReflectionsNpcReactionComponent* Npc = Owner->FindComponentByClass<UReflectionsNpcReactionComponent>())
-        {
-            if (ACharacter* Driver = Npc->GetMovementCharacter())
-            {
-                Own.AddUnique(Driver);
-            }
-        }
+        // NPC rebuild: removed the NPC hidden movement-driver lookup
     }
     return Own;
 }

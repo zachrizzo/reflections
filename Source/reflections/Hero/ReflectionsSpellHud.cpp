@@ -4,8 +4,6 @@
 #include "Components/Image.h"
 #include "Hero/ReflectionsSpellCatalog.h"
 #include "Hero/ReflectionsSpellCombat.h"
-#include "NPC/ReflectionsNpcReactionComponent.h"
-#include "NPC/ReflectionsNpcSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
 #include "Components/ButtonSlot.h"
@@ -241,14 +239,10 @@ void UReflectionsSpellHudWidget::RefreshSelection()
             Query.AddIgnoredActors(Attached);
             FHitResult Hit;
             if (GetWorld()->LineTraceSingleByChannel(Hit, ViewLocation, ViewLocation + ViewRotation.Vector() * 3500.0f, ECC_Visibility, Query))
-                if (AActor* Actor = Hit.GetActor())
+                if (const AActor* Actor = Hit.GetActor())
                 {
-                    // A hit on an NPC's hit proxy or hidden locomotion pawn counts as the NPC. Hostile covers enemies,
-                    // infected, villain hosts, soldiers and anyone attacking the player right now (false when dead).
-                    const UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(Actor);
-                    if (const UReflectionsNpcReactionComponent* Npc = Npcs ? Npcs->FindNpc(Actor) : nullptr) Actor = Npc->GetOwner();
-                    if (Actor && (Actor->ActorHasTag(TEXT("NPC_CombatEnemy")) || (Npcs && Npcs->IsHostileToPlayer(Actor))))
-                        TargetHealth = Actor->FindComponentByClass<UReflectionsHealthComponent>();
+                    // NPC rebuild: removed the NPC hit-proxy resolve and hostility check; any actor with health shows
+                    TargetHealth = Actor->FindComponentByClass<UReflectionsHealthComponent>();
                 }
         }
         if (TargetHealth && TargetHealth->Health > 0.0f)

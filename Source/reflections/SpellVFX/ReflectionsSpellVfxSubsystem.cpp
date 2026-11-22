@@ -9,7 +9,6 @@
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
-#include "Interfaces/CombatDamageable.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInterface.h"
 #include "NiagaraComponent.h"
@@ -856,7 +855,8 @@ void UReflectionsSpellVfxSubsystem::OnSpellHit(const FReflectionsSpellHitData& H
     if (Direction.IsNearlyZero()) Direction = -Hit.Impulse.GetSafeNormal();
     if (Direction.IsNearlyZero()) Direction = FVector::UpVector;
     // Walls and floors report hits too; body effects, feedback and sounds are for living targets only.
-    const bool bLiving = IsValid(Hit.Target) && (Hit.Target->IsA<APawn>() || Hit.Target->Implements<UCombatDamageable>()
+    // NPC rebuild: removed the combat-template damageable-interface check
+    const bool bLiving = IsValid(Hit.Target) && (Hit.Target->IsA<APawn>()
         || Hit.Target->FindComponentByClass<UReflectionsHealthComponent>());
     if (bLiving)
     {

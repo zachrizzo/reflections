@@ -10,11 +10,8 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 #include "InputAction.h"
-#include "Interfaces/CombatDamageable.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
-#include "NPC/ReflectionsNpcReactionComponent.h"
-#include "NPC/ReflectionsNpcSubsystem.h"
 
 namespace
 {
@@ -39,21 +36,11 @@ namespace
         return Origin;
     }
 
-    /** The NPC an actor belongs to: itself, or the NPC a hidden locomotion pawn drives. */
-    AActor* ResolveNpc(const UReflectionsNpcSubsystem* Npcs, AActor* Actor)
-    {
-        if (Npcs && Actor)
-        {
-            if (const UReflectionsNpcReactionComponent* Npc = Npcs->FindNpc(Actor)) return Npc->GetOwner();
-        }
-        return Actor;
-    }
+    // NPC rebuild: removed ResolveNpc (NPC hit-proxy / hidden walker lookup)
 
     bool IsAssistCandidate(const AActor* Actor, const AActor* Owner)
     {
-        // Friendly actors stay candidates, but only inside FriendlyConeDegrees (see Consider). The walkers' hidden
-        // locomotion pawns are filtered in Consider (they resolve to another NPC); the NPC_SampleLocomotion tag
-        // is on the visible walker, so it must not be filtered here.
+        // Friendly actors stay candidates, but only inside FriendlyConeDegrees (see Consider).
         if (!IsValid(Actor) || Actor == Owner || Actor->IsHidden())
         {
             return false;
@@ -62,7 +49,8 @@ namespace
         {
             return Health->Health > 0.0f;
         }
-        return Actor->IsA<APawn>() || Actor->Implements<UCombatDamageable>();
+        // NPC rebuild: removed the combat-template damageable-interface check
+        return Actor->IsA<APawn>();
     }
 }
 
@@ -217,7 +205,6 @@ void UReflectionsSpellAimComponent::UpdateAimTrace(APlayerController* Controller
     const float Cone = FMath::DegreesToRadians(AssistConeDegrees * (bAiming ? 1.0f : 0.6f) * (bGamepad ? 1.7f : 1.0f));
     const float EnemyCos = FMath::Cos(Cone);
     const float FriendlyCos = FMath::Cos(FMath::DegreesToRadians(FMath::Min(FriendlyConeDegrees, AssistConeDegrees)));
-    UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(World);
     float BestScore = -1.0f;
     AActor* Best = nullptr;
     bool bBestFriendly = false;
@@ -228,16 +215,10 @@ void UReflectionsSpellAimComponent::UpdateAimTrace(APlayerController* Controller
         {
             return;
         }
-        // A pawn that drives another NPC (the walkers' hidden GASP pawns) is never the target; the NPC is.
-        if (ResolveNpc(Npcs, Actor) != Actor)
-        {
-            return;
-        }
+        // NPC rebuild: removed the NPC driver-pawn filter and NPC aim point
         const bool bFriendly = Actor->ActorHasTag(TEXT("Friendly"));
         const float CosCone = bFriendly ? FriendlyCos : EnemyCos;
-        // NPCs of the unified system know their chest (spine bone or hit capsule); others use capsule or bounds.
-        FVector Point = TargetPoint(Actor);
-        if (const UReflectionsNpcReactionComponent* Npc = Npcs ? Npcs->FindNpc(Actor) : nullptr) Point = Npc->GetAimPoint();
+        const FVector Point = TargetPoint(Actor);
         const FVector ToTarget = Point - ViewLocation;
         const float Distance = ToTarget.Size();
         if (Distance > MaxAimDistance || Distance < 50.0f)
@@ -273,20 +254,12 @@ void UReflectionsSpellAimComponent::UpdateAimTrace(APlayerController* Controller
     {
         Consider(*It);
     }
-    // Actor-only NPCs (crowd MetaHumans, infected, hosts) from the unified NPC system.
-    if (Npcs)
-    {
-        for (AActor* Npc : Npcs->GetNpcActors())
-        {
-            if (!Npc || Npc->IsA<APawn>()) continue;  // Pawns were considered above.
-            Consider(Npc);
-        }
-    }
-    // Reticle directly on a target (or its hit proxy / driver pawn): that is the player's pick, Friendly or not.
+    // NPC rebuild: removed the actor-only NPC candidates from the NPC subsystem
+    // Reticle directly on a target: that is the player's pick, Friendly or not.
     // It locks for homing; a civilian still never pulls the camera.
     if (bAimHit && Hit.GetActor())
     {
-        AActor* Direct = ResolveNpc(Npcs, Hit.GetActor());
+        AActor* Direct = Hit.GetActor();
         if (Direct && IsAssistCandidate(Direct, Owner))
         {
             Best = Direct;

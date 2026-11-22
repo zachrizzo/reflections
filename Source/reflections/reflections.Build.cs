@@ -25,7 +25,8 @@ public class reflections : ModuleRules
 			"PhysicsCore"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime", "Niagara", "WebSockets", "AudioCaptureCore", "AudioCapture", "Json" });
+		// NPC rebuild: removed WebSockets, AudioCaptureCore, AudioCapture and Json (used only by the old Voice code)
+		PrivateDependencyModuleNames.AddRange(new string[] { "AnimGraphRuntime", "Niagara" });
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.AddRange(new string[] {
@@ -34,14 +35,9 @@ public class reflections : ModuleRules
 			});
 		}
 
+		// NPC rebuild: removed the combat-template include paths
 		PublicIncludePaths.AddRange(new string[] {
 			"reflections",
-			"reflections/Variant_Combat",
-			"reflections/Variant_Combat/AI",
-			"reflections/Variant_Combat/Animation",
-			"reflections/Variant_Combat/Gameplay",
-			"reflections/Variant_Combat/Interfaces",
-			"reflections/Variant_Combat/UI",
 		});
 
 		// Uncomment if you are using Slate UI

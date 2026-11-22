@@ -14,10 +14,6 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Variant_Combat/AI/CombatEnemy.h"
-#include "Interfaces/CombatDamageable.h"
-#include "NPC/ReflectionsNpcReactionComponent.h"
-#include "NPC/ReflectionsNpcSubsystem.h"
 #include "SpellVFX/ReflectionsSpellVfxSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInterface.h"
@@ -76,32 +72,8 @@ namespace
         const FHitResult* DirectHit = nullptr, const FSpellReaction* Reaction = nullptr)
     {
         if (!Target || Target == Caster) return;
-        // NPC casters (enemy soldiers) spare their own side; the player's spells can still hit anyone.
-        const UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(Target);
-        // A hit on an NPC's hidden walker or hit proxy is a hit on the NPC; the NPC system moves NPC bodies itself.
-        bool bNpc = false;
-        if (Npcs)
-        {
-            if (const UReflectionsNpcReactionComponent* Npc = Npcs->FindNpc(Target))
-            {
-                Target = Npc->GetOwner();
-                bNpc = true;
-                if (!Target || Target == Caster) return;
-            }
-        }
-        if (Npcs && !Npcs->CanBeHarmedBy(Target, Caster))
-        {
-            UE_CLOG(CVarSpellLogHits.GetValueOnGameThread() != 0, LogTemp, Display, TEXT("Spell: %s spared %s (ally of the caster)"),
-                *GetNameSafe(Caster), *GetNameSafe(Target));
-            return;
-        }
+        // NPC rebuild: removed the NPC hit-proxy resolve, the NPC ally harm gate and the combat-template enemy freeze gate
         const FSpellReaction React = Reaction ? *Reaction : ReactionFor(Spell, Damage, Push);
-        if (Spell == EHeroSpell::Freeze && !bNpc)
-        {
-            // The main world's people use the NPC system. The combat template uses a separate AI pawn.
-            ACombatEnemy* Enemy = Cast<ACombatEnemy>(Target);
-            if (!Enemy || !Enemy->ApplySpellFreeze(React.Duration)) return;
-        }
         const bool bBlast = React.Type == EReflectionsSpellReaction::Explosion;
         const FVector Direction = (Target->GetActorLocation() - Origin).GetSafeNormal();
         UPrimitiveComponent* Primitive = DirectHit ? DirectHit->GetComponent() : Cast<UPrimitiveComponent>(Target->GetRootComponent());
@@ -109,13 +81,9 @@ namespace
         const FHitResult Hit = DirectHit ? *DirectHit : FHitResult(Target, Primitive, Point, -Direction);
         if (Damage > 0.0f)
         {
-            if (ICombatDamageable* Damageable = Cast<ICombatDamageable>(Target))
-                Damageable->ApplyDamage(Damage, Caster, Point, Direction * Push);
-            else
-            {
-                const APawn* Pawn = Cast<APawn>(Caster);
-                UGameplayStatics::ApplyPointDamage(Target, Damage, Direction, Hit, Pawn ? Pawn->GetController() : nullptr, Caster, UDamageType::StaticClass());
-            }
+            // NPC rebuild: removed the combat-template damageable-interface damage path
+            const APawn* Pawn = Cast<APawn>(Caster);
+            UGameplayStatics::ApplyPointDamage(Target, Damage, Direction, Hit, Pawn ? Pawn->GetController() : nullptr, Caster, UDamageType::StaticClass());
         }
         // The player is shoved, not thrown: enemy bolts would otherwise knock them around on every hit.
         if (const APawn* TargetPawn = Cast<APawn>(Target); TargetPawn && TargetPawn->IsPlayerControlled()) Push *= 0.3f;
@@ -123,10 +91,11 @@ namespace
         const FVector Velocity = Direction * Push + FVector(0.0f, 0.0f, Push * (bBlast ? 0.4f : 0.15f));
         if (Push > 0.0f)
         {
-            if (ACharacter* Character = Cast<ACharacter>(Target); Character && !bNpc) Character->LaunchCharacter(Velocity, true, true);
-            else if (Primitive && Primitive->IsSimulatingPhysics(Hit.BoneName) && !(Npcs && Npcs->FindNpc(Target)))
+            // NPC rebuild: removed the NPC-body exclusions from launch and impulse
+            if (ACharacter* Character = Cast<ACharacter>(Target)) Character->LaunchCharacter(Velocity, true, true);
+            else if (Primitive && Primitive->IsSimulatingPhysics(Hit.BoneName))
             {
-                // Loose props: a velocity kick, so a crate flies as far as a bottle. NPC bodies react on their own side.
+                // Loose props: a velocity kick, so a crate flies as far as a bottle.
                 Primitive->AddImpulseAtLocation(Velocity * Primitive->GetMass(), Point, Hit.BoneName);
             }
         }
@@ -152,15 +121,10 @@ namespace
         Types.AddObjectTypesToQuery(ECC_Pawn); Types.AddObjectTypesToQuery(ECC_WorldDynamic); Types.AddObjectTypesToQuery(ECC_PhysicsBody);
         FCollisionQueryParams Query(SCENE_QUERY_STAT(SpellArea), false, Caster);
         World->OverlapMultiByObjectType(Hits, Location, FQuat::Identity, Types, FCollisionShape::MakeSphere(Radius), Query);
-        const UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(World);
         for (const FOverlapResult& Hit : Hits)
         {
             AActor* Actor = Hit.GetActor();
-            // An NPC and its hidden walker or hit proxy count once, as the NPC.
-            if (Npcs && Actor)
-            {
-                if (const UReflectionsNpcReactionComponent* Npc = Npcs->FindNpc(Actor)) Actor = Npc->GetOwner();
-            }
+            // NPC rebuild: removed the NPC hit-proxy resolve
             if (Actor && Actor != Caster) Targets.Add(Actor);
         }
         return Targets;
@@ -178,11 +142,7 @@ namespace
         Types.AddObjectTypesToQuery(ECC_Pawn); Types.AddObjectTypesToQuery(ECC_WorldDynamic); Types.AddObjectTypesToQuery(ECC_PhysicsBody);
         FCollisionQueryParams Query(SCENE_QUERY_STAT(SpellExplosion), false, Caster);
         World->OverlapMultiByObjectType(Hits, Center, FQuat::Identity, Types, FCollisionShape::MakeSphere(Radius), Query);
-        const UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(World);
-        if (Npcs && DirectActor)
-        {
-            if (const UReflectionsNpcReactionComponent* Npc = Npcs->FindNpc(DirectActor)) DirectActor = Npc->GetOwner();
-        }
+        // NPC rebuild: removed the NPC hit-proxy resolve and NPC-body impulse exclusion
         TSet<AActor*> Done;
         TSet<UPrimitiveComponent*> Thrown;
         auto Blast = [&](AActor* Target, const FHitResult* Direct)
@@ -198,14 +158,10 @@ namespace
             AActor* Target = Hit.GetActor();
             if (!Target || Target == Caster || Ignore.Contains(Target)) continue;
             UPrimitiveComponent* Part = Hit.GetComponent();
-            if (Part && Part->IsSimulatingPhysics() && !Thrown.Contains(Part) && !(Npcs && Npcs->FindNpc(Target)))
+            if (Part && Part->IsSimulatingPhysics() && !Thrown.Contains(Part))
             {
                 Thrown.Add(Part);
                 Part->AddRadialImpulse(Center, Radius, Speed, ERadialImpulseFalloff::RIF_Linear, true);
-            }
-            if (Npcs)
-            {
-                if (const UReflectionsNpcReactionComponent* Npc = Npcs->FindNpc(Target)) Target = Npc->GetOwner();
             }
             if (!Target || Target == Caster || Ignore.Contains(Target) || Done.Contains(Target) || Target == DirectActor) continue;
             Done.Add(Target);
@@ -355,30 +311,22 @@ void AReflectionsSpellProjectile::ChainLightning(AActor* From, const FVector& Po
     UWorld* World = GetWorld();
     AActor* Caster = GetOwner();
     if (!World || ChainsLeft <= 0 || !IsValid(From)) return;
-    const UReflectionsNpcSubsystem* Npcs = UReflectionsNpcSubsystem::Get(World);
-    auto Body = [Npcs](AActor* Actor) -> AActor*
-    {
-        if (!Npcs || !Actor) return Actor;
-        const UReflectionsNpcReactionComponent* Npc = Npcs->FindNpc(Actor);
-        return Npc ? Npc->GetOwner() : Actor;
-    };
-    AActor* Struck = Body(From);
+    // NPC rebuild: removed the NPC hit-proxy resolve, NPC ally harm gate and NPC aim point
+    AActor* Struck = From;
     TArray<TPair<float, AActor*>> Next;
-    for (AActor* Candidate : OverlapTargets(World, Point, 750.0f, Caster))
+    for (AActor* Target : OverlapTargets(World, Point, 750.0f, Caster))
     {
-        AActor* Target = Body(Candidate);
         if (!IsValid(Target) || Target == Struck || Target == Caster || Next.ContainsByPredicate([Target](const TPair<float, AActor*>& P) { return P.Value == Target; })) continue;
         const UReflectionsHealthComponent* Health = Target->FindComponentByClass<UReflectionsHealthComponent>();
-        const bool bLiving = (Health && Health->Health > 0.0f) || (!Health && (Target->IsA<APawn>() || (Npcs && Npcs->FindNpc(Target))));
-        if (!bLiving || (Npcs && !Npcs->CanBeHarmedBy(Target, Caster))) continue;
+        const bool bLiving = (Health && Health->Health > 0.0f) || (!Health && Target->IsA<APawn>());
+        if (!bLiving) continue;
         Next.Add(TPair<float, AActor*>(FVector::DistSquared(Point, Target->GetActorLocation()), Target));
     }
     Next.Sort([](const TPair<float, AActor*>& A, const TPair<float, AActor*>& B) { return A.Key < B.Key; });
     for (int32 Index = 0; Index < FMath::Min(Next.Num(), 2); ++Index)
     {
         AActor* Target = Next[Index].Value;
-        FVector Aim = Target->GetActorLocation();
-        if (const UReflectionsNpcReactionComponent* Npc = Npcs ? Npcs->FindNpc(Target) : nullptr) Aim = Npc->GetAimPoint();
+        const FVector Aim = Target->GetActorLocation();
         const FVector Start = Point + (Aim - Point).GetSafeNormal() * 40.0f;
         const FTransform Launch((Aim - Start).Rotation(), Start);
         AReflectionsSpellProjectile* Arc = World->SpawnActorDeferred<AReflectionsSpellProjectile>(StaticClass(), Launch, Caster,
@@ -604,10 +552,7 @@ void UReflectionsSpellCombatComponent::ReleaseSpellAt(EHeroSpell Spell, FTransfo
         {
             Health->Heal(Spec.Power, Caster);
         }
-        else if (ICombatDamageable* Damageable = Cast<ICombatDamageable>(Caster))
-        {
-            Damageable->ApplyHealing(Spec.Power, Caster);
-        }
+        // NPC rebuild: removed the combat-template damageable-interface healing path
         if (Spec.Radius > 0.0f)
             for (AActor* Ally : OverlapTargets(World, Caster->GetActorLocation(), Spec.Radius, Caster))
                 if (Ally->ActorHasTag(TEXT("Friendly")))

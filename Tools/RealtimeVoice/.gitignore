@@ -1,4 +1,0 @@
-build/
-dist/
-*.spec
-__pie_probe.py

@@ -1,8 +1,8 @@
 # Reflections
 
-Reflections starts in Test Town, the project's only saved level. The small blockout has a market square, a side lane, and a conversation NPC. The existing hero spawns on the south road. Use the square to check movement and spells, and use the NPC by the stalls to check dialogue. The project also retains reusable melee assets and the NPC voice library.
+Reflections starts in Test Town, the project's only saved level. The small blockout has a market square and a side lane. The existing hero spawns on the south road. Use the square to check movement and spells.
 
-The [NPC conversation setup](ArtDirection/NpcDialogue/README.md) covers baked replies and the optional local relay.
+NPCs are being rebuilt from scratch; see [the NPC behavior plan](ArtDirection/NpcBehavior/Plan.md).
 
 ## Set up a team workspace
 
