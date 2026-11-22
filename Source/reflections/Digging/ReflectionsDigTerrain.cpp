@@ -1,7 +1,10 @@
 #include "Digging/ReflectionsDigTerrain.h"
 
 #include "CoreMinimal.h"
+#include "AI/Navigation/NavDataGatheringMode.h"
+#include "AI/Navigation/NavigationTypes.h"
 #include "AI/NavigationSystemBase.h"
+#include "AI/NavigationSystemHelpers.h"
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
 #include "Digging/ReflectionsDigMesher.h"
@@ -42,9 +45,13 @@ using UE::Geometry::FDynamicMesh3;
  *   quiet: a neighbouring chunk may still be showing the old hole into this chunk.
  * - Navigation follows the collision, not the mesh: a current piece asks for one navigation update per cook that
  *   brings its new body in (a failed cook asks for nothing), a set leaves navigation as it retires, and a destroyed
- *   piece leaves through the engine's unregister. A retiring set kept by a failed cook is the chunk's only collision,
- *   so it gets its navigation back once, until the next commit puts a new set in front of it or it is destroyed.
- *   The safety floor never affects navigation.
+ *   piece leaves through the engine's unregister. A new piece does not count for navigation until its first cook is
+ *   in; that cook adds it. A retiring set kept by a failed cook is the chunk's only collision, so it gets its
+ *   navigation back once, until the next commit puts a new set in front of it or it is destroyed. Each piece carries
+ *   that state itself (UReflectionsDigChunkComponent::CountsForNavigation). The safety floor never affects navigation.
+ * - Navigation never reads a piece's body setup: it exports the triangles of the piece's collision, built on the
+ *   worker with its mesh. Reading the body would have the navigation tick build a body that has no physics meshes yet
+ *   on the game thread, while the background cook builds the same data.
  */
 
 namespace
@@ -172,6 +179,104 @@ namespace
     }
 }
 
+UReflectionsDigChunkComponent::UReflectionsDigChunkComponent()
+{
+    OnMeshChanged.AddUObject(this, &UReflectionsDigChunkComponent::NoteMeshChanged);
+}
+
+void UReflectionsDigChunkComponent::NoteMeshChanged()
+{
+    ++MeshChangeSerial;
+}
+
+void UReflectionsDigChunkComponent::SetNavGeometry(FReflectionsDigNavGeometry&& InGeometry)
+{
+    NewNavGeometry = MoveTemp(InGeometry);
+    bHasNewNavGeometry = true;
+}
+
+void UReflectionsDigChunkComponent::PromoteNavGeometry()
+{
+    if (bHasCookingNavGeometry)
+    {
+        NavGeometry = MoveTemp(CookingNavGeometry);
+        CookingNavGeometry = FReflectionsDigNavGeometry();
+        bHasCookingNavGeometry = false;
+    }
+}
+
+bool UReflectionsDigChunkComponent::DoCustomNavigableGeometryExport(FNavigableGeometryExport& GeomExport) const
+{
+    // Runs on the game thread (GetGeometryGatheringMode is Instant), where the arrays change.
+    if (!NavGeometry.Vertices.IsEmpty() && !NavGeometry.Indices.IsEmpty())
+    {
+        GeomExport.ExportCustomMesh(NavGeometry.Vertices.GetData(), NavGeometry.Vertices.Num(), NavGeometry.Indices.GetData(),
+            NavGeometry.Indices.Num(), GetComponentTransform());
+    }
+    // The default export would read the body setup, and the generator builds a body it reads that has no physics
+    // meshes yet (UBodySetup::CreatePhysicsMeshes) on the spot.
+    return false;
+}
+
+ENavDataGatheringMode UReflectionsDigChunkComponent::GetGeometryGatheringMode() const
+{
+    // With lazy gathering (a project setting) the export would run when a tile is built, possibly on a worker.
+    return ENavDataGatheringMode::Instant;
+}
+
+bool UReflectionsDigChunkComponent::IsNavigationRelevant() const
+{
+    return NavigationState == ENavigationState::Counts && Super::IsNavigationRelevant();
+}
+
+bool UReflectionsDigChunkComponent::CountsForNavigation() const
+{
+    return NavigationState == ENavigationState::Counts;
+}
+
+void UReflectionsDigChunkComponent::RefreshNavigationRelevance()
+{
+    if (!IsRegistered())
+    {
+        return;
+    }
+    if (IsNavigationRelevant())
+    {
+        // With CanEverAffectNavigation on, this caches the relevance and registers the piece with navigation.
+        HandleCanEverAffectNavigationChange();
+    }
+    else
+    {
+        bNavigationRelevant = false;
+        FNavigationSystem::OnComponentUnregistered(*this);
+    }
+}
+
+void UReflectionsDigChunkComponent::CountGameThreadCook(const UBodySetup* FinishedBodySetup)
+{
+    // The body in place: with deferred collision updates every mesh change clears it (InvalidatePhysicsData), so if
+    // it holds cooked triangles again for a mesh no cook of this piece brought it in for, something built it here.
+    const UBodySetup* Current = MeshBodySetup;
+    if (Current == nullptr || Current == FinishedBodySetup || !Current->bCreatedPhysicsMeshes || Current->TriMeshGeometries.IsEmpty())
+    {
+        return;
+    }
+    if (CookedBody.Get() == Current && CookedBodyMeshSerial == MeshChangeSerial)
+    {
+        return;
+    }
+    if (LastCountedBody.Get() == Current && LastCountedMeshSerial == MeshChangeSerial)
+    {
+        return;
+    }
+    LastCountedBody = Current;
+    LastCountedMeshSerial = MeshChangeSerial;
+    if (AReflectionsDigTerrain* Terrain = Cast<AReflectionsDigTerrain>(GetOwner()))
+    {
+        ++Terrain->GameThreadCookCount;
+    }
+}
+
 bool UReflectionsDigChunkComponent::IsCollisionCookPending() const
 {
     return PendingCook != nullptr;
@@ -192,9 +297,23 @@ void UReflectionsDigChunkComponent::RebuildPhysicsData()
     // The async path appends one new body setup to AsyncBodySetupQueue. A cook that finishes inside this call
     // (nothing to cook) has already left the queue, and the sync path empties it: neither is pending.
     UBodySetup* const LastBefore = AsyncBodySetupQueue.IsEmpty() ? nullptr : AsyncBodySetupQueue.Last().Get();
+    // The cook about to start builds the newest mesh: its triangles wait with it.
+    if (bHasNewNavGeometry)
+    {
+        CookingNavGeometry = MoveTemp(NewNavGeometry);
+        NewNavGeometry = FReflectionsDigNavGeometry();
+        bHasNewNavGeometry = false;
+        bHasCookingNavGeometry = true;
+    }
+    RebuildMeshSerial = MeshChangeSerial;
     Super::RebuildPhysicsData();
+    RebuildMeshSerial = INDEX_NONE;
     UBodySetup* const LastAfter = AsyncBodySetupQueue.IsEmpty() ? nullptr : AsyncBodySetupQueue.Last().Get();
     PendingCook = LastAfter != LastBefore ? LastAfter : nullptr;
+    if (PendingCook != nullptr)
+    {
+        PendingCookMeshSerial = MeshChangeSerial;
+    }
     if (AsyncBodySetupQueue.IsEmpty())
     {
         // Nothing left to wait for, but an empty queue does not prove a body: the engine's RebuildPhysicsData returns
@@ -205,6 +324,10 @@ void UReflectionsDigChunkComponent::RebuildPhysicsData()
         bHasCollision = Body != nullptr && Body->bCreatedPhysicsMeshes && !Body->bFailedToCreatePhysicsMeshes
             && (Body->TriMeshGeometries.Num() > 0 || Body->AggGeom.GetElementCount() > 0);
         bLastCookFailed = !bHasCollision;
+        if (bHasCollision)
+        {
+            PromoteNavGeometry();
+        }
         if (AReflectionsDigTerrain* Terrain = Cast<AReflectionsDigTerrain>(GetOwner()); Terrain != nullptr && bHasCollision)
         {
             Terrain->UpdatePieceNavigation(*this);
@@ -221,6 +344,8 @@ void UReflectionsDigChunkComponent::FailNextCookForTest()
 
 void UReflectionsDigChunkComponent::FinishPhysicsAsyncCook(bool bSuccess, UBodySetup* FinishedBodySetup)
 {
+    // Before the engine swaps anything: what is in place now is what this cook is about to replace.
+    CountGameThreadCook(FinishedBodySetup);
 #if WITH_DEV_AUTOMATION_TESTS
     if (bFailNextCookForTest && FinishedBodySetup != nullptr && FinishedBodySetup == PendingCook)
     {
@@ -235,6 +360,14 @@ void UReflectionsDigChunkComponent::FinishPhysicsAsyncCook(bool bSuccess, UBodyS
     {
         Timed->CookFinishSeconds += FPlatformTime::Seconds() - CookFinishStart;
     }
+    if (FinishedBodySetup != nullptr && MeshBodySetup == FinishedBodySetup)
+    {
+        // This cook's body is in; remember which mesh it was cooked from (one that finished inside RebuildPhysicsData
+        // started there).
+        CookedBody = FinishedBodySetup;
+        CookedBodyMeshSerial = FinishedBodySetup == PendingCook ? PendingCookMeshSerial
+            : RebuildMeshSerial != INDEX_NONE ? RebuildMeshSerial : MeshChangeSerial;
+    }
     // Older cooks are aborted when a newer one starts and never report back; only the newest ends the wait.
     if (FinishedBodySetup != nullptr && FinishedBodySetup == PendingCook)
     {
@@ -246,9 +379,13 @@ void UReflectionsDigChunkComponent::FinishPhysicsAsyncCook(bool bSuccess, UBodyS
             ++Owner->CookCompletionCount;
         }
         bHasCollision |= !bLastCookFailed;
-        // Navigation exports the body setup it is handed, so it is told only now that the new one is in; a failed
-        // cook kept the old body, which navigation already has.
+        // Navigation follows the collision: it is told only now that the new body is in, and from now on exports
+        // this mesh's triangles. A failed cook kept the old body, whose triangles navigation already has.
         AReflectionsDigTerrain* Terrain = Cast<AReflectionsDigTerrain>(GetOwner());
+        if (!bLastCookFailed)
+        {
+            PromoteNavGeometry();
+        }
         if (!bLastCookFailed && Terrain != nullptr)
         {
             Terrain->UpdatePieceNavigation(*this);
@@ -410,6 +547,8 @@ void AReflectionsDigTerrain::CommitChunkPieces(FIntVector Chunk, FReflectionsDig
             CookStartVertices += Result.Pieces[Index].VertexCount();
             const double SetStart = FPlatformTime::Seconds();
             Targets[Index]->SetMesh(MoveTemp(Result.Pieces[Index]));
+            // Its triangles for navigation, which exports them once the cook below has brought them in.
+            Targets[Index]->SetNavGeometry(Result.NavGeometry.IsValidIndex(Index) ? MoveTemp(Result.NavGeometry[Index]) : FReflectionsDigNavGeometry());
             SetMeshSeconds += FPlatformTime::Seconds() - SetStart;
             // Async path: a new body setup is cooked; FinishPhysicsAsyncCook swaps it in.
             const double CookStart = FPlatformTime::Seconds();
@@ -443,8 +582,10 @@ void AReflectionsDigTerrain::RetireCurrentSet(FReflectionsDigTerrainChunk& State
             {
                 Old->SetVisibility(false);
                 // Old collision: it leaves navigation now (the engine removes it from the navigation octree and
-                // dirties its area), not when it is destroyed after the swap.
+                // dirties its area), not when it is destroyed after the swap. A cook of it still running brings
+                // nothing to navigation.
                 const double NavStart = FPlatformTime::Seconds();
+                Old->NavigationState = UReflectionsDigChunkComponent::ENavigationState::Excluded;
                 Old->SetCanEverAffectNavigation(false);
                 NavUpdateSeconds += FPlatformTime::Seconds() - NavStart;
                 ++NavUpdateCount;
@@ -468,19 +609,30 @@ void AReflectionsDigTerrain::RetireCurrentSet(FReflectionsDigTerrainChunk& State
 
 void AReflectionsDigTerrain::SetRetiringSetNavigation(FReflectionsDigTerrainChunk& State, bool bAffects)
 {
+    using ENavigationState = UReflectionsDigChunkComponent::ENavigationState;
+    const ENavigationState Wanted = bAffects ? ENavigationState::Counts : ENavigationState::Excluded;
     bool bChanged = false;
     for (UReflectionsDigChunkComponent* Piece : State.Retiring)
     {
-        if (Piece != nullptr && Piece->CanEverAffectNavigation() != bAffects)
+        if (Piece == nullptr || (Piece->CanEverAffectNavigation() == bAffects && Piece->NavigationState == Wanted))
         {
-            // The engine adds the piece to the navigation octree with its current body, or removes it, and dirties
-            // its area.
-            const double NavStart = FPlatformTime::Seconds();
-            Piece->SetCanEverAffectNavigation(bAffects);
-            NavUpdateSeconds += FPlatformTime::Seconds() - NavStart;
-            ++NavUpdateCount;
-            bChanged = true;
+            continue;
         }
+        // The engine adds the piece to the navigation octree with the triangles of its collision, or removes it, and
+        // dirties its area. The piece's own state goes first: it decides whether the piece is relevant.
+        const double NavStart = FPlatformTime::Seconds();
+        Piece->NavigationState = Wanted;
+        if (Piece->CanEverAffectNavigation() != bAffects)
+        {
+            Piece->SetCanEverAffectNavigation(bAffects);
+        }
+        else
+        {
+            Piece->RefreshNavigationRelevance();
+        }
+        NavUpdateSeconds += FPlatformTime::Seconds() - NavStart;
+        ++NavUpdateCount;
+        bChanged = true;
     }
     const UWorld* World = GetWorld();
     if (bChanged && World != nullptr)
@@ -518,6 +670,11 @@ FReflectionsDigTerrainTimings AReflectionsDigTerrain::GetTimings() const
 int32 AReflectionsDigTerrain::GetCookCompletionCount() const
 {
     return CookCompletionCount;
+}
+
+int32 AReflectionsDigTerrain::GetGameThreadCookCount() const
+{
+    return GameThreadCookCount;
 }
 
 int32 AReflectionsDigTerrain::GetChunkReleaseCount() const
@@ -658,16 +815,26 @@ double AReflectionsDigTerrain::GetNavUpdateSeconds() const
 
 void AReflectionsDigTerrain::UpdatePieceNavigation(UReflectionsDigChunkComponent& Piece)
 {
+    using ENavigationState = UReflectionsDigChunkComponent::ENavigationState;
     UWorld* World = GetWorld();
-    // A retiring piece no longer affects navigation; a destroyed one has unregistered. Between EndPlay and the
+    // A retiring piece no longer counts for navigation; a destroyed one has unregistered. Between EndPlay and the
     // world's end the grid is gone, so a late cook asks for nothing either.
     if (Grid == nullptr || World == nullptr || World->bIsTearingDown || !Piece.IsRegistered() || Piece.IsBeingDestroyed()
-        || !Piece.CanEverAffectNavigation())
+        || Piece.NavigationState == ENavigationState::Excluded)
     {
         return;
     }
     const double NavStart = FPlatformTime::Seconds();
-    FNavigationSystem::UpdateComponentData(Piece);
+    if (Piece.NavigationState == ENavigationState::WaitingForCollision)
+    {
+        // Its first collision is in: only now does the new piece join navigation, with these triangles.
+        Piece.NavigationState = ENavigationState::Counts;
+        Piece.RefreshNavigationRelevance();
+    }
+    else
+    {
+        FNavigationSystem::UpdateComponentData(Piece);
+    }
     NavUpdateSeconds += FPlatformTime::Seconds() - NavStart;
     NavAfterCookSeconds += FPlatformTime::Seconds() - NavStart;
     ++NavUpdateCount;
@@ -691,6 +858,9 @@ UReflectionsDigChunkComponent* AReflectionsDigTerrain::CreatePieceComponent()
     Piece->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     Piece->SetCollisionObjectType(ECC_WorldStatic);
     Piece->SetCollisionResponseToAllChannels(ECR_Block);
+    // Navigation takes the piece's own triangles (DoCustomNavigableGeometryExport), never its body setup, and only
+    // once its first cook is in (until then IsNavigationRelevant is false, so registering adds nothing).
+    Piece->SetCustomNavigableGeometry(EHasCustomNavigableGeometry::Yes);
     Piece->SetCanEverAffectNavigation(true);
     if (PieceMaterial != nullptr)
     {

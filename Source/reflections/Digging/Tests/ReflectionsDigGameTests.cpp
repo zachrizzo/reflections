@@ -11,6 +11,7 @@
 #include "Digging/ReflectionsDigTypes.h"
 #include "Digging/Tests/ReflectionsDigGameTestHarness.h"
 #include "Digging/Tests/ReflectionsDigTestTraces.h"
+#include "DynamicMesh/DynamicMesh3.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/HitResult.h"
 #include "Engine/World.h"
@@ -676,6 +677,162 @@ bool FReflectionsDigSpikeAiWalksIntoPitTest::RunTest(const FString& Parameters)
         }
         return true;
     }, /*bAlwaysRun=*/ true);
+    AddCleanup(Scene);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigSpikeNavigationNeverBuildsCollisionTest, "Reflections.DigSpike.NavigationNeverBuildsCollision", DigGameTestFlags)
+bool FReflectionsDigSpikeNavigationNeverBuildsCollisionTest::RunTest(const FString& Parameters)
+{
+    /**
+     * Its own site: buried chunk (2, 1, 0), X 4225..5825, Y -775..825, Z -2800..-1200, which no other game test digs
+     * (the nearest digs are DigDownToBedrock's shaft at (4800, -1600) and FloorStaysWhileCollisionRecooks' at
+     * (4800, 1600), both over 800 cm from its cavities). The character stands on the ground above it.
+     */
+    const FVector2D Above(5025.0, 25.0);
+    static constexpr int32 SplitAboveVertices = 12000;
+    /**
+     * Ten digs 0.1 s apart: a tunnel along +X on the bedrock, between two rows of cavities, from (4825, 25, -2700):
+     * five places 50 cm apart, each dug at the bedrock and 80 cm higher (as PitTunnelAndFill's tunnel), so its floor
+     * is wide and tall enough for the navmesh's agent. It ends at (5025, 25), as far from the lattice's cavities as
+     * the lattice allows, so the navmesh found there is the tunnel's.
+     */
+    static constexpr int32 Digs = 10;
+    static constexpr double DigEverySeconds = 0.1;
+    const FVector TunnelStart(4825.0, 25.0, -2700.0);
+    /** The tunnel's end on the bedrock, before the digs. */
+    const FVector TunnelEndFloor(5025.0, 25.0, BedrockTopZ);
+    constexpr double TunnelStepCm = 50.0;
+    constexpr double TunnelUpperCm = 80.0;
+    constexpr double FollowLimitSeconds = 1.0;
+    constexpr double FollowTimeoutSeconds = 10.0;
+    const TSharedPtr<FDigGameScene> Started = StartScene(*this, Above.X, Above.Y);
+    if (!Started.IsValid())
+    {
+        return false;
+    }
+    const FDigGameSceneRef Scene = Started.ToSharedRef();
+
+    struct FBusy
+    {
+        FIntVector Chunk = FIntVector::ZeroValue;
+        int32 Passes = 0;
+        int32 CooksBeforeDigs = 0;
+        double NextDigSeconds = -1.0;
+        int32 Issued = 0;
+        int32 Changed = 0;
+        FVector LastDig = FVector::ZeroVector;
+        FVector Floor = FVector::ZeroVector;
+        double IdleSeconds = 0.0;
+    };
+    TSharedRef<FBusy> Busy = MakeShared<FBusy>();
+    auto ChunkVertices = [](const AReflectionsDigTerrain& Terrain, const FIntVector& Chunk)
+    {
+        int32 Vertices = 0;
+        for (int32 Index = 0; Index < Terrain.GetChunkPieceCount(Chunk); ++Index)
+        {
+            const UDynamicMeshComponent* Piece = Terrain.GetChunkPiece(Chunk, Index);
+            Vertices += Piece != nullptr && Piece->GetMesh() != nullptr ? Piece->GetMesh()->VertexCount() : 0;
+        }
+        return Vertices;
+    };
+
+    // Riddle the chunk with radius-100 cavities on a 200 cm lattice (a second, offset lattice if the first does not
+    // take it above 12,000 vertices), as SpikePerf.BusyChunkCost does.
+    for (const double Offset : { 0.0, 100.0 })
+    {
+        AddAction(Scene, TEXT("Riddle the busy chunk"), [Busy, Offset, ChunkVertices](FDigGameScene& S)
+        {
+            const AReflectionsDigTerrain* Terrain = S.Terrain.Get();
+            if (Terrain == nullptr || Terrain->GetGrid() == nullptr)
+            {
+                S.Abort(TEXT("The terrain is gone"));
+                return;
+            }
+            Busy->Chunk = ChunkAt(*Terrain, FVector(5025.0, 25.0, -2000.0));
+            if (Busy->Passes > 0 && ChunkVertices(*Terrain, Busy->Chunk) > SplitAboveVertices)
+            {
+                return;
+            }
+            ++Busy->Passes;
+            for (double Z = -2700.0 + Offset; Z <= -1300.0; Z += 200.0)
+            {
+                for (double Y = -675.0 + Offset; Y <= 725.0; Y += 200.0)
+                {
+                    for (double X = 4325.0 + Offset; X <= 5725.0; X += 200.0)
+                    {
+                        S.GetSubsystem()->Dig(FVector(X, Y, Z), DigRadiusCm, EReflectionsDigMode::Remove);
+                    }
+                }
+            }
+        });
+        AddStep(Scene, TEXT("Idle after riddling"), 120.0, [](FDigGameScene& S) { return S.GetSubsystem()->IsIdle(); });
+    }
+    AddWaitForNavigationAt(Scene, TEXT("The navmesh covers the ground above the busy chunk"), FVector(Above.X, Above.Y, GroundZ));
+    AddAction(Scene, TEXT("Check the busy chunk is split"), [Busy, ChunkVertices, TunnelEndFloor](FDigGameScene& S)
+    {
+        const TOptional<FVector> Before = ProjectToNavigation(S, TunnelEndFloor);
+        S.Test->TestFalse(FString::Printf(TEXT("Premise: before the digs a projection onto the tunnel's end %s fails (found %s)"),
+            *TunnelEndFloor.ToString(), Before.IsSet() ? *Before->ToString() : TEXT("none")), Before.IsSet());
+        const AReflectionsDigTerrain* Terrain = S.Terrain.Get();
+        const int32 Vertices = ChunkVertices(*Terrain, Busy->Chunk);
+        Busy->CooksBeforeDigs = Terrain->GetGameThreadCookCount();
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless NavigationNeverBuildsCollision: chunk %s riddled in %d passes, %d pieces, %d vertices; game-thread cooks so far %d"),
+            *Busy->Chunk.ToString(), Busy->Passes, Terrain->GetChunkPieceCount(Busy->Chunk), Vertices, Busy->CooksBeforeDigs);
+        if (!S.Test->TestTrue(FString::Printf(TEXT("Premise: chunk %s is above %d vertices (%d)"), *Busy->Chunk.ToString(), SplitAboveVertices, Vertices),
+            Vertices > SplitAboveVertices))
+        {
+            S.bAborted = true;
+        }
+    });
+    AddStep(Scene, TEXT("Dig inside the busy chunk ten times 0.1 s apart"), 30.0, [Busy, TunnelStart, TunnelStepCm, TunnelUpperCm](FDigGameScene& S)
+    {
+        const double Now = S.GetWorld()->GetTimeSeconds();
+        if (Busy->NextDigSeconds < 0.0)
+        {
+            Busy->NextDigSeconds = Now;
+        }
+        if (Now < Busy->NextDigSeconds)
+        {
+            return false;
+        }
+        Busy->NextDigSeconds += DigEverySeconds;
+        Busy->LastDig = TunnelStart + FVector(TunnelStepCm * (Busy->Issued / 2), 0.0, Busy->Issued % 2 == 0 ? 0.0 : TunnelUpperCm);
+        Busy->Changed += S.GetSubsystem()->Dig(Busy->LastDig, DigRadiusCm, EReflectionsDigMode::Remove) ? 1 : 0;
+        return ++Busy->Issued >= Digs;
+    });
+    AddStep(Scene, TEXT("Idle after the ten digs"), 60.0, [Busy](FDigGameScene& S)
+    {
+        if (!S.GetSubsystem()->IsIdle())
+        {
+            return false;
+        }
+        Busy->IdleSeconds = S.GetWorld()->GetTimeSeconds();
+        const TOptional<double> FloorZ = FReflectionsDigTestTraces::TraceDownToChunkZ(S.GetWorld(), Busy->LastDig.X, Busy->LastDig.Y, Busy->LastDig.Z,
+            TraceEndZ, S.GetCharacter());
+        Busy->Floor = FVector(Busy->LastDig.X, Busy->LastDig.Y, FloorZ.IsSet() ? *FloorZ : Busy->LastDig.Z - DigRadiusCm);
+        const int32 Cooks = S.Terrain.IsValid() ? S.Terrain->GetGameThreadCookCount() : -1;
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless NavigationNeverBuildsCollision: %d of %d digs changed the grid; game-thread cooks %d (%d before the digs); last dug floor %s"),
+            Busy->Changed, Busy->Issued, Cooks, Busy->CooksBeforeDigs, FloorZ.IsSet() ? *Busy->Floor.ToString() : TEXT("not hit"));
+        S.Test->TestTrue(FString::Printf(TEXT("The ten digs changed the grid (%d did)"), Busy->Changed), Busy->Changed > 0);
+        S.Test->TestTrue(TEXT("A trace from the last dig hits its floor"), FloorZ.IsSet());
+        S.Test->TestEqual(TEXT("No piece's collision was built on the game thread (GetGameThreadCookCount)"), Cooks, 0);
+        return true;
+    });
+    AddStep(Scene, TEXT("The navmesh reaches the last dug floor"), FollowTimeoutSeconds, [Busy, FollowLimitSeconds](FDigGameScene& S)
+    {
+        const TOptional<FVector> OnFloor = ProjectToNavigation(S, Busy->Floor);
+        if (!OnFloor.IsSet())
+        {
+            return false;
+        }
+        const double Seconds = S.GetWorld()->GetTimeSeconds() - Busy->IdleSeconds;
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless NavigationNeverBuildsCollision: projection onto %s succeeded at %s, %.3f s game time after idle"),
+            *Busy->Floor.ToString(), *OnFloor->ToString(), Seconds);
+        S.Test->TestTrue(FString::Printf(TEXT("The navmesh reaches the last dug floor within %.0f s of idle (took %.3f s)"), FollowLimitSeconds, Seconds),
+            Seconds <= FollowLimitSeconds);
+        return true;
+    });
     AddCleanup(Scene);
     return true;
 }

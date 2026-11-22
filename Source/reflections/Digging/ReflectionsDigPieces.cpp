@@ -139,6 +139,27 @@ namespace
         return Dropped;
     }
 
+    /** A piece's own vertices (in its local space) and three indices per triangle, for navigation. */
+    void BuildNavGeometry(const FDynamicMesh3& Piece, FReflectionsDigNavGeometry& Out)
+    {
+        Out.Vertices.Reset(Piece.VertexCount());
+        Out.Indices.Reset(3 * Piece.TriangleCount());
+        // BuildPieceMesh only appends, so the IDs are compact already; the remap keeps this right if that changes.
+        TArray<int32> IndexOfVertex;
+        IndexOfVertex.Init(INDEX_NONE, Piece.MaxVertexID());
+        for (const int32 Vertex : Piece.VertexIndicesItr())
+        {
+            IndexOfVertex[Vertex] = Out.Vertices.Add(Piece.GetVertex(Vertex));
+        }
+        for (const int32 Triangle : Piece.TriangleIndicesItr())
+        {
+            const FIndex3i Corners = Piece.GetTriangle(Triangle);
+            Out.Indices.Add(IndexOfVertex[Corners.A]);
+            Out.Indices.Add(IndexOfVertex[Corners.B]);
+            Out.Indices.Add(IndexOfVertex[Corners.C]);
+        }
+    }
+
     int32 LargestPieceVertexCount(const FReflectionsDigChunkResult& Result)
     {
         int32 Largest = 0;
@@ -168,6 +189,11 @@ namespace ReflectionsDigPieces
             {
                 Out.DroppedTriangles += BuildPieceMesh(Mesh, Slab, Out.Pieces.AddDefaulted_GetRef());
             }
+        }
+        Out.NavGeometry.SetNum(Out.Pieces.Num());
+        for (int32 Index = 0; Index < Out.Pieces.Num(); ++Index)
+        {
+            BuildNavGeometry(Out.Pieces[Index], Out.NavGeometry[Index]);
         }
     }
 

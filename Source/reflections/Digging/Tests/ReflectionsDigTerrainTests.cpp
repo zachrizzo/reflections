@@ -1,6 +1,7 @@
 #include "Digging/ReflectionsDigTerrain.h"
 
 #include "CoreMinimal.h"
+#include "AI/NavigationSystemHelpers.h"
 #include "Async/TaskGraphInterfaces.h"
 #include "Components/BoxComponent.h"
 #include "Components/DynamicMeshComponent.h"
@@ -1504,6 +1505,124 @@ bool FReflectionsDigTerrainKeptRetiringSetLeavesNavigationAtTheNextCommitTest::R
     {
         TestEqual(TEXT("Part 2's retiring set is gone once the reused piece has cooked"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
     }
+    return true;
+}
+
+namespace
+{
+    /** Records what a navigation geometry export is asked to do; it exports nothing. */
+    struct FRecordingGeometryExport : public FNavigableGeometryExport
+    {
+        int32 CustomMeshCalls = 0;
+        int32 CustomMeshVertices = 0;
+        int32 CustomMeshIndices = 0;
+        int32 RigidBodyCalls = 0;
+        int32 OtherCalls = 0;
+
+        virtual void ExportChaosTriMesh(const Chaos::FTriangleMeshImplicitObject* const TriMesh, const FTransform& LocalToWorld) override { ++OtherCalls; }
+        virtual void ExportChaosConvexMesh(const FKConvexElem* const Convex, const FTransform& LocalToWorld) override { ++OtherCalls; }
+        virtual void ExportChaosHeightField(const Chaos::FHeightField* const Heightfield, const FTransform& LocalToWorld) override { ++OtherCalls; }
+        virtual void ExportChaosHeightFieldSlice(const FNavHeightfieldSamples& PrefetchedHeightfieldSamples, const int32 NumRows, const int32 NumCols,
+            const FTransform& LocalToWorld, const FBox& SliceBox) override { ++OtherCalls; }
+        virtual void ExportRigidBodySetup(UBodySetup& BodySetup, const FTransform& LocalToWorld) override { ++RigidBodyCalls; }
+        virtual void ExportCustomMesh(const FVector* VertexBuffer, int32 NumVerts, const int32* IndexBuffer, int32 NumIndices, const FTransform& LocalToWorld) override
+        {
+            ++CustomMeshCalls;
+            CustomMeshVertices += NumVerts;
+            CustomMeshIndices += NumIndices;
+        }
+        virtual void AddNavModifiers(const FCompositeNavModifier& Modifiers) override {}
+        virtual void SetNavDataPerInstanceTransformDelegate(const FNavDataPerInstanceTransformDelegate& InDelegate) override {}
+    };
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainPieceExportsItsOwnNavigationGeometryTest, "Reflections.Digging.Terrain.PieceExportsItsOwnNavigationGeometry", DigTerrainTestFlags)
+bool FReflectionsDigTerrainPieceExportsItsOwnNavigationGeometryTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    // A chunk committed directly, with its collision in.
+    const FIntVector Chunk(1, 1, 1);
+    FReflectionsDigMeshData Mesh;
+    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Chunk, Mesh);
+    Scene.Terrain->CommitChunk(Chunk, MoveTemp(Mesh));
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the commit")))
+    {
+        return true;
+    }
+    const UReflectionsDigChunkComponent* Piece = Cast<UReflectionsDigChunkComponent>(Scene.Terrain->FindChunkComponent(Chunk));
+    if (!TestNotNull(TEXT("The chunk has a piece"), Piece) || !TestNotNull(TEXT("The piece has a mesh"), Piece->GetMesh()))
+    {
+        return true;
+    }
+    FRecordingGeometryExport Export;
+    const bool bDefaultExportRequired = Piece->DoCustomNavigableGeometryExport(Export);
+    TestFalse(TEXT("The export says the default (body setup) export is not required"), bDefaultExportRequired);
+    TestEqual(TEXT("ExportCustomMesh is called once"), Export.CustomMeshCalls, 1);
+    TestEqual(TEXT("It is given three indices per triangle of the piece"), Export.CustomMeshIndices, 3 * Piece->GetMesh()->TriangleCount());
+    TestEqual(TEXT("It is given the piece's vertices"), Export.CustomMeshVertices, Piece->GetMesh()->VertexCount());
+    TestEqual(TEXT("ExportRigidBodySetup is never called"), Export.RigidBodyCalls, 0);
+    TestEqual(TEXT("Nothing else is exported"), Export.OtherCalls, 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainNewPieceWaitsForCollisionBeforeNavigationTest, "Reflections.Digging.Terrain.NewPieceWaitsForCollisionBeforeNavigation", DigTerrainTestFlags)
+bool FReflectionsDigTerrainNewPieceWaitsForCollisionBeforeNavigationTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    const FIntVector Busy(1, 1, 0);
+    // The commit inside creates a new split set, still cooking, in front of the split set that cooked before it.
+    if (!RetireTheRiddledChunk(*this, TestWorld, Scene, Busy))
+    {
+        return true;
+    }
+    TArray<UReflectionsDigChunkComponent*> Created;
+    for (int32 Index = 0; Index < Scene.Terrain->GetChunkPieceCount(Busy); ++Index)
+    {
+        Created.Add(Cast<UReflectionsDigChunkComponent>(Scene.Terrain->GetChunkPiece(Busy, Index)));
+    }
+    const TArray<UReflectionsDigChunkComponent*> Retiring = GetHiddenPieces(*Scene.Terrain);
+    TestTrue(TEXT("Premise: the chunk has retiring pieces"), Retiring.Num() > 0);
+    for (const UReflectionsDigChunkComponent* Piece : Created)
+    {
+        if (TestNotNull(TEXT("A created piece"), Piece))
+        {
+            TestTrue(FString::Printf(TEXT("Premise: created piece %s is cooking its first collision"), *Piece->GetName()), Piece->IsCollisionCookPending());
+            TestFalse(FString::Printf(TEXT("Before its first cook finishes, created piece %s is not navigation relevant"), *Piece->GetName()),
+                Piece->IsNavigationRelevant());
+        }
+    }
+    for (const UReflectionsDigChunkComponent* Piece : Retiring)
+    {
+        TestFalse(FString::Printf(TEXT("Retiring piece %s is not navigation relevant"), *Piece->GetName()), Piece->IsNavigationRelevant());
+    }
+    if (!FinishCooksWithoutATick(*this, Scene, Busy))
+    {
+        return true;
+    }
+    for (const UReflectionsDigChunkComponent* Piece : Created)
+    {
+        if (Piece != nullptr)
+        {
+            TestTrue(FString::Printf(TEXT("Premise: created piece %s has collision"), *Piece->GetName()), Piece->HasCollision());
+            TestTrue(FString::Printf(TEXT("Once its first cook has finished, created piece %s is navigation relevant"), *Piece->GetName()),
+                Piece->IsNavigationRelevant());
+        }
+    }
+    for (const UReflectionsDigChunkComponent* Piece : Retiring)
+    {
+        TestFalse(FString::Printf(TEXT("After the cooks, retiring piece %s is still not navigation relevant"), *Piece->GetName()), Piece->IsNavigationRelevant());
+    }
+    WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the commit"));
     return true;
 }
 

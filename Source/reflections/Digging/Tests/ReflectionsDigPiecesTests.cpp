@@ -168,4 +168,31 @@ bool FReflectionsDigPiecesSlabsAreTheFewestThatFitTest::RunTest(const FString& P
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigPiecesNavGeometryMatchesEachPieceTest, "Reflections.Digging.Pieces.NavGeometryMatchesEachPiece", DigPiecesTestFlags)
+bool FReflectionsDigPiecesNavGeometryMatchesEachPieceTest::RunTest(const FString& Parameters)
+{
+    const FReflectionsDigMeshData Busy = MakeBusyMesh();
+    FReflectionsDigChunkResult Result;
+    ReflectionsDigPieces::Build(Busy, Result);
+    if (!TestTrue(FString::Printf(TEXT("Premise: the busy mesh is split (%d pieces)"), Result.Pieces.Num()), Result.Pieces.Num() >= 2)
+        || !TestEqual(TEXT("One navigation geometry per piece"), Result.NavGeometry.Num(), Result.Pieces.Num()))
+    {
+        return true;
+    }
+    for (int32 Index = 0; Index < Result.Pieces.Num(); ++Index)
+    {
+        const UE::Geometry::FDynamicMesh3& Piece = Result.Pieces[Index];
+        const FReflectionsDigNavGeometry& Nav = Result.NavGeometry[Index];
+        TestEqual(FString::Printf(TEXT("Piece %d: three indices per triangle"), Index), Nav.Indices.Num(), 3 * Piece.TriangleCount());
+        const int32 Invalid = Nav.Indices.FilterByPredicate([&Nav](int32 Vertex) { return !Nav.Vertices.IsValidIndex(Vertex); }).Num();
+        TestEqual(FString::Printf(TEXT("Piece %d: indices outside the %d vertices"), Index, Nav.Vertices.Num()), Invalid, 0);
+        const UE::Geometry::FAxisAlignedBox3d MeshBounds = Piece.GetBounds();
+        const FBox NavBounds(Nav.Vertices);
+        TestTrue(FString::Printf(TEXT("Piece %d: the navigation bounds %s equal the mesh bounds %s"), Index, *NavBounds.ToString(),
+            *FBox(MeshBounds.Min, MeshBounds.Max).ToString()),
+            NavBounds.IsValid && NavBounds.Min.Equals(MeshBounds.Min, 1.0e-3) && NavBounds.Max.Equals(MeshBounds.Max, 1.0e-3));
+    }
+    return true;
+}
+
 #endif

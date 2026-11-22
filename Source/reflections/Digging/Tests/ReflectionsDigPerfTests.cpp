@@ -260,6 +260,9 @@ namespace
         int32 Digs = 0;
         int32 Commits = 0;
         int32 CooksFinished = 0;
+        /** Pieces' collision built on the game thread by someone else (AReflectionsDigTerrain::GetGameThreadCookCount), over the window. */
+        int32 GameThreadCooks = 0;
+        int32 LastGameThreadCooks = -1;
         int32 NavUpdates = 0;
         int32 Releases = 0;
         int32 Restores = 0;
@@ -345,6 +348,8 @@ namespace
             {
                 FrameCooks = LastCooks >= 0 ? Terrain->GetCookCompletionCount() - LastCooks : 0;
                 LastCooks = Terrain->GetCookCompletionCount();
+                GameThreadCooks += LastGameThreadCooks >= 0 ? Terrain->GetGameThreadCookCount() - LastGameThreadCooks : 0;
+                LastGameThreadCooks = Terrain->GetGameThreadCookCount();
                 FrameNav = LastNavUpdates >= 0 ? Terrain->GetNavUpdateCount() - LastNavUpdates : 0;
                 FrameNavMs = LastNavUpdates >= 0 ? (Terrain->GetNavUpdateSeconds() - LastNavSeconds) * 1000.0 : 0.0;
                 LastNavUpdates = Terrain->GetNavUpdateCount();
@@ -466,11 +471,11 @@ namespace
             const double MaxAbove = Above.IsEmpty() ? 0.0 : FMath::Max(Above);
             const bool bMaxIsCollection = !Collection.IsEmpty() && FMath::Max(Collection) >= MaxAbove;
             const double CostPerDig = Digs > 0 ? (MeanOf(GameMs) - MeanOf(Idle.GameMs)) * Num() / Digs : 0.0;
-            return FString::Printf(TEXT("idle_median_ms=%.3f above_mean_ms=%.3f above_median_ms=%.3f above_p99_ms=%.3f above_max_ms=%.3f raw_max_ms=%.3f max_is_collection=%d frames=%d digs=%d cost_per_dig_ms=%.3f dig_related_frames=%d dig_related_max_ms=%.3f collection_frames=%d collection_max_ms=%.3f background_frames=%d background_max_ms=%.3f idle_background_max_ms=%.3f collections_window=%d collections_idle=%d commits=%d cooks_finished=%d nav_updates=%d releases=%d restores=%d release_ms_total=%.3f release_ms_max_frame=%.3f"),
+            return FString::Printf(TEXT("idle_median_ms=%.3f above_mean_ms=%.3f above_median_ms=%.3f above_p99_ms=%.3f above_max_ms=%.3f raw_max_ms=%.3f max_is_collection=%d frames=%d digs=%d cost_per_dig_ms=%.3f dig_related_frames=%d dig_related_max_ms=%.3f collection_frames=%d collection_max_ms=%.3f background_frames=%d background_max_ms=%.3f idle_background_max_ms=%.3f collections_window=%d collections_idle=%d commits=%d cooks_finished=%d nav_updates=%d releases=%d restores=%d release_ms_total=%.3f release_ms_max_frame=%.3f game_thread_cooks=%d"),
                 Baseline, MeanOf(Above), PercentileOf(Above, 0.5), PercentileOf(Above, 0.99), MaxAbove, MaxOf(GameMs), bMaxIsCollection ? 1 : 0, Num(), Digs,
                 CostPerDig, DigRelated.Num(), DigRelated.IsEmpty() ? 0.0 : FMath::Max(DigRelated), Collection.Num(), Collection.IsEmpty() ? 0.0 : FMath::Max(Collection),
                 BackgroundFrames, Background, IdleBackground, Collections, Idle.Collections, Commits, CooksFinished, NavUpdates, Releases, Restores,
-                ReleaseMsTotal, ReleaseMsMaxFrame);
+                ReleaseMsTotal, ReleaseMsMaxFrame, GameThreadCooks);
         }
 
         /**
