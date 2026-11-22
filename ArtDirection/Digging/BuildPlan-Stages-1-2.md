@@ -437,11 +437,11 @@ The map uses the project's default game mode; it sets no override.
 - Produces: `double AReflectionsDigTerrain::GetLastNavUpdateSeconds() const;` (world time of the last navigation update the terrain asked for), used by task 2.6.
 
 **Rules.**
-- When a chunk's collision cook finishes, the terrain calls `FNavigationSystem::UpdateComponentData` for that chunk's component. A dynamic mesh component does not tell navigation by itself.
+- When a chunk piece's collision cook finishes, the terrain calls `FNavigationSystem::UpdateComponentData` for that piece. A dynamic mesh component does not tell navigation by itself. A piece that retires stops affecting navigation at once (it is old collision), and navigation is told; a piece that is destroyed leaves navigation through the engine's normal unregister path.
 - The map gets a `NavMeshBoundsVolume` labelled `DigSpike_NavBounds` covering the whole patch and its full depth with a 200 cm margin, and its `RecastNavMesh` actor has Runtime Generation set to Dynamic **on the actor in this map**. Do not change project navigation settings in `Config/`.
 
 - [ ] **Step 1: Write two failing game-context tests**:
-  - `Reflections.DigSpike.NavmeshFollowsNewPit`: before digging, a navigation projection at (3400, 0, 0) succeeds. Dig a ramp down to 300 cm deep (stamps of radius 150 stepping down along +X so the slope is walkable). Within 1 second of the last dig's collision being ready, a projection onto the ramp's lowest point succeeds. Log the measured time as `DIGSPIKE NAV SECONDS=<value>`.
+  - `Reflections.DigSpike.NavmeshFollowsNewPit`: before digging, a navigation projection at (2000, 1600, 0) succeeds. Starting at (1800, 1600), dig a ramp down to 300 cm deep (stamps of radius 150 stepping down along +X so the slope is walkable); this site is clear of every other game test's digs. Within 1 second of the last dig's collision being ready, a projection onto the ramp's lowest point succeeds. Log the measured time as `DIGSPIKE NAV SECONDS=<value>`.
   - `Reflections.DigSpike.AiWalksIntoPit`: a plain `ACharacter` with an `AAIController` is told to move to the ramp's lowest point and arrives within 100 cm of it inside 10 seconds.
 - [ ] **Step 2: Build and run** the game-context command. Record RED.
 - [ ] **Step 3: Implement** the navigation update, the map changes and the map test additions (bounds volume present; the map's navmesh actor is Dynamic). Rebuild the map.
