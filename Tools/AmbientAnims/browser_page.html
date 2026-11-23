@@ -1,0 +1,256 @@
+<title>Ambient Animation Library</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an animator's pencil-test sheet. Sticky toolbar, category tabs, a grid of looping stick-figure cards. */
+:root {
+  --paper: #eef1f4; --sheet: #f8f9fb; --rule: #d6dce4; --ink: #22262d; --muted: #5d6673;
+  --blue: #3d6fd1; --red: #c8412d; --ok: #2f7d55; --ghost: rgba(61,111,209,.10);
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #15181c; --sheet: #1c2026; --rule: #2e343d; --ink: #dfe4ea; --muted: #97a1ad;
+  --blue: #84a8f2; --red: #f08a73; --ok: #6cc596; --ghost: rgba(132,168,242,.12); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #15181c; --sheet: #1c2026; --rule: #2e343d; --ink: #dfe4ea; --muted: #97a1ad;
+  --blue: #84a8f2; --red: #f08a73; --ok: #6cc596; --ghost: rgba(132,168,242,.12); color-scheme: dark }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1500px; margin: 0 auto; }
+header.top { padding-block: 28px 8px; display: grid; gap: 6px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 46px); letter-spacing: .01em; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 70ch; margin: 0; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 18px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.stats b { color: var(--ink); font-weight: 500; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper); border-bottom: 1px solid var(--rule); }
+.bar .wrap { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding-block: 10px; }
+.bar input[type=search] { flex: 1 1 220px; min-width: 0; font: inherit; padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--sheet); color: var(--ink); }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.seg button, .tabs button { font: 500 12px/1 var(--body); padding: 7px 10px; background: var(--sheet); color: var(--muted); border: 0; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed=true] { background: var(--ink); color: var(--paper); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding-block: 0 10px; scrollbar-width: thin; }
+.tabs button { border: 1px solid var(--rule); border-radius: 999px; white-space: nowrap; }
+.tabs button[aria-pressed=true] { border-color: var(--blue); color: var(--blue); background: var(--ghost); }
+.tabs .n { font-family: var(--mono); margin-left: 4px; opacity: .7; }
+section.cat { padding-block: 22px 6px; }
+section.cat h2 { font-family: var(--display); font-weight: 600; font-size: 26px; margin: 0; display: flex; gap: 10px; align-items: baseline; }
+section.cat h2 .no { font-family: var(--mono); font-size: 13px; color: var(--muted); font-weight: 400; }
+section.cat p { margin: 2px 0 12px; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; display: grid; grid-template-rows: auto auto 1fr; min-width: 0; cursor: pointer; }
+.card:hover { border-color: var(--blue); }
+.card.flag { border-top: 3px solid var(--red); }
+.stage { position: relative; aspect-ratio: 1 / 1.05; max-width: 100%;
+  background-image: linear-gradient(var(--rule) 1px, transparent 1px), linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+  background-size: 24px 24px; background-position: -1px -1px; border-radius: 8px 8px 0 0; overflow: hidden; }
+.stage canvas { width: 100%; height: 100%; display: block; }
+.stage .t { position: absolute; right: 8px; top: 6px; font: 11px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.stage .wait { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font: 12px var(--mono); }
+.tl { position: relative; height: 6px; background: var(--rule); }
+.tl i { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--muted); }
+.tl b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--red); }
+.meta { padding: 10px 12px 12px; display: grid; gap: 6px; min-width: 0; align-content: start; }
+.name { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.name strong { font-family: var(--display); font-size: 19px; font-weight: 600; letter-spacing: .01em; }
+.pill { font: 500 11px var(--mono); padding: 2px 6px; border-radius: 4px; background: var(--ghost); color: var(--blue); white-space: nowrap; }
+.pill.action { color: var(--ok); background: transparent; border: 1px solid currentColor; }
+.beat { font-size: 12.5px; color: var(--muted); min-height: 3.6em; }
+.beat .on { color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chips span { font-size: 11px; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--rule); color: var(--muted); }
+.chips span.prop { border-style: dashed; }
+.nums { font: 11px var(--mono); color: var(--muted); display: flex; flex-wrap: wrap; gap: 2px 10px; font-variant-numeric: tabular-nums; }
+.nums .bad { color: var(--red); font-weight: 500; }
+.asset { font: 11px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 8px 14px; border-radius: 6px; font-size: 13px; }
+.notes { padding-block: 28px 40px; color: var(--muted); max-width: 80ch; display: grid; gap: 8px; }
+.notes h3 { font-family: var(--display); font-weight: 600; font-size: 20px; color: var(--ink); margin: 0; }
+.notes p { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+</style>
+
+<header class="top wrap">
+  <h1>Ambient Animation Library</h1>
+  <p class="lede">Everyday town life for the NPCs of Reflections: work, talk, rest, drink and pray. Every clip was generated with Kimodo from the sentences shown on its card, on a MetaHuman, and baked in place. The figures replay each clip's real joint motion; blue pencil is the body's left side.</p>
+  <div class="stats" id="stats"></div>
+</header>
+<div class="bar">
+  <div class="wrap">
+    <input type="search" id="q" placeholder="Search clips, jobs or props (smith, mug, guard...)" aria-label="Search clips">
+    <div class="seg" role="group" aria-label="Kind">
+      <button id="k-all" aria-pressed="true">All</button><button id="k-loop" aria-pressed="false">Loops</button><button id="k-action" aria-pressed="false">Actions</button><button id="k-flag" aria-pressed="false">Flagged</button>
+    </div>
+    <div class="seg" role="group" aria-label="View">
+      <button id="v-0" aria-pressed="false">Front</button><button id="v-35" aria-pressed="true">3/4</button><button id="v-90" aria-pressed="false">Side</button>
+    </div>
+    <div class="seg" role="group" aria-label="Playback">
+      <button id="play" aria-pressed="true">Playing</button><button id="slow" aria-pressed="false">Half speed</button>
+    </div>
+  </div>
+  <div class="wrap"><nav class="tabs" id="tabs" aria-label="Categories"></nav></div>
+</div>
+<main class="wrap" id="main"></main>
+<div class="wrap notes">
+  <h3>Using these clips</h3>
+  <p><b>Loops</b> repeat an activity. Most end within a few centimetres of their first pose, so a 0.3 second crossfade back to the start hides the seam. <b>Actions</b> are one-off beats that begin and end near a relaxed stand.</p>
+  <p><b>Props</b> (dashed chips) are mimed. The generator cannot see an axe or a mug and the body has no finger animation, so the prop attaches to the hand socket at runtime and some grips need a small offset.</p>
+  <p><b>Seated</b> clips sit on an invisible seat at standard height: place the NPC on a bench or stool. Scores: <i>energy</i> is how much the hands, head and feet move, <i>slide</i> is how fast a planted foot skates in cm/s, <i>seam</i> is how far a loop's last pose is from its first in cm. A clip is flagged <i>FROZEN?</i> when its prompt asked for an action but the take barely moves; clips meant to be still (standing guard, dozing) say <i>held pose</i> instead. <i>Redo queued</i> means a better prompt is waiting for the next generation pass; the current take works as a placeholder.</p>
+  <p>Click a card to copy its asset path.</p>
+</div>
+
+<script>
+const BONES = ['pelvis','spine_03','spine_05','neck_01','head','clavicle_l','upperarm_l','lowerarm_l','hand_l','clavicle_r','upperarm_r','lowerarm_r','hand_r','thigh_l','calf_l','foot_l','ball_l','thigh_r','calf_r','foot_r','ball_r'];
+const IX = Object.fromEntries(BONES.map((b, i) => [b, i]));
+const EDGES = [['pelvis','spine_03'],['spine_03','spine_05'],['spine_05','neck_01'],['neck_01','head'],['spine_05','clavicle_l'],['clavicle_l','upperarm_l'],['upperarm_l','lowerarm_l'],['lowerarm_l','hand_l'],['spine_05','clavicle_r'],['clavicle_r','upperarm_r'],['upperarm_r','lowerarm_r'],['lowerarm_r','hand_r'],['pelvis','thigh_l'],['thigh_l','calf_l'],['calf_l','foot_l'],['foot_l','ball_l'],['pelvis','thigh_r'],['thigh_r','calf_r'],['calf_r','foot_r'],['foot_r','ball_r']].map(([a, b]) => [IX[a], IX[b], a.endsWith('_l') || b.endsWith('_l')]);
+const NB = BONES.length;
+const state = { kind: 'all', q: '', yaw: 35, playing: true, speed: 1, cat: null };
+let clips = [], cards = [], visible = new Set(), t0 = performance.now(), paused = 0;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let colors = {};
+function readColors() { colors = { ink: css('--ink'), blue: css('--blue'), muted: css('--muted'), rule: css('--rule') }; }
+
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+function buildCard(c) {
+  const card = el('article', 'card' + (c.score && c.score.flags.length ? ' flag' : ''));
+  card.tabIndex = 0;
+  const stage = el('div', 'stage');
+  const cv = el('canvas'); stage.append(cv);
+  const tm = el('span', 't', ''); stage.append(tm);
+  if (!c.f) stage.append(el('div', 'wait', 'not generated yet'));
+  const tl = el('div', 'tl');
+  for (const [s] of c.beats) { const i = el('i'); i.style.left = (100 * s / c.sec) + '%'; tl.append(i); }
+  const ph = el('b'); tl.append(ph);
+  const meta = el('div', 'meta');
+  const nm = el('div', 'name'); nm.append(el('strong', null, c.id), el('span', 'pill' + (c.kind === 'action' ? ' action' : ''), c.kind + ' ' + c.sec.toFixed(1) + 's'));
+  const beat = el('div', 'beat');
+  const beatEls = c.beats.map(([s, txt]) => { const sp = el('span', null, txt + ' '); beat.append(sp); return sp; });
+  const chips = el('div', 'chips');
+  c.props.forEach(p => chips.append(el('span', 'prop', p)));
+  c.jobs.forEach(j => chips.append(el('span', null, j)));
+  const nums = el('div', 'nums');
+  if (c.score) {
+    const s = c.score;
+    nums.append(el('span', s.flags.includes('FROZEN?') ? 'bad' : null, 'energy ' + Math.round(s.energy)), el('span', s.foot_slide > 25 ? 'bad' : null, 'slide ' + Math.round(s.foot_slide)), el('span', c.kind === 'loop' && s.seam > 20 ? 'bad' : null, 'seam ' + Math.round(s.seam)));
+    if (c.still) nums.append(el('span', null, 'held pose'));
+    if (c.pending) nums.append(el('span', 'bad', 'redo queued'));
+    if (s.flags.length) nums.append(el('span', 'bad', s.flags.join(' ')));
+  }
+  meta.append(nm, beat, chips, nums, el('div', 'asset', c.asset));
+  card.append(stage, tl, meta);
+  const copy = () => {
+    const text = c.path;
+    const done = () => toast('Copied ' + c.asset);
+    try { navigator.clipboard.writeText(text).then(done, () => toast(text)); } catch (e) { toast(text); }
+  };
+  card.addEventListener('click', copy);
+  card.addEventListener('keydown', e => { if (e.key === 'Enter') copy(); });
+  return { c, card, cv, tm, ph, beatEls, last: -1 };
+}
+
+function toast(msg) {
+  const t = el('div', 'toast', msg); document.body.append(t); setTimeout(() => t.remove(), 1800);
+}
+
+function draw(k, now) {
+  const { c, cv } = k;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (!W) return;
+  if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  const time = ((now / 1000) * state.speed) % c.sec;
+  k.tm.textContent = time.toFixed(1) + ' / ' + c.sec.toFixed(1) + ' s';
+  k.ph.style.left = (100 * time / c.sec) + '%';
+  let b = 0; c.beats.forEach(([s], i) => { if (time >= s) b = i; });
+  if (b !== k.last) { k.beatEls.forEach((e, i) => e.classList.toggle('on', i === b)); k.last = b; }
+  if (!c.f) return;
+  const nf = c.f.length / (NB * 3), fi = Math.min(nf - 1, Math.floor(time * c.fps));
+  const a = state.yaw * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+  const o = fi * NB * 3, f = c.f;
+  const px0 = c.f[0], py0 = c.f[1];
+  const sc = H * 0.8 / 190, cx = W / 2, base = H * 0.93;
+  const P = [], D = [];
+  for (let i = 0; i < NB; i++) {
+    const x = f[o + 3 * i] - px0, y = f[o + 3 * i + 1] - py0, z = f[o + 3 * i + 2];
+    P.push([cx + (x * ca - y * sa) * sc, base - z * sc]); D.push(x * sa + y * ca);
+  }
+  g.strokeStyle = colors.rule; g.lineWidth = 1; g.beginPath(); g.ellipse(P[0][0], base, 30 * sc, 5, 0, 0, 2 * Math.PI); g.stroke();
+  const order = EDGES.map((e, i) => [D[e[0]] + D[e[1]], i]).sort((p, q) => q[0] - p[0]);
+  g.lineCap = 'round';
+  for (const [, i] of order) {
+    const [p, q, left] = EDGES[i];
+    g.strokeStyle = left ? colors.blue : colors.ink; g.lineWidth = Math.max(2, 3 * sc);
+    g.beginPath(); g.moveTo(P[p][0], P[p][1]); g.lineTo(P[q][0], P[q][1]); g.stroke();
+  }
+  const h = P[IX.head], n = P[IX.neck_01], r = Math.max(5, 10 * sc);
+  const dx = h[0] - n[0], dy = h[1] - n[1], L = Math.hypot(dx, dy) || 1;
+  g.fillStyle = css('--sheet'); g.strokeStyle = colors.ink; g.lineWidth = 2;
+  g.beginPath(); g.arc(h[0] + dx / L * r * .6, h[1] + dy / L * r * .6, r, 0, 2 * Math.PI); g.fill(); g.stroke();
+}
+
+function frame(now) {
+  if (state.playing) { const t = now - t0 - paused; for (const k of visible) draw(k, t); }
+  requestAnimationFrame(frame);
+}
+
+function render() {
+  const main = document.getElementById('main'); main.textContent = '';
+  const q = state.q.toLowerCase();
+  const match = c => (state.kind === 'all' || (state.kind === 'flag' ? c.score && c.score.flags.length : c.kind === state.kind))
+    && (!state.cat || c.cat === state.cat)
+    && (!q || [c.id, c.cat, ...c.props, ...c.jobs, ...c.beats.map(b => b[1])].join(' ').toLowerCase().includes(q));
+  const cats = [...new Set(clips.map(c => c.cat))];
+  for (const cat of cats) {
+    const list = cards.filter(k => k.c.cat === cat && match(k.c));
+    if (!list.length) continue;
+    const s = el('section', 'cat'); s.id = 'cat-' + cat;
+    const h = el('h2'); h.append(el('span', 'no', String(list[0].c.catNo).padStart(2, '0')), document.createTextNode(cat));
+    const grid = el('div', 'grid'); list.forEach(k => grid.append(k.card));
+    s.append(h, el('p', null, list[0].c.catDesc + '.'), grid); main.append(s);
+  }
+  if (!main.children.length) main.append(el('p', 'lede', 'No clips match. Clear the search or pick another filter.'));
+  // draw one still frame for everything shown, so the page reads even when paused
+  requestAnimationFrame(() => cards.forEach(k => k.card.isConnected && draw(k, 1600)));
+}
+
+function tabsUI() {
+  const tabs = document.getElementById('tabs'); tabs.textContent = '';
+  const cats = [...new Set(clips.map(c => c.cat))];
+  const mk = (label, cat, n) => { const b = el('button', null, label); b.setAttribute('aria-pressed', String(state.cat === cat)); if (n != null) b.append(el('span', 'n', n)); b.onclick = () => { state.cat = cat; tabsUI(); render(); }; tabs.append(b); };
+  mk('All categories', null, clips.length);
+  cats.forEach(cat => mk(cat, cat, clips.filter(c => c.cat === cat).length));
+}
+
+function seg(prefix, values, apply) {
+  values.forEach(v => { const b = document.getElementById(prefix + v); b.onclick = () => { values.forEach(w => document.getElementById(prefix + w).setAttribute('aria-pressed', String(w === v))); apply(v); }; });
+}
+
+async function boot() {
+  readColors();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => setTimeout(readColors, 50));
+  new MutationObserver(() => setTimeout(readColors, 50)).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  clips = await (await fetch('library.json')).json();
+  cards = clips.map(buildCard);
+  const io = new IntersectionObserver(es => es.forEach(e => { const k = cards.find(k => k.card === e.target); if (e.isIntersecting) visible.add(k); else visible.delete(k); }), { rootMargin: '200px' });
+  cards.forEach(k => io.observe(k.card));
+  const done = clips.filter(c => c.f), flagged = done.filter(c => c.score.flags.length);
+  const st = document.getElementById('stats');
+  [['clips', clips.length], ['generated', done.length], ['categories', new Set(clips.map(c => c.cat)).size], ['minutes of motion', (done.reduce((a, c) => a + c.sec, 0) / 60).toFixed(1)], ['flagged for review', flagged.length]]
+    .forEach(([k, v]) => { const s = el('span'); s.append(el('b', null, v), document.createTextNode(' ' + k)); st.append(s); });
+  tabsUI(); render();
+  document.getElementById('q').addEventListener('input', e => { state.q = e.target.value; render(); });
+  seg('k-', ['all', 'loop', 'action', 'flag'], v => { state.kind = v; render(); });
+  seg('v-', ['0', '35', '90'], v => { state.yaw = +v; if (!state.playing) render(); });
+  document.getElementById('play').onclick = e => { state.playing = !state.playing; e.target.setAttribute('aria-pressed', String(state.playing)); e.target.textContent = state.playing ? 'Playing' : 'Paused'; };
+  document.getElementById('slow').onclick = e => { state.speed = state.speed === 1 ? 0.5 : 1; e.target.setAttribute('aria-pressed', String(state.speed !== 1)); };
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { state.playing = false; const p = document.getElementById('play'); p.setAttribute('aria-pressed', 'false'); p.textContent = 'Paused'; }
+  requestAnimationFrame(frame);
+}
+boot();
+</script>
