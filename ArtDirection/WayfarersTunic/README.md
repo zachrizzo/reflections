@@ -1,5 +1,22 @@
 # Wayfarer’s Tunic
 
+## Crowd default
+
+Use `/Game/Characters/Clothing/WayfarerPilot/MotionFit/WI_LooseTunic` for the revised loose tunic. Its editor pipeline enables **Strip Simulation Mesh** during assembly. It uses the same resizable source outfit and removes the simulation mesh from the fitted result. The cut and skin weights let the garment follow the character's movements with cloth physics off. The Wardrobe Item carries the tested body coverage mask. The physics prototype remains available through `WI_LooseTunic_SimulationTrial`.
+
+Use the same workflow for other NPC garments.
+
+1. Shape the garment on a reference MetaHuman. Build the intended ease and silhouette into the pattern. Leave clearance at the collar, cuffs, armholes and hem through the motions the NPC uses.
+2. Import the render mesh and transfer skin weights from its matching full-body reference. Use Unreal's Resizable Outfit and equip the same Wardrobe Item on each target. Add a shared source size if the same cut repeatedly fails on a group of bodies. For an existing simulated outfit, strip the simulation mesh during fitting to retain its authored source and geometry.
+3. Apply a Body Hidden Face Map only to skin that the garment covers throughout motion. Test with the full skin surface first. Verify that the target material honors the mask and that visible skin around the garment openings stays intact.
+4. Measure the assembled garment on representative bodies and a fresh holdout. Sample moving poses and record exposed intersections by region. Small standing gaps can turn into clipping during a reach or cast. Use a reproducible motion and compare the skinned geometry on the same body.
+
+The revised hem with physics off intersected exposed skin in only 1 of 425 turn samples across 25 wearers. The cast still had exposed hem intersections in 557 of 625 samples. Physics with the body-shaped collider added 5.28 ms at the median with 24 simulated wearers in Play in Editor. [Fit measurements and benchmark](Review/MotionFit25.md)
+
+A fresh editor process assembled the saved crowd item on Barnaby, the dwarf, and the orc. All three fitted assets reported `StripSimMesh=True`. Their standing meshes matched the earlier skinned surfaces within 0.001 mm, with identical triangle indices.
+
+## Original four-size tunic
+
 One Wardrobe Item assembles the tunic on the Test Town lineup and new MetaHumans. Select `WI_WayfarersTunic` in the character’s **Outfits** slot and assemble the preview. Unreal picks a reference size, resizes the garment to the current body and transfers skin weights. The four reference sizes are BridgeGuard, Dwarf, Elf and Orc. The new character, `MHC_TunicFieldTest`, has a 170 cm height target and was held out of garment authoring.
 
 [Numeric fit scorecard](Review/FitScorecard.md) · [All 24 standing previews](Review/Standing24.jpg) · [Five characters in four poses](Review/MotionReview.jpg) · [New MetaHuman in motion](Review/NewMetaHumanMotion.gif) · [Measurements by character](FitReview.json)

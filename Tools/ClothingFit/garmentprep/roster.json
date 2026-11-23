@@ -1,0 +1,116 @@
+[
+ {
+  "label": "GiltBarnaby",
+  "character": "/Game/Characters/Lanthorne/People/GiltBarnaby/MHC_GiltBarnaby"
+ },
+ {
+  "label": "ArchiveApprentice",
+  "character": "/Game/Characters/RedLondon/ArchiveApprentice/MHC_ArchiveApprentice"
+ },
+ {
+  "label": "BridgeGuard",
+  "character": "/Game/Characters/RedLondon/BridgeGuard/MHC_BridgeGuard"
+ },
+ {
+  "label": "CoinClerk",
+  "character": "/Game/Characters/RedLondon/CoinClerk/MHC_CoinClerk"
+ },
+ {
+  "label": "Dwarf",
+  "character": "/Game/Characters/Clothing/VillageWardrobe/Generated/QA/MHC_Dwarf_BodyCommitted",
+  "original": "/Game/Characters/Fantasy/MHC_Dwarf",
+  "note": "QA copy with the body state committed; the original was saved without it"
+ },
+ {
+  "label": "Elf",
+  "character": "/Game/Characters/Clothing/VillageWardrobe/Generated/QA/MHC_Elf_BodyCommitted",
+  "original": "/Game/Characters/Fantasy/MHC_Elf",
+  "note": "QA copy with the body state committed; the original was saved without it"
+ },
+ {
+  "label": "FerryPilot",
+  "character": "/Game/Characters/RedLondon/FerryPilot/MHC_FerryPilot"
+ },
+ {
+  "label": "FestivalDrummer",
+  "character": "/Game/Characters/RedLondon/FestivalDrummer/MHC_FestivalDrummer"
+ },
+ {
+  "label": "FreshHoldout",
+  "character": "/Game/Characters/Clothing/VillageWardrobe/MeshRetargetJerkin/QA/MHC_PreparedFitHoldout"
+ },
+ {
+  "label": "FrostAmara",
+  "character": "/Game/Characters/Lanthorne/People/FrostAmara/MHC_FrostAmara"
+ },
+ {
+  "label": "FrostHyeon",
+  "character": "/Game/Characters/Lanthorne/People/FrostHyeon/MHC_FrostHyeon"
+ },
+ {
+  "label": "FrostNia",
+  "character": "/Game/Characters/Lanthorne/People/FrostNia/MHC_FrostNia"
+ },
+ {
+  "label": "FrostSaran",
+  "character": "/Game/Characters/Lanthorne/People/FrostSaran/MHC_FrostSaran"
+ },
+ {
+  "label": "FrostSilas",
+  "character": "/Game/Characters/Lanthorne/People/FrostSilas/MHC_FrostSilas"
+ },
+ {
+  "label": "FrostTobias",
+  "character": "/Game/Characters/Lanthorne/People/FrostTobias/MHC_FrostTobias"
+ },
+ {
+  "label": "FrostWen",
+  "character": "/Game/Characters/Lanthorne/People/FrostWen/MHC_FrostWen"
+ },
+ {
+  "label": "GiltHaruto",
+  "character": "/Game/Characters/Lanthorne/People/GiltHaruto/MHC_GiltHaruto"
+ },
+ {
+  "label": "GiltMaren",
+  "character": "/Game/Characters/Lanthorne/People/GiltMaren/MHC_GiltMaren"
+ },
+ {
+  "label": "GiltPriya",
+  "character": "/Game/Characters/Lanthorne/People/GiltPriya/MHC_GiltPriya"
+ },
+ {
+  "label": "GiltRamon",
+  "character": "/Game/Characters/Lanthorne/People/GiltRamon/MHC_GiltRamon"
+ },
+ {
+  "label": "GiltRowena",
+  "character": "/Game/Characters/Lanthorne/People/GiltRowena/MHC_GiltRowena"
+ },
+ {
+  "label": "GlassArtisan",
+  "character": "/Game/Characters/RedLondon/GlassArtisan/MHC_GlassArtisan"
+ },
+ {
+  "label": "IvenRook",
+  "character": "/Game/Characters/WhiteLondon/IvenRook/MetaHuman/MHC_IvenRook"
+ },
+ {
+  "label": "MeshRetargetHoldout",
+  "character": "/Game/Characters/Clothing/VillageWardrobe/MeshRetargetJerkin/QA/MHC_MeshRetargetHoldout"
+ },
+ {
+  "label": "MotionFitHoldout",
+  "character": "/Game/Characters/Clothing/WayfarerPilot/MotionFit/MHC_MotionFitHoldout"
+ },
+ {
+  "label": "Orc",
+  "character": "/Game/Characters/Clothing/VillageWardrobe/Generated/QA/MHC_Orc_BodyCommitted",
+  "original": "/Game/Characters/Fantasy/MHC_Orc",
+  "note": "QA copy with the body state committed; the original was saved without it"
+ },
+ {
+  "label": "TunicFieldTest",
+  "character": "/Game/Characters/Fantasy/MHC_TunicFieldTest"
+ }
+]

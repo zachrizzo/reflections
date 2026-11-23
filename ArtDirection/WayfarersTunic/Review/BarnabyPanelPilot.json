@@ -1,0 +1,3627 @@
+{
+  "body": "GiltBarnaby",
+  "clip": "AS_Hero_CombatHealRaise",
+  "method": "Unreal LOD 0 bone-skinned surfaces. Editor clip sampled at 30 Hz including both endpoints. Game sampled at recorded elapsed game times.",
+  "gameplay_run": {
+    "body_asset": "/Engine/Transient.UnrealEdEngine_0:MetaHumanCharacterEditorSubsystem_0.BodyMesh_21",
+    "animation_blueprint": "ABP_HeroSampleCastBlend_C",
+    "layered": true,
+    "spell": "HealingPulse",
+    "montage": "<Object '/Engine/Transient.AnimMontage_3' (0x000001E16C9D0700) Class 'AnimMontage'>",
+    "cast_driver_end_s": 0.9980484489351511,
+    "sample_times_s": [
+      0,
+      0.017954,
+      0.05265,
+      0.089871,
+      0.127085,
+      0.171838,
+      0.205239,
+      0.240776,
+      0.274319,
+      0.308277,
+      0.344599,
+      0.435661,
+      0.504763,
+      0.542097,
+      0.581993,
+      0.616544,
+      0.651779,
+      0.690136,
+      0.727314,
+      0.760682,
+      0.796314,
+      0.830041,
+      0.866094,
+      0.903718,
+      0.939144,
+      0.974698,
+      0.998048,
+      1.034538,
+      1.070796,
+      1.105402,
+      1.13969,
+      1.173205,
+      1.209144,
+      1.242483
+    ],
+    "casting_at_sample": [
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "left_hand_max_travel_from_idle_cm": 33.05
+  },
+  "common_skin_faces_hit_by_all_three": {
+    "editor": {
+      "rest": 0,
+      "f000": 7,
+      "f001": 7,
+      "f002": 7,
+      "f003": 5,
+      "f004": 3,
+      "f005": 3,
+      "f006": 3,
+      "f007": 17,
+      "f008": 40,
+      "f009": 25,
+      "f010": 45,
+      "f011": 42,
+      "f012": 52,
+      "f013": 27,
+      "f014": 33,
+      "f015": 41,
+      "f016": 50,
+      "f017": 54,
+      "f018": 39,
+      "f019": 32,
+      "f020": 47,
+      "f021": 41,
+      "f022": 33,
+      "f023": 58,
+      "f024": 32,
+      "f025": 43,
+      "f026": 46,
+      "f027": 27,
+      "f028": 41,
+      "f029": 43,
+      "f030": 50,
+      "f031": 56,
+      "f032": 71,
+      "f033": 57,
+      "f034": 51,
+      "f035": 49,
+      "f036": 46,
+      "f037": 53,
+      "f038": 37,
+      "f039": 33,
+      "f040": 27,
+      "f041": 33,
+      "f042": 41,
+      "f043": 40,
+      "f044": 31,
+      "f045": 34,
+      "f046": 36,
+      "f047": 45,
+      "f048": 56,
+      "f049": 61,
+      "f050": 64,
+      "f051": 51,
+      "f052": 38,
+      "f053": 52,
+      "f054": 34,
+      "f055": 35,
+      "f056": 24,
+      "f057": 16,
+      "f058": 10,
+      "f059": 11,
+      "f060": 8,
+      "f061": 4,
+      "f062": 8,
+      "f063": 2,
+      "f064": 6,
+      "f065": 4,
+      "f066": 4
+    },
+    "game": {
+      "idle": 36,
+      "f000": 24,
+      "f001": 6,
+      "f002": 5,
+      "f003": 3,
+      "f004": 5,
+      "f005": 4,
+      "f006": 16,
+      "f007": 29,
+      "f008": 25,
+      "f009": 42,
+      "f010": 34,
+      "f011": 37,
+      "f012": 55,
+      "f013": 47,
+      "f014": 32,
+      "f015": 44,
+      "f016": 46,
+      "f017": 51,
+      "f018": 40,
+      "f019": 36,
+      "f020": 46,
+      "f021": 30,
+      "f022": 25,
+      "f023": 33,
+      "f024": 31,
+      "f025": 32,
+      "f026": 32,
+      "f027": 32,
+      "f028": 33,
+      "f029": 35,
+      "f030": 37,
+      "f031": 36,
+      "f032": 36
+    }
+  },
+  "active_cast_body_face_contacts_by_dominant_bone": {
+    "current": {
+      "upperarm_twistCor_02_l": 738,
+      "upperarm_tricep_l": 31,
+      "upperarm_twistCor_01_l": 38,
+      "upperarm_twistCor_02_r": 748,
+      "upperarm_twistCor_01_r": 25,
+      "upperarm_bicep_r": 322,
+      "upperarm_bicep_l": 194,
+      "lowerarm_twist_02_r": 1308,
+      "lowerarm_twist_01_r": 933,
+      "lowerarm_twist_02_l": 1086,
+      "lowerarm_twist_01_l": 793,
+      "hand_l": 547,
+      "thumb_02_r": 151,
+      "thumb_02_mcp_r": 18,
+      "thumb_01_r": 540,
+      "hand_r": 547,
+      "wrist_outer_r": 36,
+      "wrist_outer_l": 99,
+      "pinky_metacarpal_l": 151,
+      "pinky_metacarpal_r": 25,
+      "ring_metacarpal_l": 19,
+      "pinky_01_mcp_l": 1,
+      "ring_metacarpal_r": 77,
+      "middle_metacarpal_r": 19,
+      "thumb_02_bulge_r": 70,
+      "thumb_03_pip_r": 26,
+      "thumb_03_r": 41,
+      "upperarm_tricep_r": 4,
+      "lowerarm_in_r": 12,
+      "thumb_01_side_out_r": 1
+    },
+    "stock": {
+      "upperarm_twistCor_02_l": 1049,
+      "upperarm_twistCor_01_l": 116,
+      "upperarm_tricep_l": 96,
+      "upperarm_bicep_l": 601,
+      "upperarm_twistCor_02_r": 976,
+      "upperarm_tricep_r": 152,
+      "upperarm_twistCor_01_r": 191,
+      "upperarm_bicep_r": 354,
+      "lowerarm_twist_01_r": 1391,
+      "lowerarm_twist_02_r": 1205,
+      "hand_l": 701,
+      "lowerarm_twist_01_l": 1145,
+      "hand_r": 745,
+      "thumb_01_r": 686,
+      "wrist_outer_r": 46,
+      "thumb_01_side_out_l": 8,
+      "thumb_01_l": 65,
+      "lowerarm_twist_02_l": 1006,
+      "thumb_02_r": 132,
+      "thumb_02_bulge_r": 91,
+      "wrist_outer_l": 128,
+      "thumb_01_side_out_r": 8,
+      "middle_metacarpal_l": 25,
+      "pinky_metacarpal_r": 57,
+      "ring_metacarpal_r": 86,
+      "middle_metacarpal_r": 15,
+      "pinky_metacarpal_l": 143,
+      "pinky_01_palm_l": 18,
+      "pinky_01_palmMid_l": 5,
+      "pinky_01_bulge_l": 18,
+      "pinky_02_in_l": 9,
+      "pinky_02_bulge_l": 3,
+      "ring_metacarpal_l": 43,
+      "pinky_01_l": 12,
+      "pinky_02_l": 9,
+      "pinky_02_pip_l": 6,
+      "ring_01_mcp_l": 12,
+      "pinky_01_mcp_l": 15,
+      "lowerarm_in_r": 27,
+      "lowerarm_in_l": 4,
+      "thumb_02_mcp_r": 10,
+      "thumb_03_r": 106,
+      "thumb_03_pip_r": 46
+    },
+    "panel": {
+      "upperarm_twistCor_02_l": 796,
+      "upperarm_tricep_l": 47,
+      "upperarm_twistCor_01_l": 27,
+      "upperarm_twistCor_02_r": 849,
+      "upperarm_twistCor_01_r": 26,
+      "upperarm_bicep_r": 273,
+      "upperarm_bicep_l": 212,
+      "lowerarm_twist_02_r": 1080,
+      "lowerarm_twist_01_r": 941,
+      "lowerarm_twist_02_l": 986,
+      "lowerarm_twist_01_l": 825,
+      "hand_l": 601,
+      "thumb_01_r": 557,
+      "thumb_01_side_out_r": 6,
+      "hand_r": 642,
+      "pinky_metacarpal_l": 209,
+      "ring_metacarpal_r": 126,
+      "wrist_outer_r": 46,
+      "wrist_outer_l": 120,
+      "thumb_02_r": 133,
+      "thumb_02_mcp_r": 12,
+      "pinky_metacarpal_r": 90,
+      "ring_metacarpal_l": 45,
+      "pinky_01_mcp_l": 7,
+      "middle_metacarpal_r": 50,
+      "middle_metacarpal_l": 1,
+      "thumb_02_bulge_r": 98,
+      "lowerarm_in_l": 19,
+      "thumb_03_r": 60,
+      "thumb_03_pip_r": 37,
+      "upperarm_tricep_r": 11,
+      "lowerarm_in_r": 19,
+      "index_metacarpal_r": 2
+    },
+    "all_three": {
+      "upperarm_twistCor_02_l": 46,
+      "upperarm_tricep_l": 28,
+      "upperarm_twistCor_01_l": 15,
+      "upperarm_twistCor_02_r": 64,
+      "upperarm_twistCor_01_r": 19,
+      "upperarm_bicep_r": 68,
+      "upperarm_bicep_l": 120,
+      "lowerarm_twist_02_r": 92,
+      "lowerarm_twist_01_r": 116,
+      "lowerarm_twist_02_l": 116,
+      "lowerarm_twist_01_l": 25,
+      "hand_r": 5,
+      "thumb_01_r": 21,
+      "thumb_02_bulge_r": 2,
+      "upperarm_tricep_r": 4,
+      "hand_l": 4,
+      "thumb_02_mcp_r": 1
+    }
+  },
+  "common_unmasked_skin_triangles": 45300,
+  "variants": {
+    "current": {
+      "shirt_triangles": 12044,
+      "mask_texture": "/Game/Characters/Clothing/OA_WayfarersTunic/Source/T_WayfarersTunic_BodyMask.T_WayfarersTunic_BodyMask",
+      "girth_mm": {
+        "chest": {
+          "rays": 128,
+          "body_hits": 108,
+          "garment_hits": 102
+        },
+        "waist": {
+          "rays": 128,
+          "body_hits": 128,
+          "garment_hits": 128,
+          "body_mm": 1018.4,
+          "garment_mm": 1063.2,
+          "ease_mm": 44.8
+        }
+      },
+      "directional_mm": {
+        "chest_front": {
+          "n": 27,
+          "min": 5.48,
+          "p05": 6.42,
+          "median": 10.1,
+          "p95": 21.27,
+          "max": 21.53
+        },
+        "chest_back": {
+          "n": 27,
+          "min": 7.37,
+          "p05": 7.46,
+          "median": 7.97,
+          "p95": 8.86,
+          "max": 8.98
+        },
+        "waist_front": {
+          "n": 27,
+          "min": 5.17,
+          "p05": 5.19,
+          "median": 5.89,
+          "p95": 9.09,
+          "max": 9.8
+        },
+        "waist_back": {
+          "n": 27,
+          "min": 2.65,
+          "p05": 2.77,
+          "median": 4.34,
+          "p95": 5.44,
+          "max": 6.03
+        },
+        "above_hem_front": {
+          "n": 9,
+          "min": 12.48,
+          "p05": 12.72,
+          "median": 14.1,
+          "p95": 16.82,
+          "max": 16.87
+        },
+        "above_hem_back": {
+          "n": 18,
+          "min": 7.08,
+          "p05": 7.08,
+          "median": 12.67,
+          "p95": 13.87,
+          "max": 14.23
+        },
+        "shoulder_l": {
+          "n": 0
+        },
+        "shoulder_r": {
+          "n": 0
+        }
+      },
+      "samples": {
+        "rest": {
+          "time_s": 0.0,
+          "intersected_body_faces": 402,
+          "fully_unmasked_body_faces": 6,
+          "common_unmasked_body_faces": 3,
+          "unknown_mask_body_faces": 149,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 0.0,
+          "p95_edge_extension_pct": 0.0
+        },
+        "f000": {
+          "time_s": 0.0,
+          "intersected_body_faces": 863,
+          "fully_unmasked_body_faces": 79,
+          "common_unmasked_body_faces": 59,
+          "unknown_mask_body_faces": 225,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.45,
+          "p95_edge_extension_pct": 27.05
+        },
+        "f001": {
+          "time_s": 0.0333,
+          "intersected_body_faces": 858,
+          "fully_unmasked_body_faces": 75,
+          "common_unmasked_body_faces": 55,
+          "unknown_mask_body_faces": 222,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.56,
+          "p95_edge_extension_pct": 27.25
+        },
+        "f002": {
+          "time_s": 0.0667,
+          "intersected_body_faces": 852,
+          "fully_unmasked_body_faces": 73,
+          "common_unmasked_body_faces": 55,
+          "unknown_mask_body_faces": 221,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.81,
+          "p95_edge_extension_pct": 27.3
+        },
+        "f003": {
+          "time_s": 0.1,
+          "intersected_body_faces": 853,
+          "fully_unmasked_body_faces": 73,
+          "common_unmasked_body_faces": 53,
+          "unknown_mask_body_faces": 221,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 3.57,
+          "p95_edge_extension_pct": 27.33
+        },
+        "f004": {
+          "time_s": 0.1333,
+          "intersected_body_faces": 851,
+          "fully_unmasked_body_faces": 71,
+          "common_unmasked_body_faces": 53,
+          "unknown_mask_body_faces": 223,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.24,
+          "p95_edge_extension_pct": 27.1
+        },
+        "f005": {
+          "time_s": 0.1667,
+          "intersected_body_faces": 852,
+          "fully_unmasked_body_faces": 71,
+          "common_unmasked_body_faces": 53,
+          "unknown_mask_body_faces": 224,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 3.19,
+          "p95_edge_extension_pct": 26.79
+        },
+        "f006": {
+          "time_s": 0.2,
+          "intersected_body_faces": 863,
+          "fully_unmasked_body_faces": 87,
+          "common_unmasked_body_faces": 67,
+          "unknown_mask_body_faces": 222,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 2.89,
+          "p95_edge_extension_pct": 26.56
+        },
+        "f007": {
+          "time_s": 0.2333,
+          "intersected_body_faces": 887,
+          "fully_unmasked_body_faces": 113,
+          "common_unmasked_body_faces": 92,
+          "unknown_mask_body_faces": 225,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.34,
+          "p95_edge_extension_pct": 26.32
+        },
+        "f008": {
+          "time_s": 0.2667,
+          "intersected_body_faces": 926,
+          "fully_unmasked_body_faces": 159,
+          "common_unmasked_body_faces": 134,
+          "unknown_mask_body_faces": 223,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 7.07,
+          "p95_edge_extension_pct": 25.76
+        },
+        "f009": {
+          "time_s": 0.3,
+          "intersected_body_faces": 995,
+          "fully_unmasked_body_faces": 244,
+          "common_unmasked_body_faces": 218,
+          "unknown_mask_body_faces": 222,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 10.38,
+          "p95_edge_extension_pct": 25.59
+        },
+        "f010": {
+          "time_s": 0.3333,
+          "intersected_body_faces": 1094,
+          "fully_unmasked_body_faces": 357,
+          "common_unmasked_body_faces": 322,
+          "unknown_mask_body_faces": 217,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 10.01,
+          "p95_edge_extension_pct": 25.37
+        },
+        "f011": {
+          "time_s": 0.3667,
+          "intersected_body_faces": 1256,
+          "fully_unmasked_body_faces": 522,
+          "common_unmasked_body_faces": 486,
+          "unknown_mask_body_faces": 209,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 11.26,
+          "p95_edge_extension_pct": 25.11
+        },
+        "f012": {
+          "time_s": 0.4,
+          "intersected_body_faces": 1394,
+          "fully_unmasked_body_faces": 659,
+          "common_unmasked_body_faces": 625,
+          "unknown_mask_body_faces": 212,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 8.76,
+          "p95_edge_extension_pct": 25.02
+        },
+        "f013": {
+          "time_s": 0.4333,
+          "intersected_body_faces": 1434,
+          "fully_unmasked_body_faces": 693,
+          "common_unmasked_body_faces": 661,
+          "unknown_mask_body_faces": 214,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 8.68,
+          "p95_edge_extension_pct": 25.14
+        },
+        "f014": {
+          "time_s": 0.4667,
+          "intersected_body_faces": 1433,
+          "fully_unmasked_body_faces": 686,
+          "common_unmasked_body_faces": 656,
+          "unknown_mask_body_faces": 218,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 7.51,
+          "p95_edge_extension_pct": 25.26
+        },
+        "f015": {
+          "time_s": 0.5,
+          "intersected_body_faces": 1454,
+          "fully_unmasked_body_faces": 707,
+          "common_unmasked_body_faces": 676,
+          "unknown_mask_body_faces": 223,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 9.85,
+          "p95_edge_extension_pct": 25.44
+        },
+        "f016": {
+          "time_s": 0.5333,
+          "intersected_body_faces": 1463,
+          "fully_unmasked_body_faces": 720,
+          "common_unmasked_body_faces": 686,
+          "unknown_mask_body_faces": 222,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 12.24,
+          "p95_edge_extension_pct": 25.69
+        },
+        "f017": {
+          "time_s": 0.5667,
+          "intersected_body_faces": 1463,
+          "fully_unmasked_body_faces": 715,
+          "common_unmasked_body_faces": 674,
+          "unknown_mask_body_faces": 225,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 16.21,
+          "p95_edge_extension_pct": 25.47
+        },
+        "f018": {
+          "time_s": 0.6,
+          "intersected_body_faces": 1481,
+          "fully_unmasked_body_faces": 733,
+          "common_unmasked_body_faces": 693,
+          "unknown_mask_body_faces": 225,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 10.29,
+          "p95_edge_extension_pct": 25.39
+        },
+        "f019": {
+          "time_s": 0.6333,
+          "intersected_body_faces": 1482,
+          "fully_unmasked_body_faces": 732,
+          "common_unmasked_body_faces": 693,
+          "unknown_mask_body_faces": 225,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 10.03,
+          "p95_edge_extension_pct": 25.43
+        },
+        "f020": {
+          "time_s": 0.6667,
+          "intersected_body_faces": 1487,
+          "fully_unmasked_body_faces": 738,
+          "common_unmasked_body_faces": 699,
+          "unknown_mask_body_faces": 228,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 8.0,
+          "p95_edge_extension_pct": 25.46
+        },
+        "f021": {
+          "time_s": 0.7,
+          "intersected_body_faces": 1494,
+          "fully_unmasked_body_faces": 741,
+          "common_unmasked_body_faces": 700,
+          "unknown_mask_body_faces": 225,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 11.02,
+          "p95_edge_extension_pct": 25.56
+        },
+        "f022": {
+          "time_s": 0.7333,
+          "intersected_body_faces": 1470,
+          "fully_unmasked_body_faces": 722,
+          "common_unmasked_body_faces": 686,
+          "unknown_mask_body_faces": 224,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 8.95,
+          "p95_edge_extension_pct": 25.54
+        },
+        "f023": {
+          "time_s": 0.7667,
+          "intersected_body_faces": 1472,
+          "fully_unmasked_body_faces": 723,
+          "common_unmasked_body_faces": 690,
+          "unknown_mask_body_faces": 224,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 8.0,
+          "p95_edge_extension_pct": 25.62
+        },
+        "f024": {
+          "time_s": 0.8,
+          "intersected_body_faces": 1462,
+          "fully_unmasked_body_faces": 714,
+          "common_unmasked_body_faces": 679,
+          "unknown_mask_body_faces": 221,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 8.37,
+          "p95_edge_extension_pct": 25.62
+        },
+        "f025": {
+          "time_s": 0.8333,
+          "intersected_body_faces": 1467,
+          "fully_unmasked_body_faces": 717,
+          "common_unmasked_body_faces": 684,
+          "unknown_mask_body_faces": 222,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 10.8,
+          "p95_edge_extension_pct": 25.51
+        },
+        "f026": {
+          "time_s": 0.8667,
+          "intersected_body_faces": 1466,
+          "fully_unmasked_body_faces": 720,
+          "common_unmasked_body_faces": 686,
+          "unknown_mask_body_faces": 228,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 7.73,
+          "p95_edge_extension_pct": 25.75
+        },
+        "f027": {
+          "time_s": 0.9,
+          "intersected_body_faces": 1446,
+          "fully_unmasked_body_faces": 699,
+          "common_unmasked_body_faces": 658,
+          "unknown_mask_body_faces": 222,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 10.04,
+          "p95_edge_extension_pct": 25.8
+        },
+        "f028": {
+          "time_s": 0.9333,
+          "intersected_body_faces": 1380,
+          "fully_unmasked_body_faces": 648,
+          "common_unmasked_body_faces": 607,
+          "unknown_mask_body_faces": 217,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 6.44,
+          "p95_edge_extension_pct": 25.76
+        },
+        "f029": {
+          "time_s": 0.9667,
+          "intersected_body_faces": 1340,
+          "fully_unmasked_body_faces": 602,
+          "common_unmasked_body_faces": 566,
+          "unknown_mask_body_faces": 216,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 9.99,
+          "p95_edge_extension_pct": 25.55
+        },
+        "f030": {
+          "time_s": 1.0,
+          "intersected_body_faces": 1280,
+          "fully_unmasked_body_faces": 552,
+          "common_unmasked_body_faces": 523,
+          "unknown_mask_body_faces": 203,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 7.11,
+          "p95_edge_extension_pct": 25.51
+        },
+        "f031": {
+          "time_s": 1.0333,
+          "intersected_body_faces": 1248,
+          "fully_unmasked_body_faces": 504,
+          "common_unmasked_body_faces": 477,
+          "unknown_mask_body_faces": 206,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 6.4,
+          "p95_edge_extension_pct": 25.6
+        },
+        "f032": {
+          "time_s": 1.0667,
+          "intersected_body_faces": 1218,
+          "fully_unmasked_body_faces": 476,
+          "common_unmasked_body_faces": 446,
+          "unknown_mask_body_faces": 211,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 11.76,
+          "p95_edge_extension_pct": 25.63
+        },
+        "f033": {
+          "time_s": 1.1,
+          "intersected_body_faces": 1165,
+          "fully_unmasked_body_faces": 422,
+          "common_unmasked_body_faces": 386,
+          "unknown_mask_body_faces": 211,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 8.02,
+          "p95_edge_extension_pct": 25.53
+        },
+        "f034": {
+          "time_s": 1.1333,
+          "intersected_body_faces": 1161,
+          "fully_unmasked_body_faces": 403,
+          "common_unmasked_body_faces": 369,
+          "unknown_mask_body_faces": 212,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 7.53,
+          "p95_edge_extension_pct": 25.39
+        },
+        "f035": {
+          "time_s": 1.1667,
+          "intersected_body_faces": 1144,
+          "fully_unmasked_body_faces": 393,
+          "common_unmasked_body_faces": 350,
+          "unknown_mask_body_faces": 218,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 6.25,
+          "p95_edge_extension_pct": 25.29
+        },
+        "f036": {
+          "time_s": 1.2,
+          "intersected_body_faces": 1153,
+          "fully_unmasked_body_faces": 415,
+          "common_unmasked_body_faces": 374,
+          "unknown_mask_body_faces": 217,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 6.87,
+          "p95_edge_extension_pct": 25.0
+        },
+        "f037": {
+          "time_s": 1.2333,
+          "intersected_body_faces": 1174,
+          "fully_unmasked_body_faces": 437,
+          "common_unmasked_body_faces": 387,
+          "unknown_mask_body_faces": 213,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 7.02,
+          "p95_edge_extension_pct": 25.0
+        },
+        "f038": {
+          "time_s": 1.2667,
+          "intersected_body_faces": 1238,
+          "fully_unmasked_body_faces": 505,
+          "common_unmasked_body_faces": 464,
+          "unknown_mask_body_faces": 214,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 8.02,
+          "p95_edge_extension_pct": 24.98
+        },
+        "f039": {
+          "time_s": 1.3,
+          "intersected_body_faces": 1300,
+          "fully_unmasked_body_faces": 566,
+          "common_unmasked_body_faces": 531,
+          "unknown_mask_body_faces": 215,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 9.72,
+          "p95_edge_extension_pct": 24.91
+        },
+        "f040": {
+          "time_s": 1.3333,
+          "intersected_body_faces": 1368,
+          "fully_unmasked_body_faces": 638,
+          "common_unmasked_body_faces": 603,
+          "unknown_mask_body_faces": 211,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 7.59,
+          "p95_edge_extension_pct": 24.81
+        },
+        "f041": {
+          "time_s": 1.3667,
+          "intersected_body_faces": 1416,
+          "fully_unmasked_body_faces": 678,
+          "common_unmasked_body_faces": 645,
+          "unknown_mask_body_faces": 211,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 6.78,
+          "p95_edge_extension_pct": 24.92
+        },
+        "f042": {
+          "time_s": 1.4,
+          "intersected_body_faces": 1410,
+          "fully_unmasked_body_faces": 658,
+          "common_unmasked_body_faces": 611,
+          "unknown_mask_body_faces": 215,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 10.06,
+          "p95_edge_extension_pct": 24.99
+        },
+        "f043": {
+          "time_s": 1.4333,
+          "intersected_body_faces": 1385,
+          "fully_unmasked_body_faces": 636,
+          "common_unmasked_body_faces": 598,
+          "unknown_mask_body_faces": 222,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 6.86,
+          "p95_edge_extension_pct": 25.18
+        },
+        "f044": {
+          "time_s": 1.4667,
+          "intersected_body_faces": 1361,
+          "fully_unmasked_body_faces": 612,
+          "common_unmasked_body_faces": 579,
+          "unknown_mask_body_faces": 228,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 6.74,
+          "p95_edge_extension_pct": 25.23
+        },
+        "f045": {
+          "time_s": 1.5,
+          "intersected_body_faces": 1323,
+          "fully_unmasked_body_faces": 571,
+          "common_unmasked_body_faces": 535,
+          "unknown_mask_body_faces": 226,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 8.28,
+          "p95_edge_extension_pct": 25.48
+        },
+        "f046": {
+          "time_s": 1.5333,
+          "intersected_body_faces": 1316,
+          "fully_unmasked_body_faces": 566,
+          "common_unmasked_body_faces": 523,
+          "unknown_mask_body_faces": 220,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 11.54,
+          "p95_edge_extension_pct": 25.5
+        },
+        "f047": {
+          "time_s": 1.5667,
+          "intersected_body_faces": 1288,
+          "fully_unmasked_body_faces": 536,
+          "common_unmasked_body_faces": 492,
+          "unknown_mask_body_faces": 218,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 6.03,
+          "p95_edge_extension_pct": 25.59
+        },
+        "f048": {
+          "time_s": 1.6,
+          "intersected_body_faces": 1288,
+          "fully_unmasked_body_faces": 530,
+          "common_unmasked_body_faces": 489,
+          "unknown_mask_body_faces": 219,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 7.4,
+          "p95_edge_extension_pct": 25.81
+        },
+        "f049": {
+          "time_s": 1.6333,
+          "intersected_body_faces": 1251,
+          "fully_unmasked_body_faces": 504,
+          "common_unmasked_body_faces": 464,
+          "unknown_mask_body_faces": 219,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 11.67,
+          "p95_edge_extension_pct": 26.12
+        },
+        "f050": {
+          "time_s": 1.6667,
+          "intersected_body_faces": 1229,
+          "fully_unmasked_body_faces": 465,
+          "common_unmasked_body_faces": 425,
+          "unknown_mask_body_faces": 224,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 12.86,
+          "p95_edge_extension_pct": 26.46
+        },
+        "f051": {
+          "time_s": 1.7,
+          "intersected_body_faces": 1169,
+          "fully_unmasked_body_faces": 409,
+          "common_unmasked_body_faces": 369,
+          "unknown_mask_body_faces": 217,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 11.31,
+          "p95_edge_extension_pct": 26.66
+        },
+        "f052": {
+          "time_s": 1.7333,
+          "intersected_body_faces": 1110,
+          "fully_unmasked_body_faces": 352,
+          "common_unmasked_body_faces": 313,
+          "unknown_mask_body_faces": 220,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 11.71,
+          "p95_edge_extension_pct": 26.85
+        },
+        "f053": {
+          "time_s": 1.7667,
+          "intersected_body_faces": 1078,
+          "fully_unmasked_body_faces": 315,
+          "common_unmasked_body_faces": 274,
+          "unknown_mask_body_faces": 222,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 10.7,
+          "p95_edge_extension_pct": 26.91
+        },
+        "f054": {
+          "time_s": 1.8,
+          "intersected_body_faces": 1061,
+          "fully_unmasked_body_faces": 285,
+          "common_unmasked_body_faces": 248,
+          "unknown_mask_body_faces": 225,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 7.42,
+          "p95_edge_extension_pct": 26.85
+        },
+        "f055": {
+          "time_s": 1.8333,
+          "intersected_body_faces": 1045,
+          "fully_unmasked_body_faces": 278,
+          "common_unmasked_body_faces": 242,
+          "unknown_mask_body_faces": 225,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.55,
+          "p95_edge_extension_pct": 26.76
+        },
+        "f056": {
+          "time_s": 1.8667,
+          "intersected_body_faces": 958,
+          "fully_unmasked_body_faces": 190,
+          "common_unmasked_body_faces": 163,
+          "unknown_mask_body_faces": 227,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.58,
+          "p95_edge_extension_pct": 26.65
+        },
+        "f057": {
+          "time_s": 1.9,
+          "intersected_body_faces": 920,
+          "fully_unmasked_body_faces": 155,
+          "common_unmasked_body_faces": 130,
+          "unknown_mask_body_faces": 227,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 5.58,
+          "p95_edge_extension_pct": 26.47
+        },
+        "f058": {
+          "time_s": 1.9333,
+          "intersected_body_faces": 906,
+          "fully_unmasked_body_faces": 132,
+          "common_unmasked_body_faces": 108,
+          "unknown_mask_body_faces": 232,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 5.25,
+          "p95_edge_extension_pct": 26.3
+        },
+        "f059": {
+          "time_s": 1.9667,
+          "intersected_body_faces": 884,
+          "fully_unmasked_body_faces": 120,
+          "common_unmasked_body_faces": 94,
+          "unknown_mask_body_faces": 230,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 2.47,
+          "p95_edge_extension_pct": 26.13
+        },
+        "f060": {
+          "time_s": 2.0,
+          "intersected_body_faces": 870,
+          "fully_unmasked_body_faces": 102,
+          "common_unmasked_body_faces": 78,
+          "unknown_mask_body_faces": 229,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 3.8,
+          "p95_edge_extension_pct": 26.1
+        },
+        "f061": {
+          "time_s": 2.0333,
+          "intersected_body_faces": 861,
+          "fully_unmasked_body_faces": 85,
+          "common_unmasked_body_faces": 66,
+          "unknown_mask_body_faces": 224,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.28,
+          "p95_edge_extension_pct": 26.13
+        },
+        "f062": {
+          "time_s": 2.0667,
+          "intersected_body_faces": 855,
+          "fully_unmasked_body_faces": 79,
+          "common_unmasked_body_faces": 60,
+          "unknown_mask_body_faces": 226,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 5.04,
+          "p95_edge_extension_pct": 26.2
+        },
+        "f063": {
+          "time_s": 2.1,
+          "intersected_body_faces": 855,
+          "fully_unmasked_body_faces": 74,
+          "common_unmasked_body_faces": 53,
+          "unknown_mask_body_faces": 226,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.79,
+          "p95_edge_extension_pct": 26.35
+        },
+        "f064": {
+          "time_s": 2.1333,
+          "intersected_body_faces": 859,
+          "fully_unmasked_body_faces": 74,
+          "common_unmasked_body_faces": 53,
+          "unknown_mask_body_faces": 226,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.52,
+          "p95_edge_extension_pct": 26.41
+        },
+        "f065": {
+          "time_s": 2.1667,
+          "intersected_body_faces": 857,
+          "fully_unmasked_body_faces": 73,
+          "common_unmasked_body_faces": 53,
+          "unknown_mask_body_faces": 226,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.11,
+          "p95_edge_extension_pct": 26.57
+        },
+        "f066": {
+          "time_s": 2.2,
+          "intersected_body_faces": 857,
+          "fully_unmasked_body_faces": 73,
+          "common_unmasked_body_faces": 53,
+          "unknown_mask_body_faces": 226,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.11,
+          "p95_edge_extension_pct": 26.57
+        }
+      },
+      "gameplay_samples": {
+        "idle": {
+          "time_s": 0,
+          "intersected_body_faces": 755,
+          "fully_unmasked_body_faces": 93,
+          "common_unmasked_body_faces": 80,
+          "unknown_mask_body_faces": 203,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 3.7,
+          "p95_edge_extension_pct": 15.8
+        },
+        "f000": {
+          "time_s": 0.018,
+          "intersected_body_faces": 746,
+          "fully_unmasked_body_faces": 78,
+          "common_unmasked_body_faces": 65,
+          "unknown_mask_body_faces": 206,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 3.37,
+          "p95_edge_extension_pct": 14.46
+        },
+        "f001": {
+          "time_s": 0.0527,
+          "intersected_body_faces": 815,
+          "fully_unmasked_body_faces": 78,
+          "common_unmasked_body_faces": 55,
+          "unknown_mask_body_faces": 203,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 5.12,
+          "p95_edge_extension_pct": 19.78
+        },
+        "f002": {
+          "time_s": 0.0899,
+          "intersected_body_faces": 853,
+          "fully_unmasked_body_faces": 73,
+          "common_unmasked_body_faces": 53,
+          "unknown_mask_body_faces": 221,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 3.54,
+          "p95_edge_extension_pct": 25.37
+        },
+        "f003": {
+          "time_s": 0.1271,
+          "intersected_body_faces": 851,
+          "fully_unmasked_body_faces": 73,
+          "common_unmasked_body_faces": 53,
+          "unknown_mask_body_faces": 221,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.39,
+          "p95_edge_extension_pct": 25.21
+        },
+        "f004": {
+          "time_s": 0.1718,
+          "intersected_body_faces": 851,
+          "fully_unmasked_body_faces": 71,
+          "common_unmasked_body_faces": 53,
+          "unknown_mask_body_faces": 223,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 3.63,
+          "p95_edge_extension_pct": 24.71
+        },
+        "f005": {
+          "time_s": 0.2052,
+          "intersected_body_faces": 867,
+          "fully_unmasked_body_faces": 93,
+          "common_unmasked_body_faces": 73,
+          "unknown_mask_body_faces": 222,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 3.14,
+          "p95_edge_extension_pct": 23.99
+        },
+        "f006": {
+          "time_s": 0.2408,
+          "intersected_body_faces": 885,
+          "fully_unmasked_body_faces": 112,
+          "common_unmasked_body_faces": 90,
+          "unknown_mask_body_faces": 224,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 5.21,
+          "p95_edge_extension_pct": 23.58
+        },
+        "f007": {
+          "time_s": 0.2743,
+          "intersected_body_faces": 933,
+          "fully_unmasked_body_faces": 168,
+          "common_unmasked_body_faces": 144,
+          "unknown_mask_body_faces": 221,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 7.85,
+          "p95_edge_extension_pct": 23.3
+        },
+        "f008": {
+          "time_s": 0.3083,
+          "intersected_body_faces": 973,
+          "fully_unmasked_body_faces": 231,
+          "common_unmasked_body_faces": 204,
+          "unknown_mask_body_faces": 222,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 8.78,
+          "p95_edge_extension_pct": 23.12
+        },
+        "f009": {
+          "time_s": 0.3446,
+          "intersected_body_faces": 1099,
+          "fully_unmasked_body_faces": 364,
+          "common_unmasked_body_faces": 331,
+          "unknown_mask_body_faces": 210,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 12.75,
+          "p95_edge_extension_pct": 22.84
+        },
+        "f010": {
+          "time_s": 0.4357,
+          "intersected_body_faces": 1434,
+          "fully_unmasked_body_faces": 691,
+          "common_unmasked_body_faces": 660,
+          "unknown_mask_body_faces": 214,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 10.78,
+          "p95_edge_extension_pct": 22.55
+        },
+        "f011": {
+          "time_s": 0.5048,
+          "intersected_body_faces": 1452,
+          "fully_unmasked_body_faces": 705,
+          "common_unmasked_body_faces": 673,
+          "unknown_mask_body_faces": 224,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 10.33,
+          "p95_edge_extension_pct": 23.46
+        },
+        "f012": {
+          "time_s": 0.5421,
+          "intersected_body_faces": 1464,
+          "fully_unmasked_body_faces": 717,
+          "common_unmasked_body_faces": 682,
+          "unknown_mask_body_faces": 223,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 12.54,
+          "p95_edge_extension_pct": 23.65
+        },
+        "f013": {
+          "time_s": 0.582,
+          "intersected_body_faces": 1462,
+          "fully_unmasked_body_faces": 715,
+          "common_unmasked_body_faces": 674,
+          "unknown_mask_body_faces": 225,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 11.69,
+          "p95_edge_extension_pct": 23.79
+        },
+        "f014": {
+          "time_s": 0.6165,
+          "intersected_body_faces": 1480,
+          "fully_unmasked_body_faces": 729,
+          "common_unmasked_body_faces": 690,
+          "unknown_mask_body_faces": 225,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 10.2,
+          "p95_edge_extension_pct": 23.73
+        },
+        "f015": {
+          "time_s": 0.6518,
+          "intersected_body_faces": 1477,
+          "fully_unmasked_body_faces": 727,
+          "common_unmasked_body_faces": 689,
+          "unknown_mask_body_faces": 224,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 8.91,
+          "p95_edge_extension_pct": 23.66
+        },
+        "f016": {
+          "time_s": 0.6901,
+          "intersected_body_faces": 1485,
+          "fully_unmasked_body_faces": 734,
+          "common_unmasked_body_faces": 693,
+          "unknown_mask_body_faces": 225,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 11.39,
+          "p95_edge_extension_pct": 23.65
+        },
+        "f017": {
+          "time_s": 0.7273,
+          "intersected_body_faces": 1463,
+          "fully_unmasked_body_faces": 717,
+          "common_unmasked_body_faces": 681,
+          "unknown_mask_body_faces": 224,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 9.37,
+          "p95_edge_extension_pct": 23.6
+        },
+        "f018": {
+          "time_s": 0.7607,
+          "intersected_body_faces": 1458,
+          "fully_unmasked_body_faces": 715,
+          "common_unmasked_body_faces": 676,
+          "unknown_mask_body_faces": 222,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 11.07,
+          "p95_edge_extension_pct": 23.18
+        },
+        "f019": {
+          "time_s": 0.7963,
+          "intersected_body_faces": 1350,
+          "fully_unmasked_body_faces": 620,
+          "common_unmasked_body_faces": 581,
+          "unknown_mask_body_faces": 226,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 7.59,
+          "p95_edge_extension_pct": 20.8
+        },
+        "f020": {
+          "time_s": 0.83,
+          "intersected_body_faces": 1060,
+          "fully_unmasked_body_faces": 382,
+          "common_unmasked_body_faces": 350,
+          "unknown_mask_body_faces": 206,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 9.59,
+          "p95_edge_extension_pct": 17.48
+        },
+        "f021": {
+          "time_s": 0.8661,
+          "intersected_body_faces": 889,
+          "fully_unmasked_body_faces": 228,
+          "common_unmasked_body_faces": 202,
+          "unknown_mask_body_faces": 189,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 8.43,
+          "p95_edge_extension_pct": 13.25
+        },
+        "f022": {
+          "time_s": 0.9037,
+          "intersected_body_faces": 750,
+          "fully_unmasked_body_faces": 91,
+          "common_unmasked_body_faces": 76,
+          "unknown_mask_body_faces": 191,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.83,
+          "p95_edge_extension_pct": 11.47
+        },
+        "f023": {
+          "time_s": 0.9391,
+          "intersected_body_faces": 754,
+          "fully_unmasked_body_faces": 91,
+          "common_unmasked_body_faces": 76,
+          "unknown_mask_body_faces": 200,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 2.45,
+          "p95_edge_extension_pct": 12.89
+        },
+        "f024": {
+          "time_s": 0.9747,
+          "intersected_body_faces": 748,
+          "fully_unmasked_body_faces": 91,
+          "common_unmasked_body_faces": 76,
+          "unknown_mask_body_faces": 201,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.74,
+          "p95_edge_extension_pct": 14.18
+        },
+        "f025": {
+          "time_s": 0.998,
+          "intersected_body_faces": 747,
+          "fully_unmasked_body_faces": 90,
+          "common_unmasked_body_faces": 77,
+          "unknown_mask_body_faces": 201,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.44,
+          "p95_edge_extension_pct": 14.3
+        },
+        "f026": {
+          "time_s": 1.0345,
+          "intersected_body_faces": 747,
+          "fully_unmasked_body_faces": 90,
+          "common_unmasked_body_faces": 77,
+          "unknown_mask_body_faces": 200,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.36,
+          "p95_edge_extension_pct": 14.28
+        },
+        "f027": {
+          "time_s": 1.0708,
+          "intersected_body_faces": 748,
+          "fully_unmasked_body_faces": 90,
+          "common_unmasked_body_faces": 77,
+          "unknown_mask_body_faces": 200,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.52,
+          "p95_edge_extension_pct": 14.24
+        },
+        "f028": {
+          "time_s": 1.1054,
+          "intersected_body_faces": 750,
+          "fully_unmasked_body_faces": 90,
+          "common_unmasked_body_faces": 77,
+          "unknown_mask_body_faces": 202,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.64,
+          "p95_edge_extension_pct": 14.16
+        },
+        "f029": {
+          "time_s": 1.1397,
+          "intersected_body_faces": 751,
+          "fully_unmasked_body_faces": 90,
+          "common_unmasked_body_faces": 77,
+          "unknown_mask_body_faces": 202,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.71,
+          "p95_edge_extension_pct": 14.11
+        },
+        "f030": {
+          "time_s": 1.1732,
+          "intersected_body_faces": 750,
+          "fully_unmasked_body_faces": 89,
+          "common_unmasked_body_faces": 76,
+          "unknown_mask_body_faces": 202,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.72,
+          "p95_edge_extension_pct": 14.04
+        },
+        "f031": {
+          "time_s": 1.2091,
+          "intersected_body_faces": 747,
+          "fully_unmasked_body_faces": 89,
+          "common_unmasked_body_faces": 76,
+          "unknown_mask_body_faces": 202,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.67,
+          "p95_edge_extension_pct": 14.0
+        },
+        "f032": {
+          "time_s": 1.2425,
+          "intersected_body_faces": 745,
+          "fully_unmasked_body_faces": 89,
+          "common_unmasked_body_faces": 76,
+          "unknown_mask_body_faces": 204,
+          "head_faces_crossed_mask_unverified": 0,
+          "sampled_local_inward_mm_on_common_skin": 4.6,
+          "p95_edge_extension_pct": 14.01
+        }
+      }
+    },
+    "stock": {
+      "shirt_triangles": 18822,
+      "mask_texture": "/MetaHumanCharacter/Optional/Clothing/DefaultGarment/ClothAssets/bodyShapeA/Textures/DG_BodyShapeA_BodyMask.DG_BodyShapeA_BodyMask",
+      "girth_mm": {
+        "chest": {
+          "rays": 128,
+          "body_hits": 108,
+          "garment_hits": 104
+        },
+        "waist": {
+          "rays": 128,
+          "body_hits": 128,
+          "garment_hits": 128,
+          "body_mm": 1018.4,
+          "garment_mm": 1096.5,
+          "ease_mm": 78.1
+        }
+      },
+      "directional_mm": {
+        "chest_front": {
+          "n": 27,
+          "min": 4.16,
+          "p05": 4.32,
+          "median": 6.57,
+          "p95": 20.13,
+          "max": 20.64
+        },
+        "chest_back": {
+          "n": 27,
+          "min": 3.26,
+          "p05": 3.4,
+          "median": 6.73,
+          "p95": 15.61,
+          "max": 15.91
+        },
+        "waist_front": {
+          "n": 27,
+          "min": 1.62,
+          "p05": 1.67,
+          "median": 2.64,
+          "p95": 12.87,
+          "max": 13.53
+        },
+        "waist_back": {
+          "n": 27,
+          "min": 7.44,
+          "p05": 8.09,
+          "median": 20.95,
+          "p95": 34.61,
+          "max": 36.42
+        },
+        "above_hem_front": {
+          "n": 27,
+          "min": 8.29,
+          "p05": 8.52,
+          "median": 13.86,
+          "p95": 18.28,
+          "max": 19.3
+        },
+        "above_hem_back": {
+          "n": 27,
+          "min": 9.55,
+          "p05": 9.74,
+          "median": 14.45,
+          "p95": 18.89,
+          "max": 19.29
+        },
+        "shoulder_l": {
+          "n": 0
+        },
+        "shoulder_r": {
+          "n": 0
+        }
+      },
+      "samples": {
+        "rest": {
+          "time_s": 0.0,
+          "intersected_body_faces": 594,
+          "fully_unmasked_body_faces": 67,
+          "common_unmasked_body_faces": 36,
+          "unknown_mask_body_faces": 153,
+          "head_faces_crossed_mask_unverified": 177,
+          "sampled_local_inward_mm_on_common_skin": 1.72,
+          "p95_edge_extension_pct": 0.0
+        },
+        "f000": {
+          "time_s": 0.0,
+          "intersected_body_faces": 1080,
+          "fully_unmasked_body_faces": 185,
+          "common_unmasked_body_faces": 146,
+          "unknown_mask_body_faces": 185,
+          "head_faces_crossed_mask_unverified": 179,
+          "sampled_local_inward_mm_on_common_skin": 8.96,
+          "p95_edge_extension_pct": 22.72
+        },
+        "f001": {
+          "time_s": 0.0333,
+          "intersected_body_faces": 1093,
+          "fully_unmasked_body_faces": 191,
+          "common_unmasked_body_faces": 152,
+          "unknown_mask_body_faces": 187,
+          "head_faces_crossed_mask_unverified": 179,
+          "sampled_local_inward_mm_on_common_skin": 9.17,
+          "p95_edge_extension_pct": 22.76
+        },
+        "f002": {
+          "time_s": 0.0667,
+          "intersected_body_faces": 1091,
+          "fully_unmasked_body_faces": 194,
+          "common_unmasked_body_faces": 155,
+          "unknown_mask_body_faces": 185,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 9.43,
+          "p95_edge_extension_pct": 22.86
+        },
+        "f003": {
+          "time_s": 0.1,
+          "intersected_body_faces": 1090,
+          "fully_unmasked_body_faces": 191,
+          "common_unmasked_body_faces": 152,
+          "unknown_mask_body_faces": 186,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 9.67,
+          "p95_edge_extension_pct": 22.86
+        },
+        "f004": {
+          "time_s": 0.1333,
+          "intersected_body_faces": 1102,
+          "fully_unmasked_body_faces": 213,
+          "common_unmasked_body_faces": 174,
+          "unknown_mask_body_faces": 183,
+          "head_faces_crossed_mask_unverified": 182,
+          "sampled_local_inward_mm_on_common_skin": 11.01,
+          "p95_edge_extension_pct": 22.86
+        },
+        "f005": {
+          "time_s": 0.1667,
+          "intersected_body_faces": 1123,
+          "fully_unmasked_body_faces": 231,
+          "common_unmasked_body_faces": 192,
+          "unknown_mask_body_faces": 187,
+          "head_faces_crossed_mask_unverified": 181,
+          "sampled_local_inward_mm_on_common_skin": 12.06,
+          "p95_edge_extension_pct": 22.8
+        },
+        "f006": {
+          "time_s": 0.2,
+          "intersected_body_faces": 1186,
+          "fully_unmasked_body_faces": 297,
+          "common_unmasked_body_faces": 258,
+          "unknown_mask_body_faces": 183,
+          "head_faces_crossed_mask_unverified": 183,
+          "sampled_local_inward_mm_on_common_skin": 11.83,
+          "p95_edge_extension_pct": 22.67
+        },
+        "f007": {
+          "time_s": 0.2333,
+          "intersected_body_faces": 1318,
+          "fully_unmasked_body_faces": 429,
+          "common_unmasked_body_faces": 390,
+          "unknown_mask_body_faces": 183,
+          "head_faces_crossed_mask_unverified": 183,
+          "sampled_local_inward_mm_on_common_skin": 12.29,
+          "p95_edge_extension_pct": 22.41
+        },
+        "f008": {
+          "time_s": 0.2667,
+          "intersected_body_faces": 1482,
+          "fully_unmasked_body_faces": 597,
+          "common_unmasked_body_faces": 558,
+          "unknown_mask_body_faces": 191,
+          "head_faces_crossed_mask_unverified": 185,
+          "sampled_local_inward_mm_on_common_skin": 11.21,
+          "p95_edge_extension_pct": 22.31
+        },
+        "f009": {
+          "time_s": 0.3,
+          "intersected_body_faces": 1718,
+          "fully_unmasked_body_faces": 816,
+          "common_unmasked_body_faces": 777,
+          "unknown_mask_body_faces": 206,
+          "head_faces_crossed_mask_unverified": 183,
+          "sampled_local_inward_mm_on_common_skin": 16.27,
+          "p95_edge_extension_pct": 22.23
+        },
+        "f010": {
+          "time_s": 0.3333,
+          "intersected_body_faces": 1848,
+          "fully_unmasked_body_faces": 977,
+          "common_unmasked_body_faces": 938,
+          "unknown_mask_body_faces": 189,
+          "head_faces_crossed_mask_unverified": 187,
+          "sampled_local_inward_mm_on_common_skin": 13.34,
+          "p95_edge_extension_pct": 22.22
+        },
+        "f011": {
+          "time_s": 0.3667,
+          "intersected_body_faces": 1592,
+          "fully_unmasked_body_faces": 733,
+          "common_unmasked_body_faces": 694,
+          "unknown_mask_body_faces": 187,
+          "head_faces_crossed_mask_unverified": 194,
+          "sampled_local_inward_mm_on_common_skin": 14.24,
+          "p95_edge_extension_pct": 22.11
+        },
+        "f012": {
+          "time_s": 0.4,
+          "intersected_body_faces": 1587,
+          "fully_unmasked_body_faces": 731,
+          "common_unmasked_body_faces": 694,
+          "unknown_mask_body_faces": 190,
+          "head_faces_crossed_mask_unverified": 196,
+          "sampled_local_inward_mm_on_common_skin": 14.89,
+          "p95_edge_extension_pct": 22.37
+        },
+        "f013": {
+          "time_s": 0.4333,
+          "intersected_body_faces": 1606,
+          "fully_unmasked_body_faces": 747,
+          "common_unmasked_body_faces": 710,
+          "unknown_mask_body_faces": 189,
+          "head_faces_crossed_mask_unverified": 195,
+          "sampled_local_inward_mm_on_common_skin": 12.22,
+          "p95_edge_extension_pct": 22.59
+        },
+        "f014": {
+          "time_s": 0.4667,
+          "intersected_body_faces": 1608,
+          "fully_unmasked_body_faces": 750,
+          "common_unmasked_body_faces": 713,
+          "unknown_mask_body_faces": 183,
+          "head_faces_crossed_mask_unverified": 195,
+          "sampled_local_inward_mm_on_common_skin": 12.65,
+          "p95_edge_extension_pct": 22.73
+        },
+        "f015": {
+          "time_s": 0.5,
+          "intersected_body_faces": 1582,
+          "fully_unmasked_body_faces": 743,
+          "common_unmasked_body_faces": 706,
+          "unknown_mask_body_faces": 181,
+          "head_faces_crossed_mask_unverified": 200,
+          "sampled_local_inward_mm_on_common_skin": 11.74,
+          "p95_edge_extension_pct": 22.88
+        },
+        "f016": {
+          "time_s": 0.5333,
+          "intersected_body_faces": 1597,
+          "fully_unmasked_body_faces": 738,
+          "common_unmasked_body_faces": 704,
+          "unknown_mask_body_faces": 193,
+          "head_faces_crossed_mask_unverified": 201,
+          "sampled_local_inward_mm_on_common_skin": 11.51,
+          "p95_edge_extension_pct": 22.95
+        },
+        "f017": {
+          "time_s": 0.5667,
+          "intersected_body_faces": 1598,
+          "fully_unmasked_body_faces": 733,
+          "common_unmasked_body_faces": 699,
+          "unknown_mask_body_faces": 201,
+          "head_faces_crossed_mask_unverified": 202,
+          "sampled_local_inward_mm_on_common_skin": 13.85,
+          "p95_edge_extension_pct": 23.04
+        },
+        "f018": {
+          "time_s": 0.6,
+          "intersected_body_faces": 1600,
+          "fully_unmasked_body_faces": 739,
+          "common_unmasked_body_faces": 705,
+          "unknown_mask_body_faces": 201,
+          "head_faces_crossed_mask_unverified": 203,
+          "sampled_local_inward_mm_on_common_skin": 14.97,
+          "p95_edge_extension_pct": 23.02
+        },
+        "f019": {
+          "time_s": 0.6333,
+          "intersected_body_faces": 1595,
+          "fully_unmasked_body_faces": 725,
+          "common_unmasked_body_faces": 691,
+          "unknown_mask_body_faces": 207,
+          "head_faces_crossed_mask_unverified": 201,
+          "sampled_local_inward_mm_on_common_skin": 15.39,
+          "p95_edge_extension_pct": 23.07
+        },
+        "f020": {
+          "time_s": 0.6667,
+          "intersected_body_faces": 1607,
+          "fully_unmasked_body_faces": 733,
+          "common_unmasked_body_faces": 698,
+          "unknown_mask_body_faces": 200,
+          "head_faces_crossed_mask_unverified": 203,
+          "sampled_local_inward_mm_on_common_skin": 15.23,
+          "p95_edge_extension_pct": 23.11
+        },
+        "f021": {
+          "time_s": 0.7,
+          "intersected_body_faces": 1593,
+          "fully_unmasked_body_faces": 720,
+          "common_unmasked_body_faces": 685,
+          "unknown_mask_body_faces": 199,
+          "head_faces_crossed_mask_unverified": 206,
+          "sampled_local_inward_mm_on_common_skin": 14.44,
+          "p95_edge_extension_pct": 23.17
+        },
+        "f022": {
+          "time_s": 0.7333,
+          "intersected_body_faces": 1584,
+          "fully_unmasked_body_faces": 715,
+          "common_unmasked_body_faces": 680,
+          "unknown_mask_body_faces": 196,
+          "head_faces_crossed_mask_unverified": 216,
+          "sampled_local_inward_mm_on_common_skin": 14.46,
+          "p95_edge_extension_pct": 23.23
+        },
+        "f023": {
+          "time_s": 0.7667,
+          "intersected_body_faces": 1587,
+          "fully_unmasked_body_faces": 724,
+          "common_unmasked_body_faces": 689,
+          "unknown_mask_body_faces": 190,
+          "head_faces_crossed_mask_unverified": 220,
+          "sampled_local_inward_mm_on_common_skin": 11.79,
+          "p95_edge_extension_pct": 23.26
+        },
+        "f024": {
+          "time_s": 0.8,
+          "intersected_body_faces": 1564,
+          "fully_unmasked_body_faces": 707,
+          "common_unmasked_body_faces": 670,
+          "unknown_mask_body_faces": 191,
+          "head_faces_crossed_mask_unverified": 231,
+          "sampled_local_inward_mm_on_common_skin": 13.74,
+          "p95_edge_extension_pct": 23.2
+        },
+        "f025": {
+          "time_s": 0.8333,
+          "intersected_body_faces": 1559,
+          "fully_unmasked_body_faces": 700,
+          "common_unmasked_body_faces": 663,
+          "unknown_mask_body_faces": 190,
+          "head_faces_crossed_mask_unverified": 232,
+          "sampled_local_inward_mm_on_common_skin": 13.2,
+          "p95_edge_extension_pct": 23.26
+        },
+        "f026": {
+          "time_s": 0.8667,
+          "intersected_body_faces": 1564,
+          "fully_unmasked_body_faces": 696,
+          "common_unmasked_body_faces": 659,
+          "unknown_mask_body_faces": 190,
+          "head_faces_crossed_mask_unverified": 237,
+          "sampled_local_inward_mm_on_common_skin": 13.44,
+          "p95_edge_extension_pct": 23.34
+        },
+        "f027": {
+          "time_s": 0.9,
+          "intersected_body_faces": 1538,
+          "fully_unmasked_body_faces": 667,
+          "common_unmasked_body_faces": 630,
+          "unknown_mask_body_faces": 196,
+          "head_faces_crossed_mask_unverified": 239,
+          "sampled_local_inward_mm_on_common_skin": 13.31,
+          "p95_edge_extension_pct": 23.26
+        },
+        "f028": {
+          "time_s": 0.9333,
+          "intersected_body_faces": 1529,
+          "fully_unmasked_body_faces": 660,
+          "common_unmasked_body_faces": 621,
+          "unknown_mask_body_faces": 183,
+          "head_faces_crossed_mask_unverified": 240,
+          "sampled_local_inward_mm_on_common_skin": 12.76,
+          "p95_edge_extension_pct": 23.09
+        },
+        "f029": {
+          "time_s": 0.9667,
+          "intersected_body_faces": 1488,
+          "fully_unmasked_body_faces": 633,
+          "common_unmasked_body_faces": 594,
+          "unknown_mask_body_faces": 172,
+          "head_faces_crossed_mask_unverified": 240,
+          "sampled_local_inward_mm_on_common_skin": 14.54,
+          "p95_edge_extension_pct": 23.04
+        },
+        "f030": {
+          "time_s": 1.0,
+          "intersected_body_faces": 1447,
+          "fully_unmasked_body_faces": 597,
+          "common_unmasked_body_faces": 558,
+          "unknown_mask_body_faces": 171,
+          "head_faces_crossed_mask_unverified": 238,
+          "sampled_local_inward_mm_on_common_skin": 13.27,
+          "p95_edge_extension_pct": 23.11
+        },
+        "f031": {
+          "time_s": 1.0333,
+          "intersected_body_faces": 1448,
+          "fully_unmasked_body_faces": 570,
+          "common_unmasked_body_faces": 531,
+          "unknown_mask_body_faces": 182,
+          "head_faces_crossed_mask_unverified": 234,
+          "sampled_local_inward_mm_on_common_skin": 13.16,
+          "p95_edge_extension_pct": 23.16
+        },
+        "f032": {
+          "time_s": 1.0667,
+          "intersected_body_faces": 1396,
+          "fully_unmasked_body_faces": 512,
+          "common_unmasked_body_faces": 473,
+          "unknown_mask_body_faces": 180,
+          "head_faces_crossed_mask_unverified": 235,
+          "sampled_local_inward_mm_on_common_skin": 13.79,
+          "p95_edge_extension_pct": 23.14
+        },
+        "f033": {
+          "time_s": 1.1,
+          "intersected_body_faces": 1379,
+          "fully_unmasked_body_faces": 488,
+          "common_unmasked_body_faces": 449,
+          "unknown_mask_body_faces": 178,
+          "head_faces_crossed_mask_unverified": 232,
+          "sampled_local_inward_mm_on_common_skin": 12.44,
+          "p95_edge_extension_pct": 23.06
+        },
+        "f034": {
+          "time_s": 1.1333,
+          "intersected_body_faces": 1377,
+          "fully_unmasked_body_faces": 495,
+          "common_unmasked_body_faces": 456,
+          "unknown_mask_body_faces": 174,
+          "head_faces_crossed_mask_unverified": 228,
+          "sampled_local_inward_mm_on_common_skin": 13.21,
+          "p95_edge_extension_pct": 22.79
+        },
+        "f035": {
+          "time_s": 1.1667,
+          "intersected_body_faces": 1391,
+          "fully_unmasked_body_faces": 495,
+          "common_unmasked_body_faces": 456,
+          "unknown_mask_body_faces": 187,
+          "head_faces_crossed_mask_unverified": 219,
+          "sampled_local_inward_mm_on_common_skin": 12.87,
+          "p95_edge_extension_pct": 22.49
+        },
+        "f036": {
+          "time_s": 1.2,
+          "intersected_body_faces": 1401,
+          "fully_unmasked_body_faces": 508,
+          "common_unmasked_body_faces": 469,
+          "unknown_mask_body_faces": 184,
+          "head_faces_crossed_mask_unverified": 211,
+          "sampled_local_inward_mm_on_common_skin": 10.88,
+          "p95_edge_extension_pct": 22.45
+        },
+        "f037": {
+          "time_s": 1.2333,
+          "intersected_body_faces": 1424,
+          "fully_unmasked_body_faces": 525,
+          "common_unmasked_body_faces": 486,
+          "unknown_mask_body_faces": 188,
+          "head_faces_crossed_mask_unverified": 206,
+          "sampled_local_inward_mm_on_common_skin": 10.81,
+          "p95_edge_extension_pct": 22.6
+        },
+        "f038": {
+          "time_s": 1.2667,
+          "intersected_body_faces": 1461,
+          "fully_unmasked_body_faces": 566,
+          "common_unmasked_body_faces": 527,
+          "unknown_mask_body_faces": 190,
+          "head_faces_crossed_mask_unverified": 212,
+          "sampled_local_inward_mm_on_common_skin": 10.67,
+          "p95_edge_extension_pct": 22.59
+        },
+        "f039": {
+          "time_s": 1.3,
+          "intersected_body_faces": 1505,
+          "fully_unmasked_body_faces": 601,
+          "common_unmasked_body_faces": 562,
+          "unknown_mask_body_faces": 196,
+          "head_faces_crossed_mask_unverified": 214,
+          "sampled_local_inward_mm_on_common_skin": 12.27,
+          "p95_edge_extension_pct": 22.65
+        },
+        "f040": {
+          "time_s": 1.3333,
+          "intersected_body_faces": 1551,
+          "fully_unmasked_body_faces": 659,
+          "common_unmasked_body_faces": 620,
+          "unknown_mask_body_faces": 199,
+          "head_faces_crossed_mask_unverified": 214,
+          "sampled_local_inward_mm_on_common_skin": 10.77,
+          "p95_edge_extension_pct": 22.52
+        },
+        "f041": {
+          "time_s": 1.3667,
+          "intersected_body_faces": 1568,
+          "fully_unmasked_body_faces": 690,
+          "common_unmasked_body_faces": 651,
+          "unknown_mask_body_faces": 195,
+          "head_faces_crossed_mask_unverified": 213,
+          "sampled_local_inward_mm_on_common_skin": 12.91,
+          "p95_edge_extension_pct": 22.57
+        },
+        "f042": {
+          "time_s": 1.4,
+          "intersected_body_faces": 1579,
+          "fully_unmasked_body_faces": 689,
+          "common_unmasked_body_faces": 651,
+          "unknown_mask_body_faces": 196,
+          "head_faces_crossed_mask_unverified": 206,
+          "sampled_local_inward_mm_on_common_skin": 12.37,
+          "p95_edge_extension_pct": 22.8
+        },
+        "f043": {
+          "time_s": 1.4333,
+          "intersected_body_faces": 1527,
+          "fully_unmasked_body_faces": 646,
+          "common_unmasked_body_faces": 608,
+          "unknown_mask_body_faces": 188,
+          "head_faces_crossed_mask_unverified": 203,
+          "sampled_local_inward_mm_on_common_skin": 14.41,
+          "p95_edge_extension_pct": 23.01
+        },
+        "f044": {
+          "time_s": 1.4667,
+          "intersected_body_faces": 1481,
+          "fully_unmasked_body_faces": 621,
+          "common_unmasked_body_faces": 583,
+          "unknown_mask_body_faces": 174,
+          "head_faces_crossed_mask_unverified": 200,
+          "sampled_local_inward_mm_on_common_skin": 12.51,
+          "p95_edge_extension_pct": 23.07
+        },
+        "f045": {
+          "time_s": 1.5,
+          "intersected_body_faces": 1451,
+          "fully_unmasked_body_faces": 595,
+          "common_unmasked_body_faces": 557,
+          "unknown_mask_body_faces": 170,
+          "head_faces_crossed_mask_unverified": 194,
+          "sampled_local_inward_mm_on_common_skin": 15.56,
+          "p95_edge_extension_pct": 22.99
+        },
+        "f046": {
+          "time_s": 1.5333,
+          "intersected_body_faces": 1438,
+          "fully_unmasked_body_faces": 573,
+          "common_unmasked_body_faces": 535,
+          "unknown_mask_body_faces": 169,
+          "head_faces_crossed_mask_unverified": 192,
+          "sampled_local_inward_mm_on_common_skin": 15.85,
+          "p95_edge_extension_pct": 22.86
+        },
+        "f047": {
+          "time_s": 1.5667,
+          "intersected_body_faces": 1429,
+          "fully_unmasked_body_faces": 563,
+          "common_unmasked_body_faces": 525,
+          "unknown_mask_body_faces": 169,
+          "head_faces_crossed_mask_unverified": 194,
+          "sampled_local_inward_mm_on_common_skin": 14.37,
+          "p95_edge_extension_pct": 22.86
+        },
+        "f048": {
+          "time_s": 1.6,
+          "intersected_body_faces": 1421,
+          "fully_unmasked_body_faces": 548,
+          "common_unmasked_body_faces": 510,
+          "unknown_mask_body_faces": 170,
+          "head_faces_crossed_mask_unverified": 193,
+          "sampled_local_inward_mm_on_common_skin": 13.33,
+          "p95_edge_extension_pct": 22.96
+        },
+        "f049": {
+          "time_s": 1.6333,
+          "intersected_body_faces": 1406,
+          "fully_unmasked_body_faces": 528,
+          "common_unmasked_body_faces": 489,
+          "unknown_mask_body_faces": 175,
+          "head_faces_crossed_mask_unverified": 190,
+          "sampled_local_inward_mm_on_common_skin": 13.52,
+          "p95_edge_extension_pct": 23.05
+        },
+        "f050": {
+          "time_s": 1.6667,
+          "intersected_body_faces": 1407,
+          "fully_unmasked_body_faces": 518,
+          "common_unmasked_body_faces": 479,
+          "unknown_mask_body_faces": 171,
+          "head_faces_crossed_mask_unverified": 188,
+          "sampled_local_inward_mm_on_common_skin": 14.44,
+          "p95_edge_extension_pct": 23.27
+        },
+        "f051": {
+          "time_s": 1.7,
+          "intersected_body_faces": 1389,
+          "fully_unmasked_body_faces": 482,
+          "common_unmasked_body_faces": 443,
+          "unknown_mask_body_faces": 179,
+          "head_faces_crossed_mask_unverified": 188,
+          "sampled_local_inward_mm_on_common_skin": 16.5,
+          "p95_edge_extension_pct": 23.36
+        },
+        "f052": {
+          "time_s": 1.7333,
+          "intersected_body_faces": 1457,
+          "fully_unmasked_body_faces": 530,
+          "common_unmasked_body_faces": 491,
+          "unknown_mask_body_faces": 187,
+          "head_faces_crossed_mask_unverified": 191,
+          "sampled_local_inward_mm_on_common_skin": 16.34,
+          "p95_edge_extension_pct": 23.52
+        },
+        "f053": {
+          "time_s": 1.7667,
+          "intersected_body_faces": 1502,
+          "fully_unmasked_body_faces": 568,
+          "common_unmasked_body_faces": 529,
+          "unknown_mask_body_faces": 199,
+          "head_faces_crossed_mask_unverified": 188,
+          "sampled_local_inward_mm_on_common_skin": 16.54,
+          "p95_edge_extension_pct": 23.6
+        },
+        "f054": {
+          "time_s": 1.8,
+          "intersected_body_faces": 1454,
+          "fully_unmasked_body_faces": 509,
+          "common_unmasked_body_faces": 470,
+          "unknown_mask_body_faces": 208,
+          "head_faces_crossed_mask_unverified": 188,
+          "sampled_local_inward_mm_on_common_skin": 14.78,
+          "p95_edge_extension_pct": 23.54
+        },
+        "f055": {
+          "time_s": 1.8333,
+          "intersected_body_faces": 1399,
+          "fully_unmasked_body_faces": 443,
+          "common_unmasked_body_faces": 404,
+          "unknown_mask_body_faces": 213,
+          "head_faces_crossed_mask_unverified": 182,
+          "sampled_local_inward_mm_on_common_skin": 11.99,
+          "p95_edge_extension_pct": 23.4
+        },
+        "f056": {
+          "time_s": 1.8667,
+          "intersected_body_faces": 1374,
+          "fully_unmasked_body_faces": 420,
+          "common_unmasked_body_faces": 381,
+          "unknown_mask_body_faces": 219,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 11.14,
+          "p95_edge_extension_pct": 23.26
+        },
+        "f057": {
+          "time_s": 1.9,
+          "intersected_body_faces": 1300,
+          "fully_unmasked_body_faces": 375,
+          "common_unmasked_body_faces": 336,
+          "unknown_mask_body_faces": 196,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 12.32,
+          "p95_edge_extension_pct": 23.2
+        },
+        "f058": {
+          "time_s": 1.9333,
+          "intersected_body_faces": 1241,
+          "fully_unmasked_body_faces": 341,
+          "common_unmasked_body_faces": 302,
+          "unknown_mask_body_faces": 177,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 10.1,
+          "p95_edge_extension_pct": 23.05
+        },
+        "f059": {
+          "time_s": 1.9667,
+          "intersected_body_faces": 1180,
+          "fully_unmasked_body_faces": 291,
+          "common_unmasked_body_faces": 252,
+          "unknown_mask_body_faces": 178,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 10.03,
+          "p95_edge_extension_pct": 22.94
+        },
+        "f060": {
+          "time_s": 2.0,
+          "intersected_body_faces": 1223,
+          "fully_unmasked_body_faces": 297,
+          "common_unmasked_body_faces": 258,
+          "unknown_mask_body_faces": 197,
+          "head_faces_crossed_mask_unverified": 181,
+          "sampled_local_inward_mm_on_common_skin": 10.54,
+          "p95_edge_extension_pct": 22.94
+        },
+        "f061": {
+          "time_s": 2.0333,
+          "intersected_body_faces": 1192,
+          "fully_unmasked_body_faces": 284,
+          "common_unmasked_body_faces": 245,
+          "unknown_mask_body_faces": 186,
+          "head_faces_crossed_mask_unverified": 181,
+          "sampled_local_inward_mm_on_common_skin": 8.63,
+          "p95_edge_extension_pct": 22.88
+        },
+        "f062": {
+          "time_s": 2.0667,
+          "intersected_body_faces": 1177,
+          "fully_unmasked_body_faces": 278,
+          "common_unmasked_body_faces": 239,
+          "unknown_mask_body_faces": 184,
+          "head_faces_crossed_mask_unverified": 181,
+          "sampled_local_inward_mm_on_common_skin": 8.0,
+          "p95_edge_extension_pct": 22.83
+        },
+        "f063": {
+          "time_s": 2.1,
+          "intersected_body_faces": 1132,
+          "fully_unmasked_body_faces": 234,
+          "common_unmasked_body_faces": 195,
+          "unknown_mask_body_faces": 186,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 7.89,
+          "p95_edge_extension_pct": 22.83
+        },
+        "f064": {
+          "time_s": 2.1333,
+          "intersected_body_faces": 1122,
+          "fully_unmasked_body_faces": 221,
+          "common_unmasked_body_faces": 182,
+          "unknown_mask_body_faces": 185,
+          "head_faces_crossed_mask_unverified": 179,
+          "sampled_local_inward_mm_on_common_skin": 11.05,
+          "p95_edge_extension_pct": 22.91
+        },
+        "f065": {
+          "time_s": 2.1667,
+          "intersected_body_faces": 1118,
+          "fully_unmasked_body_faces": 223,
+          "common_unmasked_body_faces": 184,
+          "unknown_mask_body_faces": 183,
+          "head_faces_crossed_mask_unverified": 179,
+          "sampled_local_inward_mm_on_common_skin": 10.11,
+          "p95_edge_extension_pct": 22.98
+        },
+        "f066": {
+          "time_s": 2.2,
+          "intersected_body_faces": 1118,
+          "fully_unmasked_body_faces": 223,
+          "common_unmasked_body_faces": 184,
+          "unknown_mask_body_faces": 183,
+          "head_faces_crossed_mask_unverified": 179,
+          "sampled_local_inward_mm_on_common_skin": 10.11,
+          "p95_edge_extension_pct": 22.98
+        }
+      },
+      "gameplay_samples": {
+        "idle": {
+          "time_s": 0,
+          "intersected_body_faces": 918,
+          "fully_unmasked_body_faces": 169,
+          "common_unmasked_body_faces": 131,
+          "unknown_mask_body_faces": 175,
+          "head_faces_crossed_mask_unverified": 179,
+          "sampled_local_inward_mm_on_common_skin": 8.18,
+          "p95_edge_extension_pct": 11.47
+        },
+        "f000": {
+          "time_s": 0.018,
+          "intersected_body_faces": 946,
+          "fully_unmasked_body_faces": 171,
+          "common_unmasked_body_faces": 133,
+          "unknown_mask_body_faces": 182,
+          "head_faces_crossed_mask_unverified": 178,
+          "sampled_local_inward_mm_on_common_skin": 7.98,
+          "p95_edge_extension_pct": 10.91
+        },
+        "f001": {
+          "time_s": 0.0527,
+          "intersected_body_faces": 1032,
+          "fully_unmasked_body_faces": 157,
+          "common_unmasked_body_faces": 118,
+          "unknown_mask_body_faces": 178,
+          "head_faces_crossed_mask_unverified": 174,
+          "sampled_local_inward_mm_on_common_skin": 7.66,
+          "p95_edge_extension_pct": 15.66
+        },
+        "f002": {
+          "time_s": 0.0899,
+          "intersected_body_faces": 1097,
+          "fully_unmasked_body_faces": 201,
+          "common_unmasked_body_faces": 162,
+          "unknown_mask_body_faces": 185,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 9.58,
+          "p95_edge_extension_pct": 20.24
+        },
+        "f003": {
+          "time_s": 0.1271,
+          "intersected_body_faces": 1097,
+          "fully_unmasked_body_faces": 212,
+          "common_unmasked_body_faces": 173,
+          "unknown_mask_body_faces": 183,
+          "head_faces_crossed_mask_unverified": 182,
+          "sampled_local_inward_mm_on_common_skin": 10.75,
+          "p95_edge_extension_pct": 20.21
+        },
+        "f004": {
+          "time_s": 0.1718,
+          "intersected_body_faces": 1115,
+          "fully_unmasked_body_faces": 232,
+          "common_unmasked_body_faces": 193,
+          "unknown_mask_body_faces": 185,
+          "head_faces_crossed_mask_unverified": 181,
+          "sampled_local_inward_mm_on_common_skin": 8.21,
+          "p95_edge_extension_pct": 20.12
+        },
+        "f005": {
+          "time_s": 0.2052,
+          "intersected_body_faces": 1164,
+          "fully_unmasked_body_faces": 277,
+          "common_unmasked_body_faces": 238,
+          "unknown_mask_body_faces": 184,
+          "head_faces_crossed_mask_unverified": 183,
+          "sampled_local_inward_mm_on_common_skin": 7.3,
+          "p95_edge_extension_pct": 19.97
+        },
+        "f006": {
+          "time_s": 0.2408,
+          "intersected_body_faces": 1298,
+          "fully_unmasked_body_faces": 415,
+          "common_unmasked_body_faces": 376,
+          "unknown_mask_body_faces": 182,
+          "head_faces_crossed_mask_unverified": 185,
+          "sampled_local_inward_mm_on_common_skin": 12.28,
+          "p95_edge_extension_pct": 19.81
+        },
+        "f007": {
+          "time_s": 0.2743,
+          "intersected_body_faces": 1463,
+          "fully_unmasked_body_faces": 575,
+          "common_unmasked_body_faces": 536,
+          "unknown_mask_body_faces": 199,
+          "head_faces_crossed_mask_unverified": 185,
+          "sampled_local_inward_mm_on_common_skin": 13.54,
+          "p95_edge_extension_pct": 19.69
+        },
+        "f008": {
+          "time_s": 0.3083,
+          "intersected_body_faces": 1677,
+          "fully_unmasked_body_faces": 773,
+          "common_unmasked_body_faces": 734,
+          "unknown_mask_body_faces": 208,
+          "head_faces_crossed_mask_unverified": 184,
+          "sampled_local_inward_mm_on_common_skin": 14.85,
+          "p95_edge_extension_pct": 19.65
+        },
+        "f009": {
+          "time_s": 0.3446,
+          "intersected_body_faces": 1856,
+          "fully_unmasked_body_faces": 995,
+          "common_unmasked_body_faces": 956,
+          "unknown_mask_body_faces": 189,
+          "head_faces_crossed_mask_unverified": 187,
+          "sampled_local_inward_mm_on_common_skin": 16.0,
+          "p95_edge_extension_pct": 19.68
+        },
+        "f010": {
+          "time_s": 0.4357,
+          "intersected_body_faces": 1606,
+          "fully_unmasked_body_faces": 750,
+          "common_unmasked_body_faces": 713,
+          "unknown_mask_body_faces": 188,
+          "head_faces_crossed_mask_unverified": 195,
+          "sampled_local_inward_mm_on_common_skin": 13.23,
+          "p95_edge_extension_pct": 19.94
+        },
+        "f011": {
+          "time_s": 0.5048,
+          "intersected_body_faces": 1583,
+          "fully_unmasked_body_faces": 743,
+          "common_unmasked_body_faces": 706,
+          "unknown_mask_body_faces": 181,
+          "head_faces_crossed_mask_unverified": 200,
+          "sampled_local_inward_mm_on_common_skin": 11.21,
+          "p95_edge_extension_pct": 20.64
+        },
+        "f012": {
+          "time_s": 0.5421,
+          "intersected_body_faces": 1595,
+          "fully_unmasked_body_faces": 729,
+          "common_unmasked_body_faces": 695,
+          "unknown_mask_body_faces": 199,
+          "head_faces_crossed_mask_unverified": 202,
+          "sampled_local_inward_mm_on_common_skin": 12.14,
+          "p95_edge_extension_pct": 20.7
+        },
+        "f013": {
+          "time_s": 0.582,
+          "intersected_body_faces": 1599,
+          "fully_unmasked_body_faces": 732,
+          "common_unmasked_body_faces": 698,
+          "unknown_mask_body_faces": 204,
+          "head_faces_crossed_mask_unverified": 202,
+          "sampled_local_inward_mm_on_common_skin": 14.91,
+          "p95_edge_extension_pct": 20.77
+        },
+        "f014": {
+          "time_s": 0.6165,
+          "intersected_body_faces": 1592,
+          "fully_unmasked_body_faces": 728,
+          "common_unmasked_body_faces": 694,
+          "unknown_mask_body_faces": 202,
+          "head_faces_crossed_mask_unverified": 203,
+          "sampled_local_inward_mm_on_common_skin": 15.18,
+          "p95_edge_extension_pct": 20.79
+        },
+        "f015": {
+          "time_s": 0.6518,
+          "intersected_body_faces": 1587,
+          "fully_unmasked_body_faces": 725,
+          "common_unmasked_body_faces": 690,
+          "unknown_mask_body_faces": 199,
+          "head_faces_crossed_mask_unverified": 203,
+          "sampled_local_inward_mm_on_common_skin": 15.31,
+          "p95_edge_extension_pct": 20.85
+        },
+        "f016": {
+          "time_s": 0.6901,
+          "intersected_body_faces": 1592,
+          "fully_unmasked_body_faces": 719,
+          "common_unmasked_body_faces": 684,
+          "unknown_mask_body_faces": 199,
+          "head_faces_crossed_mask_unverified": 206,
+          "sampled_local_inward_mm_on_common_skin": 14.69,
+          "p95_edge_extension_pct": 20.94
+        },
+        "f017": {
+          "time_s": 0.7273,
+          "intersected_body_faces": 1574,
+          "fully_unmasked_body_faces": 712,
+          "common_unmasked_body_faces": 677,
+          "unknown_mask_body_faces": 196,
+          "head_faces_crossed_mask_unverified": 212,
+          "sampled_local_inward_mm_on_common_skin": 14.9,
+          "p95_edge_extension_pct": 20.92
+        },
+        "f018": {
+          "time_s": 0.7607,
+          "intersected_body_faces": 1556,
+          "fully_unmasked_body_faces": 695,
+          "common_unmasked_body_faces": 658,
+          "unknown_mask_body_faces": 193,
+          "head_faces_crossed_mask_unverified": 202,
+          "sampled_local_inward_mm_on_common_skin": 12.1,
+          "p95_edge_extension_pct": 20.5
+        },
+        "f019": {
+          "time_s": 0.7963,
+          "intersected_body_faces": 1469,
+          "fully_unmasked_body_faces": 611,
+          "common_unmasked_body_faces": 574,
+          "unknown_mask_body_faces": 209,
+          "head_faces_crossed_mask_unverified": 182,
+          "sampled_local_inward_mm_on_common_skin": 12.6,
+          "p95_edge_extension_pct": 18.01
+        },
+        "f020": {
+          "time_s": 0.83,
+          "intersected_body_faces": 1301,
+          "fully_unmasked_body_faces": 493,
+          "common_unmasked_body_faces": 455,
+          "unknown_mask_body_faces": 189,
+          "head_faces_crossed_mask_unverified": 179,
+          "sampled_local_inward_mm_on_common_skin": 11.54,
+          "p95_edge_extension_pct": 14.51
+        },
+        "f021": {
+          "time_s": 0.8661,
+          "intersected_body_faces": 1150,
+          "fully_unmasked_body_faces": 345,
+          "common_unmasked_body_faces": 306,
+          "unknown_mask_body_faces": 194,
+          "head_faces_crossed_mask_unverified": 177,
+          "sampled_local_inward_mm_on_common_skin": 7.91,
+          "p95_edge_extension_pct": 10.74
+        },
+        "f022": {
+          "time_s": 0.9037,
+          "intersected_body_faces": 968,
+          "fully_unmasked_body_faces": 173,
+          "common_unmasked_body_faces": 135,
+          "unknown_mask_body_faces": 181,
+          "head_faces_crossed_mask_unverified": 181,
+          "sampled_local_inward_mm_on_common_skin": 6.5,
+          "p95_edge_extension_pct": 8.78
+        },
+        "f023": {
+          "time_s": 0.9391,
+          "intersected_body_faces": 938,
+          "fully_unmasked_body_faces": 166,
+          "common_unmasked_body_faces": 128,
+          "unknown_mask_body_faces": 176,
+          "head_faces_crossed_mask_unverified": 183,
+          "sampled_local_inward_mm_on_common_skin": 5.99,
+          "p95_edge_extension_pct": 9.44
+        },
+        "f024": {
+          "time_s": 0.9747,
+          "intersected_body_faces": 919,
+          "fully_unmasked_body_faces": 167,
+          "common_unmasked_body_faces": 129,
+          "unknown_mask_body_faces": 177,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 6.63,
+          "p95_edge_extension_pct": 10.05
+        },
+        "f025": {
+          "time_s": 0.998,
+          "intersected_body_faces": 915,
+          "fully_unmasked_body_faces": 165,
+          "common_unmasked_body_faces": 127,
+          "unknown_mask_body_faces": 177,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 6.65,
+          "p95_edge_extension_pct": 10.14
+        },
+        "f026": {
+          "time_s": 1.0345,
+          "intersected_body_faces": 917,
+          "fully_unmasked_body_faces": 165,
+          "common_unmasked_body_faces": 127,
+          "unknown_mask_body_faces": 177,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 8.23,
+          "p95_edge_extension_pct": 10.13
+        },
+        "f027": {
+          "time_s": 1.0708,
+          "intersected_body_faces": 916,
+          "fully_unmasked_body_faces": 165,
+          "common_unmasked_body_faces": 127,
+          "unknown_mask_body_faces": 177,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 7.91,
+          "p95_edge_extension_pct": 10.09
+        },
+        "f028": {
+          "time_s": 1.1054,
+          "intersected_body_faces": 916,
+          "fully_unmasked_body_faces": 165,
+          "common_unmasked_body_faces": 127,
+          "unknown_mask_body_faces": 177,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 7.57,
+          "p95_edge_extension_pct": 10.09
+        },
+        "f029": {
+          "time_s": 1.1397,
+          "intersected_body_faces": 916,
+          "fully_unmasked_body_faces": 165,
+          "common_unmasked_body_faces": 127,
+          "unknown_mask_body_faces": 179,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 7.24,
+          "p95_edge_extension_pct": 10.08
+        },
+        "f030": {
+          "time_s": 1.1732,
+          "intersected_body_faces": 914,
+          "fully_unmasked_body_faces": 165,
+          "common_unmasked_body_faces": 127,
+          "unknown_mask_body_faces": 179,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 6.93,
+          "p95_edge_extension_pct": 10.04
+        },
+        "f031": {
+          "time_s": 1.2091,
+          "intersected_body_faces": 911,
+          "fully_unmasked_body_faces": 162,
+          "common_unmasked_body_faces": 124,
+          "unknown_mask_body_faces": 181,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 6.61,
+          "p95_edge_extension_pct": 10.01
+        },
+        "f032": {
+          "time_s": 1.2425,
+          "intersected_body_faces": 912,
+          "fully_unmasked_body_faces": 162,
+          "common_unmasked_body_faces": 124,
+          "unknown_mask_body_faces": 181,
+          "head_faces_crossed_mask_unverified": 180,
+          "sampled_local_inward_mm_on_common_skin": 6.47,
+          "p95_edge_extension_pct": 9.98
+        }
+      }
+    },
+    "panel": {
+      "shirt_triangles": 6192,
+      "mask_texture": "/MetaHumanCharacter/Lookdev_UHM/Common/Textures/Placeholders/T_Flat_White_C.T_Flat_White_C",
+      "girth_mm": {
+        "chest": {
+          "rays": 128,
+          "body_hits": 108,
+          "garment_hits": 100
+        },
+        "waist": {
+          "rays": 128,
+          "body_hits": 128,
+          "garment_hits": 128,
+          "body_mm": 1018.4,
+          "garment_mm": 1114.7,
+          "ease_mm": 96.4
+        }
+      },
+      "directional_mm": {
+        "chest_front": {
+          "n": 27,
+          "min": 8.83,
+          "p05": 9.27,
+          "median": 11.95,
+          "p95": 25.23,
+          "max": 25.55
+        },
+        "chest_back": {
+          "n": 27,
+          "min": 9.68,
+          "p05": 10.02,
+          "median": 14.66,
+          "p95": 26.14,
+          "max": 26.67
+        },
+        "waist_front": {
+          "n": 27,
+          "min": 9.73,
+          "p05": 9.9,
+          "median": 12.13,
+          "p95": 22.15,
+          "max": 22.37
+        },
+        "waist_back": {
+          "n": 27,
+          "min": 23.87,
+          "p05": 23.97,
+          "median": 27.12,
+          "p95": 30.74,
+          "max": 31.23
+        },
+        "above_hem_front": {
+          "n": 27,
+          "min": 9.39,
+          "p05": 9.49,
+          "median": 10.63,
+          "p95": 14.85,
+          "max": 15.4
+        },
+        "above_hem_back": {
+          "n": 8,
+          "min": 13.42,
+          "p05": 14.51,
+          "median": 25.56,
+          "p95": 28.32,
+          "max": 28.43
+        },
+        "shoulder_l": {
+          "n": 0
+        },
+        "shoulder_r": {
+          "n": 0
+        }
+      },
+      "samples": {
+        "rest": {
+          "time_s": 0.0,
+          "intersected_body_faces": 218,
+          "fully_unmasked_body_faces": 218,
+          "common_unmasked_body_faces": 0,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 0.0,
+          "p95_edge_extension_pct": 0.0
+        },
+        "f000": {
+          "time_s": 0.0,
+          "intersected_body_faces": 637,
+          "fully_unmasked_body_faces": 637,
+          "common_unmasked_body_faces": 63,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 7.64,
+          "p95_edge_extension_pct": 21.97
+        },
+        "f001": {
+          "time_s": 0.0333,
+          "intersected_body_faces": 630,
+          "fully_unmasked_body_faces": 630,
+          "common_unmasked_body_faces": 65,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 7.59,
+          "p95_edge_extension_pct": 22.13
+        },
+        "f002": {
+          "time_s": 0.0667,
+          "intersected_body_faces": 632,
+          "fully_unmasked_body_faces": 632,
+          "common_unmasked_body_faces": 65,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 7.7,
+          "p95_edge_extension_pct": 22.23
+        },
+        "f003": {
+          "time_s": 0.1,
+          "intersected_body_faces": 634,
+          "fully_unmasked_body_faces": 634,
+          "common_unmasked_body_faces": 65,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 7.4,
+          "p95_edge_extension_pct": 22.23
+        },
+        "f004": {
+          "time_s": 0.1333,
+          "intersected_body_faces": 632,
+          "fully_unmasked_body_faces": 632,
+          "common_unmasked_body_faces": 69,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 8.03,
+          "p95_edge_extension_pct": 22.25
+        },
+        "f005": {
+          "time_s": 0.1667,
+          "intersected_body_faces": 633,
+          "fully_unmasked_body_faces": 633,
+          "common_unmasked_body_faces": 69,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 6.08,
+          "p95_edge_extension_pct": 22.06
+        },
+        "f006": {
+          "time_s": 0.2,
+          "intersected_body_faces": 631,
+          "fully_unmasked_body_faces": 631,
+          "common_unmasked_body_faces": 67,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 6.97,
+          "p95_edge_extension_pct": 21.95
+        },
+        "f007": {
+          "time_s": 0.2333,
+          "intersected_body_faces": 647,
+          "fully_unmasked_body_faces": 647,
+          "common_unmasked_body_faces": 97,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 5.96,
+          "p95_edge_extension_pct": 21.96
+        },
+        "f008": {
+          "time_s": 0.2667,
+          "intersected_body_faces": 718,
+          "fully_unmasked_body_faces": 718,
+          "common_unmasked_body_faces": 162,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 4.52,
+          "p95_edge_extension_pct": 21.89
+        },
+        "f009": {
+          "time_s": 0.3,
+          "intersected_body_faces": 815,
+          "fully_unmasked_body_faces": 815,
+          "common_unmasked_body_faces": 258,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 9.51,
+          "p95_edge_extension_pct": 22.13
+        },
+        "f010": {
+          "time_s": 0.3333,
+          "intersected_body_faces": 976,
+          "fully_unmasked_body_faces": 976,
+          "common_unmasked_body_faces": 417,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 13.23,
+          "p95_edge_extension_pct": 21.97
+        },
+        "f011": {
+          "time_s": 0.3667,
+          "intersected_body_faces": 1145,
+          "fully_unmasked_body_faces": 1145,
+          "common_unmasked_body_faces": 583,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 15.81,
+          "p95_edge_extension_pct": 22.12
+        },
+        "f012": {
+          "time_s": 0.4,
+          "intersected_body_faces": 1196,
+          "fully_unmasked_body_faces": 1196,
+          "common_unmasked_body_faces": 625,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 12.79,
+          "p95_edge_extension_pct": 22.24
+        },
+        "f013": {
+          "time_s": 0.4333,
+          "intersected_body_faces": 1218,
+          "fully_unmasked_body_faces": 1218,
+          "common_unmasked_body_faces": 656,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 11.03,
+          "p95_edge_extension_pct": 22.49
+        },
+        "f014": {
+          "time_s": 0.4667,
+          "intersected_body_faces": 1234,
+          "fully_unmasked_body_faces": 1234,
+          "common_unmasked_body_faces": 671,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 14.13,
+          "p95_edge_extension_pct": 22.56
+        },
+        "f015": {
+          "time_s": 0.5,
+          "intersected_body_faces": 1232,
+          "fully_unmasked_body_faces": 1232,
+          "common_unmasked_body_faces": 669,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 11.64,
+          "p95_edge_extension_pct": 22.53
+        },
+        "f016": {
+          "time_s": 0.5333,
+          "intersected_body_faces": 1244,
+          "fully_unmasked_body_faces": 1244,
+          "common_unmasked_body_faces": 677,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 13.04,
+          "p95_edge_extension_pct": 22.86
+        },
+        "f017": {
+          "time_s": 0.5667,
+          "intersected_body_faces": 1251,
+          "fully_unmasked_body_faces": 1251,
+          "common_unmasked_body_faces": 685,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.93,
+          "p95_edge_extension_pct": 22.87
+        },
+        "f018": {
+          "time_s": 0.6,
+          "intersected_body_faces": 1259,
+          "fully_unmasked_body_faces": 1259,
+          "common_unmasked_body_faces": 690,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 11.0,
+          "p95_edge_extension_pct": 22.75
+        },
+        "f019": {
+          "time_s": 0.6333,
+          "intersected_body_faces": 1271,
+          "fully_unmasked_body_faces": 1271,
+          "common_unmasked_body_faces": 708,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 12.65,
+          "p95_edge_extension_pct": 22.81
+        },
+        "f020": {
+          "time_s": 0.6667,
+          "intersected_body_faces": 1247,
+          "fully_unmasked_body_faces": 1247,
+          "common_unmasked_body_faces": 689,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 12.92,
+          "p95_edge_extension_pct": 22.72
+        },
+        "f021": {
+          "time_s": 0.7,
+          "intersected_body_faces": 1239,
+          "fully_unmasked_body_faces": 1239,
+          "common_unmasked_body_faces": 683,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.25,
+          "p95_edge_extension_pct": 22.71
+        },
+        "f022": {
+          "time_s": 0.7333,
+          "intersected_body_faces": 1228,
+          "fully_unmasked_body_faces": 1228,
+          "common_unmasked_body_faces": 672,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 11.19,
+          "p95_edge_extension_pct": 22.52
+        },
+        "f023": {
+          "time_s": 0.7667,
+          "intersected_body_faces": 1232,
+          "fully_unmasked_body_faces": 1232,
+          "common_unmasked_body_faces": 677,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 13.53,
+          "p95_edge_extension_pct": 22.56
+        },
+        "f024": {
+          "time_s": 0.8,
+          "intersected_body_faces": 1222,
+          "fully_unmasked_body_faces": 1222,
+          "common_unmasked_body_faces": 663,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 11.63,
+          "p95_edge_extension_pct": 22.67
+        },
+        "f025": {
+          "time_s": 0.8333,
+          "intersected_body_faces": 1213,
+          "fully_unmasked_body_faces": 1213,
+          "common_unmasked_body_faces": 640,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 9.05,
+          "p95_edge_extension_pct": 22.66
+        },
+        "f026": {
+          "time_s": 0.8667,
+          "intersected_body_faces": 1211,
+          "fully_unmasked_body_faces": 1211,
+          "common_unmasked_body_faces": 629,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 9.1,
+          "p95_edge_extension_pct": 22.43
+        },
+        "f027": {
+          "time_s": 0.9,
+          "intersected_body_faces": 1210,
+          "fully_unmasked_body_faces": 1210,
+          "common_unmasked_body_faces": 652,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.06,
+          "p95_edge_extension_pct": 22.25
+        },
+        "f028": {
+          "time_s": 0.9333,
+          "intersected_body_faces": 1171,
+          "fully_unmasked_body_faces": 1171,
+          "common_unmasked_body_faces": 614,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 14.85,
+          "p95_edge_extension_pct": 22.19
+        },
+        "f029": {
+          "time_s": 0.9667,
+          "intersected_body_faces": 1169,
+          "fully_unmasked_body_faces": 1169,
+          "common_unmasked_body_faces": 611,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 12.37,
+          "p95_edge_extension_pct": 22.02
+        },
+        "f030": {
+          "time_s": 1.0,
+          "intersected_body_faces": 1088,
+          "fully_unmasked_body_faces": 1088,
+          "common_unmasked_body_faces": 531,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 11.61,
+          "p95_edge_extension_pct": 21.98
+        },
+        "f031": {
+          "time_s": 1.0333,
+          "intersected_body_faces": 1055,
+          "fully_unmasked_body_faces": 1055,
+          "common_unmasked_body_faces": 498,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 11.42,
+          "p95_edge_extension_pct": 21.99
+        },
+        "f032": {
+          "time_s": 1.0667,
+          "intersected_body_faces": 1013,
+          "fully_unmasked_body_faces": 1013,
+          "common_unmasked_body_faces": 466,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 13.32,
+          "p95_edge_extension_pct": 21.91
+        },
+        "f033": {
+          "time_s": 1.1,
+          "intersected_body_faces": 955,
+          "fully_unmasked_body_faces": 955,
+          "common_unmasked_body_faces": 417,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 12.32,
+          "p95_edge_extension_pct": 21.87
+        },
+        "f034": {
+          "time_s": 1.1333,
+          "intersected_body_faces": 930,
+          "fully_unmasked_body_faces": 930,
+          "common_unmasked_body_faces": 388,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 12.95,
+          "p95_edge_extension_pct": 21.61
+        },
+        "f035": {
+          "time_s": 1.1667,
+          "intersected_body_faces": 910,
+          "fully_unmasked_body_faces": 910,
+          "common_unmasked_body_faces": 385,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.16,
+          "p95_edge_extension_pct": 21.55
+        },
+        "f036": {
+          "time_s": 1.2,
+          "intersected_body_faces": 917,
+          "fully_unmasked_body_faces": 917,
+          "common_unmasked_body_faces": 386,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 9.23,
+          "p95_edge_extension_pct": 21.4
+        },
+        "f037": {
+          "time_s": 1.2333,
+          "intersected_body_faces": 947,
+          "fully_unmasked_body_faces": 947,
+          "common_unmasked_body_faces": 404,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.97,
+          "p95_edge_extension_pct": 21.54
+        },
+        "f038": {
+          "time_s": 1.2667,
+          "intersected_body_faces": 1014,
+          "fully_unmasked_body_faces": 1014,
+          "common_unmasked_body_faces": 473,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 6.67,
+          "p95_edge_extension_pct": 21.85
+        },
+        "f039": {
+          "time_s": 1.3,
+          "intersected_body_faces": 1068,
+          "fully_unmasked_body_faces": 1068,
+          "common_unmasked_body_faces": 533,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.83,
+          "p95_edge_extension_pct": 21.86
+        },
+        "f040": {
+          "time_s": 1.3333,
+          "intersected_body_faces": 1157,
+          "fully_unmasked_body_faces": 1157,
+          "common_unmasked_body_faces": 617,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.58,
+          "p95_edge_extension_pct": 21.88
+        },
+        "f041": {
+          "time_s": 1.3667,
+          "intersected_body_faces": 1154,
+          "fully_unmasked_body_faces": 1154,
+          "common_unmasked_body_faces": 610,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.04,
+          "p95_edge_extension_pct": 22.02
+        },
+        "f042": {
+          "time_s": 1.4,
+          "intersected_body_faces": 1169,
+          "fully_unmasked_body_faces": 1169,
+          "common_unmasked_body_faces": 628,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 12.42,
+          "p95_edge_extension_pct": 22.06
+        },
+        "f043": {
+          "time_s": 1.4333,
+          "intersected_body_faces": 1137,
+          "fully_unmasked_body_faces": 1137,
+          "common_unmasked_body_faces": 591,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.01,
+          "p95_edge_extension_pct": 22.57
+        },
+        "f044": {
+          "time_s": 1.4667,
+          "intersected_body_faces": 1102,
+          "fully_unmasked_body_faces": 1102,
+          "common_unmasked_body_faces": 571,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 9.2,
+          "p95_edge_extension_pct": 22.61
+        },
+        "f045": {
+          "time_s": 1.5,
+          "intersected_body_faces": 1075,
+          "fully_unmasked_body_faces": 1075,
+          "common_unmasked_body_faces": 549,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 13.3,
+          "p95_edge_extension_pct": 22.63
+        },
+        "f046": {
+          "time_s": 1.5333,
+          "intersected_body_faces": 1055,
+          "fully_unmasked_body_faces": 1055,
+          "common_unmasked_body_faces": 523,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 14.23,
+          "p95_edge_extension_pct": 22.46
+        },
+        "f047": {
+          "time_s": 1.5667,
+          "intersected_body_faces": 1047,
+          "fully_unmasked_body_faces": 1047,
+          "common_unmasked_body_faces": 505,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 11.91,
+          "p95_edge_extension_pct": 22.46
+        },
+        "f048": {
+          "time_s": 1.6,
+          "intersected_body_faces": 1040,
+          "fully_unmasked_body_faces": 1040,
+          "common_unmasked_body_faces": 492,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 13.08,
+          "p95_edge_extension_pct": 22.18
+        },
+        "f049": {
+          "time_s": 1.6333,
+          "intersected_body_faces": 1011,
+          "fully_unmasked_body_faces": 1011,
+          "common_unmasked_body_faces": 468,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 12.38,
+          "p95_edge_extension_pct": 22.31
+        },
+        "f050": {
+          "time_s": 1.6667,
+          "intersected_body_faces": 966,
+          "fully_unmasked_body_faces": 966,
+          "common_unmasked_body_faces": 427,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.04,
+          "p95_edge_extension_pct": 22.57
+        },
+        "f051": {
+          "time_s": 1.7,
+          "intersected_body_faces": 938,
+          "fully_unmasked_body_faces": 938,
+          "common_unmasked_body_faces": 393,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 11.04,
+          "p95_edge_extension_pct": 22.88
+        },
+        "f052": {
+          "time_s": 1.7333,
+          "intersected_body_faces": 912,
+          "fully_unmasked_body_faces": 912,
+          "common_unmasked_body_faces": 344,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.8,
+          "p95_edge_extension_pct": 22.84
+        },
+        "f053": {
+          "time_s": 1.7667,
+          "intersected_body_faces": 873,
+          "fully_unmasked_body_faces": 873,
+          "common_unmasked_body_faces": 302,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.08,
+          "p95_edge_extension_pct": 22.67
+        },
+        "f054": {
+          "time_s": 1.8,
+          "intersected_body_faces": 866,
+          "fully_unmasked_body_faces": 866,
+          "common_unmasked_body_faces": 282,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 7.53,
+          "p95_edge_extension_pct": 22.5
+        },
+        "f055": {
+          "time_s": 1.8333,
+          "intersected_body_faces": 851,
+          "fully_unmasked_body_faces": 851,
+          "common_unmasked_body_faces": 255,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 8.44,
+          "p95_edge_extension_pct": 22.45
+        },
+        "f056": {
+          "time_s": 1.8667,
+          "intersected_body_faces": 840,
+          "fully_unmasked_body_faces": 840,
+          "common_unmasked_body_faces": 254,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 7.03,
+          "p95_edge_extension_pct": 22.25
+        },
+        "f057": {
+          "time_s": 1.9,
+          "intersected_body_faces": 713,
+          "fully_unmasked_body_faces": 713,
+          "common_unmasked_body_faces": 157,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 7.73,
+          "p95_edge_extension_pct": 22.11
+        },
+        "f058": {
+          "time_s": 1.9333,
+          "intersected_body_faces": 678,
+          "fully_unmasked_body_faces": 678,
+          "common_unmasked_body_faces": 120,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 7.03,
+          "p95_edge_extension_pct": 22.06
+        },
+        "f059": {
+          "time_s": 1.9667,
+          "intersected_body_faces": 648,
+          "fully_unmasked_body_faces": 648,
+          "common_unmasked_body_faces": 97,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 6.88,
+          "p95_edge_extension_pct": 22.27
+        },
+        "f060": {
+          "time_s": 2.0,
+          "intersected_body_faces": 623,
+          "fully_unmasked_body_faces": 623,
+          "common_unmasked_body_faces": 74,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 6.33,
+          "p95_edge_extension_pct": 22.1
+        },
+        "f061": {
+          "time_s": 2.0333,
+          "intersected_body_faces": 619,
+          "fully_unmasked_body_faces": 619,
+          "common_unmasked_body_faces": 70,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 6.98,
+          "p95_edge_extension_pct": 22.11
+        },
+        "f062": {
+          "time_s": 2.0667,
+          "intersected_body_faces": 614,
+          "fully_unmasked_body_faces": 614,
+          "common_unmasked_body_faces": 64,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.84,
+          "p95_edge_extension_pct": 22.09
+        },
+        "f063": {
+          "time_s": 2.1,
+          "intersected_body_faces": 621,
+          "fully_unmasked_body_faces": 621,
+          "common_unmasked_body_faces": 66,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 9.96,
+          "p95_edge_extension_pct": 22.1
+        },
+        "f064": {
+          "time_s": 2.1333,
+          "intersected_body_faces": 626,
+          "fully_unmasked_body_faces": 626,
+          "common_unmasked_body_faces": 65,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 9.7,
+          "p95_edge_extension_pct": 22.11
+        },
+        "f065": {
+          "time_s": 2.1667,
+          "intersected_body_faces": 622,
+          "fully_unmasked_body_faces": 622,
+          "common_unmasked_body_faces": 65,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 7.13,
+          "p95_edge_extension_pct": 22.17
+        },
+        "f066": {
+          "time_s": 2.2,
+          "intersected_body_faces": 622,
+          "fully_unmasked_body_faces": 622,
+          "common_unmasked_body_faces": 65,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 7.13,
+          "p95_edge_extension_pct": 22.17
+        }
+      },
+      "gameplay_samples": {
+        "idle": {
+          "time_s": 0,
+          "intersected_body_faces": 509,
+          "fully_unmasked_body_faces": 509,
+          "common_unmasked_body_faces": 75,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 6.64,
+          "p95_edge_extension_pct": 15.74
+        },
+        "f000": {
+          "time_s": 0.018,
+          "intersected_body_faces": 511,
+          "fully_unmasked_body_faces": 511,
+          "common_unmasked_body_faces": 74,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 5.77,
+          "p95_edge_extension_pct": 13.51
+        },
+        "f001": {
+          "time_s": 0.0527,
+          "intersected_body_faces": 598,
+          "fully_unmasked_body_faces": 598,
+          "common_unmasked_body_faces": 66,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 6.35,
+          "p95_edge_extension_pct": 13.42
+        },
+        "f002": {
+          "time_s": 0.0899,
+          "intersected_body_faces": 633,
+          "fully_unmasked_body_faces": 633,
+          "common_unmasked_body_faces": 65,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 7.49,
+          "p95_edge_extension_pct": 17.34
+        },
+        "f003": {
+          "time_s": 0.1271,
+          "intersected_body_faces": 630,
+          "fully_unmasked_body_faces": 630,
+          "common_unmasked_body_faces": 67,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 6.88,
+          "p95_edge_extension_pct": 17.38
+        },
+        "f004": {
+          "time_s": 0.1718,
+          "intersected_body_faces": 633,
+          "fully_unmasked_body_faces": 633,
+          "common_unmasked_body_faces": 69,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 5.72,
+          "p95_edge_extension_pct": 17.11
+        },
+        "f005": {
+          "time_s": 0.2052,
+          "intersected_body_faces": 643,
+          "fully_unmasked_body_faces": 643,
+          "common_unmasked_body_faces": 82,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 6.67,
+          "p95_edge_extension_pct": 16.83
+        },
+        "f006": {
+          "time_s": 0.2408,
+          "intersected_body_faces": 654,
+          "fully_unmasked_body_faces": 654,
+          "common_unmasked_body_faces": 100,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 4.87,
+          "p95_edge_extension_pct": 16.67
+        },
+        "f007": {
+          "time_s": 0.2743,
+          "intersected_body_faces": 725,
+          "fully_unmasked_body_faces": 725,
+          "common_unmasked_body_faces": 168,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 4.64,
+          "p95_edge_extension_pct": 16.57
+        },
+        "f008": {
+          "time_s": 0.3083,
+          "intersected_body_faces": 802,
+          "fully_unmasked_body_faces": 802,
+          "common_unmasked_body_faces": 253,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 8.25,
+          "p95_edge_extension_pct": 16.28
+        },
+        "f009": {
+          "time_s": 0.3446,
+          "intersected_body_faces": 1009,
+          "fully_unmasked_body_faces": 1009,
+          "common_unmasked_body_faces": 458,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 12.66,
+          "p95_edge_extension_pct": 16.56
+        },
+        "f010": {
+          "time_s": 0.4357,
+          "intersected_body_faces": 1213,
+          "fully_unmasked_body_faces": 1213,
+          "common_unmasked_body_faces": 652,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 9.28,
+          "p95_edge_extension_pct": 16.73
+        },
+        "f011": {
+          "time_s": 0.5048,
+          "intersected_body_faces": 1225,
+          "fully_unmasked_body_faces": 1225,
+          "common_unmasked_body_faces": 660,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 9.56,
+          "p95_edge_extension_pct": 17.32
+        },
+        "f012": {
+          "time_s": 0.5421,
+          "intersected_body_faces": 1244,
+          "fully_unmasked_body_faces": 1244,
+          "common_unmasked_body_faces": 677,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 12.79,
+          "p95_edge_extension_pct": 17.45
+        },
+        "f013": {
+          "time_s": 0.582,
+          "intersected_body_faces": 1246,
+          "fully_unmasked_body_faces": 1246,
+          "common_unmasked_body_faces": 680,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 12.28,
+          "p95_edge_extension_pct": 17.58
+        },
+        "f014": {
+          "time_s": 0.6165,
+          "intersected_body_faces": 1260,
+          "fully_unmasked_body_faces": 1260,
+          "common_unmasked_body_faces": 692,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.96,
+          "p95_edge_extension_pct": 17.76
+        },
+        "f015": {
+          "time_s": 0.6518,
+          "intersected_body_faces": 1254,
+          "fully_unmasked_body_faces": 1254,
+          "common_unmasked_body_faces": 694,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 10.05,
+          "p95_edge_extension_pct": 17.73
+        },
+        "f016": {
+          "time_s": 0.6901,
+          "intersected_body_faces": 1242,
+          "fully_unmasked_body_faces": 1242,
+          "common_unmasked_body_faces": 685,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 13.67,
+          "p95_edge_extension_pct": 17.71
+        },
+        "f017": {
+          "time_s": 0.7273,
+          "intersected_body_faces": 1231,
+          "fully_unmasked_body_faces": 1231,
+          "common_unmasked_body_faces": 672,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 11.19,
+          "p95_edge_extension_pct": 17.5
+        },
+        "f018": {
+          "time_s": 0.7607,
+          "intersected_body_faces": 1208,
+          "fully_unmasked_body_faces": 1208,
+          "common_unmasked_body_faces": 655,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 12.74,
+          "p95_edge_extension_pct": 17.25
+        },
+        "f019": {
+          "time_s": 0.7963,
+          "intersected_body_faces": 1155,
+          "fully_unmasked_body_faces": 1155,
+          "common_unmasked_body_faces": 618,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 13.98,
+          "p95_edge_extension_pct": 15.35
+        },
+        "f020": {
+          "time_s": 0.83,
+          "intersected_body_faces": 943,
+          "fully_unmasked_body_faces": 943,
+          "common_unmasked_body_faces": 420,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 9.43,
+          "p95_edge_extension_pct": 12.74
+        },
+        "f021": {
+          "time_s": 0.8661,
+          "intersected_body_faces": 697,
+          "fully_unmasked_body_faces": 697,
+          "common_unmasked_body_faces": 210,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 7.93,
+          "p95_edge_extension_pct": 9.56
+        },
+        "f022": {
+          "time_s": 0.9037,
+          "intersected_body_faces": 525,
+          "fully_unmasked_body_faces": 525,
+          "common_unmasked_body_faces": 79,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 74,
+          "sampled_local_inward_mm_on_common_skin": 4.96,
+          "p95_edge_extension_pct": 10.24
+        },
+        "f023": {
+          "time_s": 0.9391,
+          "intersected_body_faces": 507,
+          "fully_unmasked_body_faces": 507,
+          "common_unmasked_body_faces": 79,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 7.48,
+          "p95_edge_extension_pct": 12.31
+        },
+        "f024": {
+          "time_s": 0.9747,
+          "intersected_body_faces": 509,
+          "fully_unmasked_body_faces": 509,
+          "common_unmasked_body_faces": 78,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 5.27,
+          "p95_edge_extension_pct": 14.09
+        },
+        "f025": {
+          "time_s": 0.998,
+          "intersected_body_faces": 513,
+          "fully_unmasked_body_faces": 513,
+          "common_unmasked_body_faces": 79,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 5.1,
+          "p95_edge_extension_pct": 14.27
+        },
+        "f026": {
+          "time_s": 1.0345,
+          "intersected_body_faces": 515,
+          "fully_unmasked_body_faces": 515,
+          "common_unmasked_body_faces": 81,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 4.86,
+          "p95_edge_extension_pct": 14.25
+        },
+        "f027": {
+          "time_s": 1.0708,
+          "intersected_body_faces": 515,
+          "fully_unmasked_body_faces": 515,
+          "common_unmasked_body_faces": 81,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 4.95,
+          "p95_edge_extension_pct": 14.21
+        },
+        "f028": {
+          "time_s": 1.1054,
+          "intersected_body_faces": 512,
+          "fully_unmasked_body_faces": 512,
+          "common_unmasked_body_faces": 81,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 5.06,
+          "p95_edge_extension_pct": 14.18
+        },
+        "f029": {
+          "time_s": 1.1397,
+          "intersected_body_faces": 512,
+          "fully_unmasked_body_faces": 512,
+          "common_unmasked_body_faces": 81,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 5.12,
+          "p95_edge_extension_pct": 14.14
+        },
+        "f030": {
+          "time_s": 1.1732,
+          "intersected_body_faces": 512,
+          "fully_unmasked_body_faces": 512,
+          "common_unmasked_body_faces": 81,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 5.17,
+          "p95_edge_extension_pct": 14.14
+        },
+        "f031": {
+          "time_s": 1.2091,
+          "intersected_body_faces": 512,
+          "fully_unmasked_body_faces": 512,
+          "common_unmasked_body_faces": 81,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 5.23,
+          "p95_edge_extension_pct": 14.17
+        },
+        "f032": {
+          "time_s": 1.2425,
+          "intersected_body_faces": 512,
+          "fully_unmasked_body_faces": 512,
+          "common_unmasked_body_faces": 81,
+          "unknown_mask_body_faces": 0,
+          "head_faces_crossed_mask_unverified": 73,
+          "sampled_local_inward_mm_on_common_skin": 5.29,
+          "p95_edge_extension_pct": 14.19
+        }
+      }
+    }
+  }
+}

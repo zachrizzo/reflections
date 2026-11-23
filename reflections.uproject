@@ -22,7 +22,7 @@
 		{
 			"Name": "ClothingFitEditor",
 			"Type": "Editor",
-			"LoadingPhase": "None"
+			"LoadingPhase": "PostDefault"
 		}
 	],
 	"Plugins": [
@@ -201,6 +201,14 @@
 			"TargetAllowList": [
 				"Editor"
 			]
+		},
+		{
+			"Name": "ChaosClothAsset",
+			"Enabled": true
+		},
+		{
+			"Name": "ChaosOutfitAsset",
+			"Enabled": true
 		},
 		{
 			"Name": "ChaosClothAssetToolset",

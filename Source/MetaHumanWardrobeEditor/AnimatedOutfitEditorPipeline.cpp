@@ -9,7 +9,8 @@ UE::Tasks::TTask<FMetaHumanPaletteBuiltData> UAnimatedOutfitEditorPipeline::Buil
 {
     // The stock preview binds clothing to root while a face rig is pending.
     // A combined body with skin weights can already drive a body-only motion review.
-    if (Params.Quality != EMetaHumanCharacterPaletteBuildQuality::Preview ||
+    const bool bPreview = Params.Quality == EMetaHumanCharacterPaletteBuildQuality::Preview;
+    if ((!bPreview && !bStripSimulationMesh) ||
         Params.BuildInput.GetScriptStruct() != GetSpecification()->BuildInputStruct)
     {
         return Super::BuildItem(Params);
@@ -21,7 +22,11 @@ UE::Tasks::TTask<FMetaHumanPaletteBuiltData> UAnimatedOutfitEditorPipeline::Buil
     {
         for (auto& Pair : Input->CharacterData)
         {
-            if (Pair.Value.MergedHeadAndBody && Pair.Value.MergedHeadAndBody->GetRefSkeleton().GetNum() > 1)
+            if (bStripSimulationMesh)
+            {
+                Pair.Value.bStripSimMesh = true;
+            }
+            if (bPreview && Pair.Value.MergedHeadAndBody && Pair.Value.MergedHeadAndBody->GetRefSkeleton().GetNum() > 1)
             {
                 Pair.Value.bTransferSkinWeights = true;
             }

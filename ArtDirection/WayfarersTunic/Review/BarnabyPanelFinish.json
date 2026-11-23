@@ -1,0 +1,2737 @@
+{
+  "gameplay": {
+    "body_mask": "/Game/Characters/Clothing/WayfarerPilot/Smoothed/T_PanelCoveredTorso.T_PanelCoveredTorso",
+    "body_asset": "/Engine/Transient.UnrealEdEngine_0:MetaHumanCharacterEditorSubsystem_0.BodyMesh_21",
+    "animation_blueprint": "ABP_HeroSampleCastBlend_C",
+    "layered": true,
+    "spell": "HealingPulse",
+    "montage": "<Object '/Engine/Transient.AnimMontage_7' (0x000001DF134A9680) Class 'AnimMontage'>",
+    "cast_driver_end_s": 1.0639805847313255
+  },
+  "fully_hidden_body_triangles": 4525,
+  "fully_hidden_faces_with_any_vertex_outside_torso_or_upper_arm": 0,
+  "samples": {
+    "editor": {
+      "rest": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1112,
+            "over_90_deg": 466,
+            "p95_deg": 90.6
+          },
+          "crossed_body_faces": 218,
+          "head_faces_crossed": 73
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 255,
+            "over_90_deg": 124,
+            "p95_deg": 25.18
+          },
+          "crossed_body_faces": 202,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 0,
+          "fully_exposed_crossings": 202,
+          "mixed_or_unverified_crossings": 0,
+          "mask_to_opening_lower_bound_mm": 26.61
+        }
+      },
+      "f000": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1283,
+            "over_90_deg": 594,
+            "p95_deg": 106.2
+          },
+          "crossed_body_faces": 637,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 464,
+            "over_90_deg": 256,
+            "p95_deg": 45.23
+          },
+          "crossed_body_faces": 568,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 509,
+          "mixed_or_unverified_crossings": 31,
+          "mask_to_opening_lower_bound_mm": 6.85
+        }
+      },
+      "f001": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1282,
+            "over_90_deg": 594,
+            "p95_deg": 106.08
+          },
+          "crossed_body_faces": 630,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 464,
+            "over_90_deg": 257,
+            "p95_deg": 45.17
+          },
+          "crossed_body_faces": 566,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 506,
+          "mixed_or_unverified_crossings": 32,
+          "mask_to_opening_lower_bound_mm": 6.82
+        }
+      },
+      "f002": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1280,
+            "over_90_deg": 593,
+            "p95_deg": 105.72
+          },
+          "crossed_body_faces": 632,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 461,
+            "over_90_deg": 257,
+            "p95_deg": 45.11
+          },
+          "crossed_body_faces": 564,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 503,
+          "mixed_or_unverified_crossings": 33,
+          "mask_to_opening_lower_bound_mm": 6.88
+        }
+      },
+      "f003": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1279,
+            "over_90_deg": 592,
+            "p95_deg": 105.96
+          },
+          "crossed_body_faces": 634,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 462,
+            "over_90_deg": 258,
+            "p95_deg": 45.33
+          },
+          "crossed_body_faces": 565,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 502,
+          "mixed_or_unverified_crossings": 35,
+          "mask_to_opening_lower_bound_mm": 7.05
+        }
+      },
+      "f004": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1281,
+            "over_90_deg": 594,
+            "p95_deg": 105.86
+          },
+          "crossed_body_faces": 632,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 463,
+            "over_90_deg": 258,
+            "p95_deg": 45.29
+          },
+          "crossed_body_faces": 557,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 494,
+          "mixed_or_unverified_crossings": 35,
+          "mask_to_opening_lower_bound_mm": 7.4
+        }
+      },
+      "f005": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1278,
+            "over_90_deg": 594,
+            "p95_deg": 105.97
+          },
+          "crossed_body_faces": 633,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 463,
+            "over_90_deg": 257,
+            "p95_deg": 45.27
+          },
+          "crossed_body_faces": 552,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 492,
+          "mixed_or_unverified_crossings": 32,
+          "mask_to_opening_lower_bound_mm": 8.01
+        }
+      },
+      "f006": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1278,
+            "over_90_deg": 596,
+            "p95_deg": 106.12
+          },
+          "crossed_body_faces": 631,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 460,
+            "over_90_deg": 260,
+            "p95_deg": 44.75
+          },
+          "crossed_body_faces": 556,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 496,
+          "mixed_or_unverified_crossings": 32,
+          "mask_to_opening_lower_bound_mm": 8.84
+        }
+      },
+      "f007": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1275,
+            "over_90_deg": 597,
+            "p95_deg": 106.2
+          },
+          "crossed_body_faces": 647,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 461,
+            "over_90_deg": 253,
+            "p95_deg": 45.03
+          },
+          "crossed_body_faces": 564,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 506,
+          "mixed_or_unverified_crossings": 30,
+          "mask_to_opening_lower_bound_mm": 9.83
+        }
+      },
+      "f008": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1271,
+            "over_90_deg": 595,
+            "p95_deg": 106.94
+          },
+          "crossed_body_faces": 718,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 459,
+            "over_90_deg": 253,
+            "p95_deg": 44.78
+          },
+          "crossed_body_faces": 611,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 552,
+          "mixed_or_unverified_crossings": 31,
+          "mask_to_opening_lower_bound_mm": 11.16
+        }
+      },
+      "f009": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1274,
+            "over_90_deg": 594,
+            "p95_deg": 107.37
+          },
+          "crossed_body_faces": 815,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 456,
+            "over_90_deg": 252,
+            "p95_deg": 44.41
+          },
+          "crossed_body_faces": 707,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 29,
+          "fully_exposed_crossings": 646,
+          "mixed_or_unverified_crossings": 32,
+          "mask_to_opening_lower_bound_mm": 13.31
+        }
+      },
+      "f010": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1274,
+            "over_90_deg": 595,
+            "p95_deg": 107.41
+          },
+          "crossed_body_faces": 976,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 462,
+            "over_90_deg": 251,
+            "p95_deg": 45.32
+          },
+          "crossed_body_faces": 888,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 29,
+          "fully_exposed_crossings": 824,
+          "mixed_or_unverified_crossings": 35,
+          "mask_to_opening_lower_bound_mm": 13.73
+        }
+      },
+      "f011": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1279,
+            "over_90_deg": 597,
+            "p95_deg": 107.47
+          },
+          "crossed_body_faces": 1145,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 464,
+            "over_90_deg": 254,
+            "p95_deg": 45.27
+          },
+          "crossed_body_faces": 1025,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 29,
+          "fully_exposed_crossings": 958,
+          "mixed_or_unverified_crossings": 38,
+          "mask_to_opening_lower_bound_mm": 14.24
+        }
+      },
+      "f012": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1287,
+            "over_90_deg": 593,
+            "p95_deg": 108.78
+          },
+          "crossed_body_faces": 1196,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 464,
+            "over_90_deg": 253,
+            "p95_deg": 45.2
+          },
+          "crossed_body_faces": 1092,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 30,
+          "fully_exposed_crossings": 1014,
+          "mixed_or_unverified_crossings": 48,
+          "mask_to_opening_lower_bound_mm": 14.09
+        }
+      },
+      "f013": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1284,
+            "over_90_deg": 594,
+            "p95_deg": 108.38
+          },
+          "crossed_body_faces": 1218,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 458,
+            "over_90_deg": 259,
+            "p95_deg": 44.51
+          },
+          "crossed_body_faces": 1115,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 1038,
+          "mixed_or_unverified_crossings": 46,
+          "mask_to_opening_lower_bound_mm": 14.4
+        }
+      },
+      "f014": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1279,
+            "over_90_deg": 592,
+            "p95_deg": 106.76
+          },
+          "crossed_body_faces": 1234,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 461,
+            "over_90_deg": 265,
+            "p95_deg": 45.0
+          },
+          "crossed_body_faces": 1140,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 34,
+          "fully_exposed_crossings": 1060,
+          "mixed_or_unverified_crossings": 46,
+          "mask_to_opening_lower_bound_mm": 15.06
+        }
+      },
+      "f015": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1279,
+            "over_90_deg": 591,
+            "p95_deg": 106.71
+          },
+          "crossed_body_faces": 1232,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 462,
+            "over_90_deg": 260,
+            "p95_deg": 45.22
+          },
+          "crossed_body_faces": 1136,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 33,
+          "fully_exposed_crossings": 1054,
+          "mixed_or_unverified_crossings": 49,
+          "mask_to_opening_lower_bound_mm": 15.9
+        }
+      },
+      "f016": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1282,
+            "over_90_deg": 591,
+            "p95_deg": 106.39
+          },
+          "crossed_body_faces": 1244,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 466,
+            "over_90_deg": 262,
+            "p95_deg": 45.62
+          },
+          "crossed_body_faces": 1162,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 30,
+          "fully_exposed_crossings": 1079,
+          "mixed_or_unverified_crossings": 53,
+          "mask_to_opening_lower_bound_mm": 14.48
+        }
+      },
+      "f017": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1283,
+            "over_90_deg": 586,
+            "p95_deg": 106.07
+          },
+          "crossed_body_faces": 1251,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 463,
+            "over_90_deg": 263,
+            "p95_deg": 45.44
+          },
+          "crossed_body_faces": 1160,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 1079,
+          "mixed_or_unverified_crossings": 50,
+          "mask_to_opening_lower_bound_mm": 12.71
+        }
+      },
+      "f018": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1282,
+            "over_90_deg": 586,
+            "p95_deg": 106.3
+          },
+          "crossed_body_faces": 1259,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 466,
+            "over_90_deg": 264,
+            "p95_deg": 45.62
+          },
+          "crossed_body_faces": 1171,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 1089,
+          "mixed_or_unverified_crossings": 51,
+          "mask_to_opening_lower_bound_mm": 12.04
+        }
+      },
+      "f019": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1281,
+            "over_90_deg": 584,
+            "p95_deg": 106.47
+          },
+          "crossed_body_faces": 1271,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 465,
+            "over_90_deg": 266,
+            "p95_deg": 45.85
+          },
+          "crossed_body_faces": 1181,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 1099,
+          "mixed_or_unverified_crossings": 51,
+          "mask_to_opening_lower_bound_mm": 11.94
+        }
+      },
+      "f020": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1281,
+            "over_90_deg": 585,
+            "p95_deg": 106.47
+          },
+          "crossed_body_faces": 1247,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 467,
+            "over_90_deg": 264,
+            "p95_deg": 45.78
+          },
+          "crossed_body_faces": 1177,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 1095,
+          "mixed_or_unverified_crossings": 51,
+          "mask_to_opening_lower_bound_mm": 12.33
+        }
+      },
+      "f021": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1282,
+            "over_90_deg": 586,
+            "p95_deg": 106.04
+          },
+          "crossed_body_faces": 1239,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 464,
+            "over_90_deg": 262,
+            "p95_deg": 45.44
+          },
+          "crossed_body_faces": 1159,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 1078,
+          "mixed_or_unverified_crossings": 50,
+          "mask_to_opening_lower_bound_mm": 13.17
+        }
+      },
+      "f022": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1282,
+            "over_90_deg": 586,
+            "p95_deg": 106.3
+          },
+          "crossed_body_faces": 1228,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 464,
+            "over_90_deg": 262,
+            "p95_deg": 45.28
+          },
+          "crossed_body_faces": 1153,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 1072,
+          "mixed_or_unverified_crossings": 50,
+          "mask_to_opening_lower_bound_mm": 14.57
+        }
+      },
+      "f023": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1280,
+            "over_90_deg": 590,
+            "p95_deg": 106.54
+          },
+          "crossed_body_faces": 1232,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 463,
+            "over_90_deg": 261,
+            "p95_deg": 45.23
+          },
+          "crossed_body_faces": 1152,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 33,
+          "fully_exposed_crossings": 1072,
+          "mixed_or_unverified_crossings": 47,
+          "mask_to_opening_lower_bound_mm": 14.89
+        }
+      },
+      "f024": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1282,
+            "over_90_deg": 592,
+            "p95_deg": 106.38
+          },
+          "crossed_body_faces": 1222,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 458,
+            "over_90_deg": 265,
+            "p95_deg": 44.83
+          },
+          "crossed_body_faces": 1149,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 34,
+          "fully_exposed_crossings": 1068,
+          "mixed_or_unverified_crossings": 47,
+          "mask_to_opening_lower_bound_mm": 14.94
+        }
+      },
+      "f025": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1281,
+            "over_90_deg": 590,
+            "p95_deg": 106.7
+          },
+          "crossed_body_faces": 1213,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 460,
+            "over_90_deg": 267,
+            "p95_deg": 44.88
+          },
+          "crossed_body_faces": 1129,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 33,
+          "fully_exposed_crossings": 1049,
+          "mixed_or_unverified_crossings": 47,
+          "mask_to_opening_lower_bound_mm": 15.31
+        }
+      },
+      "f026": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1288,
+            "over_90_deg": 591,
+            "p95_deg": 108.03
+          },
+          "crossed_body_faces": 1211,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 467,
+            "over_90_deg": 266,
+            "p95_deg": 45.69
+          },
+          "crossed_body_faces": 1110,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 33,
+          "fully_exposed_crossings": 1029,
+          "mixed_or_unverified_crossings": 48,
+          "mask_to_opening_lower_bound_mm": 13.24
+        }
+      },
+      "f027": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1289,
+            "over_90_deg": 595,
+            "p95_deg": 108.44
+          },
+          "crossed_body_faces": 1210,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 473,
+            "over_90_deg": 261,
+            "p95_deg": 46.56
+          },
+          "crossed_body_faces": 1101,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 33,
+          "fully_exposed_crossings": 1016,
+          "mixed_or_unverified_crossings": 52,
+          "mask_to_opening_lower_bound_mm": 14.34
+        }
+      },
+      "f028": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1293,
+            "over_90_deg": 592,
+            "p95_deg": 108.01
+          },
+          "crossed_body_faces": 1171,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 479,
+            "over_90_deg": 258,
+            "p95_deg": 47.05
+          },
+          "crossed_body_faces": 1084,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 999,
+          "mixed_or_unverified_crossings": 53,
+          "mask_to_opening_lower_bound_mm": 16.53
+        }
+      },
+      "f029": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1296,
+            "over_90_deg": 593,
+            "p95_deg": 107.71
+          },
+          "crossed_body_faces": 1169,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 484,
+            "over_90_deg": 261,
+            "p95_deg": 47.91
+          },
+          "crossed_body_faces": 1043,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 958,
+          "mixed_or_unverified_crossings": 53,
+          "mask_to_opening_lower_bound_mm": 15.25
+        }
+      },
+      "f030": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1299,
+            "over_90_deg": 597,
+            "p95_deg": 106.56
+          },
+          "crossed_body_faces": 1088,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 481,
+            "over_90_deg": 258,
+            "p95_deg": 48.47
+          },
+          "crossed_body_faces": 978,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 900,
+          "mixed_or_unverified_crossings": 47,
+          "mask_to_opening_lower_bound_mm": 13.8
+        }
+      },
+      "f031": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1302,
+            "over_90_deg": 596,
+            "p95_deg": 106.56
+          },
+          "crossed_body_faces": 1055,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 487,
+            "over_90_deg": 264,
+            "p95_deg": 49.26
+          },
+          "crossed_body_faces": 940,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 30,
+          "fully_exposed_crossings": 865,
+          "mixed_or_unverified_crossings": 45,
+          "mask_to_opening_lower_bound_mm": 13.63
+        }
+      },
+      "f032": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1298,
+            "over_90_deg": 593,
+            "p95_deg": 106.84
+          },
+          "crossed_body_faces": 1013,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 488,
+            "over_90_deg": 263,
+            "p95_deg": 49.23
+          },
+          "crossed_body_faces": 894,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 30,
+          "fully_exposed_crossings": 819,
+          "mixed_or_unverified_crossings": 45,
+          "mask_to_opening_lower_bound_mm": 14.3
+        }
+      },
+      "f033": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1300,
+            "over_90_deg": 593,
+            "p95_deg": 106.79
+          },
+          "crossed_body_faces": 955,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 490,
+            "over_90_deg": 261,
+            "p95_deg": 48.78
+          },
+          "crossed_body_faces": 862,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 27,
+          "fully_exposed_crossings": 794,
+          "mixed_or_unverified_crossings": 41,
+          "mask_to_opening_lower_bound_mm": 13.57
+        }
+      },
+      "f034": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1305,
+            "over_90_deg": 590,
+            "p95_deg": 107.03
+          },
+          "crossed_body_faces": 930,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 491,
+            "over_90_deg": 261,
+            "p95_deg": 48.58
+          },
+          "crossed_body_faces": 835,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 27,
+          "fully_exposed_crossings": 772,
+          "mixed_or_unverified_crossings": 36,
+          "mask_to_opening_lower_bound_mm": 13.51
+        }
+      },
+      "f035": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1301,
+            "over_90_deg": 597,
+            "p95_deg": 106.83
+          },
+          "crossed_body_faces": 910,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 488,
+            "over_90_deg": 261,
+            "p95_deg": 48.64
+          },
+          "crossed_body_faces": 814,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 757,
+          "mixed_or_unverified_crossings": 29,
+          "mask_to_opening_lower_bound_mm": 14.0
+        }
+      },
+      "f036": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1303,
+            "over_90_deg": 595,
+            "p95_deg": 107.36
+          },
+          "crossed_body_faces": 917,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 482,
+            "over_90_deg": 258,
+            "p95_deg": 47.19
+          },
+          "crossed_body_faces": 838,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 26,
+          "fully_exposed_crossings": 785,
+          "mixed_or_unverified_crossings": 27,
+          "mask_to_opening_lower_bound_mm": 14.74
+        }
+      },
+      "f037": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1297,
+            "over_90_deg": 591,
+            "p95_deg": 107.07
+          },
+          "crossed_body_faces": 947,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 477,
+            "over_90_deg": 257,
+            "p95_deg": 46.34
+          },
+          "crossed_body_faces": 858,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 27,
+          "fully_exposed_crossings": 804,
+          "mixed_or_unverified_crossings": 27,
+          "mask_to_opening_lower_bound_mm": 16.5
+        }
+      },
+      "f038": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1296,
+            "over_90_deg": 591,
+            "p95_deg": 106.94
+          },
+          "crossed_body_faces": 1014,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 474,
+            "over_90_deg": 256,
+            "p95_deg": 46.1
+          },
+          "crossed_body_faces": 912,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 27,
+          "fully_exposed_crossings": 858,
+          "mixed_or_unverified_crossings": 27,
+          "mask_to_opening_lower_bound_mm": 16.83
+        }
+      },
+      "f039": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1296,
+            "over_90_deg": 590,
+            "p95_deg": 107.34
+          },
+          "crossed_body_faces": 1068,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 468,
+            "over_90_deg": 253,
+            "p95_deg": 45.99
+          },
+          "crossed_body_faces": 986,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 925,
+          "mixed_or_unverified_crossings": 29,
+          "mask_to_opening_lower_bound_mm": 17.95
+        }
+      },
+      "f040": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1298,
+            "over_90_deg": 593,
+            "p95_deg": 106.6
+          },
+          "crossed_body_faces": 1157,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 466,
+            "over_90_deg": 250,
+            "p95_deg": 45.68
+          },
+          "crossed_body_faces": 1057,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 996,
+          "mixed_or_unverified_crossings": 29,
+          "mask_to_opening_lower_bound_mm": 19.54
+        }
+      },
+      "f041": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1294,
+            "over_90_deg": 595,
+            "p95_deg": 105.77
+          },
+          "crossed_body_faces": 1154,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 467,
+            "over_90_deg": 249,
+            "p95_deg": 45.92
+          },
+          "crossed_body_faces": 1075,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 34,
+          "fully_exposed_crossings": 1008,
+          "mixed_or_unverified_crossings": 33,
+          "mask_to_opening_lower_bound_mm": 16.52
+        }
+      },
+      "f042": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1298,
+            "over_90_deg": 586,
+            "p95_deg": 106.08
+          },
+          "crossed_body_faces": 1169,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 465,
+            "over_90_deg": 253,
+            "p95_deg": 45.87
+          },
+          "crossed_body_faces": 1076,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 33,
+          "fully_exposed_crossings": 1009,
+          "mixed_or_unverified_crossings": 34,
+          "mask_to_opening_lower_bound_mm": 15.28
+        }
+      },
+      "f043": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1301,
+            "over_90_deg": 587,
+            "p95_deg": 106.67
+          },
+          "crossed_body_faces": 1137,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 462,
+            "over_90_deg": 259,
+            "p95_deg": 45.93
+          },
+          "crossed_body_faces": 1050,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 35,
+          "fully_exposed_crossings": 973,
+          "mixed_or_unverified_crossings": 42,
+          "mask_to_opening_lower_bound_mm": 16.65
+        }
+      },
+      "f044": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1295,
+            "over_90_deg": 584,
+            "p95_deg": 107.02
+          },
+          "crossed_body_faces": 1102,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 470,
+            "over_90_deg": 257,
+            "p95_deg": 46.37
+          },
+          "crossed_body_faces": 1030,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 36,
+          "fully_exposed_crossings": 950,
+          "mixed_or_unverified_crossings": 44,
+          "mask_to_opening_lower_bound_mm": 15.75
+        }
+      },
+      "f045": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1295,
+            "over_90_deg": 585,
+            "p95_deg": 107.23
+          },
+          "crossed_body_faces": 1075,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 469,
+            "over_90_deg": 255,
+            "p95_deg": 46.4
+          },
+          "crossed_body_faces": 993,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 34,
+          "fully_exposed_crossings": 916,
+          "mixed_or_unverified_crossings": 43,
+          "mask_to_opening_lower_bound_mm": 15.93
+        }
+      },
+      "f046": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1295,
+            "over_90_deg": 589,
+            "p95_deg": 107.1
+          },
+          "crossed_body_faces": 1055,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 468,
+            "over_90_deg": 258,
+            "p95_deg": 46.38
+          },
+          "crossed_body_faces": 966,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 34,
+          "fully_exposed_crossings": 889,
+          "mixed_or_unverified_crossings": 43,
+          "mask_to_opening_lower_bound_mm": 15.31
+        }
+      },
+      "f047": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1294,
+            "over_90_deg": 593,
+            "p95_deg": 107.28
+          },
+          "crossed_body_faces": 1047,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 470,
+            "over_90_deg": 259,
+            "p95_deg": 46.26
+          },
+          "crossed_body_faces": 949,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 876,
+          "mixed_or_unverified_crossings": 41,
+          "mask_to_opening_lower_bound_mm": 13.72
+        }
+      },
+      "f048": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1298,
+            "over_90_deg": 593,
+            "p95_deg": 107.05
+          },
+          "crossed_body_faces": 1040,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 471,
+            "over_90_deg": 254,
+            "p95_deg": 46.09
+          },
+          "crossed_body_faces": 949,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 33,
+          "fully_exposed_crossings": 871,
+          "mixed_or_unverified_crossings": 45,
+          "mask_to_opening_lower_bound_mm": 13.35
+        }
+      },
+      "f049": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1300,
+            "over_90_deg": 595,
+            "p95_deg": 106.56
+          },
+          "crossed_body_faces": 1011,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 475,
+            "over_90_deg": 256,
+            "p95_deg": 47.08
+          },
+          "crossed_body_faces": 896,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 828,
+          "mixed_or_unverified_crossings": 36,
+          "mask_to_opening_lower_bound_mm": 14.26
+        }
+      },
+      "f050": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1293,
+            "over_90_deg": 596,
+            "p95_deg": 106.59
+          },
+          "crossed_body_faces": 966,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 477,
+            "over_90_deg": 263,
+            "p95_deg": 47.43
+          },
+          "crossed_body_faces": 869,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 34,
+          "fully_exposed_crossings": 794,
+          "mixed_or_unverified_crossings": 41,
+          "mask_to_opening_lower_bound_mm": 14.07
+        }
+      },
+      "f051": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1291,
+            "over_90_deg": 599,
+            "p95_deg": 106.63
+          },
+          "crossed_body_faces": 938,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 479,
+            "over_90_deg": 267,
+            "p95_deg": 47.89
+          },
+          "crossed_body_faces": 846,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 34,
+          "fully_exposed_crossings": 771,
+          "mixed_or_unverified_crossings": 41,
+          "mask_to_opening_lower_bound_mm": 11.31
+        }
+      },
+      "f052": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1294,
+            "over_90_deg": 599,
+            "p95_deg": 106.69
+          },
+          "crossed_body_faces": 912,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 478,
+            "over_90_deg": 265,
+            "p95_deg": 47.52
+          },
+          "crossed_body_faces": 822,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 750,
+          "mixed_or_unverified_crossings": 40,
+          "mask_to_opening_lower_bound_mm": 9.66
+        }
+      },
+      "f053": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1292,
+            "over_90_deg": 599,
+            "p95_deg": 106.65
+          },
+          "crossed_body_faces": 873,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 476,
+            "over_90_deg": 260,
+            "p95_deg": 46.73
+          },
+          "crossed_body_faces": 780,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 708,
+          "mixed_or_unverified_crossings": 40,
+          "mask_to_opening_lower_bound_mm": 8.89
+        }
+      },
+      "f054": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1291,
+            "over_90_deg": 600,
+            "p95_deg": 106.19
+          },
+          "crossed_body_faces": 866,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 475,
+            "over_90_deg": 259,
+            "p95_deg": 47.0
+          },
+          "crossed_body_faces": 764,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 694,
+          "mixed_or_unverified_crossings": 38,
+          "mask_to_opening_lower_bound_mm": 8.39
+        }
+      },
+      "f055": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1292,
+            "over_90_deg": 601,
+            "p95_deg": 106.48
+          },
+          "crossed_body_faces": 851,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 472,
+            "over_90_deg": 256,
+            "p95_deg": 46.16
+          },
+          "crossed_body_faces": 744,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 674,
+          "mixed_or_unverified_crossings": 38,
+          "mask_to_opening_lower_bound_mm": 7.8
+        }
+      },
+      "f056": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1293,
+            "over_90_deg": 600,
+            "p95_deg": 107.05
+          },
+          "crossed_body_faces": 840,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 475,
+            "over_90_deg": 263,
+            "p95_deg": 46.33
+          },
+          "crossed_body_faces": 676,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 606,
+          "mixed_or_unverified_crossings": 38,
+          "mask_to_opening_lower_bound_mm": 7.06
+        }
+      },
+      "f057": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1291,
+            "over_90_deg": 598,
+            "p95_deg": 107.83
+          },
+          "crossed_body_faces": 713,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 476,
+            "over_90_deg": 259,
+            "p95_deg": 46.43
+          },
+          "crossed_body_faces": 606,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 537,
+          "mixed_or_unverified_crossings": 38,
+          "mask_to_opening_lower_bound_mm": 6.38
+        }
+      },
+      "f058": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1292,
+            "over_90_deg": 597,
+            "p95_deg": 107.72
+          },
+          "crossed_body_faces": 678,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 474,
+            "over_90_deg": 256,
+            "p95_deg": 46.18
+          },
+          "crossed_body_faces": 580,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 512,
+          "mixed_or_unverified_crossings": 37,
+          "mask_to_opening_lower_bound_mm": 7.57
+        }
+      },
+      "f059": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1285,
+            "over_90_deg": 600,
+            "p95_deg": 107.45
+          },
+          "crossed_body_faces": 648,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 468,
+            "over_90_deg": 256,
+            "p95_deg": 45.7
+          },
+          "crossed_body_faces": 572,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 33,
+          "fully_exposed_crossings": 503,
+          "mixed_or_unverified_crossings": 36,
+          "mask_to_opening_lower_bound_mm": 7.58
+        }
+      },
+      "f060": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1283,
+            "over_90_deg": 600,
+            "p95_deg": 106.87
+          },
+          "crossed_body_faces": 623,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 466,
+            "over_90_deg": 253,
+            "p95_deg": 45.53
+          },
+          "crossed_body_faces": 561,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 494,
+          "mixed_or_unverified_crossings": 36,
+          "mask_to_opening_lower_bound_mm": 6.09
+        }
+      },
+      "f061": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1283,
+            "over_90_deg": 600,
+            "p95_deg": 106.64
+          },
+          "crossed_body_faces": 619,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 467,
+            "over_90_deg": 251,
+            "p95_deg": 45.36
+          },
+          "crossed_body_faces": 561,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 33,
+          "fully_exposed_crossings": 494,
+          "mixed_or_unverified_crossings": 34,
+          "mask_to_opening_lower_bound_mm": 5.48
+        }
+      },
+      "f062": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1284,
+            "over_90_deg": 601,
+            "p95_deg": 106.58
+          },
+          "crossed_body_faces": 614,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 465,
+            "over_90_deg": 249,
+            "p95_deg": 45.36
+          },
+          "crossed_body_faces": 560,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 33,
+          "fully_exposed_crossings": 495,
+          "mixed_or_unverified_crossings": 32,
+          "mask_to_opening_lower_bound_mm": 5.39
+        }
+      },
+      "f063": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1284,
+            "over_90_deg": 600,
+            "p95_deg": 106.7
+          },
+          "crossed_body_faces": 621,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 460,
+            "over_90_deg": 248,
+            "p95_deg": 44.93
+          },
+          "crossed_body_faces": 557,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 492,
+          "mixed_or_unverified_crossings": 33,
+          "mask_to_opening_lower_bound_mm": 5.4
+        }
+      },
+      "f064": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1286,
+            "over_90_deg": 601,
+            "p95_deg": 106.69
+          },
+          "crossed_body_faces": 626,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 459,
+            "over_90_deg": 249,
+            "p95_deg": 44.95
+          },
+          "crossed_body_faces": 553,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 488,
+          "mixed_or_unverified_crossings": 33,
+          "mask_to_opening_lower_bound_mm": 5.39
+        }
+      },
+      "f065": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1286,
+            "over_90_deg": 599,
+            "p95_deg": 106.72
+          },
+          "crossed_body_faces": 622,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 459,
+            "over_90_deg": 248,
+            "p95_deg": 44.85
+          },
+          "crossed_body_faces": 554,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 489,
+          "mixed_or_unverified_crossings": 33,
+          "mask_to_opening_lower_bound_mm": 5.32
+        }
+      },
+      "f066": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1286,
+            "over_90_deg": 599,
+            "p95_deg": 106.72
+          },
+          "crossed_body_faces": 622,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 459,
+            "over_90_deg": 248,
+            "p95_deg": 44.85
+          },
+          "crossed_body_faces": 554,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 32,
+          "fully_exposed_crossings": 489,
+          "mixed_or_unverified_crossings": 33,
+          "mask_to_opening_lower_bound_mm": 5.32
+        }
+      }
+    },
+    "game": {
+      "idle": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1249,
+            "over_90_deg": 530,
+            "p95_deg": 100.24
+          },
+          "crossed_body_faces": 507,
+          "head_faces_crossed": 73
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 451,
+            "over_90_deg": 213,
+            "p95_deg": 43.85
+          },
+          "crossed_body_faces": 460,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 0,
+          "fully_exposed_crossings": 452,
+          "mixed_or_unverified_crossings": 8,
+          "mask_to_opening_lower_bound_mm": 19.9
+        },
+        "cast_active": false
+      },
+      "f000": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1248,
+            "over_90_deg": 534,
+            "p95_deg": 100.18
+          },
+          "crossed_body_faces": 504,
+          "head_faces_crossed": 73
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 451,
+            "over_90_deg": 215,
+            "p95_deg": 43.58
+          },
+          "crossed_body_faces": 461,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 0,
+          "fully_exposed_crossings": 452,
+          "mixed_or_unverified_crossings": 9,
+          "mask_to_opening_lower_bound_mm": 20.66
+        },
+        "cast_active": true
+      },
+      "f001": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1265,
+            "over_90_deg": 565,
+            "p95_deg": 103.31
+          },
+          "crossed_body_faces": 565,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 441,
+            "over_90_deg": 251,
+            "p95_deg": 42.22
+          },
+          "crossed_body_faces": 518,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 9,
+          "fully_exposed_crossings": 489,
+          "mixed_or_unverified_crossings": 20,
+          "mask_to_opening_lower_bound_mm": 18.96
+        },
+        "cast_active": true
+      },
+      "f002": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1279,
+            "over_90_deg": 592,
+            "p95_deg": 105.83
+          },
+          "crossed_body_faces": 632,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 462,
+            "over_90_deg": 258,
+            "p95_deg": 45.32
+          },
+          "crossed_body_faces": 564,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 501,
+          "mixed_or_unverified_crossings": 35,
+          "mask_to_opening_lower_bound_mm": 6.95
+        },
+        "cast_active": true
+      },
+      "f003": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1279,
+            "over_90_deg": 592,
+            "p95_deg": 105.86
+          },
+          "crossed_body_faces": 631,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 462,
+            "over_90_deg": 258,
+            "p95_deg": 45.3
+          },
+          "crossed_body_faces": 558,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 495,
+          "mixed_or_unverified_crossings": 35,
+          "mask_to_opening_lower_bound_mm": 7.25
+        },
+        "cast_active": true
+      },
+      "f004": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1276,
+            "over_90_deg": 594,
+            "p95_deg": 106.05
+          },
+          "crossed_body_faces": 632,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 460,
+            "over_90_deg": 260,
+            "p95_deg": 44.72
+          },
+          "crossed_body_faces": 552,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 492,
+          "mixed_or_unverified_crossings": 32,
+          "mask_to_opening_lower_bound_mm": 8.48
+        },
+        "cast_active": true
+      },
+      "f005": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1276,
+            "over_90_deg": 597,
+            "p95_deg": 106.37
+          },
+          "crossed_body_faces": 648,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 461,
+            "over_90_deg": 256,
+            "p95_deg": 44.91
+          },
+          "crossed_body_faces": 562,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 504,
+          "mixed_or_unverified_crossings": 30,
+          "mask_to_opening_lower_bound_mm": 9.44
+        },
+        "cast_active": true
+      },
+      "f006": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1274,
+            "over_90_deg": 597,
+            "p95_deg": 106.7
+          },
+          "crossed_body_faces": 702,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 458,
+            "over_90_deg": 254,
+            "p95_deg": 44.76
+          },
+          "crossed_body_faces": 583,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 28,
+          "fully_exposed_crossings": 524,
+          "mixed_or_unverified_crossings": 31,
+          "mask_to_opening_lower_bound_mm": 10.79
+        },
+        "cast_active": true
+      },
+      "f007": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1273,
+            "over_90_deg": 595,
+            "p95_deg": 107.32
+          },
+          "crossed_body_faces": 792,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 456,
+            "over_90_deg": 250,
+            "p95_deg": 44.36
+          },
+          "crossed_body_faces": 691,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 29,
+          "fully_exposed_crossings": 630,
+          "mixed_or_unverified_crossings": 32,
+          "mask_to_opening_lower_bound_mm": 13.06
+        },
+        "cast_active": true
+      },
+      "f008": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1273,
+            "over_90_deg": 594,
+            "p95_deg": 107.12
+          },
+          "crossed_body_faces": 955,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 463,
+            "over_90_deg": 251,
+            "p95_deg": 45.38
+          },
+          "crossed_body_faces": 882,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 29,
+          "fully_exposed_crossings": 818,
+          "mixed_or_unverified_crossings": 35,
+          "mask_to_opening_lower_bound_mm": 13.89
+        },
+        "cast_active": true
+      },
+      "f009": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1277,
+            "over_90_deg": 597,
+            "p95_deg": 107.36
+          },
+          "crossed_body_faces": 1150,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 463,
+            "over_90_deg": 253,
+            "p95_deg": 45.32
+          },
+          "crossed_body_faces": 1023,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 29,
+          "fully_exposed_crossings": 956,
+          "mixed_or_unverified_crossings": 38,
+          "mask_to_opening_lower_bound_mm": 14.19
+        },
+        "cast_active": true
+      },
+      "f010": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1284,
+            "over_90_deg": 592,
+            "p95_deg": 108.94
+          },
+          "crossed_body_faces": 1205,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 465,
+            "over_90_deg": 255,
+            "p95_deg": 45.49
+          },
+          "crossed_body_faces": 1087,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 1011,
+          "mixed_or_unverified_crossings": 45,
+          "mask_to_opening_lower_bound_mm": 14.14
+        },
+        "cast_active": true
+      },
+      "f011": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1277,
+            "over_90_deg": 590,
+            "p95_deg": 107.15
+          },
+          "crossed_body_faces": 1222,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 461,
+            "over_90_deg": 262,
+            "p95_deg": 45.06
+          },
+          "crossed_body_faces": 1145,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 34,
+          "fully_exposed_crossings": 1061,
+          "mixed_or_unverified_crossings": 50,
+          "mask_to_opening_lower_bound_mm": 15.32
+        },
+        "cast_active": true
+      },
+      "f012": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1281,
+            "over_90_deg": 590,
+            "p95_deg": 106.46
+          },
+          "crossed_body_faces": 1248,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 465,
+            "over_90_deg": 262,
+            "p95_deg": 45.61
+          },
+          "crossed_body_faces": 1154,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 1073,
+          "mixed_or_unverified_crossings": 50,
+          "mask_to_opening_lower_bound_mm": 13.72
+        },
+        "cast_active": true
+      },
+      "f013": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1281,
+            "over_90_deg": 585,
+            "p95_deg": 106.32
+          },
+          "crossed_body_faces": 1260,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 466,
+            "over_90_deg": 266,
+            "p95_deg": 45.77
+          },
+          "crossed_body_faces": 1162,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 1080,
+          "mixed_or_unverified_crossings": 51,
+          "mask_to_opening_lower_bound_mm": 11.99
+        },
+        "cast_active": true
+      },
+      "f014": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1282,
+            "over_90_deg": 586,
+            "p95_deg": 106.13
+          },
+          "crossed_body_faces": 1244,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 465,
+            "over_90_deg": 263,
+            "p95_deg": 45.34
+          },
+          "crossed_body_faces": 1160,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 1079,
+          "mixed_or_unverified_crossings": 50,
+          "mask_to_opening_lower_bound_mm": 12.76
+        },
+        "cast_active": true
+      },
+      "f015": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1278,
+            "over_90_deg": 588,
+            "p95_deg": 106.54
+          },
+          "crossed_body_faces": 1231,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 465,
+            "over_90_deg": 262,
+            "p95_deg": 45.3
+          },
+          "crossed_body_faces": 1140,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 31,
+          "fully_exposed_crossings": 1060,
+          "mixed_or_unverified_crossings": 49,
+          "mask_to_opening_lower_bound_mm": 15.21
+        },
+        "cast_active": true
+      },
+      "f016": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1265,
+            "over_90_deg": 575,
+            "p95_deg": 105.93
+          },
+          "crossed_body_faces": 1072,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 455,
+            "over_90_deg": 254,
+            "p95_deg": 44.19
+          },
+          "crossed_body_faces": 946,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 24,
+          "fully_exposed_crossings": 882,
+          "mixed_or_unverified_crossings": 40,
+          "mask_to_opening_lower_bound_mm": 7.86
+        },
+        "cast_active": true
+      },
+      "f017": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1257,
+            "over_90_deg": 546,
+            "p95_deg": 101.39
+          },
+          "crossed_body_faces": 613,
+          "head_faces_crossed": 74
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 456,
+            "over_90_deg": 234,
+            "p95_deg": 44.32
+          },
+          "crossed_body_faces": 502,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 8,
+          "fully_exposed_crossings": 479,
+          "mixed_or_unverified_crossings": 15,
+          "mask_to_opening_lower_bound_mm": 12.35
+        },
+        "cast_active": true
+      },
+      "f018": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1242,
+            "over_90_deg": 530,
+            "p95_deg": 100.69
+          },
+          "crossed_body_faces": 505,
+          "head_faces_crossed": 73
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 449,
+            "over_90_deg": 212,
+            "p95_deg": 43.68
+          },
+          "crossed_body_faces": 462,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 3,
+          "fully_exposed_crossings": 447,
+          "mixed_or_unverified_crossings": 12,
+          "mask_to_opening_lower_bound_mm": 14.12
+        },
+        "cast_active": true
+      },
+      "f019": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1240,
+            "over_90_deg": 530,
+            "p95_deg": 100.23
+          },
+          "crossed_body_faces": 512,
+          "head_faces_crossed": 73
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 456,
+            "over_90_deg": 210,
+            "p95_deg": 43.52
+          },
+          "crossed_body_faces": 461,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 3,
+          "fully_exposed_crossings": 446,
+          "mixed_or_unverified_crossings": 12,
+          "mask_to_opening_lower_bound_mm": 13.71
+        },
+        "cast_active": true
+      },
+      "f020": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1240,
+            "over_90_deg": 532,
+            "p95_deg": 99.95
+          },
+          "crossed_body_faces": 512,
+          "head_faces_crossed": 73
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 456,
+            "over_90_deg": 211,
+            "p95_deg": 43.66
+          },
+          "crossed_body_faces": 459,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 3,
+          "fully_exposed_crossings": 445,
+          "mixed_or_unverified_crossings": 11,
+          "mask_to_opening_lower_bound_mm": 13.4
+        },
+        "cast_active": false
+      },
+      "f021": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1238,
+            "over_90_deg": 532,
+            "p95_deg": 99.98
+          },
+          "crossed_body_faces": 507,
+          "head_faces_crossed": 73
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 453,
+            "over_90_deg": 212,
+            "p95_deg": 43.7
+          },
+          "crossed_body_faces": 461,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 3,
+          "fully_exposed_crossings": 447,
+          "mixed_or_unverified_crossings": 11,
+          "mask_to_opening_lower_bound_mm": 13.29
+        },
+        "cast_active": false
+      },
+      "f022": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1237,
+            "over_90_deg": 531,
+            "p95_deg": 100.4
+          },
+          "crossed_body_faces": 506,
+          "head_faces_crossed": 73
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 451,
+            "over_90_deg": 214,
+            "p95_deg": 43.53
+          },
+          "crossed_body_faces": 460,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 3,
+          "fully_exposed_crossings": 446,
+          "mixed_or_unverified_crossings": 11,
+          "mask_to_opening_lower_bound_mm": 13.18
+        },
+        "cast_active": false
+      },
+      "f023": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1237,
+            "over_90_deg": 532,
+            "p95_deg": 100.46
+          },
+          "crossed_body_faces": 508,
+          "head_faces_crossed": 73
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 452,
+            "over_90_deg": 216,
+            "p95_deg": 42.95
+          },
+          "crossed_body_faces": 460,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 3,
+          "fully_exposed_crossings": 446,
+          "mixed_or_unverified_crossings": 11,
+          "mask_to_opening_lower_bound_mm": 13.08
+        },
+        "cast_active": false
+      },
+      "f024": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1237,
+            "over_90_deg": 533,
+            "p95_deg": 100.35
+          },
+          "crossed_body_faces": 509,
+          "head_faces_crossed": 73
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 452,
+            "over_90_deg": 216,
+            "p95_deg": 42.98
+          },
+          "crossed_body_faces": 461,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 3,
+          "fully_exposed_crossings": 447,
+          "mixed_or_unverified_crossings": 11,
+          "mask_to_opening_lower_bound_mm": 12.98
+        },
+        "cast_active": false
+      },
+      "f025": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1236,
+            "over_90_deg": 533,
+            "p95_deg": 100.3
+          },
+          "crossed_body_faces": 508,
+          "head_faces_crossed": 73
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 453,
+            "over_90_deg": 216,
+            "p95_deg": 43.05
+          },
+          "crossed_body_faces": 461,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 3,
+          "fully_exposed_crossings": 447,
+          "mixed_or_unverified_crossings": 11,
+          "mask_to_opening_lower_bound_mm": 12.88
+        },
+        "cast_active": false
+      },
+      "f026": {
+        "before": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 1237,
+            "over_90_deg": 533,
+            "p95_deg": 100.34
+          },
+          "crossed_body_faces": 507,
+          "head_faces_crossed": 73
+        },
+        "after": {
+          "creases": {
+            "triangles": 6192,
+            "adjacent_edges": 9212,
+            "over_45_deg": 453,
+            "over_90_deg": 216,
+            "p95_deg": 43.14
+          },
+          "crossed_body_faces": 461,
+          "head_faces_crossed": 0,
+          "fully_hidden_crossings": 3,
+          "fully_exposed_crossings": 447,
+          "mixed_or_unverified_crossings": 11,
+          "mask_to_opening_lower_bound_mm": 12.74
+        },
+        "cast_active": false
+      }
+    }
+  },
+  "before_waist_ease_mm": 96.4,
+  "after_waist_ease_mm": 77.7
+}

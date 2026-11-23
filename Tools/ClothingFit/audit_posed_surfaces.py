@@ -48,13 +48,13 @@ def mask_image(path):
     return rgba.reshape(height, width, 4)[::-1, :, 0].copy()
 
 
-def classify_body_triangles(folder, body, tri, mask):
+def classify_body_triangles(folder, body, tri, mask, texture_name="T_WayfarersTunic_BodyMask"):
     """0 = entirely culled, 1 = wholly unmasked, 2 = mixed or unverified."""
     state_file = folder / "body_mask.json"
     if not state_file.is_file() or mask is None:
         return np.full(len(tri), 2, dtype=np.uint8)
     state = json.loads(state_file.read_text())
-    if not str(state["texture"]).endswith(".T_WayfarersTunic_BodyMask"):
+    if not str(state["texture"]).endswith("." + texture_name):
         return np.full(len(tri), 2, dtype=np.uint8)
     uv = np.fromfile(folder / "body_uv.bin", dtype="<f4").reshape(-1, 2)
     if len(uv) != len(body):
