@@ -14,9 +14,16 @@ Model files (Comfy-Org/TRELLIS.2 bf16, DINOv3 ViT-L, BiRefNet) live in C:\\Users
 The ComfyUI server is started for the run and stopped afterwards. Post a NOTICE in Saved/PIE_QUEUE.md first:
 this is an outside-editor GPU job. Settings follow ComfyUI's TRELLIS.2 template (CFG override and rescale match
 the original pipeline); background removal is BiRefNet (MIT), never RMBG-2.0 (non-commercial).
+
+Memory: on this PC every GB of video memory is also charged to Windows' commit limit. A 1536 run with the bf16
+model used 17-19 GB of commit (measured 2026-11-23), which does not fit next to the open Unreal editor (~20 GB
+commit, 8 GB VRAM). The script refuses to start under --min-free-commit (default 21 GB) and stops the ComfyUI
+server by itself if free commit falls under 2 GB during the run. Run it while the editor is closed.
 """
 import argparse
+import ctypes
 import json
+import threading
 import os
 import shutil
 import subprocess
@@ -32,6 +39,30 @@ URL = f"http://127.0.0.1:{PORT}"
 STOP = Path(__file__).resolve().parents[2] / "Saved/ClothingFit/STOP_GPU"
 CHANNELS = {"basecolor": "BaseColor", "metallic": "Metallic", "roughness": "Roughness"}
 UNETS = {"bf16": "trellis_2_bf16.safetensors", "int8": "trellis_2_int8_convrot.safetensors"}
+
+
+class _Mem(ctypes.Structure):
+    _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong), ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong), ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong), ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
+
+
+def free_commit_gb():
+    m = _Mem(); m.dwLength = ctypes.sizeof(_Mem)
+    ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(m))
+    return m.ullAvailPageFile / 2 ** 30
+
+
+def guard(proc, floor, state):
+    """Stop the server when free commit falls under `floor` GB (the editor and other programs need it)."""
+    while proc.poll() is None and not state.get("stop"):
+        free = free_commit_gb()
+        state["lowest"] = min(state.get("lowest", 1e9), free)
+        if free < floor:
+            proc.kill()
+            state["killed"] = round(free, 2)
+            return
+        time.sleep(.25)
 
 
 def api(path, payload=None, timeout=30):
@@ -180,6 +211,7 @@ def main():
     parser.add_argument("--model", choices=["bf16", "int8"], default="bf16", help="int8 halves the model's memory (5.3 GB instead of 10.3 GB)")
     parser.add_argument("--reserve-vram", type=float, default=2.0, help="GB of video memory ComfyUI leaves for the editor")
     parser.add_argument("--keep-server", action="store_true")
+    parser.add_argument("--min-free-commit", type=float, default=21.0, help="GB of free Windows commit needed to start")
     parser.add_argument("--comfy-args", default="", help="extra ComfyUI server flags, e.g. \"--disable-dynamic-vram\"")
     args = parser.parse_args()
     if STOP.exists():
@@ -189,7 +221,13 @@ def main():
     name = args.name
     image_name = f"{name}_reference.png"
     shutil.copyfile(args.image, COMFY / "input" / image_name)
+    if not up() and free_commit_gb() < args.min_free_commit:
+        raise SystemExit(f"only {free_commit_gb():.1f} GB of Windows commit is free; TRELLIS.2 needs about {args.min_free_commit:.0f} GB "
+                         "(close the Unreal editor for the run, or ask the orchestrator for an editor-closed window)")
     proc = None if up() else start_server(log, args.reserve_vram, args.comfy_args.split())
+    state = {}
+    if proc is not None:
+        threading.Thread(target=guard, args=(proc, 2.0, state), daemon=True).start()
     report = dict(name=name, image=str(args.image), model=UNETS[args.model], generator="Microsoft TRELLIS.2 4B (Comfy-Org/TRELLIS.2, MIT) via ComfyUI " + (COMFY / "comfyui_version.py").read_text().split('"')[1],
                   resolution=args.resolution, faces=args.faces, texture=args.texture, seed=args.seed, variants={}, seconds={})
     try:
@@ -222,7 +260,13 @@ def main():
                 if done.returncode:
                     raise SystemExit(f"OBJ conversion failed: {done.stderr[-2000:]}")
                 report.update(mesh=str(obj), texture=str(out / "material_0.png"), obj_info=done.stdout.strip())
+    except SystemExit:
+        if state.get("killed"):
+            raise SystemExit(f"stopped: free Windows commit fell to {state['killed']} GB; run TRELLIS.2 with the editor closed")
+        raise
     finally:
+        state["stop"] = True
+        report["lowest_free_commit_gb"] = round(state.get("lowest", 0), 2) if state else None
         if proc is not None and not args.keep_server:
             proc.terminate()
             try:

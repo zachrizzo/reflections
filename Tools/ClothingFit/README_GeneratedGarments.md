@@ -25,13 +25,29 @@ in `/Game/Characters/Clothing/VillageWardrobe/Generated/<Name>/` (`SM_`, `CA_`, 
 | stage | what happens | script | needs |
 |---|---|---|---|
 | image | Codex (ChatGPT login, no API key) draws one catalog reference image | `garmentprep/reference_image.py` | Codex app |
-| mesh | local Hunyuan3D: geometry, then texture; converted to OBJ + PNG | `generate_garment_mesh.py` | GPU, about 10 GB free for the texture step |
+| mesh | local TRELLIS.2 (Microsoft, MIT) through ComfyUI: shape at 1536, remeshed to one closed piece, 125,000 triangles, 4096 base colour + metallic + roughness baked from the 3D colour field; converted to OBJ + PNG | `generate_garment_mesh_trellis2.py` | GPU and about 21 GB of free memory: run it while the Unreal editor is closed; about 3 minutes |
 | fit | mesh read in Blender, registered on the source body (Barnaby), fit-prepared | `register_garment.py`, `prepare_generated_garment.py` | numpy, scipy; about 2 to 5 minutes |
 | unreal | static mesh, cloth asset with skin weights from the source body, resizable outfit, Wardrobe Item | `garmentprep/editor/import_garment.py` | shared editor (MCP port 8019), takes `Saved\PIE_LOCK.json` itself |
 | test | item put on each body of `garmentprep/roster.json`, 51 poses captured (standing, 25 walk, 25 reach) and measured | `garmentprep/run_lineup.py`, `audit_capture.py`, `lineup_report.py` | shared editor; about 30 s of editor time and 2 minutes of CPU per body |
 | mask | body hidden-face map from the source body's 51 captured poses, imported as `T_<Name>_BodyHiddenFaces` and set on the Wardrobe Item's pipeline (`BodyHiddenFaceMapTexture`) | `garmentprep/hidden_face_map.py`, `emulate_hidden_faces.py`, `editor/import_garment.py` (mask-only mode saves `T_` and `WI_` only) | about 30 s of CPU and a few seconds of editor time |
 
 The fit stage refuses to go on if the prepared garment still crosses the source body.
+
+## Image-to-3D generator (since 2026-11-23: TRELLIS.2)
+
+`generate_garment_mesh_trellis2.py` runs Microsoft TRELLIS.2 4B with ComfyUI's built-in nodes, no window
+(install: `C:\Users\zachc\tools\ComfyUI`, ComfyUI 0.46, Python 3.11, torch 2.11 cu128; models from
+`Comfy-Org/TRELLIS.2` (bf16, MIT), DINOv3 ViT-L image encoder (Meta DINOv3 licence, commercial use allowed),
+BiRefNet background removal (MIT)). No RMBG-2.0 (non-commercial) and no nvdiffrast (non-commercial); the texture is
+baked by ComfyUI's own PyTorch code. It replaced Hunyuan3D-2, whose licence does not cover the EU, the UK and South
+Korea. Measured on the red tunic and the long-sleeved shirt (same Codex pictures): one closed piece like Hunyuan's,
+a 4096 texture with every texel baked from the 3D colour field (Hunyuan: 2048, of which only 27-33 % came from its
+six views, the rest was filler), even colour without blotches or streaks, and in Unreal the tunic's long dark flap
+lines at both armholes became one small nick. Fit and motion numbers on 8 bodies were about the same (the fit step
+decides those). The `udf` remesh variant tears the hems and cuffs; use `solid` (default).
+Memory: on this PC every GB of video memory is also charged to the Windows commit limit; a run used 17-19 GB,
+so it does not fit next to the open editor. The script refuses to start under 21 GB free and stops ComfyUI by
+itself if free memory falls under 2 GB. Ask the orchestrator for an editor-closed window.
 
 ## What the fit preparation does (`prepare_generated_garment.py`)
 

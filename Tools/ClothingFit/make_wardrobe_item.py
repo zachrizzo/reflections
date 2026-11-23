@@ -12,7 +12,8 @@
 
 Stages (each is skipped when its result is already in Saved/ClothingFit/Generated/<Name>/):
   image   Codex (ChatGPT) draws the catalog reference image          garmentprep/reference_image.py
-  mesh    local Hunyuan3D makes the textured mesh from that image    generate_garment_mesh.py   (GPU, ~10 GB)
+  mesh    local TRELLIS.2 (MIT) makes the textured mesh from that    generate_garment_mesh_trellis2.py
+          image (GPU; needs ~21 GB of free memory: run it while the Unreal editor is closed)
   fit     the mesh is read, registered on the source body and
           fit-prepared (no crossing triangle on the source body)     register_garment.py, prepare_generated_garment.py
   unreal  static mesh -> cloth asset -> outfit -> Wardrobe Item       garmentprep/editor/import_garment.py
@@ -116,7 +117,8 @@ def main():
 
     # ---- image
     image = args.image or out / f"{name}_Reference.png"
-    mesh = args.mesh or out / f"{name}-Textured.obj"
+    legacy = out / f"{name}-Textured.obj"            # garments made before 2026-11-23 with Hunyuan3D-2 (retired)
+    mesh = args.mesh or (legacy if legacy.exists() and redo > STAGES.index("mesh") else out / f"{name}-T2-solid.obj")
     texture = args.texture or (args.mesh.parent / "material_0.png" if args.mesh else out / "material_0.png")
     image, mesh, texture = Path(image).resolve(), Path(mesh).resolve(), Path(texture).resolve()     # the editor has another working folder
     if not args.mesh and wanted("image", image) and not args.image:
@@ -125,8 +127,8 @@ def main():
         run([PY, PREP / "reference_image.py", kind, args.describe, image], log)
     # ---- mesh
     if not args.mesh and wanted("mesh", mesh):
-        print("mesh: local image-to-3D and texture (GPU)")
-        run([PY, HERE / "generate_garment_mesh.py", name, image, out], log)
+        print("mesh: local TRELLIS.2 image-to-3D with baked texture (GPU, editor closed)")
+        run([PY, HERE / "generate_garment_mesh_trellis2.py", name, image, out], log)
     if last < STAGES.index("fit"):
         return
     # ---- fit
