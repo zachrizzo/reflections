@@ -28,3 +28,16 @@ __pycache__/
 **/keys*.json
 !**/keys.json.example
 *.env
+
+# PyInstaller output for the voice relay (rebuilt from NpcDialogueRelay.spec)
+/Tools/RealtimeVoice/build/
+/Tools/RealtimeVoice/dist/
+
+# Garment-prep caches (rebuilt by the scripts that read them)
+/Tools/ClothingFit/garmentprep/_field_*.pkl
+
+# QA copies of the cast that the garment captures rebuild every run
+/Content/Characters/Clothing/VillageWardrobe/Generated/QA/
+
+# Claude Code runtime lock
+/.claude/scheduled_tasks.lock
