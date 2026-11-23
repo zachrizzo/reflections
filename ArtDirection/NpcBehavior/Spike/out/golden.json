@@ -1,0 +1,8074 @@
+{
+ "note": "Reference output of gen_lives.py run_world(seed), 40 people, 25 years. sha256 is over json.dumps(events, sort_keys=True, ensure_ascii=False).",
+ "rng": {
+  "seed": 1,
+  "u64": [
+   "10451216379200822465",
+   "13757245211066428519",
+   "17911839290282890590",
+   "8196980753821780235",
+   "8195237237126968761"
+  ],
+  "random_after": [
+   0.5665615751722809
+  ],
+  "randint_1_6": [
+   3
+  ]
+ },
+ "towns": [
+  {
+   "seed": 1,
+   "events": 144,
+   "people_ever": 50,
+   "sha256": "a12d62a7d13e8f2ae816d1d9e3c3c5207d3d0e51440f698267e95eb1fef74171",
+   "first_events": [
+    "Merrick and Ida Cobb are married.",
+    "Hild and Walter Tull are brother and sister and share a house.",
+    "Maud and Odile Croft are sisters and share a house.",
+    "Oswin and Nell Garrow are married.",
+    "Gerard and Joan Hale are married.",
+    "Wat and Lise Dunn are married.",
+    "Edric and Juliana Pryor are married.",
+    "Ned and Ysolde Vane are married."
+   ],
+   "last_event": "Rather than give each other up, Alard and Isolde run off together, defying Oswin.",
+   "all_events": [
+    {
+     "id": 0,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      0,
+      1
+     ],
+     "text": "Merrick and Ida Cobb are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 1,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      3,
+      4
+     ],
+     "text": "Hild and Walter Tull are brother and sister and share a house.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 2,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      5,
+      6
+     ],
+     "text": "Maud and Odile Croft are sisters and share a house.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 3,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      7,
+      8
+     ],
+     "text": "Oswin and Nell Garrow are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 4,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      10,
+      11
+     ],
+     "text": "Gerard and Joan Hale are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 5,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      14,
+      15
+     ],
+     "text": "Wat and Lise Dunn are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 6,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      18,
+      19
+     ],
+     "text": "Edric and Juliana Pryor are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 7,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      22,
+      23
+     ],
+     "text": "Ned and Ysolde Vane are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 8,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "rivalry",
+     "group": "conflict",
+     "actors": [
+      18,
+      0
+     ],
+     "text": "Edric undercuts Merrick's prices, and the two butchers become rivals.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 9,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      26
+     ],
+     "text": "Ivo Pike, a chandler, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 10,
+     "t": 14,
+     "year": 2,
+     "season": "spring",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      10,
+      15
+     ],
+     "text": "Gerard borrows 40 silver from Lise.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 11,
+     "t": 15,
+     "year": 2,
+     "season": "spring",
+     "kind": "rivalry",
+     "group": "conflict",
+     "actors": [
+      19,
+      22
+     ],
+     "text": "Juliana undercuts Ned's prices, and the two bakers become rivals.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 12,
+     "t": 15,
+     "year": 2,
+     "season": "spring",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      27
+     ],
+     "text": "Elias Fenn, a carter, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 13,
+     "t": 16,
+     "year": 2,
+     "season": "spring",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      6,
+      4
+     ],
+     "text": "Odile borrows 30 silver from Walter.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 14,
+     "t": 18,
+     "year": 2,
+     "season": "summer",
+     "kind": "rivalry",
+     "group": "conflict",
+     "actors": [
+      5,
+      27
+     ],
+     "text": "Maud undercuts Elias's prices, and the two carters become rivals.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 15,
+     "t": 18,
+     "year": 2,
+     "season": "summer",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      28
+     ],
+     "text": "Aldric Barrow, a weaver, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 16,
+     "t": 21,
+     "year": 2,
+     "season": "autumn",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      29,
+      30
+     ],
+     "text": "Tam and Margery Orme move to town. Tam is a baker.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 17,
+     "t": 24,
+     "year": 3,
+     "season": "winter",
+     "kind": "theft",
+     "group": "crime",
+     "actors": [
+      1,
+      15
+     ],
+     "text": "Ida steals 32 silver from Lise's forge.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 18,
+     "t": 24,
+     "year": 3,
+     "season": "winter",
+     "kind": "silence",
+     "group": "crime",
+     "actors": [
+      0,
+      1
+     ],
+     "text": "Merrick saw Ida do it, and says nothing.",
+     "causes": [
+      17
+     ],
+     "secret": true
+    },
+    {
+     "id": 19,
+     "t": 24,
+     "year": 3,
+     "season": "winter",
+     "kind": "blame",
+     "group": "crime",
+     "actors": [
+      15,
+      28
+     ],
+     "text": "Lise blames Aldric for the missing silver.",
+     "causes": [
+      17
+     ],
+     "secret": false
+    },
+    {
+     "id": 20,
+     "t": 24,
+     "year": 3,
+     "season": "winter",
+     "kind": "fight",
+     "group": "conflict",
+     "actors": [
+      28,
+      15
+     ],
+     "text": "Aldric won't stand for being called a thief, and hits Lise.",
+     "causes": [
+      19
+     ],
+     "secret": false
+    },
+    {
+     "id": 21,
+     "t": 26,
+     "year": 3,
+     "season": "spring",
+     "kind": "theft",
+     "group": "crime",
+     "actors": [
+      8,
+      1
+     ],
+     "text": "Nell steals 30 silver from Ida at Merrick's butcher's shop.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 22,
+     "t": 26,
+     "year": 3,
+     "season": "spring",
+     "kind": "silence",
+     "group": "crime",
+     "actors": [
+      9,
+      8
+     ],
+     "text": "Alys (only 3) saw Nell do it, and says nothing.",
+     "causes": [
+      21
+     ],
+     "secret": true
+    },
+    {
+     "id": 23,
+     "t": 26,
+     "year": 3,
+     "season": "spring",
+     "kind": "blame",
+     "group": "crime",
+     "actors": [
+      1,
+      22
+     ],
+     "text": "Ida blames Ned for the missing silver.",
+     "causes": [
+      21
+     ],
+     "secret": false
+    },
+    {
+     "id": 24,
+     "t": 26,
+     "year": 3,
+     "season": "spring",
+     "kind": "feud",
+     "group": "conflict",
+     "actors": [
+      22,
+      1
+     ],
+     "text": "The Cobbs and the Vanes stop speaking. It's a feud now.",
+     "causes": [
+      23
+     ],
+     "secret": false
+    },
+    {
+     "id": 25,
+     "t": 27,
+     "year": 3,
+     "season": "spring",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      6,
+      26
+     ],
+     "text": "Odile and Ivo start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 26,
+     "t": 33,
+     "year": 3,
+     "season": "autumn",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      31
+     ],
+     "text": "Mara Dale, a tavern keeper, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 27,
+     "t": 36,
+     "year": 4,
+     "season": "winter",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      30,
+      29,
+      32
+     ],
+     "text": "Margery and Tam have a son, Alard.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 28,
+     "t": 41,
+     "year": 4,
+     "season": "summer",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      6,
+      26
+     ],
+     "text": "Odile marries Ivo.",
+     "causes": [
+      25
+     ],
+     "secret": false
+    },
+    {
+     "id": 29,
+     "t": 42,
+     "year": 4,
+     "season": "summer",
+     "kind": "accident",
+     "group": "hardship",
+     "actors": [
+      10
+     ],
+     "text": "Gerard is badly hurt in an accident at the cooperage.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 30,
+     "t": 42,
+     "year": 4,
+     "season": "summer",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      33,
+      34
+     ],
+     "text": "Tobin and Gwen Lowe move to town. Tobin is a miller.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 31,
+     "t": 43,
+     "year": 4,
+     "season": "summer",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      30,
+      29,
+      35
+     ],
+     "text": "Margery and Tam have a daughter, Elena.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 32,
+     "t": 45,
+     "year": 4,
+     "season": "autumn",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      15,
+      34
+     ],
+     "text": "Lise takes on Gwen at the forge.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 33,
+     "t": 48,
+     "year": 5,
+     "season": "winter",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      8,
+      7,
+      36
+     ],
+     "text": "Nell and Oswin have a daughter, Isolde.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 34,
+     "t": 51,
+     "year": 5,
+     "season": "spring",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      15,
+      34
+     ],
+     "text": "Lise and Gwen become close friends.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 35,
+     "t": 52,
+     "year": 5,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      34,
+      33,
+      37
+     ],
+     "text": "Gwen and Tobin have a son, Nicol.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 36,
+     "t": 54,
+     "year": 5,
+     "season": "summer",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      15,
+      30
+     ],
+     "text": "Lise takes on Margery at the forge.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 37,
+     "t": 55,
+     "year": 5,
+     "season": "summer",
+     "kind": "fire",
+     "group": "hardship",
+     "actors": [
+      8
+     ],
+     "text": "Fire guts Nell's pottery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 38,
+     "t": 55,
+     "year": 5,
+     "season": "summer",
+     "kind": "hardtimes",
+     "group": "money",
+     "actors": [
+      8,
+      15
+     ],
+     "text": "Nell falls on hard times; Lise won't lend.",
+     "causes": [
+      37
+     ],
+     "secret": false
+    },
+    {
+     "id": 39,
+     "t": 56,
+     "year": 5,
+     "season": "autumn",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      8,
+      11
+     ],
+     "text": "Nell borrows 50 silver from Joan, and must pay back 75.",
+     "causes": [
+      37
+     ],
+     "secret": false
+    },
+    {
+     "id": 40,
+     "t": 60,
+     "year": 6,
+     "season": "winter",
+     "kind": "slip",
+     "group": "crime",
+     "actors": [
+      0,
+      1,
+      15
+     ],
+     "text": "Merrick lets slip that Ida robbed Lise.",
+     "causes": [
+      17,
+      18
+     ],
+     "secret": false
+    },
+    {
+     "id": 41,
+     "t": 60,
+     "year": 6,
+     "season": "winter",
+     "kind": "peace",
+     "group": "conflict",
+     "actors": [
+      15,
+      28
+     ],
+     "text": "Lise realises Aldric was innocent all along.",
+     "causes": [
+      19,
+      40
+     ],
+     "secret": false
+    },
+    {
+     "id": 42,
+     "t": 66,
+     "year": 6,
+     "season": "summer",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      15,
+      14,
+      38
+     ],
+     "text": "Lise and Wat have a daughter, Wenna.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 43,
+     "t": 76,
+     "year": 7,
+     "season": "spring",
+     "kind": "accident",
+     "group": "hardship",
+     "actors": [
+      23
+     ],
+     "text": "Ysolde is badly hurt in an accident at Ned's bakery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 44,
+     "t": 77,
+     "year": 7,
+     "season": "summer",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      23,
+      15
+     ],
+     "text": "Ysolde borrows 40 silver from Lise.",
+     "causes": [
+      43
+     ],
+     "secret": false
+    },
+    {
+     "id": 45,
+     "t": 78,
+     "year": 7,
+     "season": "summer",
+     "kind": "accident",
+     "group": "hardship",
+     "actors": [
+      34
+     ],
+     "text": "Gwen is badly hurt in an accident at Lise's forge.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 46,
+     "t": 80,
+     "year": 7,
+     "season": "autumn",
+     "kind": "unrequited",
+     "group": "love",
+     "actors": [
+      27,
+      30
+     ],
+     "text": "Elias falls for Margery, who doesn't feel the same. It stays a secret.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 47,
+     "t": 81,
+     "year": 7,
+     "season": "autumn",
+     "kind": "unrequited",
+     "group": "love",
+     "actors": [
+      26,
+      3
+     ],
+     "text": "Ivo falls for Hild, who doesn't feel the same. It stays a secret.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 48,
+     "t": 89,
+     "year": 8,
+     "season": "summer",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      34,
+      33,
+      39
+     ],
+     "text": "Gwen and Tobin have a daughter, Una.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 49,
+     "t": 89,
+     "year": 8,
+     "season": "summer",
+     "kind": "theft",
+     "group": "crime",
+     "actors": [
+      8,
+      26
+     ],
+     "text": "Nell steals 24 silver from Ivo's chandlery.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 50,
+     "t": 89,
+     "year": 8,
+     "season": "summer",
+     "kind": "blame",
+     "group": "crime",
+     "actors": [
+      26,
+      19
+     ],
+     "text": "Ivo blames Juliana for the missing silver.",
+     "causes": [
+      49
+     ],
+     "secret": false
+    },
+    {
+     "id": 51,
+     "t": 89,
+     "year": 8,
+     "season": "summer",
+     "kind": "feud",
+     "group": "conflict",
+     "actors": [
+      19,
+      26
+     ],
+     "text": "The Pikes and the Pryors stop speaking. It's a feud now.",
+     "causes": [
+      50
+     ],
+     "secret": false
+    },
+    {
+     "id": 52,
+     "t": 95,
+     "year": 8,
+     "season": "winter",
+     "kind": "harvest",
+     "group": "hardship",
+     "actors": [],
+     "text": "The harvest fails, and the whole town goes short that winter.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 53,
+     "t": 95,
+     "year": 8,
+     "season": "winter",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      8,
+      7,
+      40
+     ],
+     "text": "Nell and Oswin have a daughter, Hawise.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 54,
+     "t": 95,
+     "year": 8,
+     "season": "winter",
+     "kind": "hardtimes",
+     "group": "money",
+     "actors": [
+      29,
+      15
+     ],
+     "text": "Tam falls on hard times; Lise won't lend.",
+     "causes": [
+      52
+     ],
+     "secret": false
+    },
+    {
+     "id": 55,
+     "t": 96,
+     "year": 9,
+     "season": "winter",
+     "kind": "closes",
+     "group": "money",
+     "actors": [
+      10
+     ],
+     "text": "Gerard shuts the cooperage for good.",
+     "causes": [
+      52
+     ],
+     "secret": false
+    },
+    {
+     "id": 56,
+     "t": 96,
+     "year": 9,
+     "season": "winter",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      2,
+      4
+     ],
+     "text": "Bette and Walter start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 57,
+     "t": 96,
+     "year": 9,
+     "season": "winter",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      29,
+      11
+     ],
+     "text": "Tam borrows 40 silver from Joan, and must pay back 60.",
+     "causes": [
+      52
+     ],
+     "secret": false
+    },
+    {
+     "id": 58,
+     "t": 97,
+     "year": 9,
+     "season": "winter",
+     "kind": "hardtimes",
+     "group": "money",
+     "actors": [
+      2,
+      15
+     ],
+     "text": "Bette falls on hard times; Lise won't lend.",
+     "causes": [
+      52
+     ],
+     "secret": false
+    },
+    {
+     "id": 59,
+     "t": 105,
+     "year": 9,
+     "season": "autumn",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      4,
+      10
+     ],
+     "text": "Walter takes on Gerard at the tannery.",
+     "causes": [
+      55
+     ],
+     "secret": false
+    },
+    {
+     "id": 60,
+     "t": 105,
+     "year": 9,
+     "season": "autumn",
+     "kind": "unrequited",
+     "group": "love",
+     "actors": [
+      23,
+      19
+     ],
+     "text": "Ysolde falls for Juliana, who doesn't feel the same. It stays a secret.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 61,
+     "t": 115,
+     "year": 10,
+     "season": "summer",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      2,
+      4
+     ],
+     "text": "Bette marries Walter.",
+     "causes": [
+      56
+     ],
+     "secret": false
+    },
+    {
+     "id": 62,
+     "t": 115,
+     "year": 10,
+     "season": "summer",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      6,
+      2
+     ],
+     "text": "Odile had hoped to marry Walter, and turns cold on Bette.",
+     "causes": [
+      61
+     ],
+     "secret": false
+    },
+    {
+     "id": 63,
+     "t": 115,
+     "year": 10,
+     "season": "summer",
+     "kind": "rumor",
+     "group": "conflict",
+     "actors": [
+      1,
+      2
+     ],
+     "text": "Bitter over the match, Ida spreads lies about Bette.",
+     "causes": [
+      61
+     ],
+     "secret": false
+    },
+    {
+     "id": 64,
+     "t": 120,
+     "year": 11,
+     "season": "winter",
+     "kind": "theft",
+     "group": "crime",
+     "actors": [
+      2,
+      31
+     ],
+     "text": "Bette steals 66 silver from Mara's tavern.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 65,
+     "t": 120,
+     "year": 11,
+     "season": "winter",
+     "kind": "blame",
+     "group": "crime",
+     "actors": [
+      31,
+      7
+     ],
+     "text": "Mara blames Oswin for the missing silver.",
+     "causes": [
+      64
+     ],
+     "secret": false
+    },
+    {
+     "id": 66,
+     "t": 123,
+     "year": 11,
+     "season": "spring",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      7,
+      15
+     ],
+     "text": "Oswin borrows 40 silver from Lise.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 67,
+     "t": 127,
+     "year": 11,
+     "season": "summer",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      15,
+      26
+     ],
+     "text": "Lise and Ivo begin an affair behind Wat and Odile's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 68,
+     "t": 133,
+     "year": 12,
+     "season": "winter",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      6,
+      26,
+      15
+     ],
+     "text": "Odile catches Ivo with Lise.",
+     "causes": [
+      67
+     ],
+     "secret": false
+    },
+    {
+     "id": 69,
+     "t": 134,
+     "year": 12,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      8,
+      7,
+      41
+     ],
+     "text": "Nell and Oswin have a son, Colin.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 70,
+     "t": 134,
+     "year": 12,
+     "season": "spring",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      11
+     ],
+     "text": "Joan dies of a wound gone bad, leaving Gerard a widower.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 71,
+     "t": 134,
+     "year": 12,
+     "season": "spring",
+     "kind": "inherit_wp",
+     "group": "money",
+     "actors": [
+      33,
+      11
+     ],
+     "text": "Tobin takes over Joan's mill.",
+     "causes": [
+      70
+     ],
+     "secret": false
+    },
+    {
+     "id": 72,
+     "t": 135,
+     "year": 12,
+     "season": "spring",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      3,
+      10
+     ],
+     "text": "Hild and Gerard start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 73,
+     "t": 135,
+     "year": 12,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      2,
+      4,
+      42
+     ],
+     "text": "Bette and Walter have a son, Hugh.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 74,
+     "t": 139,
+     "year": 12,
+     "season": "summer",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      2,
+      4,
+      43
+     ],
+     "text": "Bette and Walter have a daughter, Dulcie.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 75,
+     "t": 140,
+     "year": 12,
+     "season": "autumn",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      6,
+      10
+     ],
+     "text": "Odile and Gerard begin an affair behind Ivo's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 76,
+     "t": 141,
+     "year": 12,
+     "season": "autumn",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      3,
+      10
+     ],
+     "text": "Hild marries Gerard.",
+     "causes": [
+      72
+     ],
+     "secret": false
+    },
+    {
+     "id": 77,
+     "t": 141,
+     "year": 12,
+     "season": "autumn",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      26,
+      10
+     ],
+     "text": "Ivo had hoped to marry Hild, and turns cold on Gerard.",
+     "causes": [
+      76
+     ],
+     "secret": false
+    },
+    {
+     "id": 78,
+     "t": 141,
+     "year": 12,
+     "season": "autumn",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      31,
+      3
+     ],
+     "text": "Mara had hoped to marry Gerard, and turns cold on Hild.",
+     "causes": [
+      76
+     ],
+     "secret": false
+    },
+    {
+     "id": 79,
+     "t": 142,
+     "year": 12,
+     "season": "autumn",
+     "kind": "unrequited",
+     "group": "love",
+     "actors": [
+      30,
+      7
+     ],
+     "text": "Margery falls for Oswin, who doesn't feel the same. It stays a secret.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 80,
+     "t": 147,
+     "year": 13,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      30,
+      29,
+      44
+     ],
+     "text": "Margery and Tam have a daughter, Lettice.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 81,
+     "t": 148,
+     "year": 13,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      23,
+      22,
+      45
+     ],
+     "text": "Ysolde and Ned have a daughter, Petra.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 82,
+     "t": 148,
+     "year": 13,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      34,
+      33,
+      46
+     ],
+     "text": "Gwen and Tobin have a daughter, Sybil.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 83,
+     "t": 154,
+     "year": 13,
+     "season": "autumn",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      15,
+      26
+     ],
+     "text": "Lise and Ivo can't stay apart, and start meeting in secret again.",
+     "causes": [
+      68
+     ],
+     "secret": true
+    },
+    {
+     "id": 84,
+     "t": 155,
+     "year": 13,
+     "season": "winter",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      14,
+      15,
+      26
+     ],
+     "text": "Wat catches Lise with Ivo.",
+     "causes": [
+      83
+     ],
+     "secret": false
+    },
+    {
+     "id": 85,
+     "t": 159,
+     "year": 14,
+     "season": "spring",
+     "kind": "closes",
+     "group": "money",
+     "actors": [
+      8
+     ],
+     "text": "Nell shuts the pottery for good.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 86,
+     "t": 160,
+     "year": 14,
+     "season": "spring",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      12,
+      26
+     ],
+     "text": "Agnes is apprenticed to Ivo, the chandler.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 87,
+     "t": 160,
+     "year": 14,
+     "season": "spring",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      17,
+      19
+     ],
+     "text": "Ermina is apprenticed to Juliana, the baker.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 88,
+     "t": 162,
+     "year": 14,
+     "season": "summer",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      16,
+      19
+     ],
+     "text": "Baldwin is apprenticed to Juliana, the baker.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 89,
+     "t": 171,
+     "year": 15,
+     "season": "spring",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      9,
+      5
+     ],
+     "text": "Alys is apprenticed to Maud, the carter.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 90,
+     "t": 174,
+     "year": 15,
+     "season": "summer",
+     "kind": "fever",
+     "group": "hardship",
+     "actors": [
+      3,
+      21
+     ],
+     "text": "Fever comes to town. Hild and Gilbert fall sick.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 91,
+     "t": 174,
+     "year": 15,
+     "season": "summer",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      2,
+      4,
+      47
+     ],
+     "text": "Bette and Walter have a daughter, Helois.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 92,
+     "t": 174,
+     "year": 15,
+     "season": "summer",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      3
+     ],
+     "text": "Hild dies of the fever, leaving Gerard a widower.",
+     "causes": [
+      90
+     ],
+     "secret": false
+    },
+    {
+     "id": 93,
+     "t": 175,
+     "year": 15,
+     "season": "summer",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      10,
+      31
+     ],
+     "text": "Gerard and Mara start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 94,
+     "t": 177,
+     "year": 15,
+     "season": "autumn",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      4,
+      8
+     ],
+     "text": "Walter takes on Nell at the tannery.",
+     "causes": [
+      85
+     ],
+     "secret": false
+    },
+    {
+     "id": 95,
+     "t": 178,
+     "year": 15,
+     "season": "autumn",
+     "kind": "accident",
+     "group": "hardship",
+     "actors": [
+      13
+     ],
+     "text": "Emma is badly hurt in an accident at Walter's tannery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 96,
+     "t": 178,
+     "year": 15,
+     "season": "autumn",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      2,
+      29
+     ],
+     "text": "Bette and Tam begin an affair behind Walter and Margery's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 97,
+     "t": 179,
+     "year": 15,
+     "season": "winter",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      4,
+      2,
+      29
+     ],
+     "text": "Walter catches Bette with Tam.",
+     "causes": [
+      96
+     ],
+     "secret": false
+    },
+    {
+     "id": 98,
+     "t": 182,
+     "year": 16,
+     "season": "spring",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      13,
+      15
+     ],
+     "text": "Emma borrows 40 silver from Lise.",
+     "causes": [
+      95
+     ],
+     "secret": false
+    },
+    {
+     "id": 99,
+     "t": 183,
+     "year": 16,
+     "season": "spring",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      10,
+      31
+     ],
+     "text": "Gerard marries Mara.",
+     "causes": [
+      93
+     ],
+     "secret": false
+    },
+    {
+     "id": 100,
+     "t": 183,
+     "year": 16,
+     "season": "spring",
+     "kind": "rumor",
+     "group": "conflict",
+     "actors": [
+      0,
+      10
+     ],
+     "text": "Bitter over the match, Merrick spreads lies about Gerard.",
+     "causes": [
+      99
+     ],
+     "secret": false
+    },
+    {
+     "id": 101,
+     "t": 183,
+     "year": 16,
+     "season": "spring",
+     "kind": "rumor",
+     "group": "conflict",
+     "actors": [
+      8,
+      31
+     ],
+     "text": "Bitter over the match, Nell spreads lies about Mara.",
+     "causes": [
+      99
+     ],
+     "secret": false
+    },
+    {
+     "id": 102,
+     "t": 185,
+     "year": 16,
+     "season": "summer",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      26,
+      6,
+      10
+     ],
+     "text": "Ivo catches Odile with Gerard.",
+     "causes": [
+      75
+     ],
+     "secret": false
+    },
+    {
+     "id": 103,
+     "t": 185,
+     "year": 16,
+     "season": "summer",
+     "kind": "feud",
+     "group": "conflict",
+     "actors": [
+      26,
+      10
+     ],
+     "text": "The Hales and the Pikes stop speaking. It's a feud now.",
+     "causes": [
+      102
+     ],
+     "secret": false
+    },
+    {
+     "id": 104,
+     "t": 207,
+     "year": 18,
+     "season": "spring",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      12,
+      16
+     ],
+     "text": "Agnes and Baldwin start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 105,
+     "t": 209,
+     "year": 18,
+     "season": "summer",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      4
+     ],
+     "text": "Walter dies of a wound gone bad, leaving Bette a widow.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 106,
+     "t": 209,
+     "year": 18,
+     "season": "summer",
+     "kind": "inherit_wp",
+     "group": "money",
+     "actors": [
+      8,
+      4
+     ],
+     "text": "Nell takes over Walter's tannery.",
+     "causes": [
+      105
+     ],
+     "secret": false
+    },
+    {
+     "id": 107,
+     "t": 210,
+     "year": 18,
+     "season": "summer",
+     "kind": "closes",
+     "group": "money",
+     "actors": [
+      8
+     ],
+     "text": "Nell shuts the tannery for good.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 108,
+     "t": 214,
+     "year": 18,
+     "season": "autumn",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      9,
+      21
+     ],
+     "text": "Alys and Gilbert start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 109,
+     "t": 214,
+     "year": 18,
+     "season": "autumn",
+     "kind": "forbids",
+     "group": "love",
+     "actors": [
+      7,
+      9,
+      21
+     ],
+     "text": "Oswin forbids Alys to see Gilbert: no Garrow marries beneath them.",
+     "causes": [
+      108
+     ],
+     "secret": false
+    },
+    {
+     "id": 110,
+     "t": 215,
+     "year": 18,
+     "season": "winter",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      31,
+      10,
+      48
+     ],
+     "text": "Mara and Gerard have a daughter, Rosa.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 111,
+     "t": 215,
+     "year": 18,
+     "season": "winter",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      2,
+      15
+     ],
+     "text": "Bette borrows 40 silver from Lise.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 112,
+     "t": 217,
+     "year": 19,
+     "season": "winter",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      31,
+      10,
+      49
+     ],
+     "text": "Mara and Gerard have a son, Osbert.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 113,
+     "t": 219,
+     "year": 19,
+     "season": "spring",
+     "kind": "peace",
+     "group": "conflict",
+     "actors": [
+      6,
+      26
+     ],
+     "text": "Odile finally forgives Ivo.",
+     "causes": [
+      68
+     ],
+     "secret": false
+    },
+    {
+     "id": 114,
+     "t": 226,
+     "year": 19,
+     "season": "autumn",
+     "kind": "elope",
+     "group": "love",
+     "actors": [
+      9,
+      21,
+      7
+     ],
+     "text": "Alys and Gilbert marry in secret, against Oswin's wishes.",
+     "causes": [
+      109
+     ],
+     "secret": false
+    },
+    {
+     "id": 115,
+     "t": 226,
+     "year": 19,
+     "season": "autumn",
+     "kind": "rumor",
+     "group": "conflict",
+     "actors": [
+      16,
+      21
+     ],
+     "text": "Bitter over the match, Baldwin spreads lies about Gilbert.",
+     "causes": [
+      114
+     ],
+     "secret": false
+    },
+    {
+     "id": 116,
+     "t": 226,
+     "year": 19,
+     "season": "autumn",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      12,
+      9
+     ],
+     "text": "Agnes had hoped to marry Gilbert, and turns cold on Alys.",
+     "causes": [
+      114
+     ],
+     "secret": false
+    },
+    {
+     "id": 117,
+     "t": 228,
+     "year": 20,
+     "season": "winter",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      32,
+      0
+     ],
+     "text": "Alard is apprenticed to Merrick, the butcher.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 118,
+     "t": 235,
+     "year": 20,
+     "season": "summer",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      35,
+      26
+     ],
+     "text": "Elena is apprenticed to Ivo, the chandler.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 119,
+     "t": 237,
+     "year": 20,
+     "season": "autumn",
+     "kind": "accident",
+     "group": "hardship",
+     "actors": [
+      21
+     ],
+     "text": "Gilbert is badly hurt in an accident at Edric's butcher's shop.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 120,
+     "t": 238,
+     "year": 20,
+     "season": "autumn",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      12,
+      16
+     ],
+     "text": "Agnes marries Baldwin.",
+     "causes": [
+      104
+     ],
+     "secret": false
+    },
+    {
+     "id": 121,
+     "t": 238,
+     "year": 20,
+     "season": "autumn",
+     "kind": "unrequited",
+     "group": "love",
+     "actors": [
+      9,
+      16
+     ],
+     "text": "Alys still loves Baldwin, and tells no one.",
+     "causes": [
+      120
+     ],
+     "secret": true
+    },
+    {
+     "id": 122,
+     "t": 245,
+     "year": 21,
+     "season": "summer",
+     "kind": "unrequited",
+     "group": "love",
+     "actors": [
+      13,
+      20
+     ],
+     "text": "Emma falls for Clemence, who doesn't feel the same.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 123,
+     "t": 249,
+     "year": 21,
+     "season": "autumn",
+     "kind": "peace",
+     "group": "conflict",
+     "actors": [
+      15,
+      1
+     ],
+     "text": "Lise finally forgives Ida.",
+     "causes": [
+      40
+     ],
+     "secret": false
+    },
+    {
+     "id": 124,
+     "t": 249,
+     "year": 21,
+     "season": "autumn",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      27
+     ],
+     "text": "Elias dies of a bad heart, and takes a secret to the grave.",
+     "causes": [
+      46
+     ],
+     "secret": false
+    },
+    {
+     "id": 125,
+     "t": 249,
+     "year": 21,
+     "season": "autumn",
+     "kind": "closes",
+     "group": "money",
+     "actors": [
+      27
+     ],
+     "text": "With Elias gone, the carter's yard shuts.",
+     "causes": [
+      124
+     ],
+     "secret": false
+    },
+    {
+     "id": 126,
+     "t": 252,
+     "year": 22,
+     "season": "winter",
+     "kind": "accident",
+     "group": "hardship",
+     "actors": [
+      0
+     ],
+     "text": "Merrick is badly hurt in an accident at the butcher's shop.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 127,
+     "t": 252,
+     "year": 22,
+     "season": "winter",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      22
+     ],
+     "text": "Ned dies of a bad heart, leaving Ysolde a widow.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 128,
+     "t": 252,
+     "year": 22,
+     "season": "winter",
+     "kind": "inherit_wp",
+     "group": "money",
+     "actors": [
+      24,
+      22
+     ],
+     "text": "Tilda takes over Ned's bakery.",
+     "causes": [
+      127
+     ],
+     "secret": false
+    },
+    {
+     "id": 129,
+     "t": 255,
+     "year": 22,
+     "season": "spring",
+     "kind": "rivalry",
+     "group": "conflict",
+     "actors": [
+      19,
+      24
+     ],
+     "text": "Juliana undercuts Tilda's prices, and the two bakers become rivals.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 130,
+     "t": 258,
+     "year": 22,
+     "season": "summer",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      18
+     ],
+     "text": "Edric dies in his sleep, leaving Juliana a widow.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 131,
+     "t": 258,
+     "year": 22,
+     "season": "summer",
+     "kind": "inherit_wp",
+     "group": "money",
+     "actors": [
+      20,
+      18
+     ],
+     "text": "Clemence takes over Edric's butcher's shop.",
+     "causes": [
+      130
+     ],
+     "secret": false
+    },
+    {
+     "id": 132,
+     "t": 259,
+     "year": 22,
+     "season": "summer",
+     "kind": "accident",
+     "group": "hardship",
+     "actors": [
+      14
+     ],
+     "text": "Wat is badly hurt in an accident at Lise's forge.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 133,
+     "t": 267,
+     "year": 23,
+     "season": "spring",
+     "kind": "rivalry",
+     "group": "conflict",
+     "actors": [
+      20,
+      0
+     ],
+     "text": "Clemence undercuts Merrick's prices, and the two butchers become rivals.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 134,
+     "t": 280,
+     "year": 24,
+     "season": "spring",
+     "kind": "theft",
+     "group": "crime",
+     "actors": [
+      37,
+      15
+     ],
+     "text": "Nicol steals 80 silver from Lise's forge.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 135,
+     "t": 280,
+     "year": 24,
+     "season": "spring",
+     "kind": "silence",
+     "group": "crime",
+     "actors": [
+      34,
+      37
+     ],
+     "text": "Gwen saw Nicol do it, and says nothing.",
+     "causes": [
+      134
+     ],
+     "secret": true
+    },
+    {
+     "id": 136,
+     "t": 280,
+     "year": 24,
+     "season": "spring",
+     "kind": "blame",
+     "group": "crime",
+     "actors": [
+      15,
+      10
+     ],
+     "text": "Lise blames Gerard for the missing silver.",
+     "causes": [
+      134
+     ],
+     "secret": false
+    },
+    {
+     "id": 137,
+     "t": 281,
+     "year": 24,
+     "season": "summer",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      39,
+      38
+     ],
+     "text": "Una is apprenticed to Wenna, the herbalist.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 138,
+     "t": 285,
+     "year": 24,
+     "season": "autumn",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      32,
+      36
+     ],
+     "text": "Alard and Isolde start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 139,
+     "t": 286,
+     "year": 24,
+     "season": "autumn",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      13,
+      37
+     ],
+     "text": "Emma and Nicol start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 140,
+     "t": 291,
+     "year": 25,
+     "season": "spring",
+     "kind": "forbids",
+     "group": "love",
+     "actors": [
+      33,
+      37,
+      13
+     ],
+     "text": "Tobin forbids Nicol to see Emma: no Lowe marries beneath them.",
+     "causes": [
+      139
+     ],
+     "secret": false
+    },
+    {
+     "id": 141,
+     "t": 291,
+     "year": 25,
+     "season": "spring",
+     "kind": "forbids",
+     "group": "love",
+     "actors": [
+      7,
+      36,
+      32
+     ],
+     "text": "Oswin forbids Isolde to see Alard: no Garrow marries beneath them.",
+     "causes": [
+      138
+     ],
+     "secret": false
+    },
+    {
+     "id": 142,
+     "t": 296,
+     "year": 25,
+     "season": "autumn",
+     "kind": "elope",
+     "group": "love",
+     "actors": [
+      13,
+      37,
+      33
+     ],
+     "text": "Emma and Nicol marry in secret, against Tobin's wishes.",
+     "causes": [
+      140
+     ],
+     "secret": false
+    },
+    {
+     "id": 143,
+     "t": 298,
+     "year": 25,
+     "season": "autumn",
+     "kind": "runaway",
+     "group": "love",
+     "actors": [
+      32,
+      36,
+      7
+     ],
+     "text": "Rather than give each other up, Alard and Isolde run off together, defying Oswin.",
+     "causes": [
+      141
+     ],
+     "secret": false
+    }
+   ]
+  },
+  {
+   "seed": 2,
+   "events": 200,
+   "people_ever": 49,
+   "sha256": "67b4af85363a69f07585c2a00f42fa6a0bd8cf86acacbb744dd390aa15e94c47",
+   "first_events": [
+    "Gilbert Sallow, a widower, is raising Herve alone.",
+    "Nicol Marsh, a widower, is raising Baldwin alone.",
+    "Drogo Dale, a widower, is raising Odile alone.",
+    "Tilda Barrow, a widow, is raising Bette and Hawise alone.",
+    "Jory and Lambert Cobb are brothers and share a house.",
+    "Sewin and Lettice Fenn are married.",
+    "Osbert Tull, a widower, is raising Hugh and Elena alone.",
+    "Yves and Clemence Croft are married."
+   ],
+   "last_event": "Beatrix loved Edda, but wishes the couple well.",
+   "all_events": [
+    {
+     "id": 0,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      0,
+      1
+     ],
+     "text": "Gilbert Sallow, a widower, is raising Herve alone.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 1,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      2,
+      3
+     ],
+     "text": "Nicol Marsh, a widower, is raising Baldwin alone.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 2,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      4,
+      5
+     ],
+     "text": "Drogo Dale, a widower, is raising Odile alone.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 3,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      6,
+      7,
+      8
+     ],
+     "text": "Tilda Barrow, a widow, is raising Bette and Hawise alone.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 4,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      9,
+      10
+     ],
+     "text": "Jory and Lambert Cobb are brothers and share a house.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 5,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      11,
+      12
+     ],
+     "text": "Sewin and Lettice Fenn are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 6,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      14,
+      15,
+      16
+     ],
+     "text": "Osbert Tull, a widower, is raising Hugh and Elena alone.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 7,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      17,
+      18
+     ],
+     "text": "Yves and Clemence Croft are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 8,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      20,
+      21
+     ],
+     "text": "Godric and Jacoba Ashby are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 9,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      23,
+      24
+     ],
+     "text": "Merrick and Tam Rook are brothers and share a house.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 10,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      25,
+      26
+     ],
+     "text": "Gerard and Ermina Burl are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 11,
+     "t": 3,
+     "year": 1,
+     "season": "spring",
+     "kind": "rivalry",
+     "group": "conflict",
+     "actors": [
+      25,
+      2
+     ],
+     "text": "Gerard undercuts Nicol's prices, and the two weavers become rivals.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 12,
+     "t": 6,
+     "year": 1,
+     "season": "summer",
+     "kind": "flood",
+     "group": "hardship",
+     "actors": [
+      12,
+      11,
+      25,
+      2,
+      6
+     ],
+     "text": "The river floods and wrecks Lettice's mill, Gerard's weaving shed, Nicol's weaving shed and Tilda's tannery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 13,
+     "t": 6,
+     "year": 1,
+     "season": "summer",
+     "kind": "hardtimes",
+     "group": "money",
+     "actors": [
+      6,
+      9
+     ],
+     "text": "Tilda falls on hard times; Jory won't lend.",
+     "causes": [
+      12
+     ],
+     "secret": false
+    },
+    {
+     "id": 14,
+     "t": 8,
+     "year": 1,
+     "season": "autumn",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      6,
+      17
+     ],
+     "text": "Tilda borrows 30 silver from Yves.",
+     "causes": [
+      12
+     ],
+     "secret": false
+    },
+    {
+     "id": 15,
+     "t": 12,
+     "year": 2,
+     "season": "winter",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      21,
+      20,
+      27
+     ],
+     "text": "Jacoba and Godric have a son, Corin.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 16,
+     "t": 15,
+     "year": 2,
+     "season": "spring",
+     "kind": "rivalry",
+     "group": "conflict",
+     "actors": [
+      9,
+      14
+     ],
+     "text": "Jory undercuts Osbert's prices, and the two bakers become rivals.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 17,
+     "t": 24,
+     "year": 3,
+     "season": "winter",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      28,
+      29
+     ],
+     "text": "Jack and Alys Nash move to town. Jack is a baker.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 18,
+     "t": 26,
+     "year": 3,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      29,
+      28,
+      30
+     ],
+     "text": "Alys and Jack have a daughter, Edda.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 19,
+     "t": 27,
+     "year": 3,
+     "season": "spring",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      31
+     ],
+     "text": "Bennet Pike, a tanner, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 20,
+     "t": 30,
+     "year": 3,
+     "season": "summer",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      32
+     ],
+     "text": "Ysolde Esk, a carter, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 21,
+     "t": 39,
+     "year": 4,
+     "season": "spring",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      33
+     ],
+     "text": "Hob Vane, a tavern keeper, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 22,
+     "t": 41,
+     "year": 4,
+     "season": "summer",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      6,
+      24
+     ],
+     "text": "Tilda and Tam start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 23,
+     "t": 42,
+     "year": 4,
+     "season": "summer",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      34
+     ],
+     "text": "Mara Orme, a cooper, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 24,
+     "t": 43,
+     "year": 4,
+     "season": "summer",
+     "kind": "fever",
+     "group": "hardship",
+     "actors": [
+      23,
+      3
+     ],
+     "text": "Fever comes to town. Merrick and Baldwin fall sick.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 25,
+     "t": 44,
+     "year": 4,
+     "season": "autumn",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      31,
+      12
+     ],
+     "text": "Bennet borrows 40 silver from Lettice, and must pay back 60.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 26,
+     "t": 54,
+     "year": 5,
+     "season": "summer",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      35
+     ],
+     "text": "Lise Dunn, a chandler, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 27,
+     "t": 55,
+     "year": 5,
+     "season": "summer",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      24,
+      12
+     ],
+     "text": "Tam borrows 40 silver from Lettice, and must pay back 60.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 28,
+     "t": 57,
+     "year": 5,
+     "season": "autumn",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      9,
+      32
+     ],
+     "text": "Jory and Ysolde start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 29,
+     "t": 61,
+     "year": 6,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      6,
+      24
+     ],
+     "text": "Tilda marries Tam.",
+     "causes": [
+      22
+     ],
+     "secret": false
+    },
+    {
+     "id": 30,
+     "t": 65,
+     "year": 6,
+     "season": "summer",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      5,
+      26
+     ],
+     "text": "Odile is apprenticed to Ermina, the cooper.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 31,
+     "t": 67,
+     "year": 6,
+     "season": "summer",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      2,
+      34
+     ],
+     "text": "Nicol and Mara start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 32,
+     "t": 68,
+     "year": 6,
+     "season": "autumn",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      19,
+      20
+     ],
+     "text": "Ulric is apprenticed to Godric, the potter.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 33,
+     "t": 69,
+     "year": 6,
+     "season": "autumn",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      19,
+      20
+     ],
+     "text": "Ulric and Godric grow as close as family.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 34,
+     "t": 70,
+     "year": 6,
+     "season": "autumn",
+     "kind": "fever",
+     "group": "hardship",
+     "actors": [
+      3,
+      5,
+      16
+     ],
+     "text": "Fever comes to town. Baldwin, Odile and Elena fall sick.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 35,
+     "t": 70,
+     "year": 6,
+     "season": "autumn",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      21,
+      17
+     ],
+     "text": "Jacoba borrows 40 silver from Yves.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 36,
+     "t": 70,
+     "year": 6,
+     "season": "autumn",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      3
+     ],
+     "text": "Baldwin dies of the fever.",
+     "causes": [
+      34
+     ],
+     "secret": false
+    },
+    {
+     "id": 37,
+     "t": 71,
+     "year": 6,
+     "season": "winter",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      34,
+      12
+     ],
+     "text": "Mara borrows 40 silver from Lettice, and must pay back 60.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 38,
+     "t": 73,
+     "year": 7,
+     "season": "winter",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      5,
+      12
+     ],
+     "text": "Odile borrows 40 silver from Lettice, and must pay back 60.",
+     "causes": [
+      34
+     ],
+     "secret": false
+    },
+    {
+     "id": 39,
+     "t": 78,
+     "year": 7,
+     "season": "summer",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      9,
+      29
+     ],
+     "text": "Jory takes on Alys at the bakery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 40,
+     "t": 84,
+     "year": 8,
+     "season": "winter",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      14,
+      35
+     ],
+     "text": "Osbert and Lise start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 41,
+     "t": 87,
+     "year": 8,
+     "season": "spring",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      2,
+      34
+     ],
+     "text": "Nicol marries Mara.",
+     "causes": [
+      31
+     ],
+     "secret": false
+    },
+    {
+     "id": 42,
+     "t": 87,
+     "year": 8,
+     "season": "spring",
+     "kind": "fight",
+     "group": "conflict",
+     "actors": [
+      0,
+      2
+     ],
+     "text": "Gilbert picks a fight with Nicol at the wedding.",
+     "causes": [
+      41
+     ],
+     "secret": false
+    },
+    {
+     "id": 43,
+     "t": 87,
+     "year": 8,
+     "season": "spring",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      32,
+      34
+     ],
+     "text": "Ysolde had hoped to marry Nicol, and turns cold on Mara.",
+     "causes": [
+      41
+     ],
+     "secret": false
+    },
+    {
+     "id": 44,
+     "t": 90,
+     "year": 8,
+     "season": "summer",
+     "kind": "buys",
+     "group": "money",
+     "actors": [
+      9,
+      6
+     ],
+     "text": "Jory buys Tilda's tannery, which is failing. Tilda stays on to work it.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 45,
+     "t": 93,
+     "year": 8,
+     "season": "autumn",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      9,
+      32
+     ],
+     "text": "Jory marries Ysolde.",
+     "causes": [
+      28
+     ],
+     "secret": false
+    },
+    {
+     "id": 46,
+     "t": 93,
+     "year": 8,
+     "season": "autumn",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      23,
+      32
+     ],
+     "text": "Merrick had hoped to marry Jory, and turns cold on Ysolde.",
+     "causes": [
+      45
+     ],
+     "secret": false
+    },
+    {
+     "id": 47,
+     "t": 93,
+     "year": 8,
+     "season": "autumn",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      33,
+      9
+     ],
+     "text": "Hob had hoped to marry Ysolde, and turns cold on Jory.",
+     "causes": [
+      45
+     ],
+     "secret": false
+    },
+    {
+     "id": 48,
+     "t": 93,
+     "year": 8,
+     "season": "autumn",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      7,
+      9
+     ],
+     "text": "Bette is apprenticed to Jory, the baker.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 49,
+     "t": 97,
+     "year": 9,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      14,
+      35
+     ],
+     "text": "Osbert marries Lise.",
+     "causes": [
+      40
+     ],
+     "secret": false
+    },
+    {
+     "id": 50,
+     "t": 99,
+     "year": 9,
+     "season": "spring",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      10,
+      32
+     ],
+     "text": "Lambert and Ysolde begin an affair behind Jory's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 51,
+     "t": 100,
+     "year": 9,
+     "season": "spring",
+     "kind": "flood",
+     "group": "hardship",
+     "actors": [
+      12,
+      11,
+      25,
+      2,
+      9,
+      6,
+      31
+     ],
+     "text": "The river floods and wrecks Lettice's mill, Gerard's weaving shed, Nicol's weaving shed and Jory's tannery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 52,
+     "t": 100,
+     "year": 9,
+     "season": "spring",
+     "kind": "gift",
+     "group": "bond",
+     "actors": [
+      17,
+      9
+     ],
+     "text": "Yves gives Jory 20 silver to rebuild, and asks nothing back.",
+     "causes": [
+      51
+     ],
+     "secret": false
+    },
+    {
+     "id": 53,
+     "t": 100,
+     "year": 9,
+     "season": "spring",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      8,
+      21
+     ],
+     "text": "Hawise is apprenticed to Jacoba, the mason.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 54,
+     "t": 100,
+     "year": 9,
+     "season": "spring",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      2,
+      17
+     ],
+     "text": "Nicol borrows 80 silver from Yves.",
+     "causes": [
+      51
+     ],
+     "secret": false
+    },
+    {
+     "id": 55,
+     "t": 102,
+     "year": 9,
+     "season": "summer",
+     "kind": "hardtimes",
+     "group": "money",
+     "actors": [
+      19,
+      17
+     ],
+     "text": "Ulric falls on hard times; Yves won't lend.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 56,
+     "t": 103,
+     "year": 9,
+     "season": "summer",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      19,
+      12
+     ],
+     "text": "Ulric borrows 40 silver from Lettice, and must pay back 60.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 57,
+     "t": 103,
+     "year": 9,
+     "season": "summer",
+     "kind": "forgive_debt",
+     "group": "bond",
+     "actors": [
+      17,
+      6
+     ],
+     "text": "Yves tells Tilda to forget the 30 silver.",
+     "causes": [
+      14,
+      51
+     ],
+     "secret": false
+    },
+    {
+     "id": 58,
+     "t": 108,
+     "year": 10,
+     "season": "winter",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      9,
+      18
+     ],
+     "text": "Jory and Clemence begin an affair behind Ysolde and Yves's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 59,
+     "t": 109,
+     "year": 10,
+     "season": "winter",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      17,
+      18,
+      9
+     ],
+     "text": "Yves catches Clemence with Jory.",
+     "causes": [
+      58
+     ],
+     "secret": false
+    },
+    {
+     "id": 60,
+     "t": 109,
+     "year": 10,
+     "season": "winter",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      6,
+      12
+     ],
+     "text": "Tilda borrows 40 silver from Lettice, and must pay back 60.",
+     "causes": [
+      51
+     ],
+     "secret": false
+    },
+    {
+     "id": 61,
+     "t": 113,
+     "year": 10,
+     "season": "summer",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      12,
+      31
+     ],
+     "text": "Lettice calls in the debt. Bennet owes 60 and can't pay.",
+     "causes": [
+      25,
+      51
+     ],
+     "secret": false
+    },
+    {
+     "id": 62,
+     "t": 115,
+     "year": 10,
+     "season": "summer",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      34,
+      2,
+      36
+     ],
+     "text": "Mara and Nicol have a son, Wat.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 63,
+     "t": 117,
+     "year": 10,
+     "season": "autumn",
+     "kind": "harvest",
+     "group": "hardship",
+     "actors": [],
+     "text": "The harvest fails, and the whole town goes short that winter.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 64,
+     "t": 117,
+     "year": 10,
+     "season": "autumn",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      7,
+      12
+     ],
+     "text": "Bette borrows 50 silver from Lettice, and must pay back 75.",
+     "causes": [
+      63
+     ],
+     "secret": false
+    },
+    {
+     "id": 65,
+     "t": 117,
+     "year": 10,
+     "season": "autumn",
+     "kind": "hardtimes",
+     "group": "money",
+     "actors": [
+      8,
+      18
+     ],
+     "text": "Hawise falls on hard times; Clemence won't lend.",
+     "causes": [
+      63
+     ],
+     "secret": false
+    },
+    {
+     "id": 66,
+     "t": 117,
+     "year": 10,
+     "season": "autumn",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      29,
+      26
+     ],
+     "text": "Alys borrows 40 silver from Ermina.",
+     "causes": [
+      63
+     ],
+     "secret": false
+    },
+    {
+     "id": 67,
+     "t": 118,
+     "year": 10,
+     "season": "autumn",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      6,
+      24,
+      37
+     ],
+     "text": "Tilda and Tam have a daughter, Una.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 68,
+     "t": 118,
+     "year": 10,
+     "season": "autumn",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      8,
+      12
+     ],
+     "text": "Hawise borrows 40 silver from Lettice, and must pay back 60.",
+     "causes": [
+      63
+     ],
+     "secret": false
+    },
+    {
+     "id": 69,
+     "t": 118,
+     "year": 10,
+     "season": "autumn",
+     "kind": "theft",
+     "group": "crime",
+     "actors": [
+      8,
+      9
+     ],
+     "text": "Hawise steals 46 silver from Jory's bakery.",
+     "causes": [
+      65
+     ],
+     "secret": true
+    },
+    {
+     "id": 70,
+     "t": 118,
+     "year": 10,
+     "season": "autumn",
+     "kind": "silence",
+     "group": "crime",
+     "actors": [
+      14,
+      8
+     ],
+     "text": "Osbert saw Hawise do it, and says nothing.",
+     "causes": [
+      69
+     ],
+     "secret": true
+    },
+    {
+     "id": 71,
+     "t": 118,
+     "year": 10,
+     "season": "autumn",
+     "kind": "blame",
+     "group": "crime",
+     "actors": [
+      9,
+      8
+     ],
+     "text": "Jory blames Hawise for the missing silver.",
+     "causes": [
+      69
+     ],
+     "secret": false
+    },
+    {
+     "id": 72,
+     "t": 123,
+     "year": 11,
+     "season": "spring",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      21
+     ],
+     "text": "Jacoba dies of a wound gone bad, leaving Godric a widower.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 73,
+     "t": 123,
+     "year": 11,
+     "season": "spring",
+     "kind": "inherit",
+     "group": "money",
+     "actors": [
+      20,
+      17
+     ],
+     "text": "Godric inherits Jacoba's debt of 40 to Yves.",
+     "causes": [
+      35,
+      72
+     ],
+     "secret": false
+    },
+    {
+     "id": 74,
+     "t": 123,
+     "year": 11,
+     "season": "spring",
+     "kind": "inherit_wp",
+     "group": "money",
+     "actors": [
+      8,
+      21
+     ],
+     "text": "Hawise takes over Jacoba's mason's yard.",
+     "causes": [
+      72
+     ],
+     "secret": false
+    },
+    {
+     "id": 75,
+     "t": 124,
+     "year": 11,
+     "season": "spring",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      12,
+      24
+     ],
+     "text": "Lettice calls in the debt. Tam owes 60 and can't pay.",
+     "causes": [
+      27,
+      63
+     ],
+     "secret": false
+    },
+    {
+     "id": 76,
+     "t": 126,
+     "year": 11,
+     "season": "summer",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      16,
+      17
+     ],
+     "text": "Elena and Yves become close friends.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 77,
+     "t": 135,
+     "year": 12,
+     "season": "spring",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      14,
+      17
+     ],
+     "text": "Osbert and Yves become fast friends.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 78,
+     "t": 136,
+     "year": 12,
+     "season": "spring",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      0,
+      12
+     ],
+     "text": "Gilbert and Lettice begin an affair behind Sewin's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 79,
+     "t": 136,
+     "year": 12,
+     "season": "spring",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      7,
+      19
+     ],
+     "text": "Bette and Ulric start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 80,
+     "t": 138,
+     "year": 12,
+     "season": "summer",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      16,
+      26
+     ],
+     "text": "Elena and Ermina grow as close as family.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 81,
+     "t": 138,
+     "year": 12,
+     "season": "summer",
+     "kind": "forbids",
+     "group": "love",
+     "actors": [
+      6,
+      7,
+      19
+     ],
+     "text": "Tilda forbids Bette to see Ulric: no Barrow marries beneath them.",
+     "causes": [
+      79
+     ],
+     "secret": false
+    },
+    {
+     "id": 82,
+     "t": 138,
+     "year": 12,
+     "season": "summer",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      31,
+      35
+     ],
+     "text": "Bennet and Lise begin an affair behind Osbert's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 83,
+     "t": 140,
+     "year": 12,
+     "season": "autumn",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      12,
+      34
+     ],
+     "text": "Lettice calls in the debt. Mara owes 60 and can't pay.",
+     "causes": [
+      37
+     ],
+     "secret": false
+    },
+    {
+     "id": 84,
+     "t": 141,
+     "year": 12,
+     "season": "autumn",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      11,
+      26
+     ],
+     "text": "Sewin and Ermina begin an affair behind Lettice and Gerard's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 85,
+     "t": 141,
+     "year": 12,
+     "season": "autumn",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      11,
+      12,
+      0
+     ],
+     "text": "Sewin catches Lettice with Gilbert.",
+     "causes": [
+      78
+     ],
+     "secret": false
+    },
+    {
+     "id": 86,
+     "t": 142,
+     "year": 12,
+     "season": "autumn",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      12,
+      5
+     ],
+     "text": "Lettice calls in the debt. Odile owes 60 and can't pay.",
+     "causes": [
+      38
+     ],
+     "secret": false
+    },
+    {
+     "id": 87,
+     "t": 146,
+     "year": 13,
+     "season": "spring",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      0,
+      12
+     ],
+     "text": "Gilbert and Lettice can't stay apart, and start meeting in secret again.",
+     "causes": [
+      85
+     ],
+     "secret": true
+    },
+    {
+     "id": 88,
+     "t": 147,
+     "year": 13,
+     "season": "spring",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      14,
+      35,
+      31
+     ],
+     "text": "Osbert catches Lise with Bennet.",
+     "causes": [
+      82
+     ],
+     "secret": false
+    },
+    {
+     "id": 89,
+     "t": 148,
+     "year": 13,
+     "season": "spring",
+     "kind": "runaway",
+     "group": "love",
+     "actors": [
+      7,
+      19,
+      6
+     ],
+     "text": "Rather than give each other up, Bette and Ulric run off together, defying Tilda.",
+     "causes": [
+      81
+     ],
+     "secret": false
+    },
+    {
+     "id": 90,
+     "t": 150,
+     "year": 13,
+     "season": "summer",
+     "kind": "slip",
+     "group": "crime",
+     "actors": [
+      14,
+      8,
+      9
+     ],
+     "text": "Osbert lets slip that Hawise robbed Jory.",
+     "causes": [
+      69,
+      70
+     ],
+     "secret": false
+    },
+    {
+     "id": 91,
+     "t": 154,
+     "year": 13,
+     "season": "autumn",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      11,
+      12,
+      0
+     ],
+     "text": "Sewin catches Lettice with Gilbert.",
+     "causes": [
+      87
+     ],
+     "secret": false
+    },
+    {
+     "id": 92,
+     "t": 154,
+     "year": 13,
+     "season": "autumn",
+     "kind": "feud",
+     "group": "conflict",
+     "actors": [
+      11,
+      0
+     ],
+     "text": "The Fenns and the Sallows stop speaking. It's a feud now.",
+     "causes": [
+      91
+     ],
+     "secret": false
+    },
+    {
+     "id": 93,
+     "t": 154,
+     "year": 13,
+     "season": "autumn",
+     "kind": "separation",
+     "group": "love",
+     "actors": [
+      11,
+      12
+     ],
+     "text": "Sewin throws Lettice out of the house.",
+     "causes": [
+      91
+     ],
+     "secret": false
+    },
+    {
+     "id": 94,
+     "t": 155,
+     "year": 13,
+     "season": "winter",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      0,
+      12
+     ],
+     "text": "Gilbert and Lettice start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 95,
+     "t": 161,
+     "year": 14,
+     "season": "summer",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      14,
+      29
+     ],
+     "text": "Osbert and Alys begin an affair behind Lise and Jack's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 96,
+     "t": 162,
+     "year": 14,
+     "season": "summer",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      9,
+      32,
+      10
+     ],
+     "text": "Jory catches Ysolde with Lambert.",
+     "causes": [
+      50
+     ],
+     "secret": false
+    },
+    {
+     "id": 97,
+     "t": 164,
+     "year": 14,
+     "season": "autumn",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      0,
+      12
+     ],
+     "text": "Gilbert marries Lettice.",
+     "causes": [
+      94
+     ],
+     "secret": false
+    },
+    {
+     "id": 98,
+     "t": 164,
+     "year": 14,
+     "season": "autumn",
+     "kind": "leaves",
+     "group": "life",
+     "actors": [
+      10,
+      12
+     ],
+     "text": "Heartbroken, Lambert leaves town.",
+     "causes": [
+      97
+     ],
+     "secret": false
+    },
+    {
+     "id": 99,
+     "t": 164,
+     "year": 14,
+     "season": "autumn",
+     "kind": "closes",
+     "group": "money",
+     "actors": [
+      10
+     ],
+     "text": "With Lambert gone, the tailor's shop shuts.",
+     "causes": [
+      98
+     ],
+     "secret": false
+    },
+    {
+     "id": 100,
+     "t": 164,
+     "year": 14,
+     "season": "autumn",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      11,
+      0
+     ],
+     "text": "Sewin had hoped to marry Lettice, and turns cold on Gilbert.",
+     "causes": [
+      97
+     ],
+     "secret": false
+    },
+    {
+     "id": 101,
+     "t": 164,
+     "year": 14,
+     "season": "autumn",
+     "kind": "fight",
+     "group": "conflict",
+     "actors": [
+      11,
+      0
+     ],
+     "text": "Sewin and Gilbert come to blows at the tavern.",
+     "causes": [
+      85
+     ],
+     "secret": false
+    },
+    {
+     "id": 102,
+     "t": 165,
+     "year": 14,
+     "season": "autumn",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      4
+     ],
+     "text": "Drogo dies after a long cough.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 103,
+     "t": 165,
+     "year": 14,
+     "season": "autumn",
+     "kind": "inherit_wp",
+     "group": "money",
+     "actors": [
+      35,
+      4
+     ],
+     "text": "Lise takes over Drogo's chandlery.",
+     "causes": [
+      102
+     ],
+     "secret": false
+    },
+    {
+     "id": 104,
+     "t": 167,
+     "year": 14,
+     "season": "winter",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      25,
+      26,
+      11
+     ],
+     "text": "Gerard catches Ermina with Sewin.",
+     "causes": [
+      84
+     ],
+     "secret": false
+    },
+    {
+     "id": 105,
+     "t": 168,
+     "year": 15,
+     "season": "winter",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      28,
+      29,
+      14
+     ],
+     "text": "Jack catches Alys with Osbert.",
+     "causes": [
+      95
+     ],
+     "secret": false
+    },
+    {
+     "id": 106,
+     "t": 168,
+     "year": 15,
+     "season": "winter",
+     "kind": "feud",
+     "group": "conflict",
+     "actors": [
+      28,
+      14
+     ],
+     "text": "The Nashs and the Tulls stop speaking. It's a feud now.",
+     "causes": [
+      105
+     ],
+     "secret": false
+    },
+    {
+     "id": 107,
+     "t": 171,
+     "year": 15,
+     "season": "spring",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      38,
+      39
+     ],
+     "text": "Ivo and Sabine Crane move to town. Ivo is a potter.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 108,
+     "t": 171,
+     "year": 15,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      35,
+      14,
+      40
+     ],
+     "text": "Lise and Osbert have a daughter, Dulcie.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 109,
+     "t": 177,
+     "year": 15,
+     "season": "autumn",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      9,
+      39
+     ],
+     "text": "Jory takes on Sabine at the bakery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 110,
+     "t": 178,
+     "year": 15,
+     "season": "autumn",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      12,
+      6
+     ],
+     "text": "Lettice calls in the debt. Tilda owes 60 and can't pay.",
+     "causes": [
+      60
+     ],
+     "secret": false
+    },
+    {
+     "id": 111,
+     "t": 179,
+     "year": 15,
+     "season": "winter",
+     "kind": "fire",
+     "group": "hardship",
+     "actors": [
+      35
+     ],
+     "text": "Fire guts Lise's chandlery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 112,
+     "t": 179,
+     "year": 15,
+     "season": "winter",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      35,
+      12
+     ],
+     "text": "Lise borrows 100 silver from Lettice, and must pay back 150.",
+     "causes": [
+      111
+     ],
+     "secret": false
+    },
+    {
+     "id": 113,
+     "t": 182,
+     "year": 16,
+     "season": "spring",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      23
+     ],
+     "text": "Merrick dies of a wound gone bad.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 114,
+     "t": 182,
+     "year": 16,
+     "season": "spring",
+     "kind": "inherit_wp",
+     "group": "money",
+     "actors": [
+      24,
+      23
+     ],
+     "text": "Tam takes over Merrick's herb garden.",
+     "causes": [
+      113
+     ],
+     "secret": false
+    },
+    {
+     "id": 115,
+     "t": 183,
+     "year": 16,
+     "season": "spring",
+     "kind": "closes",
+     "group": "money",
+     "actors": [
+      24
+     ],
+     "text": "Tam shuts the herb garden for good.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 116,
+     "t": 183,
+     "year": 16,
+     "season": "spring",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      9,
+      24
+     ],
+     "text": "Jory takes on Tam at the bakery.",
+     "causes": [
+      115
+     ],
+     "secret": false
+    },
+    {
+     "id": 117,
+     "t": 187,
+     "year": 16,
+     "season": "summer",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      12,
+      8
+     ],
+     "text": "Lettice calls in the debt. Hawise owes 60 and can't pay.",
+     "causes": [
+      68
+     ],
+     "secret": false
+    },
+    {
+     "id": 118,
+     "t": 193,
+     "year": 17,
+     "season": "winter",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      31,
+      35
+     ],
+     "text": "Bennet and Lise can't stay apart, and start meeting in secret again.",
+     "causes": [
+      88
+     ],
+     "secret": true
+    },
+    {
+     "id": 119,
+     "t": 195,
+     "year": 17,
+     "season": "spring",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      38,
+      12
+     ],
+     "text": "Ivo borrows 40 silver from Lettice, and must pay back 60.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 120,
+     "t": 195,
+     "year": 17,
+     "season": "spring",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      20
+     ],
+     "text": "Godric dies in his sleep.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 121,
+     "t": 195,
+     "year": 17,
+     "season": "spring",
+     "kind": "inherit",
+     "group": "money",
+     "actors": [
+      22,
+      17
+     ],
+     "text": "Kit inherits Godric's debt of 40 to Yves.",
+     "causes": [
+      35,
+      120
+     ],
+     "secret": false
+    },
+    {
+     "id": 122,
+     "t": 195,
+     "year": 17,
+     "season": "spring",
+     "kind": "inherit_wp",
+     "group": "money",
+     "actors": [
+      22,
+      20
+     ],
+     "text": "Kit takes over Godric's pottery.",
+     "causes": [
+      120
+     ],
+     "secret": false
+    },
+    {
+     "id": 123,
+     "t": 198,
+     "year": 17,
+     "season": "summer",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      41
+     ],
+     "text": "Harl Holt, a smith, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 124,
+     "t": 200,
+     "year": 17,
+     "season": "autumn",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      14,
+      35,
+      31
+     ],
+     "text": "Osbert catches Lise with Bennet.",
+     "causes": [
+      118
+     ],
+     "secret": false
+    },
+    {
+     "id": 125,
+     "t": 204,
+     "year": 18,
+     "season": "winter",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      27,
+      22
+     ],
+     "text": "Corin is apprenticed to Kit, the potter.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 126,
+     "t": 215,
+     "year": 18,
+     "season": "winter",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      27,
+      12
+     ],
+     "text": "Corin borrows 40 silver from Lettice, and must pay back 60.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 127,
+     "t": 216,
+     "year": 19,
+     "season": "winter",
+     "kind": "theft",
+     "group": "crime",
+     "actors": [
+      41,
+      12
+     ],
+     "text": "Harl steals 80 silver from Lettice's mill.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 128,
+     "t": 216,
+     "year": 19,
+     "season": "winter",
+     "kind": "blame",
+     "group": "crime",
+     "actors": [
+      12,
+      8
+     ],
+     "text": "Lettice blames Hawise for the missing silver.",
+     "causes": [
+      127
+     ],
+     "secret": false
+    },
+    {
+     "id": 129,
+     "t": 218,
+     "year": 19,
+     "season": "spring",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      9,
+      18
+     ],
+     "text": "Jory and Clemence can't stay apart, and start meeting in secret again.",
+     "causes": [
+      59
+     ],
+     "secret": true
+    },
+    {
+     "id": 130,
+     "t": 218,
+     "year": 19,
+     "season": "spring",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      30,
+      26
+     ],
+     "text": "Edda is apprenticed to Ermina, the cooper.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 131,
+     "t": 218,
+     "year": 19,
+     "season": "spring",
+     "kind": "fight",
+     "group": "conflict",
+     "actors": [
+      11,
+      0
+     ],
+     "text": "Sewin and Gilbert come to blows at the tavern.",
+     "causes": [
+      85
+     ],
+     "secret": false
+    },
+    {
+     "id": 132,
+     "t": 223,
+     "year": 19,
+     "season": "summer",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      2
+     ],
+     "text": "Nicol drowns in the river, leaving Mara a widow.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 133,
+     "t": 223,
+     "year": 19,
+     "season": "summer",
+     "kind": "inherit",
+     "group": "money",
+     "actors": [
+      34,
+      17
+     ],
+     "text": "Mara inherits Nicol's debt of 80 to Yves.",
+     "causes": [
+      54,
+      132
+     ],
+     "secret": false
+    },
+    {
+     "id": 134,
+     "t": 223,
+     "year": 19,
+     "season": "summer",
+     "kind": "closes",
+     "group": "money",
+     "actors": [
+      2
+     ],
+     "text": "With Nicol gone, the weaving shed shuts.",
+     "causes": [
+      132
+     ],
+     "secret": false
+    },
+    {
+     "id": 135,
+     "t": 224,
+     "year": 19,
+     "season": "autumn",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      31,
+      34
+     ],
+     "text": "Bennet and Mara start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 136,
+     "t": 224,
+     "year": 19,
+     "season": "autumn",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      17,
+      18,
+      9
+     ],
+     "text": "Yves catches Clemence with Jory.",
+     "causes": [
+      129
+     ],
+     "secret": false
+    },
+    {
+     "id": 137,
+     "t": 225,
+     "year": 19,
+     "season": "autumn",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      42
+     ],
+     "text": "Beatrix Pryor, a mason, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 138,
+     "t": 225,
+     "year": 19,
+     "season": "autumn",
+     "kind": "fight",
+     "group": "conflict",
+     "actors": [
+      25,
+      11
+     ],
+     "text": "Gerard and Sewin come to blows in the market.",
+     "causes": [
+      104
+     ],
+     "secret": false
+    },
+    {
+     "id": 139,
+     "t": 227,
+     "year": 19,
+     "season": "winter",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      39,
+      17
+     ],
+     "text": "Sabine borrows 40 silver from Yves.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 140,
+     "t": 231,
+     "year": 20,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      39,
+      38,
+      43
+     ],
+     "text": "Sabine and Ivo have a daughter, Joan.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 141,
+     "t": 235,
+     "year": 20,
+     "season": "summer",
+     "kind": "repay",
+     "group": "money",
+     "actors": [
+      22,
+      17
+     ],
+     "text": "Kit pays Yves back in full.",
+     "causes": [
+      35
+     ],
+     "secret": false
+    },
+    {
+     "id": 142,
+     "t": 239,
+     "year": 20,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      31,
+      34
+     ],
+     "text": "Bennet marries Mara.",
+     "causes": [
+      135
+     ],
+     "secret": false
+    },
+    {
+     "id": 143,
+     "t": 239,
+     "year": 20,
+     "season": "winter",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      6,
+      34
+     ],
+     "text": "Tilda had hoped to marry Bennet, and turns cold on Mara.",
+     "causes": [
+      142
+     ],
+     "secret": false
+    },
+    {
+     "id": 144,
+     "t": 239,
+     "year": 20,
+     "season": "winter",
+     "kind": "peace",
+     "group": "conflict",
+     "actors": [
+      24,
+      34
+     ],
+     "text": "Tam loved Mara, but wishes the couple well.",
+     "causes": [
+      142
+     ],
+     "secret": false
+    },
+    {
+     "id": 145,
+     "t": 240,
+     "year": 21,
+     "season": "winter",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      14,
+      42
+     ],
+     "text": "Osbert and Beatrix become close friends.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 146,
+     "t": 240,
+     "year": 21,
+     "season": "winter",
+     "kind": "fight",
+     "group": "conflict",
+     "actors": [
+      17,
+      9
+     ],
+     "text": "Yves and Jory come to blows in the street.",
+     "causes": [
+      59
+     ],
+     "secret": false
+    },
+    {
+     "id": 147,
+     "t": 241,
+     "year": 21,
+     "season": "winter",
+     "kind": "theft",
+     "group": "crime",
+     "actors": [
+      34,
+      26
+     ],
+     "text": "Mara steals 80 silver from Ermina's cooperage.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 148,
+     "t": 241,
+     "year": 21,
+     "season": "winter",
+     "kind": "blame",
+     "group": "crime",
+     "actors": [
+      26,
+      12
+     ],
+     "text": "Ermina blames Lettice for the missing silver.",
+     "causes": [
+      147
+     ],
+     "secret": false
+    },
+    {
+     "id": 149,
+     "t": 245,
+     "year": 21,
+     "season": "summer",
+     "kind": "accident",
+     "group": "hardship",
+     "actors": [
+      41
+     ],
+     "text": "Harl is badly hurt in an accident at Yves's forge.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 150,
+     "t": 245,
+     "year": 21,
+     "season": "summer",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      16,
+      27
+     ],
+     "text": "Elena and Corin start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 151,
+     "t": 247,
+     "year": 21,
+     "season": "summer",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      28
+     ],
+     "text": "Jack dies in his sleep, leaving Alys a widow.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 152,
+     "t": 248,
+     "year": 21,
+     "season": "autumn",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      12,
+      35
+     ],
+     "text": "Lettice calls in the debt. Lise owes 150 and can't pay.",
+     "causes": [
+      112
+     ],
+     "secret": false
+    },
+    {
+     "id": 153,
+     "t": 250,
+     "year": 21,
+     "season": "autumn",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      26
+     ],
+     "text": "Ermina drowns in the river, leaving Gerard a widower.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 154,
+     "t": 250,
+     "year": 21,
+     "season": "autumn",
+     "kind": "inherit_wp",
+     "group": "money",
+     "actors": [
+      5,
+      26
+     ],
+     "text": "Odile takes over Ermina's cooperage.",
+     "causes": [
+      153
+     ],
+     "secret": false
+    },
+    {
+     "id": 155,
+     "t": 251,
+     "year": 21,
+     "season": "winter",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      24,
+      34
+     ],
+     "text": "Tam and Mara begin an affair behind Tilda and Bennet's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 156,
+     "t": 251,
+     "year": 21,
+     "season": "winter",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      25,
+      29
+     ],
+     "text": "Gerard calls in the debt Ermina lent. Alys owes 40 and can't pay.",
+     "causes": [
+      66
+     ],
+     "secret": false
+    },
+    {
+     "id": 157,
+     "t": 252,
+     "year": 22,
+     "season": "winter",
+     "kind": "closes",
+     "group": "money",
+     "actors": [
+      5
+     ],
+     "text": "Odile shuts the cooperage for good.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 158,
+     "t": 252,
+     "year": 22,
+     "season": "winter",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      9,
+      30
+     ],
+     "text": "Jory takes on Edda at the tannery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 159,
+     "t": 257,
+     "year": 22,
+     "season": "summer",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      17
+     ],
+     "text": "Yves dies in his sleep, leaving Clemence a widow.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 160,
+     "t": 257,
+     "year": 22,
+     "season": "summer",
+     "kind": "inherit_wp",
+     "group": "money",
+     "actors": [
+      18,
+      17
+     ],
+     "text": "Clemence takes over Yves's forge.",
+     "causes": [
+      159
+     ],
+     "secret": false
+    },
+    {
+     "id": 161,
+     "t": 258,
+     "year": 22,
+     "season": "summer",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      18,
+      34
+     ],
+     "text": "Clemence takes on Mara at the forge.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 162,
+     "t": 261,
+     "year": 22,
+     "season": "autumn",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      18,
+      5
+     ],
+     "text": "Clemence takes on Odile at the forge.",
+     "causes": [
+      157
+     ],
+     "secret": false
+    },
+    {
+     "id": 163,
+     "t": 261,
+     "year": 22,
+     "season": "autumn",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      44,
+      45
+     ],
+     "text": "Conrad and Maud Garrow move to town. Conrad is a tailor.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 164,
+     "t": 264,
+     "year": 23,
+     "season": "winter",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      12,
+      38
+     ],
+     "text": "Lettice calls in the debt. Ivo owes 60 and can't pay.",
+     "causes": [
+      119
+     ],
+     "secret": false
+    },
+    {
+     "id": 165,
+     "t": 265,
+     "year": 23,
+     "season": "winter",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      30,
+      41
+     ],
+     "text": "Edda and Harl start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 166,
+     "t": 270,
+     "year": 23,
+     "season": "summer",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      13,
+      39
+     ],
+     "text": "Alard and Sabine begin an affair behind Ivo's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 167,
+     "t": 274,
+     "year": 23,
+     "season": "autumn",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      38,
+      39,
+      13
+     ],
+     "text": "Ivo catches Sabine with Alard.",
+     "causes": [
+      166
+     ],
+     "secret": false
+    },
+    {
+     "id": 168,
+     "t": 274,
+     "year": 23,
+     "season": "autumn",
+     "kind": "feud",
+     "group": "conflict",
+     "actors": [
+      38,
+      13
+     ],
+     "text": "The Cranes and the Fenns stop speaking. It's a feud now.",
+     "causes": [
+      167
+     ],
+     "secret": false
+    },
+    {
+     "id": 169,
+     "t": 277,
+     "year": 24,
+     "season": "winter",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      6
+     ],
+     "text": "Tilda dies in a fall, leaving Tam a widower.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 170,
+     "t": 277,
+     "year": 24,
+     "season": "winter",
+     "kind": "inherit",
+     "group": "money",
+     "actors": [
+      8,
+      12
+     ],
+     "text": "Hawise inherits Tilda's debt of 60 to Lettice.",
+     "causes": [
+      60,
+      169
+     ],
+     "secret": false
+    },
+    {
+     "id": 171,
+     "t": 278,
+     "year": 24,
+     "season": "spring",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      16,
+      27
+     ],
+     "text": "Elena marries Corin.",
+     "causes": [
+      150
+     ],
+     "secret": false
+    },
+    {
+     "id": 172,
+     "t": 278,
+     "year": 24,
+     "season": "spring",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      5,
+      27
+     ],
+     "text": "Odile had hoped to marry Elena, and turns cold on Corin.",
+     "causes": [
+      171
+     ],
+     "secret": false
+    },
+    {
+     "id": 173,
+     "t": 278,
+     "year": 24,
+     "season": "spring",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      41,
+      27
+     ],
+     "text": "Harl had hoped to marry Elena, and turns cold on Corin.",
+     "causes": [
+      171
+     ],
+     "secret": false
+    },
+    {
+     "id": 174,
+     "t": 279,
+     "year": 24,
+     "season": "spring",
+     "kind": "harvest",
+     "group": "hardship",
+     "actors": [],
+     "text": "The harvest fails, and the whole town goes short that winter.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 175,
+     "t": 279,
+     "year": 24,
+     "season": "spring",
+     "kind": "rivalry",
+     "group": "conflict",
+     "actors": [
+      42,
+      8
+     ],
+     "text": "Beatrix undercuts Hawise's prices, and the two masons become rivals.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 176,
+     "t": 279,
+     "year": 24,
+     "season": "spring",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      9,
+      45
+     ],
+     "text": "Jory takes on Maud at the tannery.",
+     "causes": [
+      174
+     ],
+     "secret": false
+    },
+    {
+     "id": 177,
+     "t": 279,
+     "year": 24,
+     "season": "spring",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      46
+     ],
+     "text": "Ralf Brook, a herbalist, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 178,
+     "t": 280,
+     "year": 24,
+     "season": "spring",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      31
+     ],
+     "text": "Bennet dies of a bad heart, leaving Mara a widow.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 179,
+     "t": 280,
+     "year": 24,
+     "season": "spring",
+     "kind": "inherit",
+     "group": "money",
+     "actors": [
+      34,
+      12
+     ],
+     "text": "Mara inherits Bennet's debt of 60 to Lettice.",
+     "causes": [
+      25,
+      178
+     ],
+     "secret": false
+    },
+    {
+     "id": 180,
+     "t": 281,
+     "year": 24,
+     "season": "summer",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      8,
+      38
+     ],
+     "text": "Hawise and Ivo begin an affair behind Sabine's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 181,
+     "t": 281,
+     "year": 24,
+     "season": "summer",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      24,
+      34
+     ],
+     "text": "Tam and Mara start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 182,
+     "t": 284,
+     "year": 24,
+     "season": "autumn",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      12,
+      27
+     ],
+     "text": "Lettice calls in the debt. Corin owes 60 and can't pay.",
+     "causes": [
+      126,
+      174
+     ],
+     "secret": false
+    },
+    {
+     "id": 183,
+     "t": 284,
+     "year": 24,
+     "season": "autumn",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      18
+     ],
+     "text": "Clemence dies of a wound gone bad.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 184,
+     "t": 284,
+     "year": 24,
+     "season": "autumn",
+     "kind": "inherit_wp",
+     "group": "money",
+     "actors": [
+      5,
+      18
+     ],
+     "text": "Odile takes over Clemence's forge.",
+     "causes": [
+      183
+     ],
+     "secret": false
+    },
+    {
+     "id": 185,
+     "t": 285,
+     "year": 24,
+     "season": "autumn",
+     "kind": "closes",
+     "group": "money",
+     "actors": [
+      5
+     ],
+     "text": "Odile shuts the forge for good.",
+     "causes": [
+      174
+     ],
+     "secret": false
+    },
+    {
+     "id": 186,
+     "t": 285,
+     "year": 24,
+     "season": "autumn",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      9,
+      41
+     ],
+     "text": "Jory takes on Harl at the tannery.",
+     "causes": [
+      174
+     ],
+     "secret": false
+    },
+    {
+     "id": 187,
+     "t": 288,
+     "year": 25,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      24,
+      34
+     ],
+     "text": "Tam marries Mara.",
+     "causes": [
+      155,
+      181
+     ],
+     "secret": false
+    },
+    {
+     "id": 188,
+     "t": 288,
+     "year": 25,
+     "season": "winter",
+     "kind": "peace",
+     "group": "conflict",
+     "actors": [
+      35,
+      24
+     ],
+     "text": "Lise loved Tam, but wishes the couple well.",
+     "causes": [
+      187
+     ],
+     "secret": false
+    },
+    {
+     "id": 189,
+     "t": 288,
+     "year": 25,
+     "season": "winter",
+     "kind": "peace",
+     "group": "conflict",
+     "actors": [
+      12,
+      24
+     ],
+     "text": "Lettice loved Tam, but wishes the couple well.",
+     "causes": [
+      187
+     ],
+     "secret": false
+    },
+    {
+     "id": 190,
+     "t": 291,
+     "year": 25,
+     "season": "spring",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      42,
+      5
+     ],
+     "text": "Beatrix takes on Odile at the mason's yard.",
+     "causes": [
+      185
+     ],
+     "secret": false
+    },
+    {
+     "id": 191,
+     "t": 291,
+     "year": 25,
+     "season": "spring",
+     "kind": "theft",
+     "group": "crime",
+     "actors": [
+      12,
+      9
+     ],
+     "text": "Lettice steals 80 silver from Jory's bakery.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 192,
+     "t": 291,
+     "year": 25,
+     "season": "spring",
+     "kind": "silence",
+     "group": "crime",
+     "actors": [
+      0,
+      12
+     ],
+     "text": "Gilbert saw Lettice do it, and says nothing.",
+     "causes": [
+      191
+     ],
+     "secret": true
+    },
+    {
+     "id": 193,
+     "t": 291,
+     "year": 25,
+     "season": "spring",
+     "kind": "blame",
+     "group": "crime",
+     "actors": [
+      9,
+      8
+     ],
+     "text": "Jory blames Hawise for the missing silver.",
+     "causes": [
+      191
+     ],
+     "secret": false
+    },
+    {
+     "id": 194,
+     "t": 293,
+     "year": 25,
+     "season": "summer",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      16,
+      27,
+      47
+     ],
+     "text": "Elena and Corin have a daughter, Willa.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 195,
+     "t": 294,
+     "year": 25,
+     "season": "summer",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      42,
+      34
+     ],
+     "text": "Beatrix takes on Mara at the mason's yard.",
+     "causes": [
+      174
+     ],
+     "secret": false
+    },
+    {
+     "id": 196,
+     "t": 297,
+     "year": 25,
+     "season": "autumn",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      48
+     ],
+     "text": "Piers Lowe, a fisher, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 197,
+     "t": 297,
+     "year": 25,
+     "season": "autumn",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      30,
+      41
+     ],
+     "text": "Edda marries Harl.",
+     "causes": [
+      165
+     ],
+     "secret": false
+    },
+    {
+     "id": 198,
+     "t": 297,
+     "year": 25,
+     "season": "autumn",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      27,
+      41
+     ],
+     "text": "Corin had hoped to marry Edda, and turns cold on Harl.",
+     "causes": [
+      197
+     ],
+     "secret": false
+    },
+    {
+     "id": 199,
+     "t": 297,
+     "year": 25,
+     "season": "autumn",
+     "kind": "peace",
+     "group": "conflict",
+     "actors": [
+      42,
+      30
+     ],
+     "text": "Beatrix loved Edda, but wishes the couple well.",
+     "causes": [
+      197
+     ],
+     "secret": false
+    }
+   ]
+  },
+  {
+   "seed": 3,
+   "events": 152,
+   "people_ever": 53,
+   "sha256": "2f565a9eee4965054200be9f6045e3b32ec850069ca6913a4adb91077e045500",
+   "first_events": [
+    "Juliana Garrow, a widow, is raising Kat and Yves alone.",
+    "Fulk and Gwen Fenn are brother and sister and share a house.",
+    "Alys Pike, a widow, is raising Godric alone.",
+    "Alard and Wenna Rook are married.",
+    "Nicol Burl, a widower, is raising Emma and Isolde alone.",
+    "Herve and Maud Hale are married.",
+    "Avice and Mara Orme are sisters and share a house.",
+    "Corin and Tilda Brook are brother and sister and share a house."
+   ],
+   "last_event": "Beatrix is apprenticed to Avice, the tavern keeper.",
+   "all_events": [
+    {
+     "id": 0,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      1,
+      2,
+      3
+     ],
+     "text": "Juliana Garrow, a widow, is raising Kat and Yves alone.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 1,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      4,
+      5
+     ],
+     "text": "Fulk and Gwen Fenn are brother and sister and share a house.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 2,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      6,
+      7
+     ],
+     "text": "Alys Pike, a widow, is raising Godric alone.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 3,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      8,
+      9
+     ],
+     "text": "Alard and Wenna Rook are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 4,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      12,
+      13,
+      14
+     ],
+     "text": "Nicol Burl, a widower, is raising Emma and Isolde alone.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 5,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      15,
+      16
+     ],
+     "text": "Herve and Maud Hale are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 6,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      21,
+      22
+     ],
+     "text": "Avice and Mara Orme are sisters and share a house.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 7,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "family",
+     "group": "life",
+     "actors": [
+      23,
+      24
+     ],
+     "text": "Corin and Tilda Brook are brother and sister and share a house.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 8,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      25,
+      26
+     ],
+     "text": "Kit and Rosa Thorne are married.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 9,
+     "t": 0,
+     "year": 1,
+     "season": "winter",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      16,
+      25
+     ],
+     "text": "Maud and Kit become close friends.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 10,
+     "t": 11,
+     "year": 1,
+     "season": "winter",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      26,
+      12
+     ],
+     "text": "Rosa borrows 40 silver from Nicol.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 11,
+     "t": 12,
+     "year": 2,
+     "season": "winter",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      30,
+      31
+     ],
+     "text": "Quentin and Bette Holt move to town. Quentin is a tavern keeper.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 12,
+     "t": 13,
+     "year": 2,
+     "season": "winter",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      15,
+      20
+     ],
+     "text": "Herve borrows 40 silver from Aldric.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 13,
+     "t": 18,
+     "year": 2,
+     "season": "summer",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      32
+     ],
+     "text": "Ermina Vane, a carter, moves to town.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 14,
+     "t": 21,
+     "year": 2,
+     "season": "autumn",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      33,
+      34
+     ],
+     "text": "Wat and Hawise Nash move to town. Wat is a mason.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 15,
+     "t": 24,
+     "year": 3,
+     "season": "winter",
+     "kind": "rivalry",
+     "group": "conflict",
+     "actors": [
+      20,
+      21
+     ],
+     "text": "Aldric undercuts Avice's prices, and the two tavern keepers become rivals.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 16,
+     "t": 27,
+     "year": 3,
+     "season": "spring",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      15,
+      33
+     ],
+     "text": "Herve and Wat become fast friends.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 17,
+     "t": 27,
+     "year": 3,
+     "season": "spring",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      35,
+      36
+     ],
+     "text": "Bennet and Dulcie Ayre move to town. Bennet is a cooper.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 18,
+     "t": 29,
+     "year": 3,
+     "season": "summer",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      0,
+      21
+     ],
+     "text": "Ulric and Avice start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 19,
+     "t": 30,
+     "year": 3,
+     "season": "summer",
+     "kind": "accident",
+     "group": "hardship",
+     "actors": [
+      20
+     ],
+     "text": "Aldric is badly hurt in an accident at the tavern.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 20,
+     "t": 30,
+     "year": 3,
+     "season": "summer",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      24,
+      35
+     ],
+     "text": "Tilda and Bennet grow as close as family.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 21,
+     "t": 32,
+     "year": 3,
+     "season": "autumn",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      22,
+      23
+     ],
+     "text": "Mara and Corin start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 22,
+     "t": 33,
+     "year": 3,
+     "season": "autumn",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      34,
+      36
+     ],
+     "text": "Hawise and Dulcie grow as close as family.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 23,
+     "t": 36,
+     "year": 4,
+     "season": "winter",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      9,
+      36
+     ],
+     "text": "Wenna takes on Dulcie at the bakery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 24,
+     "t": 39,
+     "year": 4,
+     "season": "spring",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      9,
+      34
+     ],
+     "text": "Wenna takes on Hawise at the bakery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 25,
+     "t": 39,
+     "year": 4,
+     "season": "spring",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      23,
+      31
+     ],
+     "text": "Corin takes on Bette at the mason's yard.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 26,
+     "t": 39,
+     "year": 4,
+     "season": "spring",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      5,
+      12
+     ],
+     "text": "Gwen and Nicol start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 27,
+     "t": 40,
+     "year": 4,
+     "season": "spring",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      0,
+      21
+     ],
+     "text": "Ulric marries Avice.",
+     "causes": [
+      18
+     ],
+     "secret": false
+    },
+    {
+     "id": 28,
+     "t": 50,
+     "year": 5,
+     "season": "spring",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      22,
+      23
+     ],
+     "text": "Mara marries Corin.",
+     "causes": [
+      21
+     ],
+     "secret": false
+    },
+    {
+     "id": 29,
+     "t": 57,
+     "year": 5,
+     "season": "autumn",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      0,
+      35
+     ],
+     "text": "Ulric and Bennet become fast friends.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 30,
+     "t": 66,
+     "year": 6,
+     "season": "summer",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      34,
+      33,
+      37
+     ],
+     "text": "Hawise and Wat have a daughter, Lise.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 31,
+     "t": 66,
+     "year": 6,
+     "season": "summer",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      25,
+      9
+     ],
+     "text": "Kit borrows 40 silver from Wenna, and must pay back 60.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 32,
+     "t": 68,
+     "year": 6,
+     "season": "autumn",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      0,
+      1
+     ],
+     "text": "Ulric and Juliana begin an affair behind Avice's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 33,
+     "t": 68,
+     "year": 6,
+     "season": "autumn",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      5,
+      12
+     ],
+     "text": "Gwen marries Nicol.",
+     "causes": [
+      26
+     ],
+     "secret": false
+    },
+    {
+     "id": 34,
+     "t": 68,
+     "year": 6,
+     "season": "autumn",
+     "kind": "leaves",
+     "group": "life",
+     "actors": [
+      4,
+      12
+     ],
+     "text": "Heartbroken, Fulk leaves town.",
+     "causes": [
+      33
+     ],
+     "secret": false
+    },
+    {
+     "id": 35,
+     "t": 68,
+     "year": 6,
+     "season": "autumn",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      1,
+      5
+     ],
+     "text": "Juliana had hoped to marry Nicol, and turns cold on Gwen.",
+     "causes": [
+      33
+     ],
+     "secret": false
+    },
+    {
+     "id": 36,
+     "t": 69,
+     "year": 6,
+     "season": "autumn",
+     "kind": "arrival",
+     "group": "life",
+     "actors": [
+      38,
+      39
+     ],
+     "text": "Simon and Mabel Esk move to town. Simon is a tanner.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 37,
+     "t": 72,
+     "year": 7,
+     "season": "winter",
+     "kind": "hire",
+     "group": "money",
+     "actors": [
+      12,
+      39
+     ],
+     "text": "Nicol takes on Mabel at the mill.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 38,
+     "t": 75,
+     "year": 7,
+     "season": "spring",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      6
+     ],
+     "text": "Alys drowns in the river.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 39,
+     "t": 75,
+     "year": 7,
+     "season": "spring",
+     "kind": "closes",
+     "group": "money",
+     "actors": [
+      6
+     ],
+     "text": "With Alys gone, the jetty shuts.",
+     "causes": [
+      38
+     ],
+     "secret": false
+    },
+    {
+     "id": 40,
+     "t": 75,
+     "year": 7,
+     "season": "spring",
+     "kind": "adopt",
+     "group": "bond",
+     "actors": [
+      32,
+      7
+     ],
+     "text": "Ermina takes in Alys's orphaned child, Godric.",
+     "causes": [
+      38
+     ],
+     "secret": false
+    },
+    {
+     "id": 41,
+     "t": 78,
+     "year": 7,
+     "season": "summer",
+     "kind": "fire",
+     "group": "hardship",
+     "actors": [
+      23,
+      31,
+      33
+     ],
+     "text": "Fire guts Corin's mason's yard.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 42,
+     "t": 79,
+     "year": 7,
+     "season": "summer",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      2
+     ],
+     "text": "Kat drowns in the river.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 43,
+     "t": 87,
+     "year": 8,
+     "season": "spring",
+     "kind": "rivalry",
+     "group": "conflict",
+     "actors": [
+      9,
+      24
+     ],
+     "text": "Wenna undercuts Tilda's prices, and the two bakers become rivals.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 44,
+     "t": 88,
+     "year": 8,
+     "season": "spring",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      10,
+      16
+     ],
+     "text": "Philippa is apprenticed to Maud, the herbalist.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 45,
+     "t": 90,
+     "year": 8,
+     "season": "summer",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      1,
+      10
+     ],
+     "text": "Juliana and Philippa grow as close as family.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 46,
+     "t": 92,
+     "year": 8,
+     "season": "autumn",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      21,
+      0,
+      1
+     ],
+     "text": "Avice catches Ulric with Juliana.",
+     "causes": [
+      32
+     ],
+     "secret": false
+    },
+    {
+     "id": 47,
+     "t": 92,
+     "year": 8,
+     "season": "autumn",
+     "kind": "feud",
+     "group": "conflict",
+     "actors": [
+      21,
+      1
+     ],
+     "text": "The Garrows and the Ormes stop speaking. It's a feud now.",
+     "causes": [
+      46
+     ],
+     "secret": false
+    },
+    {
+     "id": 48,
+     "t": 94,
+     "year": 8,
+     "season": "autumn",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      39,
+      38,
+      40
+     ],
+     "text": "Mabel and Simon have a daughter, Lettice.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 49,
+     "t": 98,
+     "year": 9,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      26,
+      25,
+      41
+     ],
+     "text": "Rosa and Kit have a daughter, Ysolde.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 50,
+     "t": 102,
+     "year": 9,
+     "season": "summer",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      9,
+      25
+     ],
+     "text": "Wenna calls in the debt. Kit owes 60 and can't pay.",
+     "causes": [
+      31
+     ],
+     "secret": false
+    },
+    {
+     "id": 51,
+     "t": 103,
+     "year": 9,
+     "season": "summer",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      31,
+      30,
+      42
+     ],
+     "text": "Bette and Quentin have a son, Harl.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 52,
+     "t": 104,
+     "year": 9,
+     "season": "autumn",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      16,
+      15,
+      43
+     ],
+     "text": "Maud and Herve have a son, Tobin.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 53,
+     "t": 106,
+     "year": 9,
+     "season": "autumn",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      21,
+      0,
+      44
+     ],
+     "text": "Avice and Ulric have a daughter, Una.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 54,
+     "t": 107,
+     "year": 9,
+     "season": "winter",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      39,
+      38,
+      45
+     ],
+     "text": "Mabel and Simon have a daughter, Beatrix.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 55,
+     "t": 111,
+     "year": 10,
+     "season": "spring",
+     "kind": "accident",
+     "group": "hardship",
+     "actors": [
+      23
+     ],
+     "text": "Corin is badly hurt in an accident at the mason's yard.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 56,
+     "t": 113,
+     "year": 10,
+     "season": "summer",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      34,
+      33,
+      46
+     ],
+     "text": "Hawise and Wat have a son, Denis.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 57,
+     "t": 114,
+     "year": 10,
+     "season": "summer",
+     "kind": "peace",
+     "group": "conflict",
+     "actors": [
+      21,
+      1
+     ],
+     "text": "Avice finally forgives Juliana.",
+     "causes": [
+      46
+     ],
+     "secret": false
+    },
+    {
+     "id": 58,
+     "t": 114,
+     "year": 10,
+     "season": "summer",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      12,
+      31
+     ],
+     "text": "Nicol and Bette begin an affair behind Gwen and Quentin's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 59,
+     "t": 117,
+     "year": 10,
+     "season": "autumn",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      10,
+      9
+     ],
+     "text": "Philippa borrows 40 silver from Wenna, and must pay back 60.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 60,
+     "t": 119,
+     "year": 10,
+     "season": "winter",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      5,
+      12,
+      31
+     ],
+     "text": "Gwen catches Nicol with Bette.",
+     "causes": [
+      58
+     ],
+     "secret": false
+    },
+    {
+     "id": 61,
+     "t": 119,
+     "year": 10,
+     "season": "winter",
+     "kind": "feud",
+     "group": "conflict",
+     "actors": [
+      5,
+      31
+     ],
+     "text": "The Fenns and the Holts stop speaking. It's a feud now.",
+     "causes": [
+      60
+     ],
+     "secret": false
+    },
+    {
+     "id": 62,
+     "t": 123,
+     "year": 11,
+     "season": "spring",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      15,
+      22
+     ],
+     "text": "Herve and Mara begin an affair behind Maud and Corin's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 63,
+     "t": 123,
+     "year": 11,
+     "season": "spring",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      16,
+      15,
+      22
+     ],
+     "text": "Maud catches Herve with Mara.",
+     "causes": [
+      62
+     ],
+     "secret": false
+    },
+    {
+     "id": 64,
+     "t": 124,
+     "year": 11,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      31,
+      30,
+      47
+     ],
+     "text": "Bette and Quentin have a daughter, Joan.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 65,
+     "t": 125,
+     "year": 11,
+     "season": "summer",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      31,
+      12
+     ],
+     "text": "Bette borrows 40 silver from Nicol.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 66,
+     "t": 126,
+     "year": 11,
+     "season": "summer",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      30,
+      9
+     ],
+     "text": "Quentin borrows 40 silver from Wenna, and must pay back 60.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 67,
+     "t": 127,
+     "year": 11,
+     "season": "summer",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      22,
+      23,
+      48
+     ],
+     "text": "Mara and Corin have a son, Tam.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 68,
+     "t": 136,
+     "year": 12,
+     "season": "spring",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      25,
+      32
+     ],
+     "text": "Kit and Ermina begin an affair behind Rosa's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 69,
+     "t": 142,
+     "year": 12,
+     "season": "autumn",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      9,
+      35
+     ],
+     "text": "Wenna and Bennet begin an affair behind Alard and Dulcie's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 70,
+     "t": 143,
+     "year": 12,
+     "season": "winter",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      5,
+      30
+     ],
+     "text": "Gwen and Quentin begin an affair behind Nicol and Bette's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 71,
+     "t": 143,
+     "year": 12,
+     "season": "winter",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      31,
+      30,
+      5
+     ],
+     "text": "Bette catches Quentin with Gwen.",
+     "causes": [
+      70
+     ],
+     "secret": false
+    },
+    {
+     "id": 72,
+     "t": 143,
+     "year": 12,
+     "season": "winter",
+     "kind": "drink",
+     "group": "life",
+     "actors": [
+      31
+     ],
+     "text": "Bette takes to drink.",
+     "causes": [
+      71
+     ],
+     "secret": false
+    },
+    {
+     "id": 73,
+     "t": 146,
+     "year": 13,
+     "season": "spring",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      36,
+      35,
+      9
+     ],
+     "text": "Dulcie catches Bennet with Wenna.",
+     "causes": [
+      69
+     ],
+     "secret": false
+    },
+    {
+     "id": 74,
+     "t": 146,
+     "year": 13,
+     "season": "spring",
+     "kind": "feud",
+     "group": "conflict",
+     "actors": [
+      36,
+      9
+     ],
+     "text": "The Ayres and the Rooks stop speaking. It's a feud now.",
+     "causes": [
+      73
+     ],
+     "secret": false
+    },
+    {
+     "id": 75,
+     "t": 146,
+     "year": 13,
+     "season": "spring",
+     "kind": "rumor",
+     "group": "conflict",
+     "actors": [
+      36,
+      9
+     ],
+     "text": "Dulcie makes sure the whole town knows what Wenna did.",
+     "causes": [
+      73
+     ],
+     "secret": false
+    },
+    {
+     "id": 76,
+     "t": 150,
+     "year": 13,
+     "season": "summer",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      33,
+      36
+     ],
+     "text": "Wat and Dulcie begin an affair behind Hawise and Bennet's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 77,
+     "t": 153,
+     "year": 13,
+     "season": "autumn",
+     "kind": "accident",
+     "group": "hardship",
+     "actors": [
+      31
+     ],
+     "text": "Bette is badly hurt in an accident at Corin's mason's yard.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 78,
+     "t": 153,
+     "year": 13,
+     "season": "autumn",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      15,
+      29
+     ],
+     "text": "Herve and Edric become close friends.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 79,
+     "t": 153,
+     "year": 13,
+     "season": "autumn",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      9,
+      10
+     ],
+     "text": "Wenna calls in the debt. Philippa owes 60 and can't pay.",
+     "causes": [
+      59
+     ],
+     "secret": false
+    },
+    {
+     "id": 80,
+     "t": 155,
+     "year": 13,
+     "season": "winter",
+     "kind": "fire",
+     "group": "hardship",
+     "actors": [
+      9,
+      8,
+      34,
+      36
+     ],
+     "text": "Fire guts Wenna's bakery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 81,
+     "t": 160,
+     "year": 14,
+     "season": "spring",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      26,
+      25,
+      32
+     ],
+     "text": "Rosa catches Kit with Ermina.",
+     "causes": [
+      68
+     ],
+     "secret": false
+    },
+    {
+     "id": 82,
+     "t": 161,
+     "year": 14,
+     "season": "summer",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      7,
+      23
+     ],
+     "text": "Godric is apprenticed to Corin, the mason.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 83,
+     "t": 162,
+     "year": 14,
+     "season": "summer",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      7,
+      14
+     ],
+     "text": "Godric and Isolde become close friends.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 84,
+     "t": 162,
+     "year": 14,
+     "season": "summer",
+     "kind": "callin",
+     "group": "money",
+     "actors": [
+      9,
+      30
+     ],
+     "text": "Wenna calls in the debt. Quentin owes 60 and can't pay.",
+     "causes": [
+      66,
+      80
+     ],
+     "secret": false
+    },
+    {
+     "id": 85,
+     "t": 171,
+     "year": 15,
+     "season": "spring",
+     "kind": "fire",
+     "group": "hardship",
+     "actors": [
+      32
+     ],
+     "text": "Fire guts Ermina's carter's yard.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 86,
+     "t": 171,
+     "year": 15,
+     "season": "spring",
+     "kind": "gift",
+     "group": "bond",
+     "actors": [
+      36,
+      32
+     ],
+     "text": "Dulcie gives Ermina 20 silver to rebuild, and asks nothing back.",
+     "causes": [
+      85
+     ],
+     "secret": false
+    },
+    {
+     "id": 87,
+     "t": 172,
+     "year": 15,
+     "season": "spring",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      18,
+      38
+     ],
+     "text": "Elias is apprenticed to Simon, the tanner.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 88,
+     "t": 173,
+     "year": 15,
+     "season": "summer",
+     "kind": "fever",
+     "group": "hardship",
+     "actors": [
+      7,
+      5,
+      33
+     ],
+     "text": "Fever comes to town. Godric, Gwen and Wat fall sick.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 89,
+     "t": 174,
+     "year": 15,
+     "season": "summer",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      18,
+      38
+     ],
+     "text": "Elias and Simon become fast friends.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 90,
+     "t": 175,
+     "year": 15,
+     "season": "summer",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      3,
+      13
+     ],
+     "text": "Yves and Emma start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 91,
+     "t": 175,
+     "year": 15,
+     "season": "summer",
+     "kind": "forbids",
+     "group": "love",
+     "actors": [
+      1,
+      3,
+      13
+     ],
+     "text": "Juliana forbids Yves to see Emma: no Garrow marries beneath them.",
+     "causes": [
+      90
+     ],
+     "secret": false
+    },
+    {
+     "id": 92,
+     "t": 178,
+     "year": 15,
+     "season": "autumn",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      27,
+      12
+     ],
+     "text": "Merrick borrows 40 silver from Nicol.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 93,
+     "t": 179,
+     "year": 15,
+     "season": "winter",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      35,
+      36,
+      33
+     ],
+     "text": "Bennet catches Dulcie with Wat.",
+     "causes": [
+      76
+     ],
+     "secret": false
+    },
+    {
+     "id": 94,
+     "t": 179,
+     "year": 15,
+     "season": "winter",
+     "kind": "drink",
+     "group": "life",
+     "actors": [
+      35
+     ],
+     "text": "Bennet takes to drink.",
+     "causes": [
+      93
+     ],
+     "secret": false
+    },
+    {
+     "id": 95,
+     "t": 179,
+     "year": 15,
+     "season": "winter",
+     "kind": "feud",
+     "group": "conflict",
+     "actors": [
+      35,
+      33
+     ],
+     "text": "The Ayres and the Nashs stop speaking. It's a feud now.",
+     "causes": [
+      93
+     ],
+     "secret": false
+    },
+    {
+     "id": 96,
+     "t": 180,
+     "year": 16,
+     "season": "winter",
+     "kind": "sober",
+     "group": "life",
+     "actors": [
+      31
+     ],
+     "text": "Bette gives up the drink.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 97,
+     "t": 181,
+     "year": 16,
+     "season": "winter",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      29,
+      32
+     ],
+     "text": "Edric and Ermina start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 98,
+     "t": 182,
+     "year": 16,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      26,
+      25,
+      49
+     ],
+     "text": "Rosa and Kit have a son, Arnold.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 99,
+     "t": 184,
+     "year": 16,
+     "season": "spring",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      11,
+      20
+     ],
+     "text": "Clemence is apprenticed to Aldric, the tavern keeper.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 100,
+     "t": 186,
+     "year": 16,
+     "season": "summer",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      7,
+      18
+     ],
+     "text": "Godric and Elias become close friends.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 101,
+     "t": 188,
+     "year": 16,
+     "season": "autumn",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      19,
+      38
+     ],
+     "text": "Gerard is apprenticed to Simon, the tanner.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 102,
+     "t": 189,
+     "year": 16,
+     "season": "autumn",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      19,
+      38
+     ],
+     "text": "Gerard and Simon become close friends.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 103,
+     "t": 189,
+     "year": 16,
+     "season": "autumn",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      28,
+      38
+     ],
+     "text": "Odile is apprenticed to Simon, the tanner.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 104,
+     "t": 195,
+     "year": 17,
+     "season": "spring",
+     "kind": "peace",
+     "group": "conflict",
+     "actors": [
+      26,
+      32
+     ],
+     "text": "Rosa finally forgives Ermina.",
+     "causes": [
+      81
+     ],
+     "secret": false
+    },
+    {
+     "id": 105,
+     "t": 197,
+     "year": 17,
+     "season": "summer",
+     "kind": "accident",
+     "group": "hardship",
+     "actors": [
+      9
+     ],
+     "text": "Wenna is badly hurt in an accident at the bakery.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 106,
+     "t": 198,
+     "year": 17,
+     "season": "summer",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      29,
+      32
+     ],
+     "text": "Edric marries Ermina.",
+     "causes": [
+      97
+     ],
+     "secret": false
+    },
+    {
+     "id": 107,
+     "t": 198,
+     "year": 17,
+     "season": "summer",
+     "kind": "peace",
+     "group": "conflict",
+     "actors": [
+      15,
+      32
+     ],
+     "text": "Herve loved Ermina, but wishes the couple well.",
+     "causes": [
+      106
+     ],
+     "secret": false
+    },
+    {
+     "id": 108,
+     "t": 198,
+     "year": 17,
+     "season": "summer",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      25,
+      29
+     ],
+     "text": "Kit had hoped to marry Ermina, and turns cold on Edric.",
+     "causes": [
+      106
+     ],
+     "secret": false
+    },
+    {
+     "id": 109,
+     "t": 200,
+     "year": 17,
+     "season": "autumn",
+     "kind": "runaway",
+     "group": "love",
+     "actors": [
+      3,
+      13,
+      1
+     ],
+     "text": "Rather than give each other up, Yves and Emma run off together, defying Juliana.",
+     "causes": [
+      91
+     ],
+     "secret": false
+    },
+    {
+     "id": 110,
+     "t": 200,
+     "year": 17,
+     "season": "autumn",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      10,
+      27
+     ],
+     "text": "Philippa and Merrick start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 111,
+     "t": 213,
+     "year": 18,
+     "season": "autumn",
+     "kind": "friends",
+     "group": "bond",
+     "actors": [
+      0,
+      17
+     ],
+     "text": "Ulric and Edda grow as close as family.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 112,
+     "t": 217,
+     "year": 19,
+     "season": "winter",
+     "kind": "fire",
+     "group": "hardship",
+     "actors": [
+      21,
+      22
+     ],
+     "text": "Fire guts Avice's tavern.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 113,
+     "t": 217,
+     "year": 19,
+     "season": "winter",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      21,
+      12
+     ],
+     "text": "Avice borrows 50 silver from Nicol.",
+     "causes": [
+      112
+     ],
+     "secret": false
+    },
+    {
+     "id": 114,
+     "t": 221,
+     "year": 19,
+     "season": "summer",
+     "kind": "marriage",
+     "group": "love",
+     "actors": [
+      10,
+      27
+     ],
+     "text": "Philippa marries Merrick.",
+     "causes": [
+      110
+     ],
+     "secret": false
+    },
+    {
+     "id": 115,
+     "t": 221,
+     "year": 19,
+     "season": "summer",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      0,
+      27
+     ],
+     "text": "Ulric had hoped to marry Philippa, and turns cold on Merrick.",
+     "causes": [
+      114
+     ],
+     "secret": false
+    },
+    {
+     "id": 116,
+     "t": 221,
+     "year": 19,
+     "season": "summer",
+     "kind": "jealousy",
+     "group": "love",
+     "actors": [
+      29,
+      27
+     ],
+     "text": "Edric had hoped to marry Philippa, and turns cold on Merrick.",
+     "causes": [
+      114
+     ],
+     "secret": false
+    },
+    {
+     "id": 117,
+     "t": 229,
+     "year": 20,
+     "season": "winter",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      10,
+      27,
+      50
+     ],
+     "text": "Philippa and Merrick have a son, Hugh.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 118,
+     "t": 231,
+     "year": 20,
+     "season": "spring",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      7,
+      17
+     ],
+     "text": "Godric and Edda start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 119,
+     "t": 234,
+     "year": 20,
+     "season": "summer",
+     "kind": "forbids",
+     "group": "love",
+     "actors": [
+      16,
+      17,
+      7
+     ],
+     "text": "Maud forbids Edda to see Godric: no Hale marries beneath them.",
+     "causes": [
+      118
+     ],
+     "secret": false
+    },
+    {
+     "id": 120,
+     "t": 247,
+     "year": 21,
+     "season": "summer",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      23,
+      26
+     ],
+     "text": "Corin and Rosa begin an affair behind Mara and Kit's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 121,
+     "t": 252,
+     "year": 22,
+     "season": "winter",
+     "kind": "fire",
+     "group": "hardship",
+     "actors": [
+      23,
+      7,
+      31,
+      33
+     ],
+     "text": "Fire guts Corin's mason's yard.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 122,
+     "t": 252,
+     "year": 22,
+     "season": "winter",
+     "kind": "gift",
+     "group": "bond",
+     "actors": [
+      24,
+      23
+     ],
+     "text": "Tilda gives Corin 20 silver to rebuild, and asks nothing back.",
+     "causes": [
+      121
+     ],
+     "secret": false
+    },
+    {
+     "id": 123,
+     "t": 258,
+     "year": 22,
+     "season": "summer",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      14,
+      29
+     ],
+     "text": "Isolde and Edric begin an affair behind Ermina's back.",
+     "causes": [],
+     "secret": true
+    },
+    {
+     "id": 124,
+     "t": 258,
+     "year": 22,
+     "season": "summer",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      37,
+      32
+     ],
+     "text": "Lise is apprenticed to Ermina, the carter.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 125,
+     "t": 262,
+     "year": 22,
+     "season": "autumn",
+     "kind": "runaway",
+     "group": "love",
+     "actors": [
+      7,
+      17,
+      16
+     ],
+     "text": "Rather than give each other up, Godric and Edda run off together, defying Maud.",
+     "causes": [
+      119
+     ],
+     "secret": false
+    },
+    {
+     "id": 126,
+     "t": 267,
+     "year": 23,
+     "season": "spring",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      5
+     ],
+     "text": "Gwen dies of a bad heart, leaving Nicol a widower.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 127,
+     "t": 267,
+     "year": 23,
+     "season": "spring",
+     "kind": "drink",
+     "group": "life",
+     "actors": [
+      12
+     ],
+     "text": "Nicol takes to drink.",
+     "causes": [
+      126
+     ],
+     "secret": false
+    },
+    {
+     "id": 128,
+     "t": 267,
+     "year": 23,
+     "season": "spring",
+     "kind": "closes",
+     "group": "money",
+     "actors": [
+      5
+     ],
+     "text": "With Gwen gone, the forge shuts.",
+     "causes": [
+      126
+     ],
+     "secret": false
+    },
+    {
+     "id": 129,
+     "t": 276,
+     "year": 24,
+     "season": "winter",
+     "kind": "sober",
+     "group": "life",
+     "actors": [
+      12
+     ],
+     "text": "Nicol gives up the drink.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 130,
+     "t": 281,
+     "year": 24,
+     "season": "summer",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      8
+     ],
+     "text": "Alard dies in his sleep, leaving Wenna a widow.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 131,
+     "t": 281,
+     "year": 24,
+     "season": "summer",
+     "kind": "drink",
+     "group": "life",
+     "actors": [
+      9
+     ],
+     "text": "Wenna takes to drink.",
+     "causes": [
+      130
+     ],
+     "secret": false
+    },
+    {
+     "id": 132,
+     "t": 281,
+     "year": 24,
+     "season": "summer",
+     "kind": "drink",
+     "group": "life",
+     "actors": [
+      11
+     ],
+     "text": "Clemence takes to drink.",
+     "causes": [
+      130
+     ],
+     "secret": false
+    },
+    {
+     "id": 133,
+     "t": 282,
+     "year": 24,
+     "season": "summer",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      9,
+      12
+     ],
+     "text": "Wenna and Nicol start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 134,
+     "t": 282,
+     "year": 24,
+     "season": "summer",
+     "kind": "borrow",
+     "group": "money",
+     "actors": [
+      35,
+      12
+     ],
+     "text": "Bennet borrows 40 silver from Nicol.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 135,
+     "t": 282,
+     "year": 24,
+     "season": "summer",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      33
+     ],
+     "text": "Wat dies of a wound gone bad, leaving Hawise a widow.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 136,
+     "t": 282,
+     "year": 24,
+     "season": "summer",
+     "kind": "drink",
+     "group": "life",
+     "actors": [
+      37
+     ],
+     "text": "Lise takes to drink.",
+     "causes": [
+      135
+     ],
+     "secret": false
+    },
+    {
+     "id": 137,
+     "t": 286,
+     "year": 24,
+     "season": "autumn",
+     "kind": "death",
+     "group": "life",
+     "actors": [
+      31
+     ],
+     "text": "Bette dies of a wound gone bad, leaving Quentin a widower.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 138,
+     "t": 286,
+     "year": 24,
+     "season": "autumn",
+     "kind": "drink",
+     "group": "life",
+     "actors": [
+      30
+     ],
+     "text": "Quentin takes to drink.",
+     "causes": [
+      137
+     ],
+     "secret": false
+    },
+    {
+     "id": 139,
+     "t": 286,
+     "year": 24,
+     "season": "autumn",
+     "kind": "inherit",
+     "group": "money",
+     "actors": [
+      30,
+      12
+     ],
+     "text": "Quentin inherits Bette's debt of 40 to Nicol.",
+     "causes": [
+      65,
+      137
+     ],
+     "secret": false
+    },
+    {
+     "id": 140,
+     "t": 287,
+     "year": 24,
+     "season": "winter",
+     "kind": "courting",
+     "group": "love",
+     "actors": [
+      30,
+      34
+     ],
+     "text": "Quentin and Hawise start courting.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 141,
+     "t": 287,
+     "year": 24,
+     "season": "winter",
+     "kind": "caught",
+     "group": "love",
+     "actors": [
+      22,
+      23,
+      26
+     ],
+     "text": "Mara catches Corin with Rosa.",
+     "causes": [
+      120
+     ],
+     "secret": false
+    },
+    {
+     "id": 142,
+     "t": 287,
+     "year": 24,
+     "season": "winter",
+     "kind": "drink",
+     "group": "life",
+     "actors": [
+      22
+     ],
+     "text": "Mara takes to drink.",
+     "causes": [
+      141
+     ],
+     "secret": false
+    },
+    {
+     "id": 143,
+     "t": 290,
+     "year": 25,
+     "season": "spring",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      41,
+      16
+     ],
+     "text": "Ysolde is apprenticed to Maud, the herbalist.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 144,
+     "t": 291,
+     "year": 25,
+     "season": "spring",
+     "kind": "sober",
+     "group": "life",
+     "actors": [
+      30
+     ],
+     "text": "Quentin gives up the drink.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 145,
+     "t": 291,
+     "year": 25,
+     "season": "spring",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      10,
+      27,
+      51
+     ],
+     "text": "Philippa and Merrick have a daughter, Jacoba.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 146,
+     "t": 292,
+     "year": 25,
+     "season": "spring",
+     "kind": "affair",
+     "group": "love",
+     "actors": [
+      23,
+      26
+     ],
+     "text": "Corin and Rosa can't stay apart, and start meeting in secret again.",
+     "causes": [
+      141
+     ],
+     "secret": true
+    },
+    {
+     "id": 147,
+     "t": 292,
+     "year": 25,
+     "season": "spring",
+     "kind": "repay",
+     "group": "money",
+     "actors": [
+      25,
+      9
+     ],
+     "text": "Kit pays Wenna back in full.",
+     "causes": [
+      50
+     ],
+     "secret": false
+    },
+    {
+     "id": 148,
+     "t": 295,
+     "year": 25,
+     "season": "summer",
+     "kind": "birth",
+     "group": "life",
+     "actors": [
+      32,
+      29,
+      52
+     ],
+     "text": "Ermina and Edric have a son, Lambert.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 149,
+     "t": 295,
+     "year": 25,
+     "season": "summer",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      42,
+      32
+     ],
+     "text": "Harl is apprenticed to Ermina, the carter.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 150,
+     "t": 296,
+     "year": 25,
+     "season": "autumn",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      43,
+      0
+     ],
+     "text": "Tobin is apprenticed to Ulric, the cooper.",
+     "causes": [],
+     "secret": false
+    },
+    {
+     "id": 151,
+     "t": 299,
+     "year": 25,
+     "season": "winter",
+     "kind": "apprentice",
+     "group": "bond",
+     "actors": [
+      45,
+      21
+     ],
+     "text": "Beatrix is apprenticed to Avice, the tavern keeper.",
+     "causes": [],
+     "secret": false
+    }
+   ]
+  },
+  {
+   "seed": 4,
+   "events": 239,
+   "people_ever": 51,
+   "sha256": "92bf7983b46a11d03200c007040341f8f0d8091b0545b9155ea3d27e8b8a875f",
+   "first_events": [
+    "Denis and Fenna Burl are married.",
+    "Ulric and Gwen Marsh are brother and sister and share a house.",
+    "Lambert and Greta Cobb are married.",
+    "Piers and Kat Barrow are married.",
+    "Hugh and Martin Garrow are brothers and share a house.",
+    "Godric and Ysolde Crane are married.",
+    "Lowen and Rosa Brook are married.",
+    "Aldric Orme, a carter, moves to town."
+   ],
+   "last_event": "Martin and Godric come to blows at the tavern."
+  },
+  {
+   "seed": 5,
+   "events": 208,
+   "people_ever": 49,
+   "sha256": "110421f46fb5840f9004a3030815b8c1c640a2f19abe72af12e01669a21a5a13",
+   "first_events": [
+    "Elias and Petra Rook are married.",
+    "Jory and Dulcie Garrow are married.",
+    "Edric and Juliana Esk are married.",
+    "Simon and Wenna Burl are married.",
+    "Joan Marsh, a widow, is raising Arnold alone.",
+    "Gilbert and Fulk Fenn are brothers and share a house.",
+    "Lowen and Edda Nash are married.",
+    "Bennet and Rohese Ayre are married."
+   ],
+   "last_event": "Alys borrows 40 silver from Lowen."
+  },
+  {
+   "seed": 6,
+   "events": 166,
+   "people_ever": 48,
+   "sha256": "7ed11f407e3b8d31ffdab4e10a3e84772ff9c9ac3763e71baba0c2d382886b63",
+   "first_events": [
+    "Harl and Bette Dunn are married.",
+    "Nicol and Kat Garrow are married.",
+    "Emma and Maud Rook are sisters and share a house.",
+    "Elias Kemp, a widower, is raising Beatrix alone.",
+    "Herve and Hild Cobb are married.",
+    "Edric and Fenna Tull are married.",
+    "Conrad and Clemence Fenn are married.",
+    "Fulk and Mabel Ashby are married."
+   ],
+   "last_event": "Hild and Ulric start courting."
+  },
+  {
+   "seed": 7,
+   "events": 98,
+   "people_ever": 41,
+   "sha256": "91c590b49d63869d781e7d7d55ebf749761273006ce0bca4c5427997573fc694",
+   "first_events": [
+    "Helois Dale, a widow, is raising Simon alone.",
+    "Lambert and Isolde Cobb are married.",
+    "Fulk and Tilda Holt are married.",
+    "Drogo and Alys Lowe are married.",
+    "Willa Nash, a widow, is raising Hawise alone.",
+    "Sybil Vane, a widow, is raising Lettice alone.",
+    "Tobin and Hild Rook are married.",
+    "Aldric and Ned Esk are brothers and share a house."
+   ],
+   "last_event": "Mara borrows 40 silver from Fulk."
+  },
+  {
+   "seed": 8,
+   "events": 159,
+   "people_ever": 48,
+   "sha256": "88f24a8bce94ba5f6c2c355ca45f049f4dfe38b9a98b3f578553160ef77ca7d9",
+   "first_events": [
+    "Una Hale, a widow, is raising Helois alone.",
+    "Bennet and Sabine Crane are married.",
+    "Jory and Jacoba Croft are married.",
+    "Drogo Wren, a widower, is raising Rosa and Lise alone.",
+    "Hugh and Hawise Sallow are married.",
+    "Simon and Corin Vane are brothers and share a house.",
+    "Fulk and Petra Brook are married.",
+    "Maud Orme, a widow, is raising Edda alone."
+   ],
+   "last_event": "Alard is apprenticed to Corin, the fisher."
+  },
+  {
+   "seed": 9,
+   "events": 225,
+   "people_ever": 51,
+   "sha256": "3605760d7cf65456dd9174ca8920b0adeff60c6a5186df0f855c594c9aa25f87",
+   "first_events": [
+    "Hugh Kemp, a widower, is raising Cecily alone.",
+    "Yves and Wenna Esk are married.",
+    "Jack and Rosa Burl are married.",
+    "Edric and Greta Hale are married.",
+    "Martin and Gwen Webb are married.",
+    "Colin and Petra Crane are married.",
+    "Conrad and Bette Wren are married.",
+    "Simon and Emma Mercer are married."
+   ],
+   "last_event": "Simon blames Helois for the missing silver."
+  },
+  {
+   "seed": 10,
+   "events": 116,
+   "people_ever": 48,
+   "sha256": "f8b12fcecb43fc5d9ae07b2b5acbec439eabda1728f5d263e88b4e279e74b374",
+   "first_events": [
+    "Nell Dunn, a widow, is raising Dulcie alone.",
+    "Harl and Ermina Sallow are married.",
+    "Odile and Fenna Pike are sisters and share a house.",
+    "Sewin and Helois Crane are married.",
+    "Fulk and Bette Mercer are married.",
+    "Elena and Edric Croft are brother and sister and share a house.",
+    "Ivo and Cecily Kemp are married.",
+    "Tam and Maud Barrow are married."
+   ],
+   "last_event": "Odile and Bram start courting."
+  }
+ ]
+}

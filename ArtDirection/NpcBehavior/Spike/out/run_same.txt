@@ -1,0 +1,99 @@
+{
+ "towns": 1000,
+ "people": 40,
+ "keep_rate": 0.495,
+ "never_passed": 0,
+ "secs_per_kept_town": 2.71,
+ "headlines_distinct": 182,
+ "headline_most_common": {
+  "kinds": "blame + silence + theft",
+  "share": 0.125
+ },
+ "same_headline_chance": 0.039,
+ "top_headlines": [
+  {
+   "kinds": "blame + silence + theft",
+   "share": 0.125
+  },
+  {
+   "kinds": "affair + caught + fight",
+   "share": 0.08
+  },
+  {
+   "kinds": "callin + silence + theft",
+   "share": 0.064
+  },
+  {
+   "kinds": "blame + callin + theft",
+   "share": 0.058
+  },
+  {
+   "kinds": "hardtimes + silence + theft",
+   "share": 0.043
+  },
+  {
+   "kinds": "affair + caught + parentage",
+   "share": 0.035
+  },
+  {
+   "kinds": "affair + caught + drink",
+   "share": 0.032
+  },
+  {
+   "kinds": "blame + fight + theft",
+   "share": 0.03
+  }
+ ],
+ "kind_in_headline": {
+  "theft": 0.497,
+  "blame": 0.345,
+  "callin": 0.288,
+  "silence": 0.286,
+  "affair": 0.233,
+  "caught": 0.212,
+  "fight": 0.204,
+  "hardtimes": 0.186,
+  "flood": 0.128,
+  "drink": 0.081,
+  "feud": 0.062,
+  "sabotage": 0.057
+ },
+ "shapes_total": 587,
+ "shapes_per_town": 24.6,
+ "overlap": 0.172,
+ "top": [
+  {
+   "shape": "courting → marriage → peace",
+   "towns": 0.788
+  },
+  {
+   "shape": "affair → caught → peace",
+   "towns": 0.639
+  },
+  {
+   "shape": "courting → marriage → jealousy",
+   "towns": 0.624
+  },
+  {
+   "shape": "theft → blame → peace",
+   "towns": 0.608
+  },
+  {
+   "shape": "affair → caught → affair",
+   "towns": 0.564
+  },
+  {
+   "shape": "caught → affair → caught",
+   "towns": 0.527
+  },
+  {
+   "shape": "affair → caught → fight",
+   "towns": 0.523
+  },
+  {
+   "shape": "courting → marriage → drink",
+   "towns": 0.503
+  }
+ ],
+ "kinds_used": 55
+}

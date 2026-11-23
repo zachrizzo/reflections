@@ -1,0 +1,82 @@
+[
+ {
+  "label": "Version 1: five people",
+  "note": "the first test",
+  "keep_rate": 0.071,
+  "shapes_per_town": 6.8,
+  "overlap": 0.137,
+  "top": [
+   {
+    "shape": "borrow → callin → takeover",
+    "towns": 0.6
+   },
+   {
+    "shape": "callin → takeover → borrow",
+    "towns": 0.42
+   },
+   {
+    "shape": "courting → marriage → jealousy",
+    "towns": 0.36
+   }
+  ]
+ },
+ {
+  "label": "Forty people, families and births",
+  "note": "about 50 kinds of event",
+  "keep_rate": 0.877,
+  "shapes_per_town": 27.5,
+  "overlap": 0.237,
+  "top": [
+   {
+    "shape": "courting → marriage → jealousy",
+    "towns": 0.99
+   },
+   {
+    "shape": "affair → caught → peace",
+    "towns": 0.95
+   }
+  ]
+ },
+ {
+  "label": "More ways for each situation to end",
+  "note": "heartbreak, affairs and blame branch by temperament",
+  "keep_rate": 0.806,
+  "shapes_per_town": 31.7,
+  "overlap": 0.262,
+  "top": [
+   {
+    "shape": "courting → marriage → jealousy",
+    "towns": 0.97
+   },
+   {
+    "shape": "affair → caught → peace",
+    "towns": 0.85
+   },
+   {
+    "shape": "courting → marriage → drink",
+    "towns": 0.83
+   }
+  ]
+ },
+ {
+  "label": "A temperament for each town",
+  "note": "some traits common, some kinds of trouble louder",
+  "keep_rate": 0.84,
+  "shapes_per_town": 32.8,
+  "overlap": 0.241,
+  "top": [
+   {
+    "shape": "courting → marriage → jealousy",
+    "towns": 0.93
+   },
+   {
+    "shape": "affair → caught → feud",
+    "towns": 0.83
+   },
+   {
+    "shape": "courting → marriage → drink",
+    "towns": 0.8
+   }
+  ]
+ }
+]

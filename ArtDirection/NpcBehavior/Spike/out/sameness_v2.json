@@ -1,0 +1,99 @@
+{
+ "towns": 100,
+ "people": 40,
+ "keep_rate": 0.806,
+ "shapes_total": 321,
+ "shapes_per_town": 31.7,
+ "overlap": 0.262,
+ "top": [
+  {
+   "shape": "courting → marriage → jealousy",
+   "towns": 0.97
+  },
+  {
+   "shape": "affair → caught → peace",
+   "towns": 0.85
+  },
+  {
+   "shape": "courting → marriage → drink",
+   "towns": 0.83
+  },
+  {
+   "shape": "theft → blame → fight",
+   "towns": 0.78
+  },
+  {
+   "shape": "theft → blame → peace",
+   "towns": 0.78
+  },
+  {
+   "shape": "affair → caught → feud",
+   "towns": 0.76
+  },
+  {
+   "shape": "affair → caught → fight",
+   "towns": 0.73
+  },
+  {
+   "shape": "courting → marriage → peace",
+   "towns": 0.73
+  }
+ ],
+ "kinds_used": 54,
+ "kinds": {
+  "borrow": 1606,
+  "birth": 1362,
+  "marriage": 1208,
+  "courting": 889,
+  "theft": 714,
+  "blame": 709,
+  "death": 699,
+  "callin": 688,
+  "unrequited": 678,
+  "affair": 671,
+  "apprentice": 642,
+  "peace": 588,
+  "caught": 569,
+  "arrival": 534,
+  "fight": 529,
+  "friends": 514,
+  "drink": 487,
+  "rivalry": 472,
+  "accident": 452,
+  "hardtimes": 394,
+  "silence": 391,
+  "jealousy": 383,
+  "family": 333,
+  "inherit_wp": 318,
+  "feud": 293,
+  "hire": 224,
+  "closes": 223,
+  "rumor": 206,
+  "inherit": 186,
+  "repay": 180,
+  "buys": 175,
+  "sober": 138,
+  "slip": 117,
+  "takeover": 114,
+  "forbids": 98,
+  "harvest": 96,
+  "flood": 95,
+  "fever": 90,
+  "gift": 88,
+  "fire": 75,
+  "forgive_debt": 73,
+  "exposed": 71,
+  "blackmail": 62,
+  "elope": 53,
+  "sabotage": 53,
+  "leaves": 50,
+  "separation": 33,
+  "runaway": 32,
+  "parentage": 19,
+  "adopt": 17,
+  "killing": 14,
+  "found": 14,
+  "confess": 12,
+  "exiled": 2
+ }
+}

@@ -1,0 +1,383 @@
+<title>Five Intertwined Lives</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one wide band per question. Who they are, their lives as threads across 25 years
+   (each mark a moment two lives touch), the year-by-year register, then the town on the day
+   the player arrives. Cool register paper, ink-blue accent; colour carries the kind of event. */
+:root {
+  --bg: #eef1f4;
+  --surface: #ffffff;
+  --ink: #1b2330;
+  --muted: #5b6676;
+  --line: #d3d9e1;
+  --accent: #2d5b88;
+  --love: #c03d68;
+  --money: #a86f12;
+  --crime: #6a45bf;
+  --conflict: #c4302f;
+  --hardship: #2f7aa3;
+  --life: #687280;
+  --warm: #2f8a5b;
+  --family: #2f8a5b;
+  --dim: 0.16;
+  --font-display: "Literata", "Georgia", "Times New Roman", serif;
+  --font-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-data: "IBM Plex Mono", "Consolas", "Menlo", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e131a; --surface: #161d27; --ink: #e5eaf0; --muted: #98a4b4; --line: #2a3441;
+    --accent: #84b3e2; --love: #f07aa0; --money: #e2ab4c; --crime: #a98ff2; --conflict: #f17474;
+    --hardship: #6db4dc; --life: #9aa3ae; --warm: #5fc792; --family: #5fc792; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e131a; --surface: #161d27; --ink: #e5eaf0; --muted: #98a4b4; --line: #2a3441;
+  --accent: #84b3e2; --love: #f07aa0; --money: #e2ab4c; --crime: #a98ff2; --conflict: #f17474;
+  --hardship: #6db4dc; --life: #9aa3ae; --warm: #5fc792; --family: #5fc792; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+}
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+  display: flex; flex-direction: column; gap: 28px;
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.3rem; font-weight: 600; }
+h3 { font-size: 1rem; font-weight: 600; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 68ch; }
+.eyebrow { font-family: var(--font-data); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header { display: flex; flex-direction: column; gap: 10px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.tab {
+  font: inherit; font-size: 0.9rem; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  border-radius: 999px; padding: 6px 14px; cursor: pointer;
+}
+.tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.tab:focus-visible, .mark:focus-visible, .row:focus-visible, .chip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.townline { font-size: 0.88rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+section { display: flex; flex-direction: column; gap: 12px; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.hint { font-size: 0.85rem; color: var(--muted); }
+
+/* the five */
+.cast { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 10px; }
+.person {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 6px; cursor: pointer; text-align: left; font: inherit; color: inherit;
+}
+.person[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.person .name { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; }
+.person .meta { font-size: 0.85rem; color: var(--muted); }
+.traits { display: flex; flex-wrap: wrap; gap: 4px; }
+.trait { font-size: 0.75rem; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; color: var(--muted); }
+.status { font-family: var(--font-data); font-size: 0.75rem; color: var(--muted); }
+.status.dead, .status.gone { color: var(--conflict); }
+
+/* lives chart */
+.chart-box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 6px 6px; overflow-x: auto; }
+.chart-box svg { display: block; width: 100%; min-width: 760px; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.ring { width: 10px; height: 10px; border-radius: 50%; display: inline-block; border: 2px dashed var(--muted); flex: none; }
+svg text { font-family: var(--font-body); fill: var(--ink); }
+svg .axis { font-family: var(--font-data); font-size: 11px; fill: var(--muted); }
+svg .lane-name { font-family: var(--font-display); font-weight: 600; font-size: 14px; }
+svg .lane-job { font-size: 11px; fill: var(--muted); }
+.mark { cursor: pointer; }
+.faded { opacity: var(--dim); }
+
+/* detail */
+.detail { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.detail .when { font-family: var(--font-data); font-size: 0.8rem; color: var(--muted); }
+.detail .what { font-family: var(--font-display); font-size: 1.15rem; }
+.links { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.links h3 { font-family: var(--font-body); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.chip-btn {
+  display: flex; gap: 8px; align-items: baseline; width: 100%; text-align: left; font: inherit; font-size: 0.9rem;
+  background: none; border: 0; border-top: 1px solid var(--line); padding: 6px 0; color: var(--ink); cursor: pointer;
+}
+.chip-btn .y { font-family: var(--font-data); font-size: 0.75rem; color: var(--muted); flex: none; width: 58px; }
+.none { font-size: 0.88rem; color: var(--muted); }
+.badge { font-family: var(--font-data); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; border: 1px dashed var(--muted); color: var(--muted); border-radius: 4px; padding: 0 5px; }
+
+/* lower */
+.lower { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 900px) { .lower { grid-template-columns: minmax(0, 1fr); } }
+.register { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.row { display: grid; grid-template-columns: 76px 12px minmax(0, 1fr); gap: 4px 10px; padding: 9px 14px; border-top: 1px solid var(--line); cursor: pointer; }
+.row:first-child { border-top: 0; }
+.row .y { font-family: var(--font-data); font-size: 0.75rem; color: var(--muted); padding-top: 3px; font-variant-numeric: tabular-nums; }
+.row .dot { margin-top: 6px; }
+.row .txt { font-family: var(--font-display); font-size: 0.98rem; }
+.row .why { grid-column: 3; font-size: 0.8rem; color: var(--muted); }
+.row.on { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.row.faded { opacity: 0.35; }
+
+.web-box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+.web-box svg { display: block; width: 100%; max-width: 460px; height: auto; margin: 0 auto; }
+.ties { display: flex; flex-direction: column; }
+.tie { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 0.88rem; }
+.tie .pair { font-weight: 600; }
+.tie .labels { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.lab { display: inline-flex; align-items: center; gap: 5px; }
+.people-now { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.now { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.now .name { font-family: var(--font-display); font-weight: 600; font-size: 1.02rem; }
+.now dl { margin: 0; display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 4px 8px; }
+.now dt { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+.now dd { margin: 0; }
+.now ul { margin: 0; padding-left: 16px; }
+footer { font-size: 0.85rem; color: var(--muted); max-width: 80ch; display: flex; flex-direction: column; gap: 6px; }
+code { font-family: var(--font-data); font-size: 0.82em; }
+@media (prefers-reduced-motion: no-preference) { .mark, .row, .lane { transition: opacity 160ms ease; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Reflections · NPC life generator · throwaway test</span>
+    <h1>Five lives, twenty-five years</h1>
+    <p class="lede">Each town starts with five strangers. The generator runs 25 years forward a month at a time, and about thirty rules decide what happens: debts, love, theft, blame, fever, floods. Every event remembers what caused it. Tap any mark or line to follow the chain.</p>
+    <div class="tabs" id="tabs" role="group" aria-label="Choose a town"></div>
+    <p class="townline" id="townline"></p>
+  </header>
+
+  <section aria-labelledby="h-cast">
+    <div class="section-head"><h2 id="h-cast">The five</h2><span class="hint">Tap a person to show only their life.</span></div>
+    <div class="cast" id="cast"></div>
+  </section>
+
+  <section aria-labelledby="h-lives">
+    <div class="section-head"><h2 id="h-lives">How their lives cross</h2><span class="hint">Each line is a life. A vertical stroke is a moment two or more lives touch.</span></div>
+    <div class="legend" id="legend"></div>
+    <div class="chart-box"><svg id="chart" role="img" aria-label="Timeline of five lives"></svg></div>
+    <div class="detail" id="detail" aria-live="polite"></div>
+  </section>
+
+  <div class="lower">
+    <section aria-labelledby="h-reg">
+      <div class="section-head"><h2 id="h-reg">Year by year</h2><span class="hint">The full record, with each event's cause.</span></div>
+      <div class="register" id="register"></div>
+    </section>
+    <section aria-labelledby="h-now">
+      <div class="section-head"><h2 id="h-now">The day the player arrives</h2></div>
+      <div class="web-box"><svg id="web" viewBox="0 0 460 400" role="img" aria-label="How the five stand with each other now"></svg></div>
+      <div class="ties" id="ties"></div>
+      <div class="people-now" id="now"></div>
+    </section>
+  </div>
+
+  <footer id="footer"></footer>
+</div>
+
+<script>
+const TOWNS = /*TOWNS*/null;
+const GROUPS = { love: "Love", money: "Money", crime: "Theft and secrets", conflict: "Grudges", hardship: "Hard times", life: "Life and death" };
+let ti = 0, sel = null, focus = null;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const col = (g) => `var(--${g})`;
+
+function town() { return TOWNS[ti]; }
+function byId(t) { const m = {}; t.events.forEach((e) => (m[e.id] = e)); return m; }
+function kids(t) { const k = {}; t.events.forEach((e) => e.causes.forEach((c) => (k[c] = k[c] || []).push(e.id))); return k; }
+function walk(start, next) { const seen = new Set(); const st = [start]; while (st.length) { const x = st.pop(); (next(x) || []).forEach((y) => { if (!seen.has(y)) { seen.add(y); st.push(y); } }); } return seen; }
+function related(t, id) {
+  const m = byId(t), k = kids(t);
+  const up = walk(id, (x) => m[x].causes), down = walk(id, (x) => k[x]);
+  return new Set([id, ...up, ...down]);
+}
+function when(e) { return `Year ${e.year}, ${e.season}`; }
+function deepest(t) {
+  const d = {}; let best = null;
+  t.events.forEach((e) => { d[e.id] = 1 + Math.max(0, ...e.causes.map((c) => d[c])); if (!best || d[e.id] > d[best.id]) best = e; });
+  return best ? best.id : null;
+}
+
+function renderTabs() {
+  $("tabs").innerHTML = TOWNS.map((t, i) => `<button class="tab" type="button" id="tab-${i}" aria-pressed="${i === ti}" data-i="${i}">Town ${i + 1} <span style="opacity:.7">· seed ${t.seed}</span></button>`).join("");
+  const t = town();
+  const secrets = t.people.reduce((n, p) => n + p.hides.length, 0);
+  const wrong = t.people.reduce((n, p) => n + p.believes.filter((b) => b.includes("Wrong")).length, 0);
+  $("townline").textContent = `${t.events.length} events · ${secrets} secret${secrets === 1 ? "" : "s"} still kept · ${wrong} wrong accusation${wrong === 1 ? "" : "s"} still believed · re-rolled ${t.rerolls} dull town${t.rerolls === 1 ? "" : "s"} first`;
+}
+
+function endOf(t, p) {
+  const e = t.events.find((e) => (e.kind === "death" || e.kind === "leaves") && e.actors[0] === p.id);
+  return e ? e.t : t.years * 12;
+}
+function statusLine(p) {
+  if (p.status === "dead") return `<span class="status dead">Died in year ${p.died_year}</span>`;
+  if (p.status === "left town") return `<span class="status gone">Left town</span>`;
+  return `<span class="status">Now ${p.age}</span>`;
+}
+function renderCast() {
+  const t = town();
+  $("cast").innerHTML = t.people.map((p) => `
+    <button class="person" type="button" id="person-${p.id}" data-p="${p.id}" aria-pressed="${focus === p.id}">
+      <span class="name">${esc(p.name)}</span>
+      <span class="meta">${esc(cap(p.job))} · ${p.age0} at the start</span>
+      <span class="traits">${p.traits.map((x) => `<span class="trait">${esc(x)}</span>`).join("")}</span>
+      ${statusLine(p)}
+    </button>`).join("");
+}
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function renderLegend() {
+  $("legend").innerHTML = Object.entries(GROUPS).map(([g, n]) => `<span><i class="dot" style="background:${col(g)}"></i>${n}</span>`).join("") +
+    `<span><i class="ring"></i>Secret: only those involved know</span>`;
+}
+
+function renderChart() {
+  const t = town(), n = t.people.length, months = t.years * 12;
+  const L = 132, R = 1000, top = 34, laneH = 58, W = 1020, H = top + n * laneH + 8;
+  const x = (m) => L + (m / months) * (R - L);
+  const y = (i) => top + i * laneH + laneH / 2;
+  const rel = sel !== null ? related(t, sel) : null;
+  const lit = (e) => (rel ? rel.has(e.id) : true) && (focus === null || e.actors.includes(focus));
+  let s = "";
+  for (let yr = 0; yr <= t.years; yr += 5) {
+    const m = yr * 12, xx = x(m);
+    s += `<line x1="${xx}" y1="${top - 8}" x2="${xx}" y2="${H - 6}" stroke="var(--line)" stroke-width="1"/>`;
+    s += `<text class="axis" x="${xx}" y="${top - 14}" text-anchor="middle">${yr === 0 ? "Year 1" : "Year " + yr}</text>`;
+  }
+  t.people.forEach((p, i) => {
+    const end = endOf(t, p), faded = focus !== null && focus !== p.id ? ` class="lane faded"` : ` class="lane"`;
+    s += `<g${faded}>`;
+    s += `<text class="lane-name" x="8" y="${y(i) - 2}">${esc(p.first)}</text>`;
+    s += `<text class="lane-job" x="8" y="${y(i) + 14}">${esc(p.job)}</text>`;
+    s += `<line x1="${x(0)}" y1="${y(i)}" x2="${x(end)}" y2="${y(i)}" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/>`;
+    if (end < months) {
+      if (p.status === "dead") s += `<path d="M${x(end) - 5} ${y(i) - 5} L${x(end) + 5} ${y(i) + 5} M${x(end) + 5} ${y(i) - 5} L${x(end) - 5} ${y(i) + 5}" stroke="var(--ink)" stroke-width="2"/>`;
+      else s += `<path d="M${x(end)} ${y(i) - 5} L${x(end) + 8} ${y(i)} L${x(end)} ${y(i) + 5}" fill="var(--muted)"/>`;
+      s += `<line x1="${x(end)}" y1="${y(i)}" x2="${x(months)}" y2="${y(i)}" stroke="var(--line)" stroke-width="2" stroke-dasharray="2 5"/>`;
+    }
+    s += `</g>`;
+  });
+  const slot = {};
+  t.events.forEach((e) => {
+    const k = e.t; slot[k] = (slot[k] || 0) + 1;
+    const xx = x(e.t) + (slot[k] - 1) * 9;
+    const lanes = e.actors.map((a) => y(a));
+    const c = col(e.group), on = lit(e), selCls = e.id === sel;
+    s += `<g class="mark${on ? "" : " faded"}" data-e="${e.id}" tabindex="0" role="button" aria-label="${esc(when(e) + ": " + e.text)}">`;
+    if (lanes.length > 1) {
+      s += `<line x1="${xx}" y1="${Math.min(...lanes)}" x2="${xx}" y2="${Math.max(...lanes)}" stroke="${c}" stroke-width="${selCls ? 4 : 2.5}"${e.group === "hardship" ? ' stroke-dasharray="4 3"' : ""}/>`;
+    }
+    lanes.forEach((ly) => {
+      if (e.secret) s += `<circle cx="${xx}" cy="${ly}" r="${selCls ? 8 : 6}" fill="var(--surface)" stroke="${c}" stroke-width="2.5" stroke-dasharray="3 2"/>`;
+      else s += `<circle cx="${xx}" cy="${ly}" r="${selCls ? 8 : 6}" fill="${c}" stroke="var(--surface)" stroke-width="1.5"/>`;
+    });
+    s += `<rect x="${xx - 8}" y="${Math.min(...lanes) - 10}" width="16" height="${Math.max(...lanes) - Math.min(...lanes) + 20}" fill="transparent"/>`;
+    s += `</g>`;
+  });
+  const svg = $("chart");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = s;
+}
+
+function eventButton(e) {
+  return `<button class="chip-btn" type="button" data-e="${e.id}"><span class="y">Yr ${e.year}</span><span><i class="dot" style="background:${col(e.group)};margin-right:6px"></i>${esc(e.text)}</span></button>`;
+}
+function renderDetail() {
+  const t = town();
+  if (sel === null) { $("detail").innerHTML = `<p class="none">Tap any mark to see what caused it and what it led to.</p>`; return; }
+  const m = byId(t), k = kids(t), e = m[sel];
+  const chain = related(t, sel).size;
+  const causes = e.causes.map((c) => m[c]), led = (k[e.id] || []).map((c) => m[c]);
+  $("detail").style.borderLeftColor = col(e.group);
+  $("detail").innerHTML = `
+    <div class="when">${when(e)} · ${GROUPS[e.group]}${e.secret ? ' · <span class="badge">secret</span>' : ""}</div>
+    <div class="what">${esc(e.text)}</div>
+    <div class="links">
+      <div><h3>Because</h3>${causes.length ? causes.map(eventButton).join("") : `<p class="none">${e.group === "hardship" ? "Bad luck: the town's director rolled it." : "Nothing before it. It came from who they are."}</p>`}</div>
+      <div><h3>Led to</h3>${led.length ? led.map(eventButton).join("") : `<p class="none">Nothing yet. It's still open when the player arrives.</p>`}</div>
+    </div>
+    <p class="none">${chain} event${chain === 1 ? "" : "s"} in this chain are lit on the timeline and in the register.${focus !== null ? " Showing one person's life; tap their card again to see everyone." : ""}</p>`;
+}
+
+function renderRegister() {
+  const t = town(), m = byId(t);
+  const rel = sel !== null ? related(t, sel) : null;
+  $("register").innerHTML = t.events.map((e) => {
+    const on = e.id === sel, faded = (rel && !rel.has(e.id)) || (focus !== null && !e.actors.includes(focus));
+    const why = e.causes.length ? `<span class="why">Because ${e.causes.map((c) => esc(lower(m[c].text))).join("; ")}</span>` : "";
+    return `<div class="row${on ? " on" : ""}${faded ? " faded" : ""}" data-e="${e.id}" tabindex="0" role="button">
+      <span class="y">Yr ${e.year} · ${e.season.slice(0, 3)}</span><i class="dot" style="background:${col(e.group)}"></i>
+      <span class="txt">${esc(e.text)}${e.secret ? ' <span class="badge">secret</span>' : ""}</span>${why}</div>`;
+  }).join("");
+}
+const lower = (s) => { const t = s.replace(/\.$/, ""); return /^(The|Fever|Fire|Guilt)\b/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; };
+
+const TIE_ORDER = ["crime", "love", "conflict", "money", "warm", "family"];
+function renderWeb() {
+  const t = town(), n = t.people.length, cx = 230, cy = 196, r = 140;
+  const pos = t.people.map((p, i) => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / n; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; });
+  let s = "";
+  t.ties.forEach((tie) => {
+    const g = TIE_ORDER.find((g) => tie.labels.some((l) => l.group === g)) || "life";
+    const secret = tie.labels.some((l) => /secret|wrongly/.test(l.text));
+    const [x1, y1] = pos[tie.a], [x2, y2] = pos[tie.b];
+    const faded = focus !== null && tie.a !== focus && tie.b !== focus ? ' class="faded"' : "";
+    s += `<line${faded} x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col(g)}" stroke-width="${1.5 + tie.labels.length}" stroke-linecap="round"${secret ? ' stroke-dasharray="6 5"' : ""}/>`;
+  });
+  t.people.forEach((p, i) => {
+    const [x, y] = pos[i], here = p.status === "alive";
+    const faded = focus !== null && focus !== p.id ? ' class="faded"' : "";
+    s += `<g${faded}><circle cx="${x}" cy="${y}" r="27" fill="var(--surface)" stroke="${here ? "var(--ink)" : "var(--muted)"}" stroke-width="2"${here ? "" : ' stroke-dasharray="4 3"'}/>`;
+    s += `<text x="${x}" y="${y + 5}" text-anchor="middle" style="font-family:var(--font-display);font-weight:600;font-size:14px${here ? "" : ";fill:var(--muted)"}">${esc(p.first)}</text>`;
+    const sub = here ? `${p.age}, ${p.job}` : p.status === "dead" ? `died year ${p.died_year}` : "left town";
+    s += `<text x="${x}" y="${y > cy ? y + 44 : y - 35}" text-anchor="middle" style="font-size:11px;fill:var(--muted)">${esc(sub)}</text></g>`;
+  });
+  $("web").innerHTML = s;
+  const P = (i) => t.people[i].first;
+  $("ties").innerHTML = t.ties.filter((tie) => focus === null || tie.a === focus || tie.b === focus).map((tie) => `
+    <div class="tie"><span class="pair">${esc(P(tie.a))} &amp; ${esc(P(tie.b))}</span>
+    <span class="labels">${tie.labels.map((l) => `<span class="lab"><i class="dot" style="background:${col(l.group)}"></i>${esc(l.text)}</span>`).join("")}</span></div>`).join("");
+  $("now").innerHTML = t.people.filter((p) => focus === null || p.id === focus).map((p) => {
+    if (p.status !== "alive") return `<div class="now"><span class="name">${esc(p.name)}</span><span class="none">${p.status === "dead" ? `Died in year ${p.died_year}. Still remembered.` : "Left town. Still talked about."}</span></div>`;
+    const list = (a) => a.length ? `<ul>${a.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : `<span class="none">Nothing</span>`;
+    return `<div class="now"><span class="name">${esc(p.name)} <span class="status">· ${p.age}, ${esc(p.job)}</span></span>
+      <dl><dt>Wants</dt><dd>${esc(p.goal)}</dd><dt>Hides</dt><dd>${list(p.hides)}</dd><dt>Believes</dt><dd>${list(p.believes)}</dd></dl></div>`;
+  }).join("");
+}
+
+function renderFooter() {
+  const t = town(), sc = t.score;
+  $("footer").innerHTML = `
+    <p>Made by <code>ArtDirection/NpcBehavior/Spike/gen_lives.py</code>. This is a throwaway test of the rules, not game code. Names, jobs and numbers are placeholders until the setting is decided, and births are off so the cast stays at five.</p>
+    <p>A town is kept only if it scores as interesting: ${sc.tensions} open tensions, ${sc.pairs_linked} of ${sc.pairs_total} pairs of people linked by something that happened between them, and a longest chain of ${sc.longest_chain} events. Duller towns are quietly re-rolled with the next seed.</p>`;
+}
+
+function render() { renderTabs(); renderCast(); renderChart(); renderDetail(); renderRegister(); renderWeb(); renderFooter(); }
+function pick(id) { sel = sel === id ? null : id; render(); }
+
+document.addEventListener("click", (ev) => {
+  const tab = ev.target.closest(".tab");
+  if (tab) { ti = +tab.dataset.i; sel = deepest(town()); focus = null; render(); return; }
+  const person = ev.target.closest(".person");
+  if (person) { const p = +person.dataset.p; focus = focus === p ? null : p; if (focus !== null && sel !== null && !byId(town())[sel].actors.includes(focus)) sel = null; render(); return; }
+  const e = ev.target.closest("[data-e]");
+  if (e) pick(+e.dataset.e);
+});
+document.addEventListener("keydown", (ev) => {
+  if (ev.key !== "Enter" && ev.key !== " ") return;
+  const e = ev.target.closest && ev.target.closest(".mark, .row");
+  if (e) { ev.preventDefault(); pick(+e.dataset.e); }
+});
+
+renderLegend();
+sel = deepest(town());
+render();
+</script>

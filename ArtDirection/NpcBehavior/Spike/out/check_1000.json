@@ -1,0 +1,28 @@
+{
+ "towns": 4032,
+ "people": 40,
+ "years": 25,
+ "months_checked": 1209600,
+ "events_checked": 666735,
+ "problems": 0,
+ "towns_with_problems": 0,
+ "event_checks": [
+  "causes come first",
+  "nobody unborn, dead or gone takes part",
+  "no child in an adult event",
+  "everyone in an event is named in its text",
+  "no kin marry"
+ ],
+ "monthly_checks": [
+  "spouses agree and are alive",
+  "no child lives without a grown-up",
+  "open shops have an owner in town",
+  "workers are on one shop's books",
+  "open debts, secrets, beliefs, courtships and affairs have people in town",
+  "parents were 16 or older",
+  "no two living people go by the same name",
+  "money stays between -400 and 5,000",
+  "nobody over 100"
+ ],
+ "by_kind": {}
+}

@@ -1,0 +1,175 @@
+{
+ "towns": 112,
+ "wall_secs": 135,
+ "history": {
+  "replay_secs": 2.11,
+  "mean_memories": 39.9,
+  "max_memories": 40,
+  "share_heard": 0.8,
+  "share_older_than_10y": 0.15,
+  "share_lived": 0.2,
+  "knows_biggest_story": 0.76,
+  "towns_with_secret_leaks": 0,
+  "topics_in_use": 146,
+  "top_topics": [
+   {
+    "kind": "death",
+    "how": "heard",
+    "share": 0.126
+   },
+   {
+    "kind": "marriage",
+    "how": "heard",
+    "share": 0.076
+   },
+   {
+    "kind": "inherit_wp",
+    "how": "heard",
+    "share": 0.05
+   },
+   {
+    "kind": "caught",
+    "how": "heard",
+    "share": 0.049
+   },
+   {
+    "kind": "affair",
+    "how": "heard",
+    "share": 0.041
+   },
+   {
+    "kind": "blame",
+    "how": "heard",
+    "share": 0.04
+   },
+   {
+    "kind": "closes",
+    "how": "heard",
+    "share": 0.036
+   },
+   {
+    "kind": "birth",
+    "how": "heard",
+    "share": 0.035
+   },
+   {
+    "kind": "feud",
+    "how": "heard",
+    "share": 0.03
+   },
+   {
+    "kind": "callin",
+    "how": "heard",
+    "share": 0.028
+   },
+   {
+    "kind": "fight",
+    "how": "heard",
+    "share": 0.025
+   },
+   {
+    "kind": "borrow",
+    "how": "heard",
+    "share": 0.023
+   }
+  ]
+ },
+ "seen_theft_witness": {
+  "tells": 0.67,
+  "knows_by_day_when_told": {
+   "1": 0.145,
+   "2": 0.255,
+   "3": 0.381,
+   "7": 0.733,
+   "14": 0.94,
+   "30": 0.997
+  },
+  "knows_by_day_when_quiet": {
+   "1": 0.032,
+   "2": 0.032,
+   "3": 0.033,
+   "7": 0.064,
+   "14": 0.166,
+   "30": 0.332
+  }
+ },
+ "seen_killing_witness": {
+  "tells": 0.99,
+  "knows_by_day_when_told": {
+   "1": 0.23,
+   "2": 0.421,
+   "3": 0.588,
+   "7": 0.889,
+   "14": 0.96,
+   "30": 0.969
+  },
+  "knows_by_day_when_quiet": {
+   "1": 0.025,
+   "2": 0.025,
+   "3": 0.025,
+   "7": 0.025,
+   "14": 0.4,
+   "30": 0.95
+  }
+ },
+ "seen_theft": {
+  "knows_by_day": {
+   "1": 0.107,
+   "2": 0.181,
+   "3": 0.266,
+   "7": 0.512,
+   "14": 0.685,
+   "30": 0.778
+  },
+  "victim_learns_median_day": 1,
+  "victim_never_learns": 0.23,
+  "victim_learns_by_day_3": 0.67,
+  "against_player": 0.745,
+  "for_player": 0.0
+ },
+ "unseen_theft": {
+  "knows_by_day": {
+   "1": 0.0,
+   "2": 0.0,
+   "3": 0.0,
+   "7": 0.0,
+   "14": 0.0,
+   "30": 0.0
+  },
+  "victim_learns_median_day": null,
+  "victim_never_learns": 1.0,
+  "victim_learns_by_day_3": 0.0,
+  "against_player": 0.0,
+  "for_player": 0.0
+ },
+ "seen_killing": {
+  "knows_by_day": {
+   "1": 0.228,
+   "2": 0.417,
+   "3": 0.583,
+   "7": 0.882,
+   "14": 0.955,
+   "30": 0.969
+  },
+  "victim_learns_median_day": 1,
+  "victim_never_learns": 0.12,
+  "victim_learns_by_day_3": 0.88,
+  "against_player": 0.971,
+  "for_player": 0.0
+ },
+ "kindness": {
+  "knows_by_day": {
+   "1": 0.054,
+   "2": 0.081,
+   "3": 0.116,
+   "7": 0.264,
+   "14": 0.566,
+   "30": 0.874
+  },
+  "victim_learns_median_day": 1,
+  "victim_never_learns": 0.0,
+  "victim_learns_by_day_3": 1.0,
+  "against_player": 0.0,
+  "for_player": 0.652
+ }
+}

@@ -1,0 +1,57 @@
+{
+ "deterministic": true,
+ "sizes": [
+  {
+   "people": 20,
+   "towns": 196,
+   "problems": 0,
+   "secs_per_town": 0.36,
+   "pass_rate": 0.28,
+   "events_per_person_year": 0.125,
+   "people_now_vs_target": 1.01,
+   "killings_per_town": 0.05,
+   "thefts_per_100_people": 11.2,
+   "marriages_per_100_people": 28.3,
+   "wall_secs": 6.6
+  },
+  {
+   "people": 40,
+   "towns": 196,
+   "problems": 0,
+   "secs_per_town": 1.28,
+   "pass_rate": 0.54,
+   "events_per_person_year": 0.135,
+   "people_now_vs_target": 0.99,
+   "killings_per_town": 0.06,
+   "thefts_per_100_people": 9.8,
+   "marriages_per_100_people": 32.3,
+   "wall_secs": 18.5
+  },
+  {
+   "people": 80,
+   "towns": 56,
+   "problems": 0,
+   "secs_per_town": 5.48,
+   "pass_rate": 0.79,
+   "events_per_person_year": 0.152,
+   "people_now_vs_target": 0.95,
+   "killings_per_town": 0.12,
+   "thefts_per_100_people": 11.7,
+   "marriages_per_100_people": 35.2,
+   "wall_secs": 25.4
+  },
+  {
+   "people": 160,
+   "towns": 14,
+   "problems": 0,
+   "secs_per_town": 23.18,
+   "pass_rate": 0.86,
+   "events_per_person_year": 0.163,
+   "people_now_vs_target": 0.93,
+   "killings_per_town": 0.21,
+   "thefts_per_100_people": 13.2,
+   "marriages_per_100_people": 36.9,
+   "wall_secs": 31.8
+  }
+ ]
+}

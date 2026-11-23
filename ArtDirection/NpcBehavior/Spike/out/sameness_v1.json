@@ -1,0 +1,74 @@
+{
+ "towns": 100,
+ "people": 5,
+ "keep_rate": 0.071,
+ "shapes_total": 74,
+ "shapes_per_town": 6.8,
+ "overlap": 0.137,
+ "top": [
+  {
+   "shape": "borrow → callin → takeover",
+   "towns": 0.6
+  },
+  {
+   "shape": "callin → takeover → borrow",
+   "towns": 0.42
+  },
+  {
+   "shape": "courting → marriage → jealousy",
+   "towns": 0.36
+  },
+  {
+   "shape": "theft → blame → peace",
+   "towns": 0.36
+  },
+  {
+   "shape": "takeover → borrow → callin",
+   "towns": 0.32
+  },
+  {
+   "shape": "borrow → callin → theft",
+   "towns": 0.3
+  },
+  {
+   "shape": "affair → caught → affair",
+   "towns": 0.28
+  },
+  {
+   "shape": "callin → theft → blame",
+   "towns": 0.28
+  }
+ ],
+ "kinds_used": 29,
+ "kinds": {
+  "borrow": 236,
+  "theft": 182,
+  "blame": 167,
+  "callin": 148,
+  "marriage": 129,
+  "peace": 113,
+  "harvest": 109,
+  "unrequited": 99,
+  "fire": 96,
+  "affair": 94,
+  "courting": 83,
+  "caught": 76,
+  "flood": 69,
+  "fever": 66,
+  "takeover": 64,
+  "hardtimes": 64,
+  "jealousy": 60,
+  "family": 56,
+  "silence": 56,
+  "death": 56,
+  "fight": 50,
+  "repay": 31,
+  "gift": 26,
+  "slip": 22,
+  "inherit": 18,
+  "exposed": 15,
+  "separation": 8,
+  "leaves": 6,
+  "confess": 3
+ }
+}

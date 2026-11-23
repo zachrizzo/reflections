@@ -1,0 +1,383 @@
+<title>Five Intertwined Lives</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one wide band per question. Who they are, their lives as threads across 25 years
+   (each mark a moment two lives touch), the year-by-year register, then the town on the day
+   the player arrives. Cool register paper, ink-blue accent; colour carries the kind of event. */
+:root {
+  --bg: #eef1f4;
+  --surface: #ffffff;
+  --ink: #1b2330;
+  --muted: #5b6676;
+  --line: #d3d9e1;
+  --accent: #2d5b88;
+  --love: #c03d68;
+  --money: #a86f12;
+  --crime: #6a45bf;
+  --conflict: #c4302f;
+  --hardship: #2f7aa3;
+  --life: #687280;
+  --warm: #2f8a5b;
+  --family: #2f8a5b;
+  --dim: 0.16;
+  --font-display: "Literata", "Georgia", "Times New Roman", serif;
+  --font-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-data: "IBM Plex Mono", "Consolas", "Menlo", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e131a; --surface: #161d27; --ink: #e5eaf0; --muted: #98a4b4; --line: #2a3441;
+    --accent: #84b3e2; --love: #f07aa0; --money: #e2ab4c; --crime: #a98ff2; --conflict: #f17474;
+    --hardship: #6db4dc; --life: #9aa3ae; --warm: #5fc792; --family: #5fc792; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e131a; --surface: #161d27; --ink: #e5eaf0; --muted: #98a4b4; --line: #2a3441;
+  --accent: #84b3e2; --love: #f07aa0; --money: #e2ab4c; --crime: #a98ff2; --conflict: #f17474;
+  --hardship: #6db4dc; --life: #9aa3ae; --warm: #5fc792; --family: #5fc792; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+}
+.wrap {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+  display: flex; flex-direction: column; gap: 28px;
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+h1 { font-size: 2.1rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.3rem; font-weight: 600; }
+h3 { font-size: 1rem; font-weight: 600; }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 68ch; }
+.eyebrow { font-family: var(--font-data); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+header { display: flex; flex-direction: column; gap: 10px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.tab {
+  font: inherit; font-size: 0.9rem; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  border-radius: 999px; padding: 6px 14px; cursor: pointer;
+}
+.tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.tab:focus-visible, .mark:focus-visible, .row:focus-visible, .chip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.townline { font-size: 0.88rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+section { display: flex; flex-direction: column; gap: 12px; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.hint { font-size: 0.85rem; color: var(--muted); }
+
+/* the five */
+.cast { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 10px; }
+.person {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 6px; cursor: pointer; text-align: left; font: inherit; color: inherit;
+}
+.person[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.person .name { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem; }
+.person .meta { font-size: 0.85rem; color: var(--muted); }
+.traits { display: flex; flex-wrap: wrap; gap: 4px; }
+.trait { font-size: 0.75rem; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; color: var(--muted); }
+.status { font-family: var(--font-data); font-size: 0.75rem; color: var(--muted); }
+.status.dead, .status.gone { color: var(--conflict); }
+
+/* lives chart */
+.chart-box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 6px 6px; overflow-x: auto; }
+.chart-box svg { display: block; width: 100%; min-width: 760px; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.ring { width: 10px; height: 10px; border-radius: 50%; display: inline-block; border: 2px dashed var(--muted); flex: none; }
+svg text { font-family: var(--font-body); fill: var(--ink); }
+svg .axis { font-family: var(--font-data); font-size: 11px; fill: var(--muted); }
+svg .lane-name { font-family: var(--font-display); font-weight: 600; font-size: 14px; }
+svg .lane-job { font-size: 11px; fill: var(--muted); }
+.mark { cursor: pointer; }
+.faded { opacity: var(--dim); }
+
+/* detail */
+.detail { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.detail .when { font-family: var(--font-data); font-size: 0.8rem; color: var(--muted); }
+.detail .what { font-family: var(--font-display); font-size: 1.15rem; }
+.links { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.links h3 { font-family: var(--font-body); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.chip-btn {
+  display: flex; gap: 8px; align-items: baseline; width: 100%; text-align: left; font: inherit; font-size: 0.9rem;
+  background: none; border: 0; border-top: 1px solid var(--line); padding: 6px 0; color: var(--ink); cursor: pointer;
+}
+.chip-btn .y { font-family: var(--font-data); font-size: 0.75rem; color: var(--muted); flex: none; width: 58px; }
+.none { font-size: 0.88rem; color: var(--muted); }
+.badge { font-family: var(--font-data); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; border: 1px dashed var(--muted); color: var(--muted); border-radius: 4px; padding: 0 5px; }
+
+/* lower */
+.lower { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 900px) { .lower { grid-template-columns: minmax(0, 1fr); } }
+.register { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.row { display: grid; grid-template-columns: 76px 12px minmax(0, 1fr); gap: 4px 10px; padding: 9px 14px; border-top: 1px solid var(--line); cursor: pointer; }
+.row:first-child { border-top: 0; }
+.row .y { font-family: var(--font-data); font-size: 0.75rem; color: var(--muted); padding-top: 3px; font-variant-numeric: tabular-nums; }
+.row .dot { margin-top: 6px; }
+.row .txt { font-family: var(--font-display); font-size: 0.98rem; }
+.row .why { grid-column: 3; font-size: 0.8rem; color: var(--muted); }
+.row.on { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.row.faded { opacity: 0.35; }
+
+.web-box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px; }
+.web-box svg { display: block; width: 100%; max-width: 460px; height: auto; margin: 0 auto; }
+.ties { display: flex; flex-direction: column; }
+.tie { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 0.88rem; }
+.tie .pair { font-weight: 600; }
+.tie .labels { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.lab { display: inline-flex; align-items: center; gap: 5px; }
+.people-now { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.now { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.now .name { font-family: var(--font-display); font-weight: 600; font-size: 1.02rem; }
+.now dl { margin: 0; display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 4px 8px; }
+.now dt { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+.now dd { margin: 0; }
+.now ul { margin: 0; padding-left: 16px; }
+footer { font-size: 0.85rem; color: var(--muted); max-width: 80ch; display: flex; flex-direction: column; gap: 6px; }
+code { font-family: var(--font-data); font-size: 0.82em; }
+@media (prefers-reduced-motion: no-preference) { .mark, .row, .lane { transition: opacity 160ms ease; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Reflections · NPC life generator · throwaway test</span>
+    <h1>Five lives, twenty-five years</h1>
+    <p class="lede">Each town starts with five strangers. The generator runs 25 years forward a month at a time, and about thirty rules decide what happens: debts, love, theft, blame, fever, floods. Every event remembers what caused it. Tap any mark or line to follow the chain.</p>
+    <div class="tabs" id="tabs" role="group" aria-label="Choose a town"></div>
+    <p class="townline" id="townline"></p>
+  </header>
+
+  <section aria-labelledby="h-cast">
+    <div class="section-head"><h2 id="h-cast">The five</h2><span class="hint">Tap a person to show only their life.</span></div>
+    <div class="cast" id="cast"></div>
+  </section>
+
+  <section aria-labelledby="h-lives">
+    <div class="section-head"><h2 id="h-lives">How their lives cross</h2><span class="hint">Each line is a life. A vertical stroke is a moment two or more lives touch.</span></div>
+    <div class="legend" id="legend"></div>
+    <div class="chart-box"><svg id="chart" role="img" aria-label="Timeline of five lives"></svg></div>
+    <div class="detail" id="detail" aria-live="polite"></div>
+  </section>
+
+  <div class="lower">
+    <section aria-labelledby="h-reg">
+      <div class="section-head"><h2 id="h-reg">Year by year</h2><span class="hint">The full record, with each event's cause.</span></div>
+      <div class="register" id="register"></div>
+    </section>
+    <section aria-labelledby="h-now">
+      <div class="section-head"><h2 id="h-now">The day the player arrives</h2></div>
+      <div class="web-box"><svg id="web" viewBox="0 0 460 400" role="img" aria-label="How the five stand with each other now"></svg></div>
+      <div class="ties" id="ties"></div>
+      <div class="people-now" id="now"></div>
+    </section>
+  </div>
+
+  <footer id="footer"></footer>
+</div>
+
+<script>
+const TOWNS = [{"seed": 1, "rerolls": 12, "score": {"groups": 5, "most_repeated": 2, "love": 7, "events": 19, "tensions": 6, "pairs_linked": 8, "pairs_total": 10, "longest_chain": 4}, "years": 25, "people": [{"id": 0, "name": "Aldric Crane", "first": "Aldric", "sex": "M", "job": "weaver", "place": "weaving shed", "traits": ["sly", "ambitious"], "age0": 22, "age": 47, "status": "alive", "died_year": null, "spouse": null, "works_for": null, "money": 344, "sibling": null, "goal": "Prove that Bram is a thief.", "hides": [], "believes": ["Is sure Bram stole from them. Wrong: it was Harl."]}, {"id": 1, "name": "Harl Hale", "first": "Harl", "sex": "M", "job": "carter", "place": "carter's yard", "traits": ["forgiving", "greedy"], "age0": 25, "age": 50, "status": "alive", "died_year": null, "spouse": null, "works_for": null, "money": 284, "sibling": null, "goal": "Keep the theft buried.", "hides": ["Stole from Aldric."], "believes": []}, {"id": 2, "name": "Godric Pike", "first": "Godric", "sex": "M", "job": "herbalist", "place": "herb garden", "traits": ["jealous", "ambitious"], "age0": 22, "age": 47, "status": "alive", "died_year": null, "spouse": 4, "works_for": null, "money": 209, "sibling": null, "goal": "Get even with Aldric.", "hides": [], "believes": []}, {"id": 3, "name": "Bram Fenn", "first": "Bram", "sex": "M", "job": "smith", "place": "forge", "traits": ["shy", "proud"], "age0": 26, "age": 51, "status": "alive", "died_year": null, "spouse": null, "works_for": null, "money": 527, "sibling": null, "goal": "A quiet life.", "hides": [], "believes": []}, {"id": 4, "name": "Agnes Brook", "first": "Agnes", "sex": "F", "job": "fisher", "place": "jetty", "traits": ["proud", "gossipy"], "age0": 25, "age": 50, "status": "alive", "died_year": null, "spouse": 2, "works_for": null, "money": 0, "sibling": null, "goal": "Pay back the 30 owed to Bram.", "hides": [], "believes": []}], "events": [{"id": 0, "t": 31, "year": 3, "season": "summer", "kind": "courting", "group": "love", "actors": [2, 4], "text": "Godric and Agnes start courting.", "causes": [], "secret": false}, {"id": 1, "t": 44, "year": 4, "season": "autumn", "kind": "unrequited", "group": "love", "actors": [4, 0], "text": "Agnes falls for Aldric, who doesn't feel the same.", "causes": [], "secret": false}, {"id": 2, "t": 48, "year": 5, "season": "winter", "kind": "fever", "group": "hardship", "actors": [0, 1], "text": "Fever comes to town. Aldric and Harl fall sick.", "causes": [], "secret": false}, {"id": 3, "t": 49, "year": 5, "season": "winter", "kind": "marriage", "group": "love", "actors": [2, 4], "text": "Godric marries Agnes.", "causes": [0], "secret": false}, {"id": 4, "t": 90, "year": 8, "season": "summer", "kind": "theft", "group": "crime", "actors": [1, 0], "text": "Harl steals 43 silver from Aldric's weaving shed.", "causes": [], "secret": true}, {"id": 5, "t": 90, "year": 8, "season": "summer", "kind": "blame", "group": "crime", "actors": [0, 3], "text": "Aldric blames Bram for the missing silver.", "causes": [4], "secret": false}, {"id": 6, "t": 127, "year": 11, "season": "summer", "kind": "theft", "group": "crime", "actors": [0, 2], "text": "Aldric steals 43 silver from Godric's herb garden.", "causes": [], "secret": true}, {"id": 7, "t": 127, "year": 11, "season": "summer", "kind": "silence", "group": "crime", "actors": [1, 0], "text": "Harl saw Aldric do it, and says nothing.", "causes": [6], "secret": true}, {"id": 8, "t": 127, "year": 11, "season": "summer", "kind": "blame", "group": "crime", "actors": [2, 3], "text": "Godric blames Bram for the missing silver.", "causes": [6], "secret": false}, {"id": 9, "t": 158, "year": 14, "season": "spring", "kind": "slip", "group": "crime", "actors": [1, 0, 2], "text": "Harl lets slip that Aldric was the one who robbed Godric.", "causes": [6, 7], "secret": false}, {"id": 10, "t": 158, "year": 14, "season": "spring", "kind": "peace", "group": "conflict", "actors": [2, 3], "text": "Godric realises Bram was innocent all along.", "causes": [8, 9], "secret": false}, {"id": 11, "t": 192, "year": 17, "season": "winter", "kind": "harvest", "group": "hardship", "actors": [0, 1, 2, 3, 4], "text": "The harvest fails, and everyone goes short that winter.", "causes": [], "secret": false}, {"id": 12, "t": 192, "year": 17, "season": "winter", "kind": "borrow", "group": "money", "actors": [4, 3], "text": "Agnes borrows 30 silver from Bram.", "causes": [11], "secret": false}, {"id": 13, "t": 205, "year": 18, "season": "winter", "kind": "affair", "group": "love", "actors": [0, 4], "text": "Aldric and Agnes begin an affair behind Godric's back.", "causes": [], "secret": true}, {"id": 14, "t": 227, "year": 19, "season": "winter", "kind": "caught", "group": "love", "actors": [2, 4, 0], "text": "Godric catches Agnes with Aldric.", "causes": [13], "secret": false}, {"id": 15, "t": 232, "year": 20, "season": "spring", "kind": "affair", "group": "love", "actors": [0, 4], "text": "Aldric and Agnes can't stay apart, and start meeting in secret again.", "causes": [14], "secret": true}, {"id": 16, "t": 239, "year": 20, "season": "winter", "kind": "caught", "group": "love", "actors": [2, 4, 0], "text": "Godric catches Agnes with Aldric.", "causes": [15], "secret": false}, {"id": 17, "t": 250, "year": 21, "season": "autumn", "kind": "harvest", "group": "hardship", "actors": [0, 1, 2, 3, 4], "text": "The harvest fails, and everyone goes short that winter.", "causes": [], "secret": false}, {"id": 18, "t": 257, "year": 22, "season": "summer", "kind": "fight", "group": "conflict", "actors": [2, 0], "text": "Godric and Aldric come to blows by the well.", "causes": [14], "secret": false}], "ties": [{"a": 0, "b": 1, "labels": [{"text": "Harl robbed Aldric (secret)", "group": "crime"}]}, {"a": 0, "b": 2, "labels": [{"text": "Godric hates Aldric", "group": "conflict"}]}, {"a": 0, "b": 3, "labels": [{"text": "Aldric blames Bram (wrongly)", "group": "crime"}]}, {"a": 0, "b": 4, "labels": [{"text": "Aldric loves Agnes", "group": "love"}, {"text": "Agnes loves Aldric", "group": "love"}]}, {"a": 2, "b": 4, "labels": [{"text": "married", "group": "love"}, {"text": "Godric resents Agnes", "group": "conflict"}]}, {"a": 3, "b": 4, "labels": [{"text": "Agnes owes Bram 30", "group": "money"}]}]}, {"seed": 2, "rerolls": 7, "score": {"groups": 5, "most_repeated": 3, "love": 9, "events": 23, "tensions": 9, "pairs_linked": 7, "pairs_total": 10, "longest_chain": 4}, "years": 25, "people": [{"id": 0, "name": "Wat Brook", "first": "Wat", "sex": "M", "job": "smith", "place": "forge", "traits": ["shy", "proud"], "age0": 20, "age": 45, "status": "alive", "died_year": null, "spouse": null, "works_for": null, "money": 512, "sibling": null, "goal": "Prove that Godric is a thief.", "hides": [], "believes": ["Is sure Godric stole from them. Wrong: it was Harl."]}, {"id": 1, "name": "Godric Ashby", "first": "Godric", "sex": "M", "job": "herbalist", "place": "herb garden", "traits": ["ambitious", "honest"], "age0": 20, "age": 45, "status": "alive", "died_year": null, "spouse": 3, "works_for": null, "money": 250, "sibling": null, "goal": "Get even with Wat.", "hides": [], "believes": []}, {"id": 2, "name": "Piers Hale", "first": "Piers", "sex": "M", "job": "weaver", "place": "weaving shed", "traits": ["proud", "forgiving"], "age0": 33, "age": 58, "status": "alive", "died_year": null, "spouse": null, "works_for": null, "money": -5, "sibling": null, "goal": "Pay back the 90 owed to Agnes.", "hides": [], "believes": []}, {"id": 3, "name": "Agnes Tull", "first": "Agnes", "sex": "F", "job": "miller", "place": "mill", "traits": ["kind", "ambitious"], "age0": 22, "age": 47, "status": "alive", "died_year": null, "spouse": 1, "works_for": null, "money": 1322, "sibling": null, "goal": "Prove that Harl is a thief.", "hides": [], "believes": ["Is sure Harl stole from them, and is right, but can't prove it."]}, {"id": 4, "name": "Harl Marsh", "first": "Harl", "sex": "M", "job": "fisher", "place": "jetty", "traits": ["jealous", "greedy"], "age0": 30, "age": 55, "status": "alive", "died_year": null, "spouse": null, "works_for": null, "money": 12, "sibling": null, "goal": "Pay back the 30 owed to Agnes.", "hides": ["Stole from Agnes.", "Stole from Wat."], "believes": []}], "events": [{"id": 0, "t": 26, "year": 3, "season": "spring", "kind": "courting", "group": "love", "actors": [1, 3], "text": "Godric and Agnes start courting.", "causes": [], "secret": false}, {"id": 1, "t": 43, "year": 4, "season": "summer", "kind": "unrequited", "group": "love", "actors": [2, 3], "text": "Piers falls for Agnes, who doesn't feel the same.", "causes": [], "secret": false}, {"id": 2, "t": 45, "year": 4, "season": "autumn", "kind": "marriage", "group": "love", "actors": [1, 3], "text": "Godric marries Agnes.", "causes": [0], "secret": false}, {"id": 3, "t": 45, "year": 4, "season": "autumn", "kind": "jealousy", "group": "love", "actors": [0, 1], "text": "Wat had hoped to marry Agnes, and turns cold on Godric.", "causes": [2], "secret": false}, {"id": 4, "t": 45, "year": 4, "season": "autumn", "kind": "jealousy", "group": "love", "actors": [2, 1], "text": "Piers had hoped to marry Agnes, and turns cold on Godric.", "causes": [2], "secret": false}, {"id": 5, "t": 76, "year": 7, "season": "spring", "kind": "theft", "group": "crime", "actors": [4, 3], "text": "Harl steals 80 silver from Agnes's mill.", "causes": [], "secret": true}, {"id": 6, "t": 76, "year": 7, "season": "spring", "kind": "blame", "group": "crime", "actors": [3, 4], "text": "Agnes blames Harl for the missing silver.", "causes": [5], "secret": false}, {"id": 7, "t": 129, "year": 11, "season": "autumn", "kind": "affair", "group": "love", "actors": [0, 3], "text": "Wat and Agnes begin an affair behind Godric's back.", "causes": [], "secret": true}, {"id": 8, "t": 135, "year": 12, "season": "spring", "kind": "fire", "group": "hardship", "actors": [2], "text": "Fire guts Piers's weaving shed.", "causes": [], "secret": false}, {"id": 9, "t": 135, "year": 12, "season": "spring", "kind": "borrow", "group": "money", "actors": [2, 3], "text": "Piers borrows 90 silver from Agnes.", "causes": [8], "secret": false}, {"id": 10, "t": 136, "year": 12, "season": "spring", "kind": "theft", "group": "crime", "actors": [4, 0], "text": "Harl steals 80 silver from Wat's forge.", "causes": [], "secret": true}, {"id": 11, "t": 136, "year": 12, "season": "spring", "kind": "blame", "group": "crime", "actors": [0, 1], "text": "Wat blames Godric for the missing silver.", "causes": [10], "secret": false}, {"id": 12, "t": 163, "year": 14, "season": "summer", "kind": "caught", "group": "love", "actors": [1, 3, 0], "text": "Godric catches Agnes with Wat.", "causes": [7], "secret": false}, {"id": 13, "t": 166, "year": 14, "season": "autumn", "kind": "peace", "group": "conflict", "actors": [3, 4], "text": "Agnes finally forgives Harl.", "causes": [6], "secret": false}, {"id": 14, "t": 188, "year": 16, "season": "autumn", "kind": "fire", "group": "hardship", "actors": [3], "text": "Fire guts Agnes's mill.", "causes": [], "secret": false}, {"id": 15, "t": 233, "year": 20, "season": "summer", "kind": "flood", "group": "hardship", "actors": [2, 3, 4], "text": "The river floods and wrecks the weaving shed and the mill and the jetty.", "causes": [], "secret": false}, {"id": 16, "t": 254, "year": 22, "season": "spring", "kind": "harvest", "group": "hardship", "actors": [0, 1, 2, 3, 4], "text": "The harvest fails, and everyone goes short that winter.", "causes": [], "secret": false}, {"id": 17, "t": 255, "year": 22, "season": "spring", "kind": "peace", "group": "conflict", "actors": [1, 0], "text": "Godric finally forgives Wat.", "causes": [12], "secret": false}, {"id": 18, "t": 260, "year": 22, "season": "autumn", "kind": "peace", "group": "conflict", "actors": [0, 1], "text": "Wat finally forgives Godric.", "causes": [11], "secret": false}, {"id": 19, "t": 270, "year": 23, "season": "summer", "kind": "affair", "group": "love", "actors": [0, 3], "text": "Wat and Agnes can't stay apart, and start meeting in secret again.", "causes": [12], "secret": true}, {"id": 20, "t": 271, "year": 23, "season": "summer", "kind": "flood", "group": "hardship", "actors": [2, 3, 4], "text": "The river floods and wrecks the weaving shed and the mill and the jetty.", "causes": [], "secret": false}, {"id": 21, "t": 271, "year": 23, "season": "summer", "kind": "borrow", "group": "money", "actors": [4, 3], "text": "Harl borrows 30 silver from Agnes.", "causes": [20], "secret": false}, {"id": 22, "t": 287, "year": 24, "season": "winter", "kind": "caught", "group": "love", "actors": [1, 3, 0], "text": "Godric catches Agnes with Wat.", "causes": [19], "secret": false}], "ties": [{"a": 0, "b": 1, "labels": [{"text": "Godric hates Wat", "group": "conflict"}, {"text": "Wat blames Godric (wrongly)", "group": "crime"}]}, {"a": 0, "b": 3, "labels": [{"text": "Wat loves Agnes", "group": "love"}, {"text": "Agnes loves Wat", "group": "love"}]}, {"a": 0, "b": 4, "labels": [{"text": "Harl robbed Wat (secret)", "group": "crime"}]}, {"a": 1, "b": 3, "labels": [{"text": "married", "group": "love"}]}, {"a": 2, "b": 3, "labels": [{"text": "Piers loves Agnes", "group": "love"}, {"text": "Piers owes Agnes 90", "group": "money"}]}, {"a": 3, "b": 4, "labels": [{"text": "Harl owes Agnes 30", "group": "money"}, {"text": "Agnes blames Harl", "group": "crime"}, {"text": "Harl robbed Agnes (secret)", "group": "crime"}]}]}, {"seed": 3, "rerolls": 31, "score": {"groups": 5, "most_repeated": 3, "love": 1, "events": 15, "tensions": 5, "pairs_linked": 7, "pairs_total": 10, "longest_chain": 5}, "years": 25, "people": [{"id": 0, "name": "Joan Cobb", "first": "Joan", "sex": "F", "job": "herbalist", "place": "herb garden", "traits": ["kind", "hot-headed"], "age0": 25, "age": 50, "status": "alive", "died_year": null, "spouse": null, "works_for": 2, "money": 0, "sibling": null, "goal": "Pay back the 30 owed to Wenna.", "hides": [], "believes": []}, {"id": 1, "name": "Wat Hale", "first": "Wat", "sex": "M", "job": "fisher", "place": "jetty", "traits": ["gossipy", "ambitious"], "age0": 33, "age": 55, "status": "dead", "died_year": 23, "spouse": null, "works_for": null, "money": 6, "sibling": 3, "goal": null, "hides": [], "believes": []}, {"id": 2, "name": "Bram Ashby", "first": "Bram", "sex": "M", "job": "smith", "place": "forge", "traits": ["ambitious", "greedy"], "age0": 20, "age": 45, "status": "alive", "died_year": null, "spouse": null, "works_for": null, "money": 1277, "sibling": null, "goal": "Grow the forge into the best in town.", "hides": [], "believes": []}, {"id": 3, "name": "Tilda Hale", "first": "Tilda", "sex": "F", "job": "carter", "place": "carter's yard", "traits": ["forgiving", "kind"], "age0": 31, "age": 56, "status": "alive", "died_year": null, "spouse": null, "works_for": null, "money": 23, "sibling": 1, "goal": "Pay back the 50 owed to Wenna.", "hides": [], "believes": []}, {"id": 4, "name": "Wenna Pike", "first": "Wenna", "sex": "F", "job": "miller", "place": "mill", "traits": ["shy", "ambitious"], "age0": 19, "age": 44, "status": "alive", "died_year": null, "spouse": null, "works_for": null, "money": 1209, "sibling": null, "goal": "Grow the mill into the best in town.", "hides": ["Loved Wat, who died never knowing."], "believes": []}], "events": [{"id": 0, "t": 0, "year": 1, "season": "winter", "kind": "family", "group": "life", "actors": [3, 1], "text": "Tilda and Wat Hale are brother and sister: the carter and the fisher.", "causes": [], "secret": false}, {"id": 1, "t": 60, "year": 6, "season": "winter", "kind": "unrequited", "group": "love", "actors": [4, 1], "text": "Wenna falls for Wat, who doesn't feel the same. It stays a secret.", "causes": [], "secret": true}, {"id": 2, "t": 88, "year": 8, "season": "spring", "kind": "fire", "group": "hardship", "actors": [1], "text": "Fire guts Wat's jetty.", "causes": [], "secret": false}, {"id": 3, "t": 88, "year": 8, "season": "spring", "kind": "borrow", "group": "money", "actors": [1, 4], "text": "Wat borrows 50 silver from Wenna.", "causes": [2], "secret": false}, {"id": 4, "t": 109, "year": 10, "season": "winter", "kind": "fire", "group": "hardship", "actors": [4], "text": "Fire guts Wenna's mill.", "causes": [], "secret": false}, {"id": 5, "t": 125, "year": 11, "season": "summer", "kind": "flood", "group": "hardship", "actors": [1, 4], "text": "The river floods and wrecks the jetty and the mill.", "causes": [], "secret": false}, {"id": 6, "t": 212, "year": 18, "season": "autumn", "kind": "harvest", "group": "hardship", "actors": [0, 1, 2, 3, 4], "text": "The harvest fails, and everyone goes short that winter.", "causes": [], "secret": false}, {"id": 7, "t": 212, "year": 18, "season": "autumn", "kind": "borrow", "group": "money", "actors": [0, 2], "text": "Joan borrows 30 silver from Bram, and must pay back 45.", "causes": [6], "secret": false}, {"id": 8, "t": 230, "year": 20, "season": "spring", "kind": "theft", "group": "crime", "actors": [2, 4], "text": "Bram steals 80 silver from Wenna's mill.", "causes": [], "secret": true}, {"id": 9, "t": 230, "year": 20, "season": "spring", "kind": "exposed", "group": "crime", "actors": [3, 2, 4], "text": "Tilda saw it and tells Wenna. Bram has to give it back.", "causes": [8], "secret": false}, {"id": 10, "t": 248, "year": 21, "season": "autumn", "kind": "callin", "group": "money", "actors": [2, 0], "text": "Bram calls in the debt. Joan owes 45 and can't pay.", "causes": [7], "secret": false}, {"id": 11, "t": 260, "year": 22, "season": "autumn", "kind": "takeover", "group": "money", "actors": [2, 0], "text": "Bram takes Joan's herb garden to settle the debt. Joan now works it for Bram.", "causes": [10], "secret": false}, {"id": 12, "t": 271, "year": 23, "season": "summer", "kind": "borrow", "group": "money", "actors": [0, 4], "text": "Joan borrows 30 silver from Wenna.", "causes": [11], "secret": false}, {"id": 13, "t": 271, "year": 23, "season": "summer", "kind": "death", "group": "life", "actors": [1], "text": "Wat dies after a long cough.", "causes": [], "secret": false}, {"id": 14, "t": 271, "year": 23, "season": "summer", "kind": "inherit", "group": "money", "actors": [3, 4], "text": "Tilda inherits Wat's debt of 50 to Wenna.", "causes": [3, 13], "secret": false}], "ties": [{"a": 0, "b": 2, "labels": [{"text": "Joan resents Bram", "group": "conflict"}, {"text": "Joan works for Bram", "group": "money"}]}, {"a": 0, "b": 4, "labels": [{"text": "Joan owes Wenna 30", "group": "money"}]}, {"a": 1, "b": 3, "labels": [{"text": "siblings", "group": "family"}]}, {"a": 2, "b": 4, "labels": [{"text": "Wenna resents Bram", "group": "conflict"}]}, {"a": 3, "b": 4, "labels": [{"text": "Tilda owes Wenna 50", "group": "money"}]}]}];
+const GROUPS = { love: "Love", money: "Money", crime: "Theft and secrets", conflict: "Grudges", hardship: "Hard times", life: "Life and death" };
+let ti = 0, sel = null, focus = null;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const col = (g) => `var(--${g})`;
+
+function town() { return TOWNS[ti]; }
+function byId(t) { const m = {}; t.events.forEach((e) => (m[e.id] = e)); return m; }
+function kids(t) { const k = {}; t.events.forEach((e) => e.causes.forEach((c) => (k[c] = k[c] || []).push(e.id))); return k; }
+function walk(start, next) { const seen = new Set(); const st = [start]; while (st.length) { const x = st.pop(); (next(x) || []).forEach((y) => { if (!seen.has(y)) { seen.add(y); st.push(y); } }); } return seen; }
+function related(t, id) {
+  const m = byId(t), k = kids(t);
+  const up = walk(id, (x) => m[x].causes), down = walk(id, (x) => k[x]);
+  return new Set([id, ...up, ...down]);
+}
+function when(e) { return `Year ${e.year}, ${e.season}`; }
+function deepest(t) {
+  const d = {}; let best = null;
+  t.events.forEach((e) => { d[e.id] = 1 + Math.max(0, ...e.causes.map((c) => d[c])); if (!best || d[e.id] > d[best.id]) best = e; });
+  return best ? best.id : null;
+}
+
+function renderTabs() {
+  $("tabs").innerHTML = TOWNS.map((t, i) => `<button class="tab" type="button" id="tab-${i}" aria-pressed="${i === ti}" data-i="${i}">Town ${i + 1} <span style="opacity:.7">· seed ${t.seed}</span></button>`).join("");
+  const t = town();
+  const secrets = t.people.reduce((n, p) => n + p.hides.length, 0);
+  const wrong = t.people.reduce((n, p) => n + p.believes.filter((b) => b.includes("Wrong")).length, 0);
+  $("townline").textContent = `${t.events.length} events · ${secrets} secret${secrets === 1 ? "" : "s"} still kept · ${wrong} wrong accusation${wrong === 1 ? "" : "s"} still believed · re-rolled ${t.rerolls} dull town${t.rerolls === 1 ? "" : "s"} first`;
+}
+
+function endOf(t, p) {
+  const e = t.events.find((e) => (e.kind === "death" || e.kind === "leaves") && e.actors[0] === p.id);
+  return e ? e.t : t.years * 12;
+}
+function statusLine(p) {
+  if (p.status === "dead") return `<span class="status dead">Died in year ${p.died_year}</span>`;
+  if (p.status === "left town") return `<span class="status gone">Left town</span>`;
+  return `<span class="status">Now ${p.age}</span>`;
+}
+function renderCast() {
+  const t = town();
+  $("cast").innerHTML = t.people.map((p) => `
+    <button class="person" type="button" id="person-${p.id}" data-p="${p.id}" aria-pressed="${focus === p.id}">
+      <span class="name">${esc(p.name)}</span>
+      <span class="meta">${esc(cap(p.job))} · ${p.age0} at the start</span>
+      <span class="traits">${p.traits.map((x) => `<span class="trait">${esc(x)}</span>`).join("")}</span>
+      ${statusLine(p)}
+    </button>`).join("");
+}
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function renderLegend() {
+  $("legend").innerHTML = Object.entries(GROUPS).map(([g, n]) => `<span><i class="dot" style="background:${col(g)}"></i>${n}</span>`).join("") +
+    `<span><i class="ring"></i>Secret: only those involved know</span>`;
+}
+
+function renderChart() {
+  const t = town(), n = t.people.length, months = t.years * 12;
+  const L = 132, R = 1000, top = 34, laneH = 58, W = 1020, H = top + n * laneH + 8;
+  const x = (m) => L + (m / months) * (R - L);
+  const y = (i) => top + i * laneH + laneH / 2;
+  const rel = sel !== null ? related(t, sel) : null;
+  const lit = (e) => (rel ? rel.has(e.id) : true) && (focus === null || e.actors.includes(focus));
+  let s = "";
+  for (let yr = 0; yr <= t.years; yr += 5) {
+    const m = yr * 12, xx = x(m);
+    s += `<line x1="${xx}" y1="${top - 8}" x2="${xx}" y2="${H - 6}" stroke="var(--line)" stroke-width="1"/>`;
+    s += `<text class="axis" x="${xx}" y="${top - 14}" text-anchor="middle">${yr === 0 ? "Year 1" : "Year " + yr}</text>`;
+  }
+  t.people.forEach((p, i) => {
+    const end = endOf(t, p), faded = focus !== null && focus !== p.id ? ` class="lane faded"` : ` class="lane"`;
+    s += `<g${faded}>`;
+    s += `<text class="lane-name" x="8" y="${y(i) - 2}">${esc(p.first)}</text>`;
+    s += `<text class="lane-job" x="8" y="${y(i) + 14}">${esc(p.job)}</text>`;
+    s += `<line x1="${x(0)}" y1="${y(i)}" x2="${x(end)}" y2="${y(i)}" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/>`;
+    if (end < months) {
+      if (p.status === "dead") s += `<path d="M${x(end) - 5} ${y(i) - 5} L${x(end) + 5} ${y(i) + 5} M${x(end) + 5} ${y(i) - 5} L${x(end) - 5} ${y(i) + 5}" stroke="var(--ink)" stroke-width="2"/>`;
+      else s += `<path d="M${x(end)} ${y(i) - 5} L${x(end) + 8} ${y(i)} L${x(end)} ${y(i) + 5}" fill="var(--muted)"/>`;
+      s += `<line x1="${x(end)}" y1="${y(i)}" x2="${x(months)}" y2="${y(i)}" stroke="var(--line)" stroke-width="2" stroke-dasharray="2 5"/>`;
+    }
+    s += `</g>`;
+  });
+  const slot = {};
+  t.events.forEach((e) => {
+    const k = e.t; slot[k] = (slot[k] || 0) + 1;
+    const xx = x(e.t) + (slot[k] - 1) * 9;
+    const lanes = e.actors.map((a) => y(a));
+    const c = col(e.group), on = lit(e), selCls = e.id === sel;
+    s += `<g class="mark${on ? "" : " faded"}" data-e="${e.id}" tabindex="0" role="button" aria-label="${esc(when(e) + ": " + e.text)}">`;
+    if (lanes.length > 1) {
+      s += `<line x1="${xx}" y1="${Math.min(...lanes)}" x2="${xx}" y2="${Math.max(...lanes)}" stroke="${c}" stroke-width="${selCls ? 4 : 2.5}"${e.group === "hardship" ? ' stroke-dasharray="4 3"' : ""}/>`;
+    }
+    lanes.forEach((ly) => {
+      if (e.secret) s += `<circle cx="${xx}" cy="${ly}" r="${selCls ? 8 : 6}" fill="var(--surface)" stroke="${c}" stroke-width="2.5" stroke-dasharray="3 2"/>`;
+      else s += `<circle cx="${xx}" cy="${ly}" r="${selCls ? 8 : 6}" fill="${c}" stroke="var(--surface)" stroke-width="1.5"/>`;
+    });
+    s += `<rect x="${xx - 8}" y="${Math.min(...lanes) - 10}" width="16" height="${Math.max(...lanes) - Math.min(...lanes) + 20}" fill="transparent"/>`;
+    s += `</g>`;
+  });
+  const svg = $("chart");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.innerHTML = s;
+}
+
+function eventButton(e) {
+  return `<button class="chip-btn" type="button" data-e="${e.id}"><span class="y">Yr ${e.year}</span><span><i class="dot" style="background:${col(e.group)};margin-right:6px"></i>${esc(e.text)}</span></button>`;
+}
+function renderDetail() {
+  const t = town();
+  if (sel === null) { $("detail").innerHTML = `<p class="none">Tap any mark to see what caused it and what it led to.</p>`; return; }
+  const m = byId(t), k = kids(t), e = m[sel];
+  const chain = related(t, sel).size;
+  const causes = e.causes.map((c) => m[c]), led = (k[e.id] || []).map((c) => m[c]);
+  $("detail").style.borderLeftColor = col(e.group);
+  $("detail").innerHTML = `
+    <div class="when">${when(e)} · ${GROUPS[e.group]}${e.secret ? ' · <span class="badge">secret</span>' : ""}</div>
+    <div class="what">${esc(e.text)}</div>
+    <div class="links">
+      <div><h3>Because</h3>${causes.length ? causes.map(eventButton).join("") : `<p class="none">${e.group === "hardship" ? "Bad luck: the town's director rolled it." : "Nothing before it. It came from who they are."}</p>`}</div>
+      <div><h3>Led to</h3>${led.length ? led.map(eventButton).join("") : `<p class="none">Nothing yet. It's still open when the player arrives.</p>`}</div>
+    </div>
+    <p class="none">${chain} event${chain === 1 ? "" : "s"} in this chain are lit on the timeline and in the register.${focus !== null ? " Showing one person's life; tap their card again to see everyone." : ""}</p>`;
+}
+
+function renderRegister() {
+  const t = town(), m = byId(t);
+  const rel = sel !== null ? related(t, sel) : null;
+  $("register").innerHTML = t.events.map((e) => {
+    const on = e.id === sel, faded = (rel && !rel.has(e.id)) || (focus !== null && !e.actors.includes(focus));
+    const why = e.causes.length ? `<span class="why">Because ${e.causes.map((c) => esc(lower(m[c].text))).join("; ")}</span>` : "";
+    return `<div class="row${on ? " on" : ""}${faded ? " faded" : ""}" data-e="${e.id}" tabindex="0" role="button">
+      <span class="y">Yr ${e.year} · ${e.season.slice(0, 3)}</span><i class="dot" style="background:${col(e.group)}"></i>
+      <span class="txt">${esc(e.text)}${e.secret ? ' <span class="badge">secret</span>' : ""}</span>${why}</div>`;
+  }).join("");
+}
+const lower = (s) => { const t = s.replace(/\.$/, ""); return /^(The|Fever|Fire|Guilt)\b/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t; };
+
+const TIE_ORDER = ["crime", "love", "conflict", "money", "warm", "family"];
+function renderWeb() {
+  const t = town(), n = t.people.length, cx = 230, cy = 196, r = 140;
+  const pos = t.people.map((p, i) => { const a = -Math.PI / 2 + (i * 2 * Math.PI) / n; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; });
+  let s = "";
+  t.ties.forEach((tie) => {
+    const g = TIE_ORDER.find((g) => tie.labels.some((l) => l.group === g)) || "life";
+    const secret = tie.labels.some((l) => /secret|wrongly/.test(l.text));
+    const [x1, y1] = pos[tie.a], [x2, y2] = pos[tie.b];
+    const faded = focus !== null && tie.a !== focus && tie.b !== focus ? ' class="faded"' : "";
+    s += `<line${faded} x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col(g)}" stroke-width="${1.5 + tie.labels.length}" stroke-linecap="round"${secret ? ' stroke-dasharray="6 5"' : ""}/>`;
+  });
+  t.people.forEach((p, i) => {
+    const [x, y] = pos[i], here = p.status === "alive";
+    const faded = focus !== null && focus !== p.id ? ' class="faded"' : "";
+    s += `<g${faded}><circle cx="${x}" cy="${y}" r="27" fill="var(--surface)" stroke="${here ? "var(--ink)" : "var(--muted)"}" stroke-width="2"${here ? "" : ' stroke-dasharray="4 3"'}/>`;
+    s += `<text x="${x}" y="${y + 5}" text-anchor="middle" style="font-family:var(--font-display);font-weight:600;font-size:14px${here ? "" : ";fill:var(--muted)"}">${esc(p.first)}</text>`;
+    const sub = here ? `${p.age}, ${p.job}` : p.status === "dead" ? `died year ${p.died_year}` : "left town";
+    s += `<text x="${x}" y="${y > cy ? y + 44 : y - 35}" text-anchor="middle" style="font-size:11px;fill:var(--muted)">${esc(sub)}</text></g>`;
+  });
+  $("web").innerHTML = s;
+  const P = (i) => t.people[i].first;
+  $("ties").innerHTML = t.ties.filter((tie) => focus === null || tie.a === focus || tie.b === focus).map((tie) => `
+    <div class="tie"><span class="pair">${esc(P(tie.a))} &amp; ${esc(P(tie.b))}</span>
+    <span class="labels">${tie.labels.map((l) => `<span class="lab"><i class="dot" style="background:${col(l.group)}"></i>${esc(l.text)}</span>`).join("")}</span></div>`).join("");
+  $("now").innerHTML = t.people.filter((p) => focus === null || p.id === focus).map((p) => {
+    if (p.status !== "alive") return `<div class="now"><span class="name">${esc(p.name)}</span><span class="none">${p.status === "dead" ? `Died in year ${p.died_year}. Still remembered.` : "Left town. Still talked about."}</span></div>`;
+    const list = (a) => a.length ? `<ul>${a.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : `<span class="none">Nothing</span>`;
+    return `<div class="now"><span class="name">${esc(p.name)} <span class="status">· ${p.age}, ${esc(p.job)}</span></span>
+      <dl><dt>Wants</dt><dd>${esc(p.goal)}</dd><dt>Hides</dt><dd>${list(p.hides)}</dd><dt>Believes</dt><dd>${list(p.believes)}</dd></dl></div>`;
+  }).join("");
+}
+
+function renderFooter() {
+  const t = town(), sc = t.score;
+  $("footer").innerHTML = `
+    <p>Made by <code>ArtDirection/NpcBehavior/Spike/gen_lives.py</code>. This is a throwaway test of the rules, not game code. Names, jobs and numbers are placeholders until the setting is decided, and births are off so the cast stays at five.</p>
+    <p>A town is kept only if it scores as interesting: ${sc.tensions} open tensions, ${sc.pairs_linked} of ${sc.pairs_total} pairs of people linked by something that happened between them, and a longest chain of ${sc.longest_chain} events. Duller towns are quietly re-rolled with the next seed.</p>`;
+}
+
+function render() { renderTabs(); renderCast(); renderChart(); renderDetail(); renderRegister(); renderWeb(); renderFooter(); }
+function pick(id) { sel = sel === id ? null : id; render(); }
+
+document.addEventListener("click", (ev) => {
+  const tab = ev.target.closest(".tab");
+  if (tab) { ti = +tab.dataset.i; sel = deepest(town()); focus = null; render(); return; }
+  const person = ev.target.closest(".person");
+  if (person) { const p = +person.dataset.p; focus = focus === p ? null : p; if (focus !== null && sel !== null && !byId(town())[sel].actors.includes(focus)) sel = null; render(); return; }
+  const e = ev.target.closest("[data-e]");
+  if (e) pick(+e.dataset.e);
+});
+document.addEventListener("keydown", (ev) => {
+  if (ev.key !== "Enter" && ev.key !== " ") return;
+  const e = ev.target.closest && ev.target.closest(".mark, .row");
+  if (e) { ev.preventDefault(); pick(+e.dataset.e); }
+});
+
+renderLegend();
+sel = deepest(town());
+render();
+</script>

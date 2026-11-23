@@ -1,0 +1,1560 @@
+[
+ {
+  "seed": 1,
+  "rerolls": 12,
+  "score": {
+   "groups": 5,
+   "most_repeated": 2,
+   "love": 7,
+   "events": 19,
+   "tensions": 6,
+   "pairs_linked": 8,
+   "pairs_total": 10,
+   "longest_chain": 4
+  },
+  "years": 25,
+  "people": [
+   {
+    "id": 0,
+    "name": "Aldric Crane",
+    "first": "Aldric",
+    "sex": "M",
+    "job": "weaver",
+    "place": "weaving shed",
+    "traits": [
+     "sly",
+     "ambitious"
+    ],
+    "age0": 22,
+    "age": 47,
+    "status": "alive",
+    "died_year": null,
+    "spouse": null,
+    "works_for": null,
+    "money": 344,
+    "sibling": null,
+    "goal": "Prove that Bram is a thief.",
+    "hides": [],
+    "believes": [
+     "Is sure Bram stole from them. Wrong: it was Harl."
+    ]
+   },
+   {
+    "id": 1,
+    "name": "Harl Hale",
+    "first": "Harl",
+    "sex": "M",
+    "job": "carter",
+    "place": "carter's yard",
+    "traits": [
+     "forgiving",
+     "greedy"
+    ],
+    "age0": 25,
+    "age": 50,
+    "status": "alive",
+    "died_year": null,
+    "spouse": null,
+    "works_for": null,
+    "money": 284,
+    "sibling": null,
+    "goal": "Keep the theft buried.",
+    "hides": [
+     "Stole from Aldric."
+    ],
+    "believes": []
+   },
+   {
+    "id": 2,
+    "name": "Godric Pike",
+    "first": "Godric",
+    "sex": "M",
+    "job": "herbalist",
+    "place": "herb garden",
+    "traits": [
+     "jealous",
+     "ambitious"
+    ],
+    "age0": 22,
+    "age": 47,
+    "status": "alive",
+    "died_year": null,
+    "spouse": 4,
+    "works_for": null,
+    "money": 209,
+    "sibling": null,
+    "goal": "Get even with Aldric.",
+    "hides": [],
+    "believes": []
+   },
+   {
+    "id": 3,
+    "name": "Bram Fenn",
+    "first": "Bram",
+    "sex": "M",
+    "job": "smith",
+    "place": "forge",
+    "traits": [
+     "shy",
+     "proud"
+    ],
+    "age0": 26,
+    "age": 51,
+    "status": "alive",
+    "died_year": null,
+    "spouse": null,
+    "works_for": null,
+    "money": 527,
+    "sibling": null,
+    "goal": "A quiet life.",
+    "hides": [],
+    "believes": []
+   },
+   {
+    "id": 4,
+    "name": "Agnes Brook",
+    "first": "Agnes",
+    "sex": "F",
+    "job": "fisher",
+    "place": "jetty",
+    "traits": [
+     "proud",
+     "gossipy"
+    ],
+    "age0": 25,
+    "age": 50,
+    "status": "alive",
+    "died_year": null,
+    "spouse": 2,
+    "works_for": null,
+    "money": 0,
+    "sibling": null,
+    "goal": "Pay back the 30 owed to Bram.",
+    "hides": [],
+    "believes": []
+   }
+  ],
+  "events": [
+   {
+    "id": 0,
+    "t": 31,
+    "year": 3,
+    "season": "summer",
+    "kind": "courting",
+    "group": "love",
+    "actors": [
+     2,
+     4
+    ],
+    "text": "Godric and Agnes start courting.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 1,
+    "t": 44,
+    "year": 4,
+    "season": "autumn",
+    "kind": "unrequited",
+    "group": "love",
+    "actors": [
+     4,
+     0
+    ],
+    "text": "Agnes falls for Aldric, who doesn't feel the same.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 2,
+    "t": 48,
+    "year": 5,
+    "season": "winter",
+    "kind": "fever",
+    "group": "hardship",
+    "actors": [
+     0,
+     1
+    ],
+    "text": "Fever comes to town. Aldric and Harl fall sick.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 3,
+    "t": 49,
+    "year": 5,
+    "season": "winter",
+    "kind": "marriage",
+    "group": "love",
+    "actors": [
+     2,
+     4
+    ],
+    "text": "Godric marries Agnes.",
+    "causes": [
+     0
+    ],
+    "secret": false
+   },
+   {
+    "id": 4,
+    "t": 90,
+    "year": 8,
+    "season": "summer",
+    "kind": "theft",
+    "group": "crime",
+    "actors": [
+     1,
+     0
+    ],
+    "text": "Harl steals 43 silver from Aldric's weaving shed.",
+    "causes": [],
+    "secret": true
+   },
+   {
+    "id": 5,
+    "t": 90,
+    "year": 8,
+    "season": "summer",
+    "kind": "blame",
+    "group": "crime",
+    "actors": [
+     0,
+     3
+    ],
+    "text": "Aldric blames Bram for the missing silver.",
+    "causes": [
+     4
+    ],
+    "secret": false
+   },
+   {
+    "id": 6,
+    "t": 127,
+    "year": 11,
+    "season": "summer",
+    "kind": "theft",
+    "group": "crime",
+    "actors": [
+     0,
+     2
+    ],
+    "text": "Aldric steals 43 silver from Godric's herb garden.",
+    "causes": [],
+    "secret": true
+   },
+   {
+    "id": 7,
+    "t": 127,
+    "year": 11,
+    "season": "summer",
+    "kind": "silence",
+    "group": "crime",
+    "actors": [
+     1,
+     0
+    ],
+    "text": "Harl saw Aldric do it, and says nothing.",
+    "causes": [
+     6
+    ],
+    "secret": true
+   },
+   {
+    "id": 8,
+    "t": 127,
+    "year": 11,
+    "season": "summer",
+    "kind": "blame",
+    "group": "crime",
+    "actors": [
+     2,
+     3
+    ],
+    "text": "Godric blames Bram for the missing silver.",
+    "causes": [
+     6
+    ],
+    "secret": false
+   },
+   {
+    "id": 9,
+    "t": 158,
+    "year": 14,
+    "season": "spring",
+    "kind": "slip",
+    "group": "crime",
+    "actors": [
+     1,
+     0,
+     2
+    ],
+    "text": "Harl lets slip that Aldric was the one who robbed Godric.",
+    "causes": [
+     6,
+     7
+    ],
+    "secret": false
+   },
+   {
+    "id": 10,
+    "t": 158,
+    "year": 14,
+    "season": "spring",
+    "kind": "peace",
+    "group": "conflict",
+    "actors": [
+     2,
+     3
+    ],
+    "text": "Godric realises Bram was innocent all along.",
+    "causes": [
+     8,
+     9
+    ],
+    "secret": false
+   },
+   {
+    "id": 11,
+    "t": 192,
+    "year": 17,
+    "season": "winter",
+    "kind": "harvest",
+    "group": "hardship",
+    "actors": [
+     0,
+     1,
+     2,
+     3,
+     4
+    ],
+    "text": "The harvest fails, and everyone goes short that winter.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 12,
+    "t": 192,
+    "year": 17,
+    "season": "winter",
+    "kind": "borrow",
+    "group": "money",
+    "actors": [
+     4,
+     3
+    ],
+    "text": "Agnes borrows 30 silver from Bram.",
+    "causes": [
+     11
+    ],
+    "secret": false
+   },
+   {
+    "id": 13,
+    "t": 205,
+    "year": 18,
+    "season": "winter",
+    "kind": "affair",
+    "group": "love",
+    "actors": [
+     0,
+     4
+    ],
+    "text": "Aldric and Agnes begin an affair behind Godric's back.",
+    "causes": [],
+    "secret": true
+   },
+   {
+    "id": 14,
+    "t": 227,
+    "year": 19,
+    "season": "winter",
+    "kind": "caught",
+    "group": "love",
+    "actors": [
+     2,
+     4,
+     0
+    ],
+    "text": "Godric catches Agnes with Aldric.",
+    "causes": [
+     13
+    ],
+    "secret": false
+   },
+   {
+    "id": 15,
+    "t": 232,
+    "year": 20,
+    "season": "spring",
+    "kind": "affair",
+    "group": "love",
+    "actors": [
+     0,
+     4
+    ],
+    "text": "Aldric and Agnes can't stay apart, and start meeting in secret again.",
+    "causes": [
+     14
+    ],
+    "secret": true
+   },
+   {
+    "id": 16,
+    "t": 239,
+    "year": 20,
+    "season": "winter",
+    "kind": "caught",
+    "group": "love",
+    "actors": [
+     2,
+     4,
+     0
+    ],
+    "text": "Godric catches Agnes with Aldric.",
+    "causes": [
+     15
+    ],
+    "secret": false
+   },
+   {
+    "id": 17,
+    "t": 250,
+    "year": 21,
+    "season": "autumn",
+    "kind": "harvest",
+    "group": "hardship",
+    "actors": [
+     0,
+     1,
+     2,
+     3,
+     4
+    ],
+    "text": "The harvest fails, and everyone goes short that winter.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 18,
+    "t": 257,
+    "year": 22,
+    "season": "summer",
+    "kind": "fight",
+    "group": "conflict",
+    "actors": [
+     2,
+     0
+    ],
+    "text": "Godric and Aldric come to blows by the well.",
+    "causes": [
+     14
+    ],
+    "secret": false
+   }
+  ],
+  "ties": [
+   {
+    "a": 0,
+    "b": 1,
+    "labels": [
+     {
+      "text": "Harl robbed Aldric (secret)",
+      "group": "crime"
+     }
+    ]
+   },
+   {
+    "a": 0,
+    "b": 2,
+    "labels": [
+     {
+      "text": "Godric hates Aldric",
+      "group": "conflict"
+     }
+    ]
+   },
+   {
+    "a": 0,
+    "b": 3,
+    "labels": [
+     {
+      "text": "Aldric blames Bram (wrongly)",
+      "group": "crime"
+     }
+    ]
+   },
+   {
+    "a": 0,
+    "b": 4,
+    "labels": [
+     {
+      "text": "Aldric loves Agnes",
+      "group": "love"
+     },
+     {
+      "text": "Agnes loves Aldric",
+      "group": "love"
+     }
+    ]
+   },
+   {
+    "a": 2,
+    "b": 4,
+    "labels": [
+     {
+      "text": "married",
+      "group": "love"
+     },
+     {
+      "text": "Godric resents Agnes",
+      "group": "conflict"
+     }
+    ]
+   },
+   {
+    "a": 3,
+    "b": 4,
+    "labels": [
+     {
+      "text": "Agnes owes Bram 30",
+      "group": "money"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "seed": 2,
+  "rerolls": 7,
+  "score": {
+   "groups": 5,
+   "most_repeated": 3,
+   "love": 9,
+   "events": 23,
+   "tensions": 9,
+   "pairs_linked": 7,
+   "pairs_total": 10,
+   "longest_chain": 4
+  },
+  "years": 25,
+  "people": [
+   {
+    "id": 0,
+    "name": "Wat Brook",
+    "first": "Wat",
+    "sex": "M",
+    "job": "smith",
+    "place": "forge",
+    "traits": [
+     "shy",
+     "proud"
+    ],
+    "age0": 20,
+    "age": 45,
+    "status": "alive",
+    "died_year": null,
+    "spouse": null,
+    "works_for": null,
+    "money": 512,
+    "sibling": null,
+    "goal": "Prove that Godric is a thief.",
+    "hides": [],
+    "believes": [
+     "Is sure Godric stole from them. Wrong: it was Harl."
+    ]
+   },
+   {
+    "id": 1,
+    "name": "Godric Ashby",
+    "first": "Godric",
+    "sex": "M",
+    "job": "herbalist",
+    "place": "herb garden",
+    "traits": [
+     "ambitious",
+     "honest"
+    ],
+    "age0": 20,
+    "age": 45,
+    "status": "alive",
+    "died_year": null,
+    "spouse": 3,
+    "works_for": null,
+    "money": 250,
+    "sibling": null,
+    "goal": "Get even with Wat.",
+    "hides": [],
+    "believes": []
+   },
+   {
+    "id": 2,
+    "name": "Piers Hale",
+    "first": "Piers",
+    "sex": "M",
+    "job": "weaver",
+    "place": "weaving shed",
+    "traits": [
+     "proud",
+     "forgiving"
+    ],
+    "age0": 33,
+    "age": 58,
+    "status": "alive",
+    "died_year": null,
+    "spouse": null,
+    "works_for": null,
+    "money": -5,
+    "sibling": null,
+    "goal": "Pay back the 90 owed to Agnes.",
+    "hides": [],
+    "believes": []
+   },
+   {
+    "id": 3,
+    "name": "Agnes Tull",
+    "first": "Agnes",
+    "sex": "F",
+    "job": "miller",
+    "place": "mill",
+    "traits": [
+     "kind",
+     "ambitious"
+    ],
+    "age0": 22,
+    "age": 47,
+    "status": "alive",
+    "died_year": null,
+    "spouse": 1,
+    "works_for": null,
+    "money": 1322,
+    "sibling": null,
+    "goal": "Prove that Harl is a thief.",
+    "hides": [],
+    "believes": [
+     "Is sure Harl stole from them, and is right, but can't prove it."
+    ]
+   },
+   {
+    "id": 4,
+    "name": "Harl Marsh",
+    "first": "Harl",
+    "sex": "M",
+    "job": "fisher",
+    "place": "jetty",
+    "traits": [
+     "jealous",
+     "greedy"
+    ],
+    "age0": 30,
+    "age": 55,
+    "status": "alive",
+    "died_year": null,
+    "spouse": null,
+    "works_for": null,
+    "money": 12,
+    "sibling": null,
+    "goal": "Pay back the 30 owed to Agnes.",
+    "hides": [
+     "Stole from Agnes.",
+     "Stole from Wat."
+    ],
+    "believes": []
+   }
+  ],
+  "events": [
+   {
+    "id": 0,
+    "t": 26,
+    "year": 3,
+    "season": "spring",
+    "kind": "courting",
+    "group": "love",
+    "actors": [
+     1,
+     3
+    ],
+    "text": "Godric and Agnes start courting.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 1,
+    "t": 43,
+    "year": 4,
+    "season": "summer",
+    "kind": "unrequited",
+    "group": "love",
+    "actors": [
+     2,
+     3
+    ],
+    "text": "Piers falls for Agnes, who doesn't feel the same.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 2,
+    "t": 45,
+    "year": 4,
+    "season": "autumn",
+    "kind": "marriage",
+    "group": "love",
+    "actors": [
+     1,
+     3
+    ],
+    "text": "Godric marries Agnes.",
+    "causes": [
+     0
+    ],
+    "secret": false
+   },
+   {
+    "id": 3,
+    "t": 45,
+    "year": 4,
+    "season": "autumn",
+    "kind": "jealousy",
+    "group": "love",
+    "actors": [
+     0,
+     1
+    ],
+    "text": "Wat had hoped to marry Agnes, and turns cold on Godric.",
+    "causes": [
+     2
+    ],
+    "secret": false
+   },
+   {
+    "id": 4,
+    "t": 45,
+    "year": 4,
+    "season": "autumn",
+    "kind": "jealousy",
+    "group": "love",
+    "actors": [
+     2,
+     1
+    ],
+    "text": "Piers had hoped to marry Agnes, and turns cold on Godric.",
+    "causes": [
+     2
+    ],
+    "secret": false
+   },
+   {
+    "id": 5,
+    "t": 76,
+    "year": 7,
+    "season": "spring",
+    "kind": "theft",
+    "group": "crime",
+    "actors": [
+     4,
+     3
+    ],
+    "text": "Harl steals 80 silver from Agnes's mill.",
+    "causes": [],
+    "secret": true
+   },
+   {
+    "id": 6,
+    "t": 76,
+    "year": 7,
+    "season": "spring",
+    "kind": "blame",
+    "group": "crime",
+    "actors": [
+     3,
+     4
+    ],
+    "text": "Agnes blames Harl for the missing silver.",
+    "causes": [
+     5
+    ],
+    "secret": false
+   },
+   {
+    "id": 7,
+    "t": 129,
+    "year": 11,
+    "season": "autumn",
+    "kind": "affair",
+    "group": "love",
+    "actors": [
+     0,
+     3
+    ],
+    "text": "Wat and Agnes begin an affair behind Godric's back.",
+    "causes": [],
+    "secret": true
+   },
+   {
+    "id": 8,
+    "t": 135,
+    "year": 12,
+    "season": "spring",
+    "kind": "fire",
+    "group": "hardship",
+    "actors": [
+     2
+    ],
+    "text": "Fire guts Piers's weaving shed.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 9,
+    "t": 135,
+    "year": 12,
+    "season": "spring",
+    "kind": "borrow",
+    "group": "money",
+    "actors": [
+     2,
+     3
+    ],
+    "text": "Piers borrows 90 silver from Agnes.",
+    "causes": [
+     8
+    ],
+    "secret": false
+   },
+   {
+    "id": 10,
+    "t": 136,
+    "year": 12,
+    "season": "spring",
+    "kind": "theft",
+    "group": "crime",
+    "actors": [
+     4,
+     0
+    ],
+    "text": "Harl steals 80 silver from Wat's forge.",
+    "causes": [],
+    "secret": true
+   },
+   {
+    "id": 11,
+    "t": 136,
+    "year": 12,
+    "season": "spring",
+    "kind": "blame",
+    "group": "crime",
+    "actors": [
+     0,
+     1
+    ],
+    "text": "Wat blames Godric for the missing silver.",
+    "causes": [
+     10
+    ],
+    "secret": false
+   },
+   {
+    "id": 12,
+    "t": 163,
+    "year": 14,
+    "season": "summer",
+    "kind": "caught",
+    "group": "love",
+    "actors": [
+     1,
+     3,
+     0
+    ],
+    "text": "Godric catches Agnes with Wat.",
+    "causes": [
+     7
+    ],
+    "secret": false
+   },
+   {
+    "id": 13,
+    "t": 166,
+    "year": 14,
+    "season": "autumn",
+    "kind": "peace",
+    "group": "conflict",
+    "actors": [
+     3,
+     4
+    ],
+    "text": "Agnes finally forgives Harl.",
+    "causes": [
+     6
+    ],
+    "secret": false
+   },
+   {
+    "id": 14,
+    "t": 188,
+    "year": 16,
+    "season": "autumn",
+    "kind": "fire",
+    "group": "hardship",
+    "actors": [
+     3
+    ],
+    "text": "Fire guts Agnes's mill.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 15,
+    "t": 233,
+    "year": 20,
+    "season": "summer",
+    "kind": "flood",
+    "group": "hardship",
+    "actors": [
+     2,
+     3,
+     4
+    ],
+    "text": "The river floods and wrecks the weaving shed and the mill and the jetty.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 16,
+    "t": 254,
+    "year": 22,
+    "season": "spring",
+    "kind": "harvest",
+    "group": "hardship",
+    "actors": [
+     0,
+     1,
+     2,
+     3,
+     4
+    ],
+    "text": "The harvest fails, and everyone goes short that winter.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 17,
+    "t": 255,
+    "year": 22,
+    "season": "spring",
+    "kind": "peace",
+    "group": "conflict",
+    "actors": [
+     1,
+     0
+    ],
+    "text": "Godric finally forgives Wat.",
+    "causes": [
+     12
+    ],
+    "secret": false
+   },
+   {
+    "id": 18,
+    "t": 260,
+    "year": 22,
+    "season": "autumn",
+    "kind": "peace",
+    "group": "conflict",
+    "actors": [
+     0,
+     1
+    ],
+    "text": "Wat finally forgives Godric.",
+    "causes": [
+     11
+    ],
+    "secret": false
+   },
+   {
+    "id": 19,
+    "t": 270,
+    "year": 23,
+    "season": "summer",
+    "kind": "affair",
+    "group": "love",
+    "actors": [
+     0,
+     3
+    ],
+    "text": "Wat and Agnes can't stay apart, and start meeting in secret again.",
+    "causes": [
+     12
+    ],
+    "secret": true
+   },
+   {
+    "id": 20,
+    "t": 271,
+    "year": 23,
+    "season": "summer",
+    "kind": "flood",
+    "group": "hardship",
+    "actors": [
+     2,
+     3,
+     4
+    ],
+    "text": "The river floods and wrecks the weaving shed and the mill and the jetty.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 21,
+    "t": 271,
+    "year": 23,
+    "season": "summer",
+    "kind": "borrow",
+    "group": "money",
+    "actors": [
+     4,
+     3
+    ],
+    "text": "Harl borrows 30 silver from Agnes.",
+    "causes": [
+     20
+    ],
+    "secret": false
+   },
+   {
+    "id": 22,
+    "t": 287,
+    "year": 24,
+    "season": "winter",
+    "kind": "caught",
+    "group": "love",
+    "actors": [
+     1,
+     3,
+     0
+    ],
+    "text": "Godric catches Agnes with Wat.",
+    "causes": [
+     19
+    ],
+    "secret": false
+   }
+  ],
+  "ties": [
+   {
+    "a": 0,
+    "b": 1,
+    "labels": [
+     {
+      "text": "Godric hates Wat",
+      "group": "conflict"
+     },
+     {
+      "text": "Wat blames Godric (wrongly)",
+      "group": "crime"
+     }
+    ]
+   },
+   {
+    "a": 0,
+    "b": 3,
+    "labels": [
+     {
+      "text": "Wat loves Agnes",
+      "group": "love"
+     },
+     {
+      "text": "Agnes loves Wat",
+      "group": "love"
+     }
+    ]
+   },
+   {
+    "a": 0,
+    "b": 4,
+    "labels": [
+     {
+      "text": "Harl robbed Wat (secret)",
+      "group": "crime"
+     }
+    ]
+   },
+   {
+    "a": 1,
+    "b": 3,
+    "labels": [
+     {
+      "text": "married",
+      "group": "love"
+     }
+    ]
+   },
+   {
+    "a": 2,
+    "b": 3,
+    "labels": [
+     {
+      "text": "Piers loves Agnes",
+      "group": "love"
+     },
+     {
+      "text": "Piers owes Agnes 90",
+      "group": "money"
+     }
+    ]
+   },
+   {
+    "a": 3,
+    "b": 4,
+    "labels": [
+     {
+      "text": "Harl owes Agnes 30",
+      "group": "money"
+     },
+     {
+      "text": "Agnes blames Harl",
+      "group": "crime"
+     },
+     {
+      "text": "Harl robbed Agnes (secret)",
+      "group": "crime"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "seed": 3,
+  "rerolls": 31,
+  "score": {
+   "groups": 5,
+   "most_repeated": 3,
+   "love": 1,
+   "events": 15,
+   "tensions": 5,
+   "pairs_linked": 7,
+   "pairs_total": 10,
+   "longest_chain": 5
+  },
+  "years": 25,
+  "people": [
+   {
+    "id": 0,
+    "name": "Joan Cobb",
+    "first": "Joan",
+    "sex": "F",
+    "job": "herbalist",
+    "place": "herb garden",
+    "traits": [
+     "kind",
+     "hot-headed"
+    ],
+    "age0": 25,
+    "age": 50,
+    "status": "alive",
+    "died_year": null,
+    "spouse": null,
+    "works_for": 2,
+    "money": 0,
+    "sibling": null,
+    "goal": "Pay back the 30 owed to Wenna.",
+    "hides": [],
+    "believes": []
+   },
+   {
+    "id": 1,
+    "name": "Wat Hale",
+    "first": "Wat",
+    "sex": "M",
+    "job": "fisher",
+    "place": "jetty",
+    "traits": [
+     "gossipy",
+     "ambitious"
+    ],
+    "age0": 33,
+    "age": 55,
+    "status": "dead",
+    "died_year": 23,
+    "spouse": null,
+    "works_for": null,
+    "money": 6,
+    "sibling": 3,
+    "goal": null,
+    "hides": [],
+    "believes": []
+   },
+   {
+    "id": 2,
+    "name": "Bram Ashby",
+    "first": "Bram",
+    "sex": "M",
+    "job": "smith",
+    "place": "forge",
+    "traits": [
+     "ambitious",
+     "greedy"
+    ],
+    "age0": 20,
+    "age": 45,
+    "status": "alive",
+    "died_year": null,
+    "spouse": null,
+    "works_for": null,
+    "money": 1277,
+    "sibling": null,
+    "goal": "Grow the forge into the best in town.",
+    "hides": [],
+    "believes": []
+   },
+   {
+    "id": 3,
+    "name": "Tilda Hale",
+    "first": "Tilda",
+    "sex": "F",
+    "job": "carter",
+    "place": "carter's yard",
+    "traits": [
+     "forgiving",
+     "kind"
+    ],
+    "age0": 31,
+    "age": 56,
+    "status": "alive",
+    "died_year": null,
+    "spouse": null,
+    "works_for": null,
+    "money": 23,
+    "sibling": 1,
+    "goal": "Pay back the 50 owed to Wenna.",
+    "hides": [],
+    "believes": []
+   },
+   {
+    "id": 4,
+    "name": "Wenna Pike",
+    "first": "Wenna",
+    "sex": "F",
+    "job": "miller",
+    "place": "mill",
+    "traits": [
+     "shy",
+     "ambitious"
+    ],
+    "age0": 19,
+    "age": 44,
+    "status": "alive",
+    "died_year": null,
+    "spouse": null,
+    "works_for": null,
+    "money": 1209,
+    "sibling": null,
+    "goal": "Grow the mill into the best in town.",
+    "hides": [
+     "Loved Wat, who died never knowing."
+    ],
+    "believes": []
+   }
+  ],
+  "events": [
+   {
+    "id": 0,
+    "t": 0,
+    "year": 1,
+    "season": "winter",
+    "kind": "family",
+    "group": "life",
+    "actors": [
+     3,
+     1
+    ],
+    "text": "Tilda and Wat Hale are brother and sister: the carter and the fisher.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 1,
+    "t": 60,
+    "year": 6,
+    "season": "winter",
+    "kind": "unrequited",
+    "group": "love",
+    "actors": [
+     4,
+     1
+    ],
+    "text": "Wenna falls for Wat, who doesn't feel the same. It stays a secret.",
+    "causes": [],
+    "secret": true
+   },
+   {
+    "id": 2,
+    "t": 88,
+    "year": 8,
+    "season": "spring",
+    "kind": "fire",
+    "group": "hardship",
+    "actors": [
+     1
+    ],
+    "text": "Fire guts Wat's jetty.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 3,
+    "t": 88,
+    "year": 8,
+    "season": "spring",
+    "kind": "borrow",
+    "group": "money",
+    "actors": [
+     1,
+     4
+    ],
+    "text": "Wat borrows 50 silver from Wenna.",
+    "causes": [
+     2
+    ],
+    "secret": false
+   },
+   {
+    "id": 4,
+    "t": 109,
+    "year": 10,
+    "season": "winter",
+    "kind": "fire",
+    "group": "hardship",
+    "actors": [
+     4
+    ],
+    "text": "Fire guts Wenna's mill.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 5,
+    "t": 125,
+    "year": 11,
+    "season": "summer",
+    "kind": "flood",
+    "group": "hardship",
+    "actors": [
+     1,
+     4
+    ],
+    "text": "The river floods and wrecks the jetty and the mill.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 6,
+    "t": 212,
+    "year": 18,
+    "season": "autumn",
+    "kind": "harvest",
+    "group": "hardship",
+    "actors": [
+     0,
+     1,
+     2,
+     3,
+     4
+    ],
+    "text": "The harvest fails, and everyone goes short that winter.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 7,
+    "t": 212,
+    "year": 18,
+    "season": "autumn",
+    "kind": "borrow",
+    "group": "money",
+    "actors": [
+     0,
+     2
+    ],
+    "text": "Joan borrows 30 silver from Bram, and must pay back 45.",
+    "causes": [
+     6
+    ],
+    "secret": false
+   },
+   {
+    "id": 8,
+    "t": 230,
+    "year": 20,
+    "season": "spring",
+    "kind": "theft",
+    "group": "crime",
+    "actors": [
+     2,
+     4
+    ],
+    "text": "Bram steals 80 silver from Wenna's mill.",
+    "causes": [],
+    "secret": true
+   },
+   {
+    "id": 9,
+    "t": 230,
+    "year": 20,
+    "season": "spring",
+    "kind": "exposed",
+    "group": "crime",
+    "actors": [
+     3,
+     2,
+     4
+    ],
+    "text": "Tilda saw it and tells Wenna. Bram has to give it back.",
+    "causes": [
+     8
+    ],
+    "secret": false
+   },
+   {
+    "id": 10,
+    "t": 248,
+    "year": 21,
+    "season": "autumn",
+    "kind": "callin",
+    "group": "money",
+    "actors": [
+     2,
+     0
+    ],
+    "text": "Bram calls in the debt. Joan owes 45 and can't pay.",
+    "causes": [
+     7
+    ],
+    "secret": false
+   },
+   {
+    "id": 11,
+    "t": 260,
+    "year": 22,
+    "season": "autumn",
+    "kind": "takeover",
+    "group": "money",
+    "actors": [
+     2,
+     0
+    ],
+    "text": "Bram takes Joan's herb garden to settle the debt. Joan now works it for Bram.",
+    "causes": [
+     10
+    ],
+    "secret": false
+   },
+   {
+    "id": 12,
+    "t": 271,
+    "year": 23,
+    "season": "summer",
+    "kind": "borrow",
+    "group": "money",
+    "actors": [
+     0,
+     4
+    ],
+    "text": "Joan borrows 30 silver from Wenna.",
+    "causes": [
+     11
+    ],
+    "secret": false
+   },
+   {
+    "id": 13,
+    "t": 271,
+    "year": 23,
+    "season": "summer",
+    "kind": "death",
+    "group": "life",
+    "actors": [
+     1
+    ],
+    "text": "Wat dies after a long cough.",
+    "causes": [],
+    "secret": false
+   },
+   {
+    "id": 14,
+    "t": 271,
+    "year": 23,
+    "season": "summer",
+    "kind": "inherit",
+    "group": "money",
+    "actors": [
+     3,
+     4
+    ],
+    "text": "Tilda inherits Wat's debt of 50 to Wenna.",
+    "causes": [
+     3,
+     13
+    ],
+    "secret": false
+   }
+  ],
+  "ties": [
+   {
+    "a": 0,
+    "b": 2,
+    "labels": [
+     {
+      "text": "Joan resents Bram",
+      "group": "conflict"
+     },
+     {
+      "text": "Joan works for Bram",
+      "group": "money"
+     }
+    ]
+   },
+   {
+    "a": 0,
+    "b": 4,
+    "labels": [
+     {
+      "text": "Joan owes Wenna 30",
+      "group": "money"
+     }
+    ]
+   },
+   {
+    "a": 1,
+    "b": 3,
+    "labels": [
+     {
+      "text": "siblings",
+      "group": "family"
+     }
+    ]
+   },
+   {
+    "a": 2,
+    "b": 4,
+    "labels": [
+     {
+      "text": "Wenna resents Bram",
+      "group": "conflict"
+     }
+    ]
+   },
+   {
+    "a": 3,
+    "b": 4,
+    "labels": [
+     {
+      "text": "Tilda owes Wenna 50",
+      "group": "money"
+     }
+    ]
+   }
+  ]
+ }
+]
