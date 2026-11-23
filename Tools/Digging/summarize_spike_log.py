@@ -152,6 +152,7 @@ def whole_rows(tag):
         ("background max / in idle", lambda log: f"{fmt(log.get(tag, 'background_max_ms'))} / {fmt(log.get(tag, 'idle_background_max_ms'))} ms"),
         ("collections window / idle", lambda log: f"{fmt(log.get(tag, 'collections_window'), 0)} / {fmt(log.get(tag, 'collections_idle'), 0)}"),
         ("commits / cooks finished / nav updates", lambda log: f"{fmt(log.get(tag, 'commits'), 0)} / {fmt(log.get(tag, 'cooks_finished'), 0)} / {fmt(log.get(tag, 'nav_updates'), 0)}"),
+        ("pieces changed / kept", lambda log: f"{fmt(log.get(tag, 'pieces_changed'), 0)} / {fmt(log.get(tag, 'pieces_kept'), 0)}"),
         ("game_thread_cooks", lambda log: fmt(log.get(tag, "game_thread_cooks"), 0)),
     ] + worst_frame_rows(tag)
 
@@ -249,7 +250,7 @@ def sections():
         return row
 
     pass_marks = []
-    for label, tag in (("busy chunk", "BUSY_WHOLE"), ("eight-chunk corner", "CORNER_WHOLE"), ("open ground", "DIG_WHOLE"), ("streaming", "STREAM_WHOLE")):
+    for label, tag in (("busy chunk", "BUSY_WHOLE"), ("busy chunk, one block", "BUSYBLOCK_WHOLE"), ("eight-chunk corner", "CORNER_WHOLE"), ("open ground", "DIG_WHOLE"), ("streaming", "STREAM_WHOLE")):
         pass_marks.append((f"{label}: 99 in 100 / worst frame", pass_row(tag)))
         pass_marks.append((f"{label}: 4 ms mark met", met(tag)))
 
@@ -267,6 +268,7 @@ def sections():
     busy = [
         ("riddle stamps that changed the grid", lambda log: fmt(log.get("BUSY_RIDDLE", "stamps_changed"), 0)),
         ("before: pieces / vertices / largest piece", lambda log: f"{fmt(log.get('BUSY_BEFORE', 'pieces'), 0)} / {fmt(log.get('BUSY_BEFORE', 'vertices'), 0, True)} / {fmt(log.get('BUSY_BEFORE', 'largest_piece_vertices'), 0, True)}"),
+        ("after: pieces / vertices / largest piece", lambda log: f"{fmt(log.get('BUSY_AFTER', 'pieces'), 0)} / {fmt(log.get('BUSY_AFTER', 'vertices'), 0, True)} / {fmt(log.get('BUSY_AFTER', 'largest_piece_vertices'), 0, True)}"),
         ("frames a second while digging", lambda log: fmt(None if log.get("BUSY_WHOLE", "frames") is None else log.get("BUSY_WHOLE", "frames") / 10.0, 0)),
     ]
     streaming = [
@@ -298,8 +300,10 @@ def sections():
         ("Open ground (DIG_WHOLE)", whole_rows("DIG_WHOLE") + open_ground),
         ("Eight-chunk corner (CORNER_WHOLE)", whole_rows("CORNER_WHOLE")),
         ("Busy chunk (BUSY_WHOLE)", whole_rows("BUSY_WHOLE") + busy),
+        ("Busy chunk, one block (BUSYBLOCK_WHOLE)", whole_rows("BUSYBLOCK_WHOLE")),
         ("Streaming (STREAM_WHOLE)", whole_rows("STREAM_WHOLE") + streaming),
         ("Split: busy chunk (SPLIT test=BUSY)", split_rows("BUSY", corner=False)),
+        ("Split: busy chunk, one block (SPLIT test=BUSYBLOCK)", split_rows("BUSYBLOCK", corner=False)),
         ("Split: corner (SPLIT test=CORNER)", split_rows("CORNER", corner=True)),
         ("Noise level", noise),
         ("Navmesh (NAV, NAV_EXTRA)", nav),

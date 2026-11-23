@@ -837,4 +837,94 @@ bool FReflectionsDigSpikeNavigationNeverBuildsCollisionTest::RunTest(const FStri
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigSpikeDigDownCrossesBlocksTest, "Reflections.DigSpike.DigDownCrossesBlocks", DigGameTestFlags)
+bool FReflectionsDigSpikeDigDownCrossesBlocksTest::RunTest(const FString& Parameters)
+{
+    /**
+     * Its own site: the middle of a block column of chunk column (1, 0) (X 3425..4225, Y -1575..-775, both 400 cm
+     * from every border), which no other game test digs (the nearest are DigDownToBedrock's shaft at (4800, -1600),
+     * about 1060 cm away, and PitTunnelAndFill's pit at (3425, 25), about 1270 cm away). The shaft goes down from the
+     * ground through the top chunk's block border at Z -400, the chunk border at Z -1200 and the lower chunk's block
+     * border at Z -2000: at each border the floor moves into a block that had no piece.
+     */
+    constexpr double X = 3825.0;
+    constexpr double Y = -1175.0;
+    /** The hold ends once the character's feet are this low: 150 cm under the lower chunk's block border. */
+    constexpr double TargetFeetZ = -2150.0;
+    /** How far below the last dug floor the feet may ever be. */
+    constexpr double BelowFloorCm = 100.0;
+    const TSharedPtr<FDigGameScene> Started = StartScene(*this, X, Y);
+    if (!Started.IsValid())
+    {
+        return false;
+    }
+    const FDigGameSceneRef Scene = Started.ToSharedRef();
+
+    struct FHold
+    {
+        int32 Frames = 0;
+        int32 Digs = 0;
+        double StartFeetZ = 0.0;
+        /** The lowest floor a dig that changed the grid left: its centre minus the dig radius. */
+        double LastFloorZ = TNumericLimits<double>::Max();
+        /** The most the feet were below LastFloorZ on any frame. */
+        double MostBelowFloorCm = -TNumericLimits<double>::Max();
+    };
+    TSharedRef<FHold> Hold = MakeShared<FHold>();
+    AddStep(Scene, TEXT("Hold dig under the feet down through two block borders"), 90.0, [Hold, TargetFeetZ, BelowFloorCm](FDigGameScene& S)
+    {
+        const double FeetZ = S.GetFeetZ();
+        if (Hold->Frames == 0)
+        {
+            Hold->StartFeetZ = FeetZ;
+        }
+        ++Hold->Frames;
+        if (FeetZ < GridFloorZ)
+        {
+            S.Abort(FString::Printf(TEXT("Frame %d: the character's feet went below the grid floor (%.1f)"), Hold->Frames, FeetZ));
+            return true;
+        }
+        if (Hold->LastFloorZ != TNumericLimits<double>::Max())
+        {
+            const double Below = Hold->LastFloorZ - FeetZ;
+            Hold->MostBelowFloorCm = FMath::Max(Hold->MostBelowFloorCm, Below);
+            if (Below > BelowFloorCm)
+            {
+                S.Abort(FString::Printf(TEXT("Frame %d: the feet (%.1f) are %.1f cm below the last dug floor (%.1f)"), Hold->Frames, FeetZ, Below, Hold->LastFloorZ));
+                return true;
+            }
+        }
+        if (FeetZ <= TargetFeetZ)
+        {
+            return true;
+        }
+        const FVector Location = S.GetCharacter()->GetActorLocation();
+        if (S.GetSubsystem()->Dig(FVector(Location.X, Location.Y, FeetZ), DigRadiusCm, EReflectionsDigMode::Remove))
+        {
+            ++Hold->Digs;
+            Hold->LastFloorZ = FMath::Min(Hold->LastFloorZ, FeetZ - DigRadiusCm);
+        }
+        return false;
+    });
+    AddWaitForRest(Scene, TEXT("The character rests in the shaft"));
+    AddAction(Scene, TEXT("Check the character stands on the shaft floor"), [Hold](FDigGameScene& S)
+    {
+        const FVector Location = S.GetCharacter()->GetActorLocation();
+        const TOptional<double> Floor = S.TraceGroundZ(Location.X, Location.Y);
+        const double FeetZ = S.GetFeetZ();
+        const UCharacterMovementComponent* Movement = S.GetCharacter()->GetCharacterMovement();
+        S.Test->TestTrue(FString::Printf(TEXT("At rest the character walks on a chunk piece (floor %s)"), *GetNameSafe(Movement->CurrentFloor.HitResult.GetComponent())),
+            Movement->IsMovingOnGround() && Cast<UReflectionsDigChunkComponent>(Movement->CurrentFloor.HitResult.GetComponent()) != nullptr);
+        S.Test->TestTrue(FString::Printf(TEXT("A trace under the character meets the shaft floor within 60 cm of its feet (feet %.1f, floor %s)"), FeetZ,
+            Floor.IsSet() ? *FString::SanitizeFloat(*Floor) : TEXT("no terrain hit")), Floor.IsSet() && FMath::Abs(*Floor - FeetZ) <= 60.0);
+        S.Test->TestTrue(FString::Printf(TEXT("The shaft floor is below the lower chunk's block border at Z -2000 (at %s)"),
+            Floor.IsSet() ? *FString::SanitizeFloat(*Floor) : TEXT("no terrain hit")), Floor.IsSet() && *Floor < -2000.0);
+        S.Test->TestTrue(FString::Printf(TEXT("The character's feet were never below the grid floor (lowest %.1f)"), S.LowestFeetZ), S.LowestFeetZ > GridFloorZ);
+        UE_LOG(LogTemp, Display, TEXT("DIGSPIKE headless DigDownCrossesBlocks: feet from %.1f to %.1f in %d frames with %d digs; feet at most %.1f cm below the last dug floor"),
+            Hold->StartFeetZ, FeetZ, Hold->Frames, Hold->Digs, Hold->MostBelowFloorCm);
+    });
+    AddCleanup(Scene);
+    return true;
+}
+
 #endif // WITH_DEV_AUTOMATION_TESTS

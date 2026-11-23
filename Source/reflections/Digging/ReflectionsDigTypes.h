@@ -24,6 +24,14 @@ namespace ReflectionsDig
     inline constexpr uint8 MaterialBedrock = 255;
     /** Most vertices one chunk piece (one mesh component and its collision) may hold. */
     inline constexpr int32 MaxPieceVertices = 12000;
+    /** Cells per block along each axis: a chunk's blocks are its eight octants, 8 m on a side, one piece each. */
+    inline constexpr int32 BlockCells = 16;
+    /**
+     * Blocks per chunk. Block index = X + 2 * Y + 4 * Z, with X, Y and Z 0 for the low half of the chunk on that axis
+     * and 1 for the high half.
+     */
+    inline constexpr int32 BlocksPerChunk = 8;
+    static_assert(2 * BlockCells == ChunkCells, "A chunk is two blocks along each axis");
 }
 
 /** Whether a stamp digs ground away or fills it in. */

@@ -47,6 +47,62 @@ namespace
      */
     const FVector CavityTraceStart = CavityCentre + FVector(50.0, 50.0, 0.0);
     constexpr double CavityFloorBelowCentreCm = 70.7;
+    /**
+     * A point of the riddled chunk (1, 1, 0) on the border between its blocks 3 (high X and Y, low Z) and 7 (high X, Y
+     * and Z), in a lattice column of cavities but away from CavityCentre's: a stamp here changes those two blocks only,
+     * so its commit replaces two pieces (the replace path). The cavity traces above run in block 7.
+     */
+    const FVector TwoBlockPoint(2925.0, 2925.0, -2000.0);
+    /** A cavity centre well inside block 7 of the riddled chunk: a stamp here changes that block only (the reuse path). */
+    const FVector InsideBlock7(2925.0, 2925.0, -1500.0);
+    constexpr int32 HighBlock = 7;
+
+    /** Position of a chunk's local cell (0, 0, 0) relative to the grid origin, as FReflectionsDigChunkSamples::LocalOriginCm. */
+    FVector3f ChunkOrigin(const FIntVector& Chunk)
+    {
+        return FVector3f(Chunk * ReflectionsDig::ChunkCells) * ReflectionsDig::CellSizeCm;
+    }
+
+    /** A radius-100 stamp straight into the terrain's grid: the subsystem does not see it, so it re-meshes nothing. */
+    void StampGrid(AReflectionsDigTerrain& Terrain, const FVector& Center, EReflectionsDigMode Mode)
+    {
+        FReflectionsDigStamp Stamp;
+        Stamp.Center = Center;
+        Stamp.RadiusCm = 100.0f;
+        Stamp.Mode = Mode;
+        TArray<FIntVector> Dirty;
+        Terrain.GetGrid()->ApplyStamp(Stamp, Dirty);
+    }
+
+    /** Meshes a chunk from the terrain's grid and commits it straight to the terrain. */
+    void CommitFromGrid(AReflectionsDigTerrain& Terrain, FIntVector Chunk)
+    {
+        FReflectionsDigMeshData Mesh;
+        ReflectionsDigMesher::BuildChunk(*Terrain.GetGrid(), Chunk, Mesh);
+        Terrain.CommitChunk(Chunk, MoveTemp(Mesh));
+    }
+
+    /** The chunk's eight slots, by block. */
+    TStaticArray<UDynamicMeshComponent*, ReflectionsDig::BlocksPerChunk> GetSlots(const AReflectionsDigTerrain& Terrain, FIntVector Chunk)
+    {
+        TStaticArray<UDynamicMeshComponent*, ReflectionsDig::BlocksPerChunk> Slots(InPlace, nullptr);
+        for (int32 Block = 0; Block < ReflectionsDig::BlocksPerChunk; ++Block)
+        {
+            Slots[Block] = Terrain.GetChunkBlockPiece(Chunk, Block);
+        }
+        return Slots;
+    }
+
+    /** How many of the terrain's hidden (retiring) pieces have bounds that hold Point. */
+    int32 GetHiddenPiecesAround(const AReflectionsDigTerrain& Terrain, const FVector& Point)
+    {
+        TArray<UReflectionsDigChunkComponent*> Pieces;
+        Terrain.GetComponents(Pieces);
+        return Pieces.FilterByPredicate([&Point](const UReflectionsDigChunkComponent* Piece)
+        {
+            return !Piece->IsVisible() && Piece->Bounds.GetBox().IsInside(Point);
+        }).Num();
+    }
 
     struct FTerrainScene
     {
@@ -168,7 +224,7 @@ namespace
         FReflectionsDigMeshData Mesh;
         ReflectionsDigMesher::BuildChunk(*Terrain.GetGrid(), Chunk, Mesh);
         FReflectionsDigChunkResult Result;
-        ReflectionsDigPieces::Build(Mesh, Result);
+        ReflectionsDigPieces::Build(Mesh, ChunkOrigin(Chunk), Result);
         const int32 Vertices = Result.SourceVertexCount;
         const int32 Triangles = Result.SourceTriangleCount;
 
@@ -535,15 +591,16 @@ bool FReflectionsDigTerrainSplitChunkCollisionFollowsEachCookTest::RunTest(const
     {
         return true;
     }
-    TestTrue(TEXT("The riddled chunk is split"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+    TestEqual(TEXT("The riddled chunk fills all eight blocks"), Scene.Terrain->GetChunkPieceCount(Busy), ReflectionsDig::BlocksPerChunk);
 
     // The fill is a radius-100 Add centred on the cavity's lowest point, so it fills the cavity's lower half. The
     // trace runs 30 cm off the centre in X and Y: the fill's top is there about 9 cm under the cavity centre, the
-    // old cavity floor about 91 cm under it.
+    // old cavity floor about 91 cm under it. Both are in block 7.
     const FVector FillCentre = CavityCentre - FVector(0.0, 0.0, 100.0);
     const FVector TraceStart = CavityCentre + FVector(30.0, 30.0, 50.0);
     const double FillTopAboveZ = CavityCentre.Z - 45.0;
-    const FVector Elsewhere(2100.0, 2100.0, -2300.0);
+    // The later changes are in blocks 3 and 7: each commit replaces the piece the trace hits, with another one.
+    const FVector Elsewhere = TwoBlockPoint;
     UWorld* World = TestWorld.World;
     auto HitsFillTop = [World, TraceStart, FillTopAboveZ](double& OutZ)
     {
@@ -553,8 +610,9 @@ bool FReflectionsDigTerrainSplitChunkCollisionFollowsEachCookTest::RunTest(const
     };
 
     // Part 1, decided at commit time: commit the fill straight to the terrain, let its cook finish without ticking
-    // the world (so no swap runs in between), then commit another change. The cooked fill set is the newest real
-    // collision, so it must survive that commit; destroying it would bring the old cavity floor back.
+    // the world (so no swap runs in between), then commit another change to the same block. The cooked fill pieces
+    // are the newest real collision, so they must survive that commit; destroying them would bring the old cavity
+    // floor back.
     {
         TestTrue(TEXT("The fill changes the grid"), Scene.Dig->Dig(FillCentre, 100.0f, EReflectionsDigMode::Add));
         FReflectionsDigMeshData Filled;
@@ -580,7 +638,8 @@ bool FReflectionsDigTerrainSplitChunkCollisionFollowsEachCookTest::RunTest(const
         }
     }
 
-    // Part 2, the held dig: after idle the trace hits the fill; then dig elsewhere in the chunk on each of 30 ticks.
+    // Part 2, the held dig: after idle the trace hits the fill; then dig beside it, in its block and the one below, on
+    // each of 30 ticks.
     if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the fill")))
     {
         return true;
@@ -789,7 +848,7 @@ bool FReflectionsDigTerrainBusyChunkIsSplitUnderTheCollisionLimitTest::RunTest(c
     }
     const int32 Pieces = Scene.Terrain->GetChunkPieceCount(Busy);
     const int32 Largest = Scene.Terrain->GetLargestCollisionVertexCount();
-    TestTrue(FString::Printf(TEXT("The busy chunk has at least 2 pieces (%d)"), Pieces), Pieces >= 2);
+    TestEqual(TEXT("The busy chunk has one piece in each of its eight blocks"), Pieces, ReflectionsDig::BlocksPerChunk);
     TestTrue(FString::Printf(TEXT("No piece holds more than 12,000 vertices (largest: %d)"), Largest), Largest <= ReflectionsDig::MaxPieceVertices);
     UE_LOG(LogTemp, Display, TEXT("DIGSPIKE busy chunk: %d vertices in %d pieces, largest piece %d vertices"), Premise.Positions.Num(), Pieces, Largest);
 
@@ -816,12 +875,13 @@ bool FReflectionsDigTerrainOldCollisionStaysWhileNewOneCooksTest::RunTest(const 
         return true;
     }
 
-    // One-piece chunk: dig and fill at one point on alternate ticks, so every tick changes the grid there.
-    // Each tick is traced twice: straight after the world tick (a commit made in it is still cooking), and
-    // after the game thread's queued tasks have run (cooks that finished have swapped their body in).
+    // One block's piece: dig and fill at one point in the middle of a block on alternate ticks, so every tick changes
+    // the grid there and each commit changes that block only (the reuse path). Each tick is traced twice: straight
+    // after the world tick (a commit made in it is still cooking), and after the game thread's queued tasks have run
+    // (cooks that finished have swapped their body in).
     {
         const FIntVector Chunk(1, 1, 1);
-        const FVector Point(2400.0, 2400.0, 0.0);
+        const FVector Point(2025.0, 2025.0, 0.0);
         int32 Misses = 0;
         int32 TracesWhileCooking = 0;
         TSet<const UBodySetup*> BodiesSeen;
@@ -851,8 +911,8 @@ bool FReflectionsDigTerrainOldCollisionStaysWhileNewOneCooksTest::RunTest(const 
         WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the one-piece digs"));
     }
 
-    // Split chunk: each commit replaces the chunk's whole set of pieces. Dig and fill one cavity on alternate
-    // ticks and trace another cavity's floor in the same chunk.
+    // Two blocks' pieces: each commit replaces the pieces of blocks 3 and 7 with new ones. Dig and fill on their
+    // border on alternate ticks and trace a cavity's floor in block 7, away from the digs.
     {
         const FIntVector Busy(1, 1, 0);
         RiddleBuriedChunk(*Scene.Dig);
@@ -860,9 +920,9 @@ bool FReflectionsDigTerrainOldCollisionStaysWhileNewOneCooksTest::RunTest(const 
         {
             return true;
         }
-        TestTrue(TEXT("The riddled chunk is split"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+        TestEqual(TEXT("The riddled chunk fills all eight blocks"), Scene.Terrain->GetChunkPieceCount(Busy), ReflectionsDig::BlocksPerChunk);
 
-        const FVector OtherCavity(2100.0, 2100.0, -2300.0);
+        const FVector OtherCavity = TwoBlockPoint;
         const double Expected = CavityCentre.Z - CavityFloorBelowCentreCm;
         int32 Misses = 0;
         TSet<const UDynamicMeshComponent*> FirstPiecesSeen;
@@ -880,11 +940,11 @@ bool FReflectionsDigTerrainOldCollisionStaysWhileNewOneCooksTest::RunTest(const 
                     PumpGameThread();
                 }
             }
-            FirstPiecesSeen.Add(Scene.Terrain->FindChunkComponent(Busy));
+            FirstPiecesSeen.Add(Scene.Terrain->GetChunkBlockPiece(Busy, HighBlock));
         }
-        TestEqual(TEXT("Split chunk: traces that missed the cavity floor"), Misses, 0);
-        TestTrue(FString::Printf(TEXT("The chunk's pieces were replaced (%d first pieces seen)"), FirstPiecesSeen.Num()), FirstPiecesSeen.Num() >= 2);
-        WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the split-chunk digs"));
+        TestEqual(TEXT("Two-block commits: traces that missed the cavity floor"), Misses, 0);
+        TestTrue(FString::Printf(TEXT("Block 7's piece was replaced (%d pieces seen)"), FirstPiecesSeen.Num()), FirstPiecesSeen.Num() >= 2);
+        WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the two-block digs"));
     }
     return true;
 }
@@ -1054,9 +1114,9 @@ bool FReflectionsDigTerrainRetiredSetGoesDuringAHeldDigTest::RunTest(const FStri
     {
         return true;
     }
-    TestTrue(TEXT("The riddled chunk is split"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+    TestEqual(TEXT("The riddled chunk fills all eight blocks"), Scene.Terrain->GetChunkPieceCount(Busy), ReflectionsDig::BlocksPerChunk);
 
-    // Fill it back with radius-150 Adds on every lattice row but the lowest, so it meshes to one piece again.
+    // Fill it back with radius-150 Adds on every lattice row but the lowest, so its upper blocks are solid again.
     for (double Z = -2500.0; Z <= -1300.0; Z += 200.0)
     {
         for (double Y = 1725.0; Y <= 3125.0; Y += 200.0)
@@ -1067,35 +1127,43 @@ bool FReflectionsDigTerrainRetiredSetGoesDuringAHeldDigTest::RunTest(const FStri
             }
         }
     }
-    FReflectionsDigMeshData Filled;
-    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Filled);
-    TestTrue(FString::Printf(TEXT("Premise: the filled chunk meshes to one piece's worth (%d vertices)"), Filled.Positions.Num()),
-        Filled.Positions.Num() > 0 && Filled.Positions.Num() <= ReflectionsDig::MaxPieceVertices);
 
-    // Hold a Remove that moves down 10 cm a tick through the filled space, starting at once (no idle in between,
-    // so the split set is still retiring when the one-piece commits begin). The trace starts inside the new pit,
-    // 50 cm off its axis; the old cavity there had its floor at about Z -1371.
-    const FVector TraceStart(2575.0, 2575.0, -1300.0);
-    const double OldSurfaceZ = -1300.0 - CavityFloorBelowCentreCm;
+    // Hold a Remove that moves down 10 cm a tick through the filled space of block 7 (X and Y 2425..3225, Z
+    // -2000..-1200), starting at once (no idle in between, so the riddled pieces are still retiring when the
+    // one-block commits begin): after the first commit each commit changes block 7 only and takes the reuse path.
+    // The trace starts inside the new pit, 50 cm off its axis; the old cavity there had its floor at about Z -1371.
+    const FVector PitAxis(2725.0, 2725.0, -1300.0);
+    const FVector TraceStart = PitAxis + FVector(50.0, 50.0, 0.0);
+    const double OldSurfaceZ = PitAxis.Z - CavityFloorBelowCentreCm;
     double DeepestZ = 0.0;
-    bool bSawOnePiece = false;
-    for (int32 Frame = 0; Frame < 120; ++Frame)
+    bool bSawReuse = false;
+    const UDynamicMeshComponent* LastPiece = nullptr;
+    int32 LastChanged = Scene.Terrain->GetPiecesChangedCount();
+    for (int32 Frame = 0; Frame < 50; ++Frame)
     {
-        Scene.Dig->Dig(FVector(2525.0, 2525.0, -1300.0 - 10.0 * Frame), 100.0f, EReflectionsDigMode::Remove);
+        Scene.Dig->Dig(PitAxis - FVector(0.0, 0.0, 10.0 * Frame), 100.0f, EReflectionsDigMode::Remove);
         TickWithoutPumping(TestWorld);
         PumpGameThread();
-        bSawOnePiece |= Scene.Terrain->GetChunkPieceCount(Busy) == 1;
+        const UDynamicMeshComponent* Piece = Scene.Terrain->GetChunkBlockPiece(Busy, HighBlock);
+        const int32 Changed = Scene.Terrain->GetPiecesChangedCount();
+        bSawReuse |= Piece != nullptr && Piece == LastPiece && Changed > LastChanged;
+        LastPiece = Piece;
+        LastChanged = Changed;
         const TOptional<double> Z = TraceDownZ(TestWorld.World, TraceStart.X, TraceStart.Y, TraceStart.Z);
         if (Z.IsSet())
         {
             DeepestZ = FMath::Min(DeepestZ, *Z);
         }
     }
-    TestTrue(TEXT("The chunk was one piece during the hold"), bSawOnePiece);
+    TestTrue(TEXT("Block 7's piece took the reuse path during the hold"), bSawReuse);
     TestTrue(FString::Printf(TEXT("A trace into the new pit reached well below the old surface at %.1f (deepest %.2f)"), OldSurfaceZ, DeepestZ),
         DeepestZ < OldSurfaceZ - 200.0);
-    TestEqual(TEXT("No retiring pieces are left by the end of the hold"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
+    // The emptied blocks' retiring pieces wait for a quiet terrain; none of them is block 7's, around the pit.
+    const FVector InPit = PitAxis - FVector(0.0, 0.0, 200.0);
+    const int32 RetiringAtPit = GetHiddenPiecesAround(*Scene.Terrain, InPit);
+    TestEqual(TEXT("No retiring piece is left around the pit by the end of the hold"), RetiringAtPit, 0);
     WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the held dig"));
+    TestEqual(TEXT("No retiring pieces are left once the terrain is idle"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
     return true;
 }
 
@@ -1114,18 +1182,20 @@ bool FReflectionsDigTerrainDirectCommitWhileCookingKeepsTheRetiringFloorTest::Ru
     {
         return true;
     }
-    TestTrue(TEXT("The riddled chunk is split"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+    TestEqual(TEXT("The riddled chunk fills all eight blocks"), Scene.Terrain->GetChunkPieceCount(Busy), ReflectionsDig::BlocksPerChunk);
     const double FloorZ = CavityCentre.Z - CavityFloorBelowCentreCm;
-    const FVector Elsewhere(2100.0, 2100.0, -2300.0);
+    // Blocks 3 and 7: the cavity traced below is in block 7.
+    const FVector Elsewhere = TwoBlockPoint;
 
-    // A first direct commit retires the cooked set; a second one, while the first replacement is still cooking,
-    // must destroy that replacement and keep the retiring set. Nothing is pumped in between, so no cook finishes.
+    // A first direct commit retires the cooked pieces of the two blocks; a second one, while their replacements are
+    // still cooking, must destroy those replacements and keep the retiring pieces. Nothing is pumped in between, so
+    // no cook finishes.
     TestTrue(TEXT("The first change changes the grid"), Scene.Dig->Dig(Elsewhere, 100.0f, EReflectionsDigMode::Add));
     FReflectionsDigMeshData First;
     ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, First);
     Scene.Terrain->CommitChunk(Busy, MoveTemp(First));
     TestTrue(TEXT("The first replacement is cooking"), Scene.Terrain->IsChunkCooking(Busy));
-    TestTrue(TEXT("The cooked set is retiring"), Scene.Terrain->GetRetiringPieceCount(Busy) >= 2);
+    TestEqual(TEXT("The two blocks' cooked pieces are retiring"), Scene.Terrain->GetRetiringPieceCount(Busy), 2);
 
     TestTrue(TEXT("The second change changes the grid"), Scene.Dig->Dig(Elsewhere, 100.0f, EReflectionsDigMode::Remove));
     FReflectionsDigMeshData Second;
@@ -1157,44 +1227,34 @@ bool FReflectionsDigTerrainReusePathClearsAFinishedRetiringSetTest::RunTest(cons
     {
         return true;
     }
-    TestTrue(TEXT("The riddled chunk is split"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+    TestEqual(TEXT("The riddled chunk fills all eight blocks"), Scene.Terrain->GetChunkPieceCount(Busy), ReflectionsDig::BlocksPerChunk);
 
-    // Fill it back so it meshes to one piece, and commit that directly: the split set retires behind one new piece.
-    for (double Z = -2500.0; Z <= -1300.0; Z += 200.0)
-    {
-        for (double Y = 1725.0; Y <= 3125.0; Y += 200.0)
-        {
-            for (double X = 1725.0; X <= 3125.0; X += 200.0)
-            {
-                Scene.Dig->Dig(FVector(X, Y, Z), 150.0f, EReflectionsDigMode::Add);
-            }
-        }
-    }
-    FReflectionsDigMeshData Filled;
-    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Filled);
-    Scene.Terrain->CommitChunk(Busy, MoveTemp(Filled));
-    TestEqual(TEXT("Premise: the filled chunk is one piece"), Scene.Terrain->GetChunkPieceCount(Busy), 1);
+    // Change blocks 3 and 7 and commit that directly: their pieces retire behind two new ones.
+    TestTrue(TEXT("The two-block change changes the grid"), Scene.Dig->Dig(TwoBlockPoint, 100.0f, EReflectionsDigMode::Add));
+    CommitFromGrid(*Scene.Terrain, Busy);
     const int32 RetiringBefore = Scene.Terrain->GetRetiringPieceCount(Busy);
-    TestTrue(FString::Printf(TEXT("Premise: the split set is retiring (%d pieces)"), RetiringBefore), RetiringBefore >= 2);
+    TestEqual(TEXT("Premise: the two blocks' pieces are retiring"), RetiringBefore, 2);
+    const UDynamicMeshComponent* Block7Piece = Scene.Terrain->GetChunkBlockPiece(Busy, HighBlock);
 
-    // Let the one piece's cook finish without ticking the world, so no swap check runs.
+    // Let the new pieces' cooks finish without ticking the world, so no swap check runs.
     const double Deadline = FPlatformTime::Seconds() + IdleTimeoutSeconds;
     while (Scene.Terrain->IsChunkCooking(Busy) && FPlatformTime::Seconds() < Deadline)
     {
         PumpGameThread();
     }
-    if (!TestFalse(TEXT("The one piece's cook finishes while the game thread is pumped"), Scene.Terrain->IsChunkCooking(Busy)))
+    if (!TestFalse(TEXT("The new pieces' cooks finish while the game thread is pumped"), Scene.Terrain->IsChunkCooking(Busy)))
     {
         return true;
     }
-    TestEqual(TEXT("Premise: with no tick the split set is still retiring"), Scene.Terrain->GetRetiringPieceCount(Busy), RetiringBefore);
+    TestEqual(TEXT("Premise: with no tick the two pieces are still retiring"), Scene.Terrain->GetRetiringPieceCount(Busy), RetiringBefore);
 
-    // A direct commit onto the one piece takes the reuse path, which must finish the swap that is due first.
-    FReflectionsDigMeshData Again;
-    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Again);
-    Scene.Terrain->CommitChunk(Busy, MoveTemp(Again));
-    TestEqual(TEXT("The chunk is still one piece"), Scene.Terrain->GetChunkPieceCount(Busy), 1);
-    TestEqual(TEXT("The reuse commit destroyed the finished retiring set"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
+    // A direct commit that changes block 7 only takes the reuse path, which must finish the swap that is due first.
+    TestTrue(TEXT("The one-block change changes the grid"), Scene.Dig->Dig(InsideBlock7, 100.0f, EReflectionsDigMode::Add));
+    CommitFromGrid(*Scene.Terrain, Busy);
+    TestTrue(TEXT("Premise: block 7 kept its piece (the reuse path)"), Block7Piece != nullptr && Scene.Terrain->GetChunkBlockPiece(Busy, HighBlock) == Block7Piece);
+    TestTrue(TEXT("Premise: block 7's piece is cooking its new mesh"), Scene.Terrain->IsChunkCooking(Busy));
+    TestEqual(TEXT("The chunk still fills all eight blocks"), Scene.Terrain->GetChunkPieceCount(Busy), ReflectionsDig::BlocksPerChunk);
+    TestEqual(TEXT("The reuse commit destroyed the finished retiring pieces"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
     WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the reuse commit"));
     return true;
 }
@@ -1211,23 +1271,39 @@ namespace
     }
 
     /**
-     * Riddles chunk (1, 1, 0) until it is split, then commits its own mesh again directly, so the split set retires
-     * behind a new set that is still cooking. Returns false (reported) when a premise fails.
+     * Riddles chunk (1, 1, 0), then changes its blocks 3 and 7 straight in the grid (the subsystem does not see it)
+     * and commits the chunk's mesh directly, so the two blocks' pieces retire behind new pieces that are still
+     * cooking. OutCreated gets the new pieces. Returns false (reported) when a premise fails.
      */
-    bool RetireTheRiddledChunk(FAutomationTestBase& Test, FReflectionsDigTestWorld& TestWorld, const FTerrainScene& Scene, FIntVector Busy)
+    bool RetireTheRiddledChunk(FAutomationTestBase& Test, FReflectionsDigTestWorld& TestWorld, const FTerrainScene& Scene, FIntVector Busy,
+        TArray<UReflectionsDigChunkComponent*>* OutCreated = nullptr)
     {
         RiddleBuriedChunk(*Scene.Dig);
         if (!WaitForIdle(Test, TestWorld, Scene, TEXT("Idle after riddling the chunk")))
         {
             return false;
         }
-        Test.TestTrue(TEXT("The riddled chunk is split"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
+        Test.TestEqual(TEXT("The riddled chunk fills all eight blocks"), Scene.Terrain->GetChunkPieceCount(Busy), ReflectionsDig::BlocksPerChunk);
         Test.TestEqual(TEXT("Premise: no piece is hidden before the commit"), GetHiddenPieces(*Scene.Terrain).Num(), 0);
-        FReflectionsDigMeshData Again;
-        ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Again);
-        Scene.Terrain->CommitChunk(Busy, MoveTemp(Again));
-        return Test.TestTrue(TEXT("Premise: the new set is cooking"), Scene.Terrain->IsChunkCooking(Busy))
-            && Test.TestTrue(TEXT("Premise: the split set is retiring"), Scene.Terrain->GetRetiringPieceCount(Busy) >= 2);
+        const TStaticArray<UDynamicMeshComponent*, ReflectionsDig::BlocksPerChunk> Before = GetSlots(*Scene.Terrain, Busy);
+        StampGrid(*Scene.Terrain, TwoBlockPoint, EReflectionsDigMode::Add);
+        CommitFromGrid(*Scene.Terrain, Busy);
+        const TStaticArray<UDynamicMeshComponent*, ReflectionsDig::BlocksPerChunk> After = GetSlots(*Scene.Terrain, Busy);
+        int32 Created = 0;
+        for (int32 Block = 0; Block < ReflectionsDig::BlocksPerChunk; ++Block)
+        {
+            if (After[Block] != nullptr && After[Block] != Before[Block])
+            {
+                ++Created;
+                if (OutCreated != nullptr)
+                {
+                    OutCreated->Add(Cast<UReflectionsDigChunkComponent>(After[Block]));
+                }
+            }
+        }
+        return Test.TestTrue(TEXT("Premise: the new pieces are cooking"), Scene.Terrain->IsChunkCooking(Busy))
+            && Test.TestEqual(TEXT("Premise: the commit created two pieces"), Created, 2)
+            && Test.TestEqual(TEXT("Premise: the two blocks' old pieces are retiring"), Scene.Terrain->GetRetiringPieceCount(Busy), 2);
     }
 
     /**
@@ -1322,11 +1398,12 @@ bool FReflectionsDigTerrainFailedCookGivesTheRetiringSetItsNavigationBackTest::R
         return true;
     }
     const FIntVector Busy(1, 1, 0);
-    if (!RetireTheRiddledChunk(*this, TestWorld, Scene, Busy))
+    TArray<UReflectionsDigChunkComponent*> Created;
+    if (!RetireTheRiddledChunk(*this, TestWorld, Scene, Busy, &Created))
     {
         return true;
     }
-    // Every piece of the new set fails its cook, so the retiring set stays the chunk's only collision.
+    // Every new piece fails its cook, so the retiring pieces stay those blocks' only collision.
     const TCHAR* FailureWarning = TEXT("a collision cook failed or a piece has no collision");
     AddExpectedMessagePlain(FailureWarning, ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 1);
     FScopedLogCounter Warnings(FailureWarning);
@@ -1341,7 +1418,7 @@ bool FReflectionsDigTerrainFailedCookGivesTheRetiringSetItsNavigationBackTest::R
             ++Failing;
         }
     }
-    TestEqual(TEXT("Premise: every cooking piece is the new set's"), Failing, Scene.Terrain->GetChunkPieceCount(Busy));
+    TestEqual(TEXT("Premise: every cooking piece is one the commit created"), Failing, Created.Num());
     const int32 RetiringBefore = Scene.Terrain->GetRetiringPieceCount(Busy);
 
     // The cooks fail between ticks. Until the next swap check has handled the failure, something is still to happen.
@@ -1429,81 +1506,59 @@ bool FReflectionsDigTerrainKeptRetiringSetLeavesNavigationAtTheNextCommitTest::R
     // Two failed cooks below, one warning each.
     AddExpectedMessagePlain(TEXT("a collision cook failed or a piece has no collision"), ELogVerbosity::Warning, EAutomationExpectedMessageFlags::Contains, 2);
 
-    // Part 1, the replace path (RetireCurrentSet): a kept split set behind a split set that never got collision.
+    // Part 1, the replace path (RetireCurrentSet): kept pieces of blocks 3 and 7 behind new ones that never got
+    // collision. The next commit of the same mesh changes no hash, but the two blocks never collided with it, so it
+    // replaces their pieces again.
     if (!RetireTheRiddledChunk(*this, TestWorld, Scene, Busy))
     {
         return true;
     }
-    TestEqual(TEXT("Premise: every cooking piece is the new split set's"), FailEveryPendingCook(*Scene.Terrain), Scene.Terrain->GetChunkPieceCount(Busy));
-    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the split set's failed cooks"))
+    TestEqual(TEXT("Premise: every cooking piece is one of the two the commit created"), FailEveryPendingCook(*Scene.Terrain), 2);
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the two pieces' failed cooks"))
         || !TestRetiringNavigation(*this, *Scene.Terrain, TEXT("Part 1, at the first idle"), true))
     {
         return true;
     }
-    const int32 KeptSplit = Scene.Terrain->GetRetiringPieceCount(Busy);
-    FReflectionsDigMeshData Riddled;
-    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, Riddled);
-    Scene.Terrain->CommitChunk(Busy, MoveTemp(Riddled));
-    TestTrue(TEXT("Premise: part 1's commit replaces the set (more than one piece)"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
-    TestTrue(TEXT("Premise: part 1's new set is cooking"), Scene.Terrain->IsChunkCooking(Busy));
-    TestEqual(TEXT("Premise: part 1 keeps the same retiring set"), Scene.Terrain->GetRetiringPieceCount(Busy), KeptSplit);
-    TestRetiringNavigation(*this, *Scene.Terrain, TEXT("Part 1, while the next set cooks"), false);
+    const int32 KeptPair = Scene.Terrain->GetRetiringPieceCount(Busy);
+    const TStaticArray<UDynamicMeshComponent*, ReflectionsDig::BlocksPerChunk> FailedSlots = GetSlots(*Scene.Terrain, Busy);
+    CommitFromGrid(*Scene.Terrain, Busy);
+    TestTrue(TEXT("Premise: part 1's commit replaces block 3's and block 7's pieces"),
+        Scene.Terrain->GetChunkBlockPiece(Busy, 3) != FailedSlots[3] && Scene.Terrain->GetChunkBlockPiece(Busy, HighBlock) != FailedSlots[HighBlock]);
+    TestTrue(TEXT("Premise: part 1's new pieces are cooking"), Scene.Terrain->IsChunkCooking(Busy));
+    TestEqual(TEXT("Premise: part 1 keeps the same retiring pieces"), Scene.Terrain->GetRetiringPieceCount(Busy), KeptPair);
+    TestRetiringNavigation(*this, *Scene.Terrain, TEXT("Part 1, while the next pieces cook"), false);
     if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after part 1's commit")))
     {
         return true;
     }
-    TestEqual(TEXT("Part 1's retiring set is gone once the new set has cooked"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
+    TestEqual(TEXT("Part 1's retiring pieces are gone once the new pieces have cooked"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
 
-    // Part 2, the reuse path (one piece onto one piece): a kept split set behind one piece that never got collision.
-    // The split mesh is kept from before the fill, so it can be committed again once the grid holds one piece's worth.
-    FReflectionsDigMeshData SplitBeforeFill;
-    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, SplitBeforeFill);
-    // The fill ReusePathClearsAFinishedRetiringSet uses: it leaves the lowest row of cavities, which mesh to one piece.
-    for (double Z = -2500.0; Z <= -1300.0; Z += 200.0)
-    {
-        for (double Y = 1725.0; Y <= 3125.0; Y += 200.0)
-        {
-            for (double X = 1725.0; X <= 3125.0; X += 200.0)
-            {
-                Scene.Dig->Dig(FVector(X, Y, Z), 150.0f, EReflectionsDigMode::Add);
-            }
-        }
-    }
-    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the fill")))
+    // Part 2, the reuse path (one block changes, with a piece before and after): a kept pair behind block 7's piece,
+    // which never got collision. Blocks 3 and 7 change again; only block 7's new piece fails its cook.
+    StampGrid(*Scene.Terrain, TwoBlockPoint, EReflectionsDigMode::Remove);
+    CommitFromGrid(*Scene.Terrain, Busy);
+    TestEqual(TEXT("Premise: part 2's first commit retires blocks 3 and 7"), Scene.Terrain->GetRetiringPieceCount(Busy), 2);
+    UReflectionsDigChunkComponent* Reused = Cast<UReflectionsDigChunkComponent>(Scene.Terrain->GetChunkBlockPiece(Busy, HighBlock));
+    if (!TestTrue(TEXT("Premise: block 7's new piece is cooking"), Reused != nullptr && Reused->IsCollisionCookPending()))
     {
         return true;
     }
-    TestEqual(TEXT("Premise: the filled chunk is one piece"), Scene.Terrain->GetChunkPieceCount(Busy), 1);
-    // The stale split mesh goes in directly and cooks: a split set with collision, nothing retiring, nothing dirty.
-    Scene.Terrain->CommitChunk(Busy, MoveTemp(SplitBeforeFill));
-    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the split mesh's commit")))
-    {
-        return true;
-    }
-    TestTrue(TEXT("Premise: the chunk shows the split set again"), Scene.Terrain->GetChunkPieceCount(Busy) >= 2);
-    TestEqual(TEXT("Premise: nothing retires before part 2's first commit"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
-    FReflectionsDigMeshData OnePiece;
-    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, OnePiece);
-    Scene.Terrain->CommitChunk(Busy, MoveTemp(OnePiece));
-    TestEqual(TEXT("Premise: part 2's first commit shows one piece"), Scene.Terrain->GetChunkPieceCount(Busy), 1);
-    TestEqual(TEXT("Premise: the one piece's cook is the only one running"), FailEveryPendingCook(*Scene.Terrain), 1);
-    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the one piece's failed cook"))
+    Reused->FailNextCookForTest();
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after block 7's failed cook"))
         || !TestRetiringNavigation(*this, *Scene.Terrain, TEXT("Part 2, at the first idle"), true))
     {
         return true;
     }
     const int32 KeptForReuse = Scene.Terrain->GetRetiringPieceCount(Busy);
-    const UDynamicMeshComponent* Reused = Scene.Terrain->FindChunkComponent(Busy);
-    FReflectionsDigMeshData OnePieceAgain;
-    ReflectionsDigMesher::BuildChunk(*Scene.Terrain->GetGrid(), Busy, OnePieceAgain);
-    Scene.Terrain->CommitChunk(Busy, MoveTemp(OnePieceAgain));
-    TestTrue(TEXT("Premise: part 2's commit reuses the one piece"), Scene.Terrain->GetChunkPieceCount(Busy) == 1 && Scene.Terrain->FindChunkComponent(Busy) == Reused);
-    TestTrue(TEXT("Premise: the reused piece is cooking"), Scene.Terrain->IsChunkCooking(Busy));
-    TestEqual(TEXT("Premise: part 2 keeps the same retiring set"), Scene.Terrain->GetRetiringPieceCount(Busy), KeptForReuse);
+    TestEqual(TEXT("Premise: the failed cook keeps both retiring pieces"), KeptForReuse, 2);
+    CommitFromGrid(*Scene.Terrain, Busy);
+    TestTrue(TEXT("Premise: part 2's commit reuses block 7's piece"), Scene.Terrain->GetChunkBlockPiece(Busy, HighBlock) == Reused);
+    TestTrue(TEXT("Premise: the reused piece is cooking"), Scene.Terrain->IsChunkCooking(Busy) && Reused->IsCollisionCookPending());
+    TestEqual(TEXT("Premise: part 2 keeps the same retiring pieces"), Scene.Terrain->GetRetiringPieceCount(Busy), KeptForReuse);
     TestRetiringNavigation(*this, *Scene.Terrain, TEXT("Part 2, while the reused piece cooks"), false);
     if (WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after part 2's commit")))
     {
-        TestEqual(TEXT("Part 2's retiring set is gone once the reused piece has cooked"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
+        TestEqual(TEXT("Part 2's retiring pieces are gone once the reused piece has cooked"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
     }
     return true;
 }
@@ -1580,15 +1635,11 @@ bool FReflectionsDigTerrainNewPieceWaitsForCollisionBeforeNavigationTest::RunTes
         return true;
     }
     const FIntVector Busy(1, 1, 0);
-    // The commit inside creates a new split set, still cooking, in front of the split set that cooked before it.
-    if (!RetireTheRiddledChunk(*this, TestWorld, Scene, Busy))
+    // The commit inside creates two new pieces, still cooking, in front of the pieces that cooked before them.
+    TArray<UReflectionsDigChunkComponent*> Created;
+    if (!RetireTheRiddledChunk(*this, TestWorld, Scene, Busy, &Created))
     {
         return true;
-    }
-    TArray<UReflectionsDigChunkComponent*> Created;
-    for (int32 Index = 0; Index < Scene.Terrain->GetChunkPieceCount(Busy); ++Index)
-    {
-        Created.Add(Cast<UReflectionsDigChunkComponent>(Scene.Terrain->GetChunkPiece(Busy, Index)));
     }
     const TArray<UReflectionsDigChunkComponent*> Retiring = GetHiddenPieces(*Scene.Terrain);
     TestTrue(TEXT("Premise: the chunk has retiring pieces"), Retiring.Num() > 0);
@@ -1623,6 +1674,184 @@ bool FReflectionsDigTerrainNewPieceWaitsForCollisionBeforeNavigationTest::RunTes
         TestFalse(FString::Printf(TEXT("After the cooks, retiring piece %s is still not navigation relevant"), *Piece->GetName()), Piece->IsNavigationRelevant());
     }
     WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the commit"));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainUnchangedBlocksAreNotTouchedTest, "Reflections.Digging.Terrain.UnchangedBlocksAreNotTouched", DigTerrainTestFlags)
+bool FReflectionsDigTerrainUnchangedBlocksAreNotTouchedTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    const FIntVector Busy(1, 1, 0);
+    RiddleBuriedChunk(*Scene.Dig);
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after riddling the chunk")))
+    {
+        return true;
+    }
+    const TStaticArray<UDynamicMeshComponent*, ReflectionsDig::BlocksPerChunk> Before = GetSlots(*Scene.Terrain, Busy);
+    TArray<const UBodySetup*> BodiesBefore;
+    for (int32 Block = 0; Block < ReflectionsDig::BlocksPerChunk; ++Block)
+    {
+        if (!TestNotNull(FString::Printf(TEXT("Premise: the riddled chunk has a piece in block %d"), Block), Before[Block]))
+        {
+            return true;
+        }
+        BodiesBefore.Add(Before[Block]->GetBodySetup());
+    }
+    const int32 CooksBefore = Scene.Terrain->GetCookCompletionCount();
+    const int32 KeptBefore = Scene.Terrain->GetPiecesKeptCount();
+    const int32 ChangedBefore = Scene.Terrain->GetPiecesChangedCount();
+
+    // One dig in the middle of block 0 (X and Y 1625..2425, Z -2800..-2000), between the cavities and 400 cm from
+    // every border of the block, so no other block's triangles and no other chunk change.
+    constexpr int32 DugBlock = 0;
+    TestTrue(TEXT("The dig changes the grid"), Scene.Dig->Dig(FVector(2025.0, 2025.0, -2400.0), 100.0f, EReflectionsDigMode::Remove));
+    if (!WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the dig")))
+    {
+        return true;
+    }
+    TestEqual(TEXT("One slot was given a new mesh"), Scene.Terrain->GetPiecesChangedCount() - ChangedBefore, 1);
+    TestNotNull(TEXT("The dug block still has a piece"), Scene.Terrain->GetChunkBlockPiece(Busy, DugBlock));
+    for (int32 Block = 0; Block < ReflectionsDig::BlocksPerChunk; ++Block)
+    {
+        if (Block == DugBlock)
+        {
+            continue;
+        }
+        UDynamicMeshComponent* Piece = Scene.Terrain->GetChunkBlockPiece(Busy, Block);
+        TestTrue(FString::Printf(TEXT("Block %d holds the same component"), Block), Piece == Before[Block]);
+        TestTrue(FString::Printf(TEXT("Block %d keeps the same body"), Block), Piece != nullptr && Piece->GetBodySetup() == BodiesBefore[Block]);
+    }
+    TestEqual(TEXT("The other seven filled slots were kept"), Scene.Terrain->GetPiecesKeptCount() - KeptBefore, ReflectionsDig::BlocksPerChunk - 1);
+    TestEqual(TEXT("Exactly one collision cook finished"), Scene.Terrain->GetCookCompletionCount() - CooksBefore, 1);
+    TestEqual(TEXT("Nothing is retiring"), Scene.Terrain->GetRetiringPieceCount(Busy), 0);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainBorderOnlyChangeDoesNoWorkTest, "Reflections.Digging.Terrain.BorderOnlyChangeDoesNoWork", DigTerrainTestFlags)
+bool FReflectionsDigTerrainBorderOnlyChangeDoesNoWorkTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    // A dig deep in the buried chunk (1, 1, 0), 200 cm under its top face: its hole (Z -1500..-1300) stays inside
+    // that chunk, but the cells it softens reach within two cells of the face, so the chunk above, (1, 1, 1), is
+    // dirtied and re-meshed. Its ground is 1200 cm higher, so its mesh comes out the same.
+    const FIntVector Buried(1, 1, 0);
+    const FIntVector Above(1, 1, 1);
+    const TStaticArray<UDynamicMeshComponent*, ReflectionsDig::BlocksPerChunk> Before = GetSlots(*Scene.Terrain, Above);
+    TArray<const UBodySetup*> BodiesBefore;
+    int32 Filled = 0;
+    for (const UDynamicMeshComponent* Piece : Before)
+    {
+        Filled += Piece != nullptr ? 1 : 0;
+        BodiesBefore.Add(Piece != nullptr ? Piece->GetBodySetup() : nullptr);
+    }
+    TestEqual(TEXT("Premise: the chunk above fills its four upper blocks"), Filled, 4);
+    TestEqual(TEXT("Premise: the buried chunk has no pieces"), Scene.Terrain->GetChunkPieceCount(Buried), 0);
+    const int32 CooksBefore = Scene.Terrain->GetCookCompletionCount();
+    const int32 KeptBefore = Scene.Terrain->GetPiecesKeptCount();
+    const int32 ChangedBefore = Scene.Terrain->GetPiecesChangedCount();
+
+    TestTrue(TEXT("The dig changes the grid"), Scene.Dig->Dig(FVector(2025.0, 2025.0, -1400.0), 100.0f, EReflectionsDigMode::Remove));
+    int32 Commits = 0;
+    UReflectionsDigSubsystem* Dig = Scene.Dig;
+    const bool bIdle = TestWorld.TickUntil([Dig, &Commits]()
+    {
+        Commits += Dig->GetCommitsLastTick();
+        return Dig->IsIdle();
+    }, IdleTimeoutSeconds);
+    if (!TestTrue(TEXT("Idle after the dig"), bIdle))
+    {
+        return true;
+    }
+    TestEqual(TEXT("Premise: both chunks were meshed and committed"), Commits, 2);
+    TestEqual(TEXT("The buried chunk gained one piece"), Scene.Terrain->GetChunkPieceCount(Buried), 1);
+    TestEqual(TEXT("Only the buried chunk's new piece was given a mesh"), Scene.Terrain->GetPiecesChangedCount() - ChangedBefore, 1);
+    TestEqual(TEXT("The chunk above kept its four pieces"), Scene.Terrain->GetPiecesKeptCount() - KeptBefore, Filled);
+    for (int32 Block = 0; Block < ReflectionsDig::BlocksPerChunk; ++Block)
+    {
+        UDynamicMeshComponent* Piece = Scene.Terrain->GetChunkBlockPiece(Above, Block);
+        TestTrue(FString::Printf(TEXT("Above, block %d holds the same component"), Block), Piece == Before[Block]);
+        TestTrue(FString::Printf(TEXT("Above, block %d keeps the same body"), Block), (Piece != nullptr ? Piece->GetBodySetup() : nullptr) == BodiesBefore[Block]);
+    }
+    TestEqual(TEXT("Only the buried chunk's new piece cooked collision"), Scene.Terrain->GetCookCompletionCount() - CooksBefore, 1);
+    TestFalse(TEXT("The chunk above is not cooking"), Scene.Terrain->IsChunkCooking(Above));
+    TestTrue(TEXT("The terrain is idle"), Scene.Dig->IsIdle());
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FReflectionsDigTerrainNewBlockCollidesBeforeItsNeighbourOpensTest, "Reflections.Digging.Terrain.NewBlockCollidesBeforeItsNeighbourOpens", DigTerrainTestFlags)
+bool FReflectionsDigTerrainNewBlockCollidesBeforeItsNeighbourOpensTest::RunTest(const FString& Parameters)
+{
+    FReflectionsDigTestWorld TestWorld;
+    FTerrainScene Scene;
+    if (!MakeTerrainScene(*this, TestWorld, Scene))
+    {
+        return true;
+    }
+    // A shaft in the middle of block column (low X, low Y) of chunk (1, 1, 1), from the ground down to a floor at
+    // about Z -700: the floor lies in block 0 (Z -1200..-400), which had no piece; the ground was block 4's.
+    const FIntVector Chunk(1, 1, 1);
+    constexpr double X = 2025.0;
+    constexpr double Y = 2025.0;
+    constexpr int32 FloorBlock = 0;
+    constexpr int32 GroundBlock = 4;
+    TestNull(TEXT("Premise: block 0 has no piece"), Scene.Terrain->GetChunkBlockPiece(Chunk, FloorBlock));
+    UDynamicMeshComponent* OldGround = Scene.Terrain->GetChunkBlockPiece(Chunk, GroundBlock);
+    if (!TestNotNull(TEXT("Premise: block 4 has the ground's piece"), OldGround))
+    {
+        return true;
+    }
+    for (double Z = 0.0; Z >= -600.0; Z -= 50.0)
+    {
+        StampGrid(*Scene.Terrain, FVector(X, Y, Z), EReflectionsDigMode::Remove);
+    }
+    CommitFromGrid(*Scene.Terrain, Chunk);
+    const UReflectionsDigChunkComponent* NewFloor = Cast<UReflectionsDigChunkComponent>(Scene.Terrain->GetChunkBlockPiece(Chunk, FloorBlock));
+    if (!TestNotNull(TEXT("The commit gives block 0 a piece"), NewFloor) || !TestFalse(TEXT("Premise: it has no collision yet"), NewFloor->HasCollision()))
+    {
+        return true;
+    }
+    TestTrue(TEXT("Block 4 shows a new piece"), Scene.Terrain->GetChunkBlockPiece(Chunk, GroundBlock) != OldGround);
+    TestFalse(TEXT("Block 4's old piece is hidden"), OldGround->IsVisible());
+
+    // Until block 0's piece has collision, a trace down the shaft must still meet the old ground (block 4's old
+    // piece, hidden but colliding); the world ticks, so the swap check runs in between.
+    int32 Checks = 0;
+    int32 Misses = 0;
+    FString LastMiss;
+    const double Deadline = FPlatformTime::Seconds() + IdleTimeoutSeconds;
+    while (!NewFloor->HasCollision() && FPlatformTime::Seconds() < Deadline)
+    {
+        const TOptional<FHitResult> Hit = TraceDown(TestWorld.World, X, Y);
+        ++Checks;
+        if (!Hit.IsSet() || Hit->GetComponent() != OldGround || FMath::Abs(Hit->ImpactPoint.Z) > 5.0)
+        {
+            ++Misses;
+            LastMiss = Hit.IsSet() ? FString::Printf(TEXT("%s at %.2f"), *GetNameSafe(Hit->GetComponent()), Hit->ImpactPoint.Z) : TEXT("nothing");
+        }
+        TickWithoutPumping(TestWorld);
+        PumpGameThread();
+    }
+    TestTrue(FString::Printf(TEXT("Block 0's piece got collision (%d checks before)"), Checks), NewFloor->HasCollision());
+    TestTrue(TEXT("Premise: at least one trace ran before block 0 had collision"), Checks > 0);
+    TestEqual(FString::Printf(TEXT("Traces that did not meet the old ground before block 0 had collision (last: %s)"), *LastMiss), Misses, 0);
+
+    if (WaitForIdle(*this, TestWorld, Scene, TEXT("Idle after the commit")))
+    {
+        const TOptional<double> Floor = TraceDownZ(TestWorld.World, X, Y);
+        TestTrue(FString::Printf(TEXT("After idle the trace meets the shaft floor below Z -600 (at %s)"),
+            Floor.IsSet() ? *FString::SanitizeFloat(*Floor) : TEXT("no terrain hit")), Floor.IsSet() && *Floor < -600.0);
+        TestEqual(TEXT("No retiring piece is left"), Scene.Terrain->GetRetiringPieceCount(Chunk), 0);
+    }
     return true;
 }
 

@@ -26,23 +26,32 @@ DEFINE_LOG_CATEGORY(LogReflectionsDigTerrain);
 using UE::Geometry::FDynamicMesh3;
 
 /*
- * Collision swap. Each chunk has a current set of pieces and at most one retiring set, hidden but still colliding.
- * The subsystem commits a chunk only when none of its current pieces is cooking (one cook at a time per chunk), so
- * every cook finishes and the engine never aborts one. The rules below still hold for a direct CommitChunk call,
- * which may land while a cook runs, and after a failed cook.
- * - A commit with one piece onto a chunk showing one piece reuses that component. With deferred, async collision the
- *   engine keeps its body in the scene until FinishPhysicsAsyncCook swaps the new one in.
- * - Any other commit replaces the set. Whether the current set is the newest collision that really exists is
- *   decided at commit time from the pieces' own cook state: if every current piece has collision of its own (a
- *   finished, successful cook; a reused piece still cooking keeps its older body), the retiring set is destroyed
- *   and the current set retires; otherwise the current set is destroyed and the retiring set stays. With no
- *   retiring set the current set always retires: it is the only collision there is. Through the subsystem the
- *   second case arises only after a failed cook.
- * - A retiring set replaced by pieces goes once every piece has finished cooking successfully. A failed cook keeps
- *   it, with one warning. The subsystem checks this at the start of each tick, before the commits, and again after
- *   the launches; a commit that reuses a chunk's single piece checks its own chunk first.
- * - A retiring set replaced by nothing (the chunk became all solid or all air) goes only when the whole terrain is
- *   quiet: a neighbouring chunk may still be showing the old hole into this chunk.
+ * Collision swap. A chunk's pieces sit in eight slots, one per block (its octants, ReflectionsDig::BlocksPerChunk),
+ * each with the hash of the mesh it shows. A slot can also hold a retiring piece, hidden but still colliding. The
+ * retiring pieces whose block shows a new piece form the chunk's retiring set; it waits for the current pieces of the
+ * blocks the commits that made it changed (SwapWaitMask). The subsystem commits a chunk only when none of its current
+ * pieces is cooking (one cook at a time per chunk), so every cook finishes and the engine never aborts one. The rules
+ * below still hold for a direct CommitChunk call, which may land while a cook runs, and after a failed cook.
+ * - A commit touches only the slots whose new hash differs from the one they show (or whose piece's newest cook
+ *   failed, so it does not collide with the mesh it shows). Every other slot keeps its component as it is: no new
+ *   mesh, no cook, no navigation update. A commit that changes no slot does nothing at all.
+ * - A commit that changes one slot with a piece before and after reuses that component. With deferred, async
+ *   collision the engine keeps its body in the scene until FinishPhysicsAsyncCook swaps the new one in.
+ * - Any other commit replaces the changed slots' pieces, as one set. Whether the current pieces the retiring set
+ *   waits for are the newest collision that really exists is decided at commit time from the pieces' own cook state:
+ *   if every one has collision of its own (a finished, successful cook; a reused piece still cooking keeps its older
+ *   body), the retiring set is destroyed and the changed slots' pieces retire; otherwise the changed slots' pieces
+ *   among those it waits for are destroyed and the retiring set stays, now waiting for the new pieces as well. A
+ *   changed slot's piece the retiring set does not wait for always retires: it is the only collision that block has.
+ *   With no retiring set the changed pieces always retire. Through the subsystem the second case arises only after a
+ *   failed cook.
+ * - A retiring set replaced by pieces goes, all together, once every piece it waits for has finished cooking
+ *   successfully: until then it covers the blocks the commit changed as they were (a pit's new floor in a block that
+ *   had no piece is waited for by the old ground above it). A failed cook keeps it, with one warning. The subsystem
+ *   checks this at the start of each tick, before the commits, and again after the launches; a commit that reuses a
+ *   slot's piece checks its own chunk first.
+ * - A retiring piece whose block now shows nothing (the block became all solid or all air) goes only when the whole
+ *   terrain is quiet: a neighbouring block may still be showing the old hole into this one.
  * - Navigation follows the collision, not the mesh: a current piece asks for one navigation update per cook that
  *   brings its new body in (a failed cook asks for nothing), a set leaves navigation as it retires, and a destroyed
  *   piece leaves through the engine's unregister. A new piece does not count for navigation until its first cook is
@@ -69,60 +78,133 @@ namespace
         return (FPlatformTime::Seconds() - StartSeconds) * 1000.0;
     }
 
-    void DestroyPieces(TArray<TObjectPtr<UReflectionsDigChunkComponent>>& Pieces)
+    constexpr int32 NumBlocks = ReflectionsDig::BlocksPerChunk;
+    constexpr uint8 AllBlocks = 0xFF;
+    static_assert(NumBlocks == 8, "A block mask is one byte");
+    using FPieceSlots = TObjectPtr<UReflectionsDigChunkComponent>[NumBlocks];
+
+    constexpr uint8 BlockBit(int32 Block)
     {
-        for (UReflectionsDigChunkComponent* Piece : Pieces)
+        return static_cast<uint8>(1u << Block);
+    }
+
+    void DestroyPiece(TObjectPtr<UReflectionsDigChunkComponent>& Piece)
+    {
+        if (Piece != nullptr)
         {
-            if (Piece != nullptr)
+            Piece->DestroyComponent();
+        }
+        Piece = nullptr;
+    }
+
+    /** Destroys the pieces of the slots in Mask; returns how many there were. */
+    int32 DestroyPieces(FPieceSlots& Slots, uint8 Mask = AllBlocks)
+    {
+        int32 Destroyed = 0;
+        for (int32 Block = 0; Block < NumBlocks; ++Block)
+        {
+            if ((Mask & BlockBit(Block)) != 0 && Slots[Block] != nullptr)
             {
-                Piece->DestroyComponent();
+                DestroyPiece(Slots[Block]);
+                ++Destroyed;
             }
         }
-        Pieces.Reset();
+        return Destroyed;
     }
 
-    bool AnyCookPending(const TArray<TObjectPtr<UReflectionsDigChunkComponent>>& Pieces)
+    /** True if a piece in a slot of Mask passes Test. Empty slots never do. */
+    template <typename FTest>
+    bool AnyPiece(const FPieceSlots& Slots, uint8 Mask, FTest Test)
     {
-        return Pieces.ContainsByPredicate([](const UReflectionsDigChunkComponent* Piece)
+        for (int32 Block = 0; Block < NumBlocks; ++Block)
         {
-            return Piece != nullptr && Piece->IsCollisionCookPending();
-        });
+            if ((Mask & BlockBit(Block)) != 0 && Slots[Block] != nullptr && Test(*Slots[Block]))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
-    bool AnyCookFailed(const TArray<TObjectPtr<UReflectionsDigChunkComponent>>& Pieces)
+    /** The slots that hold a piece. */
+    uint8 FilledBlocks(const FPieceSlots& Slots)
     {
-        return Pieces.ContainsByPredicate([](const UReflectionsDigChunkComponent* Piece)
+        uint8 Mask = 0;
+        for (int32 Block = 0; Block < NumBlocks; ++Block)
         {
-            return Piece != nullptr && Piece->DidLastCookFail();
-        });
+            Mask |= Slots[Block] != nullptr ? BlockBit(Block) : 0;
+        }
+        return Mask;
     }
 
-    bool AllHaveCollision(const TArray<TObjectPtr<UReflectionsDigChunkComponent>>& Pieces)
+    bool AnyCookPending(const FPieceSlots& Slots, uint8 Mask = AllBlocks)
     {
-        return !Pieces.ContainsByPredicate([](const UReflectionsDigChunkComponent* Piece)
-        {
-            return Piece == nullptr || !Piece->HasCollision();
-        });
+        return AnyPiece(Slots, Mask, [](const UReflectionsDigChunkComponent& Piece) { return Piece.IsCollisionCookPending(); });
+    }
+
+    bool AnyCookFailed(const FPieceSlots& Slots, uint8 Mask = AllBlocks)
+    {
+        return AnyPiece(Slots, Mask, [](const UReflectionsDigChunkComponent& Piece) { return Piece.DidLastCookFail(); });
+    }
+
+    /** Every piece in a slot of Mask has collision of its own (empty slots are skipped). */
+    bool AllHaveCollision(const FPieceSlots& Slots, uint8 Mask = AllBlocks)
+    {
+        return !AnyPiece(Slots, Mask, [](const UReflectionsDigChunkComponent& Piece) { return !Piece.HasCollision(); });
+    }
+
+    /** Blocks whose retiring piece stands behind a current piece: the chunk's retiring set. */
+    uint8 ReplacedBlocks(const FReflectionsDigTerrainChunk& State)
+    {
+        return FilledBlocks(State.Retiring) & FilledBlocks(State.Pieces);
+    }
+
+    /** Blocks whose retiring piece stands behind nothing: the block was emptied. */
+    uint8 EmptiedBlocks(const FReflectionsDigTerrainChunk& State)
+    {
+        return FilledBlocks(State.Retiring) & ~FilledBlocks(State.Pieces);
+    }
+
+    /** The blocks whose current pieces the retiring set waits for. */
+    uint8 SwapWaitBlocks(const FReflectionsDigTerrainChunk& State)
+    {
+        return (State.SwapWaitMask | ReplacedBlocks(State)) & FilledBlocks(State.Pieces);
+    }
+
+    bool HasRetiring(const FReflectionsDigTerrainChunk& State)
+    {
+        return FilledBlocks(State.Retiring) != 0;
+    }
+
+    bool ShowsNothing(const FReflectionsDigTerrainChunk& State)
+    {
+        return FilledBlocks(State.Pieces) == 0 && FilledBlocks(State.Retiring) == 0;
     }
 
     /**
-     * Whether a chunk's retiring set still waits for the swap check: a cook is running, every piece has collision of
-     * its own and the swap is due, or a failed cook (or a piece that never received a body) has not been handled yet.
-     * A cook can finish between ticks, while game-thread tasks run; until the next swap check has kept the set,
-     * warned and given it its navigation back, something is still to happen. Once handled, the wait stops, so a
-     * failure cannot hold idle off.
+     * Whether a chunk's retiring pieces still wait for the swap check: an emptied block's waits for a quiet terrain;
+     * the retiring set waits while a cook it waits for is running, when every piece has collision of its own and the
+     * swap is due, or while a failed cook (or a piece that never received a body) has not been handled yet. A cook can
+     * finish between ticks, while game-thread tasks run; until the next swap check has kept the set, warned and given
+     * it its navigation back, something is still to happen. Once handled, the wait stops, so a failure cannot hold
+     * idle off.
      */
     bool IsSwapWaiting(const FReflectionsDigTerrainChunk& State)
     {
-        if (State.Retiring.IsEmpty())
+        if (!HasRetiring(State))
         {
             return false;
         }
-        if (State.Pieces.IsEmpty() || AnyCookPending(State.Pieces))
+        if (EmptiedBlocks(State) != 0)
         {
             return true;
         }
-        if (AnyCookFailed(State.Pieces) || !AllHaveCollision(State.Pieces))
+        const uint8 Wait = SwapWaitBlocks(State);
+        if (AnyCookPending(State.Pieces, Wait))
+        {
+            return true;
+        }
+        if (AnyCookFailed(State.Pieces, Wait) || !AllHaveCollision(State.Pieces, Wait))
         {
             return !State.bCookFailureReported;
         }
@@ -130,52 +212,54 @@ namespace
     }
 
     /**
-     * Destroys the chunk's retiring set if its time has come (see the collision swap above). Returns true when the
-     * chunk was emptied and is now showing nothing at all, so its entry can go. bOutNewlyKept is set when this call
-     * found, for the first time since the last commit, that a failed cook keeps the retiring set.
+     * Destroys the chunk's retiring pieces whose time has come (see the collision swap above). Returns true when the
+     * chunk is now showing nothing at all, so its entry can go. bOutNewlyKept is set when this call found, for the
+     * first time since the last commit, that a failed cook keeps the retiring set.
      */
     bool FinishSwap(const FIntVector& Chunk, FReflectionsDigTerrainChunk& State, bool bTerrainQuiet, bool& bOutNewlyKept)
     {
         bOutNewlyKept = false;
-        if (State.Retiring.IsEmpty())
+        if (!HasRetiring(State))
         {
-            return false;
+            State.SwapWaitMask = 0;
+            return ShowsNothing(State);
         }
         const double DestroyStart = FPlatformTime::Seconds();
-        const int32 Destroyed = State.Retiring.Num();
-        bool bEmptied = false;
-        if (State.Pieces.IsEmpty())
+        int32 Destroyed = 0;
+        const uint8 Replaced = ReplacedBlocks(State);
+        if (Replaced != 0)
         {
-            if (!bTerrainQuiet)
+            const uint8 Wait = SwapWaitBlocks(State);
+            if (AnyCookPending(State.Pieces, Wait))
             {
-                return false;
             }
-            DestroyPieces(State.Retiring);
-            bEmptied = true;
-        }
-        else if (AnyCookPending(State.Pieces))
-        {
-            return false;
-        }
-        else if (AnyCookFailed(State.Pieces) || !AllHaveCollision(State.Pieces))
-        {
-            // A piece that never received a body cannot stand in for the old set any more than a failed cook can.
-            if (!State.bCookFailureReported)
+            else if (AnyCookFailed(State.Pieces, Wait) || !AllHaveCollision(State.Pieces, Wait))
             {
-                State.bCookFailureReported = true;
-                bOutNewlyKept = true;
-                UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("Chunk %s: a collision cook failed or a piece has no collision; its previous collision stays until the next commit"),
-                    *Chunk.ToString());
+                // A piece that never received a body cannot stand in for the old pieces any more than a failed cook can.
+                if (!State.bCookFailureReported)
+                {
+                    State.bCookFailureReported = true;
+                    bOutNewlyKept = true;
+                    UE_LOG(LogReflectionsDigTerrain, Warning, TEXT("Chunk %s: a collision cook failed or a piece has no collision; its previous collision stays until the next commit"),
+                        *Chunk.ToString());
+                }
             }
-            return false;
+            else
+            {
+                Destroyed += DestroyPieces(State.Retiring, Replaced);
+                State.SwapWaitMask = 0;
+            }
         }
-        else
+        if (bTerrainQuiet)
         {
-            DestroyPieces(State.Retiring);
+            Destroyed += DestroyPieces(State.Retiring, EmptiedBlocks(State));
         }
-        UE_LOG(LogReflectionsDigTerrain, Verbose, TEXT("DIGSPIKE headless swap %s: destroyed %d retiring pieces in %.2f ms"),
-            *Chunk.ToString(), Destroyed, MillisecondsSince(DestroyStart));
-        return bEmptied;
+        if (Destroyed > 0)
+        {
+            UE_LOG(LogReflectionsDigTerrain, Verbose, TEXT("DIGSPIKE headless swap %s: destroyed %d retiring pieces in %.2f ms"),
+                *Chunk.ToString(), Destroyed, MillisecondsSince(DestroyStart));
+        }
+        return ShowsNothing(State);
     }
 }
 
@@ -471,7 +555,8 @@ void AReflectionsDigTerrain::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AReflectionsDigTerrain::CommitChunk(FIntVector Chunk, FReflectionsDigMeshData&& Mesh)
 {
     FReflectionsDigChunkResult Result;
-    ReflectionsDigPieces::Build(Mesh, Result);
+    // The chunk's local cell (0, 0, 0) relative to the grid origin, as FReflectionsDigGrid::CopyChunkSamples gives it.
+    ReflectionsDigPieces::Build(Mesh, FVector3f(Chunk * ReflectionsDig::ChunkCells) * ReflectionsDig::CellSizeCm, Result);
     CommitChunkPieces(Chunk, MoveTemp(Result));
 }
 
@@ -495,115 +580,170 @@ void AReflectionsDigTerrain::CommitChunkPieces(FIntVector Chunk, FReflectionsDig
     double DestroySeconds = 0.0;
     const TCHAR* Kind = TEXT("reuse");
 
-    if (Result.Pieces.IsEmpty())
+    // The slots this result changes: a new hash, or a piece whose newest cook failed (it does not collide with the
+    // mesh it shows, so the commit cooks it again, as a whole-chunk commit used to). Every other filled slot is kept.
+    const FReflectionsDigTerrainChunk* Shown = Chunks.Find(Chunk);
+    uint8 Changed = 0;
+    int32 Kept = 0;
+    for (int32 Block = 0; Block < NumBlocks; ++Block)
     {
-        Kind = TEXT("retire to empty");
-        if (FReflectionsDigTerrainChunk* State = Chunks.Find(Chunk))
+        const UReflectionsDigChunkComponent* Current = Shown != nullptr ? Shown->Pieces[Block].Get() : nullptr;
+        const uint64 ShownHash = Shown != nullptr ? Shown->PieceHash[Block] : 0;
+        const bool bFailed = Current != nullptr && !Current->IsCollisionCookPending() && Current->DidLastCookFail();
+        if (Result.PieceHash[Block] != ShownHash || bFailed)
         {
-            RetireCurrentSet(*State, DestroySeconds);
-            if (State->Retiring.IsEmpty())
-            {
-                Chunks.Remove(Chunk);
-            }
+            Changed |= BlockBit(Block);
         }
+        else if (Current != nullptr)
+        {
+            ++Kept;
+        }
+    }
+    PiecesKeptCount += Kept;
+    const int32 NumChanged = FMath::CountBits(static_cast<uint64>(Changed));
+
+    if (Changed == 0)
+    {
+        // Nothing to do: no component, cook or navigation work, and nothing for the chunk to wait on.
+        Kind = TEXT("unchanged");
     }
     else
     {
         FReflectionsDigTerrainChunk& State = Chunks.FindOrAdd(Chunk);
-        TArray<UReflectionsDigChunkComponent*, TInlineAllocator<4>> Targets;
-        if (Result.Pieces.Num() == 1 && State.Pieces.Num() == 1 && State.Pieces[0] != nullptr)
+        TArray<int32, TInlineAllocator<NumBlocks>> Targets;
+        const int32 Single = NumChanged == 1 ? static_cast<int32>(FMath::CountTrailingZeros(static_cast<uint32>(Changed))) : INDEX_NONE;
+        if (Single != INDEX_NONE && State.Pieces[Single] != nullptr && Result.Pieces[Single].TriangleCount() > 0)
         {
-            // One piece before and after: the engine keeps the old body until the new cook is in. A retiring set
-            // whose replacement (this piece) has finished cooking goes first: every later commit to this chunk takes
-            // this path and starts a new cook, so a swap check that runs only between commits would never find the
-            // piece idle and the retiring set would stay for the whole hold, an invisible lid.
+            // One slot changes, with a piece before and after: the engine keeps the old body until the new cook is
+            // in. A retiring set whose replacement has finished cooking goes first: every later commit to this block
+            // takes this path and starts a new cook, so a swap check that runs only between commits would never find
+            // the piece idle and the retiring set would stay for the whole hold, an invisible lid.
             bool bNewlyKept = false;
             FinishSwap(Chunk, State, /*bTerrainQuiet=*/ false, bNewlyKept);
             // A retiring set kept by a failed cook gets a new replacement cooking: it is old collision again.
             SetRetiringSetNavigation(State, /*bAffects=*/ false);
-            Targets.Add(State.Pieces[0]);
+            Targets.Add(Single);
         }
         else
         {
             Kind = TEXT("replace");
-            RetireCurrentSet(State, DestroySeconds);
+            RetireCurrentSet(State, Changed, DestroySeconds);
             const double CreateStart = FPlatformTime::Seconds();
-            for (int32 Index = 0; Index < Result.Pieces.Num(); ++Index)
+            for (int32 Block = 0; Block < NumBlocks; ++Block)
             {
-                UReflectionsDigChunkComponent* Piece = CreatePieceComponent();
-                State.Pieces.Add(Piece);
-                Targets.Add(Piece);
+                if ((Changed & BlockBit(Block)) != 0 && Result.Pieces[Block].TriangleCount() > 0)
+                {
+                    State.Pieces[Block] = CreatePieceComponent();
+                    // The retiring set (if any) waits for every piece this commit creates.
+                    State.SwapWaitMask |= BlockBit(Block);
+                    Targets.Add(Block);
+                }
             }
             ComponentSeconds += FPlatformTime::Seconds() - CreateStart;
         }
         // Only now, after the swap check above has reported a failure it found: the cooks started below are new,
         // and a failure of theirs is reported again.
         State.bCookFailureReported = false;
-        for (int32 Index = 0; Index < Targets.Num(); ++Index)
+        for (const int32 Block : Targets)
         {
             // With bDeferCollisionUpdates, SetMesh only invalidates the current body setup's cooked meshes; the body
             // in the physics scene keeps its own reference to them and goes on colliding.
+            UReflectionsDigChunkComponent* Piece = State.Pieces[Block];
             ++CookStartPieces;
-            CookStartVertices += Result.Pieces[Index].VertexCount();
+            ++PiecesChangedCount;
+            CookStartVertices += Result.Pieces[Block].VertexCount();
             const double SetStart = FPlatformTime::Seconds();
-            Targets[Index]->SetMesh(MoveTemp(Result.Pieces[Index]));
+            Piece->SetMesh(MoveTemp(Result.Pieces[Block]));
             // Its triangles for navigation, which exports them once the cook below has brought them in.
-            Targets[Index]->SetNavGeometry(Result.NavGeometry.IsValidIndex(Index) ? MoveTemp(Result.NavGeometry[Index]) : FReflectionsDigNavGeometry());
+            Piece->SetNavGeometry(MoveTemp(Result.NavGeometry[Block]));
             SetMeshSeconds += FPlatformTime::Seconds() - SetStart;
             // Async path: a new body setup is cooked; FinishPhysicsAsyncCook swaps it in.
             const double CookStart = FPlatformTime::Seconds();
-            Targets[Index]->UpdateCollision(/*bOnlyIfPending=*/ false);
+            Piece->UpdateCollision(/*bOnlyIfPending=*/ false);
             CookStartSeconds += FPlatformTime::Seconds() - CookStart;
+        }
+        for (int32 Block = 0; Block < NumBlocks; ++Block)
+        {
+            if ((Changed & BlockBit(Block)) != 0)
+            {
+                State.PieceHash[Block] = Result.PieceHash[Block];
+            }
+        }
+        if (ShowsNothing(State))
+        {
+            Chunks.Remove(Chunk);
         }
     }
 
     UE_LOG(LogReflectionsDigTerrain, Verbose,
-        TEXT("DIGSPIKE headless commit %s (%s, %d pieces, %d vertices): total %.2f ms, components %.2f, set mesh %.2f, cook start %.2f, destroy %.2f"),
-        *Chunk.ToString(), Kind, Result.Pieces.Num(), Result.SourceVertexCount, MillisecondsSince(StartSeconds),
+        TEXT("DIGSPIKE headless commit %s (%s, %d pieces, %d vertices, %d changed, %d kept): total %.2f ms, components %.2f, set mesh %.2f, cook start %.2f, destroy %.2f"),
+        *Chunk.ToString(), Kind, Result.NumPieces(), Result.SourceVertexCount, NumChanged, Kept, MillisecondsSince(StartSeconds),
         ComponentSeconds * 1000.0, SetMeshSeconds * 1000.0, CookStartSeconds * 1000.0, DestroySeconds * 1000.0);
     CommitSeconds += FPlatformTime::Seconds() - StartSeconds;
 }
 
-void AReflectionsDigTerrain::RetireCurrentSet(FReflectionsDigTerrainChunk& State, double& InOutDestroySeconds)
+void AReflectionsDigTerrain::RetireCurrentSet(FReflectionsDigTerrainChunk& State, uint8 ChangedBlocks, double& InOutDestroySeconds)
 {
-    if (State.Pieces.IsEmpty())
-    {
-        // The chunk was emptied: its retiring set is still the last collision it had.
-        return;
-    }
     const double DestroyStart = FPlatformTime::Seconds();
-    if (State.Retiring.IsEmpty() || AllHaveCollision(State.Pieces))
+    if (ReplacedBlocks(State) == 0)
     {
-        DestroyPieces(State.Retiring);
-        State.Retiring = MoveTemp(State.Pieces);
-        for (UReflectionsDigChunkComponent* Old : State.Retiring)
+        // No retiring set: this commit starts a new one, waiting only for the pieces it creates.
+        State.SwapWaitMask = 0;
+    }
+    // The current pieces the retiring set waits for: are they the newest collision that really exists?
+    const uint8 Wait = SwapWaitBlocks(State);
+    const bool bHasRetiringSet = ReplacedBlocks(State) != 0;
+    const bool bReplacementCollides = !bHasRetiringSet || AllHaveCollision(State.Pieces, Wait);
+    if (bHasRetiringSet && bReplacementCollides)
+    {
+        // The swap is due: the retiring set goes now, as the swap check would have destroyed it.
+        DestroyPieces(State.Retiring, ReplacedBlocks(State));
+        State.SwapWaitMask = 0;
+    }
+    bool bRetired = false;
+    for (int32 Block = 0; Block < NumBlocks; ++Block)
+    {
+        if ((ChangedBlocks & BlockBit(Block)) == 0 || State.Pieces[Block] == nullptr)
         {
-            if (Old != nullptr)
-            {
-                Old->SetVisibility(false);
-                // Old collision: it leaves navigation now (the engine removes it from the navigation octree and
-                // dirties its area), not when it is destroyed after the swap. A cook of it still running brings
-                // nothing to navigation.
-                const double NavStart = FPlatformTime::Seconds();
-                Old->NavigationState = UReflectionsDigChunkComponent::ENavigationState::Excluded;
-                Old->SetCanEverAffectNavigation(false);
-                NavUpdateSeconds += FPlatformTime::Seconds() - NavStart;
-                ++NavUpdateCount;
-            }
+            // Unchanged, or the block had no piece: an emptied block's retiring piece is still the last collision it had.
+            continue;
         }
+        if (bReplacementCollides || (Wait & BlockBit(Block)) == 0)
+        {
+            // The piece is the newest collision its block has: it retires. (A block with a retiring piece is always
+            // one the retiring set waits for, so here the slot has none left.)
+            DestroyPiece(State.Retiring[Block]);
+            UReflectionsDigChunkComponent* Old = State.Pieces[Block];
+            State.Retiring[Block] = Old;
+            Old->SetVisibility(false);
+            // Old collision: it leaves navigation now (the engine removes it from the navigation octree and dirties
+            // its area), not when it is destroyed after the swap. A cook of it still running brings nothing to
+            // navigation.
+            const double NavStart = FPlatformTime::Seconds();
+            Old->NavigationState = UReflectionsDigChunkComponent::ENavigationState::Excluded;
+            Old->SetCanEverAffectNavigation(false);
+            NavUpdateSeconds += FPlatformTime::Seconds() - NavStart;
+            ++NavUpdateCount;
+            bRetired = true;
+        }
+        else
+        {
+            // Part of a replacement that never got collision of its own: the retiring set (or nothing, for a block
+            // that had no piece before it) is still the newest that collides there.
+            DestroyPiece(State.Pieces[Block]);
+        }
+        State.Pieces[Block] = nullptr;
+    }
+    if (bRetired)
+    {
         if (const UWorld* World = GetWorld())
         {
             LastNavUpdateSeconds = World->GetTimeSeconds();
         }
     }
-    else
-    {
-        // The current set never got collision of its own; the retiring set is still the newest that collides. If a
-        // failed cook had given it its navigation back, the new set about to cook makes it old collision again.
-        DestroyPieces(State.Pieces);
-        SetRetiringSetNavigation(State, /*bAffects=*/ false);
-    }
-    State.Pieces.Reset();
+    // If a failed cook had given the retiring set its navigation back, the new pieces about to cook make it old
+    // collision again.
+    SetRetiringSetNavigation(State, /*bAffects=*/ false);
     InOutDestroySeconds += FPlatformTime::Seconds() - DestroyStart;
 }
 
@@ -647,6 +787,7 @@ void AReflectionsDigTerrain::ReleaseChunk(FIntVector Chunk)
     {
         const double ReleaseStart = FPlatformTime::Seconds();
         DestroyPieces(State->Pieces);
+        // The hashes go with the entry: a chunk shown again is built from scratch.
         DestroyPieces(State->Retiring);
         Chunks.Remove(Chunk);
         ReleaseSeconds += FPlatformTime::Seconds() - ReleaseStart;
@@ -689,26 +830,52 @@ double AReflectionsDigTerrain::GetChunkReleaseSeconds() const
 
 UDynamicMeshComponent* AReflectionsDigTerrain::FindChunkComponent(FIntVector Chunk) const
 {
-    const FReflectionsDigTerrainChunk* State = Chunks.Find(Chunk);
-    return State != nullptr && !State->Pieces.IsEmpty() ? State->Pieces[0].Get() : nullptr;
+    return GetChunkPiece(Chunk, 0);
 }
 
 int32 AReflectionsDigTerrain::GetChunkPieceCount(FIntVector Chunk) const
 {
     const FReflectionsDigTerrainChunk* State = Chunks.Find(Chunk);
-    return State != nullptr ? State->Pieces.Num() : 0;
+    return State != nullptr ? FMath::CountBits(static_cast<uint64>(FilledBlocks(State->Pieces))) : 0;
 }
 
 UDynamicMeshComponent* AReflectionsDigTerrain::GetChunkPiece(FIntVector Chunk, int32 Index) const
 {
     const FReflectionsDigTerrainChunk* State = Chunks.Find(Chunk);
-    return State != nullptr && State->Pieces.IsValidIndex(Index) ? State->Pieces[Index].Get() : nullptr;
+    if (State == nullptr || Index < 0)
+    {
+        return nullptr;
+    }
+    for (int32 Block = 0; Block < NumBlocks; ++Block)
+    {
+        if (State->Pieces[Block] != nullptr && Index-- == 0)
+        {
+            return State->Pieces[Block].Get();
+        }
+    }
+    return nullptr;
+}
+
+UDynamicMeshComponent* AReflectionsDigTerrain::GetChunkBlockPiece(FIntVector Chunk, int32 Block) const
+{
+    const FReflectionsDigTerrainChunk* State = Chunks.Find(Chunk);
+    return State != nullptr && Block >= 0 && Block < NumBlocks ? State->Pieces[Block].Get() : nullptr;
 }
 
 int32 AReflectionsDigTerrain::GetRetiringPieceCount(FIntVector Chunk) const
 {
     const FReflectionsDigTerrainChunk* State = Chunks.Find(Chunk);
-    return State != nullptr ? State->Retiring.Num() : 0;
+    return State != nullptr ? FMath::CountBits(static_cast<uint64>(FilledBlocks(State->Retiring))) : 0;
+}
+
+int32 AReflectionsDigTerrain::GetPiecesChangedCount() const
+{
+    return PiecesChangedCount;
+}
+
+int32 AReflectionsDigTerrain::GetPiecesKeptCount() const
+{
+    return PiecesKeptCount;
 }
 
 FReflectionsDigGrid* AReflectionsDigTerrain::GetGrid() const
@@ -721,7 +888,7 @@ int32 AReflectionsDigTerrain::GetLargestCollisionVertexCount() const
     int32 Largest = 0;
     for (const TPair<FIntVector, FReflectionsDigTerrainChunk>& Pair : Chunks)
     {
-        for (const TArray<TObjectPtr<UReflectionsDigChunkComponent>>* Set : { &Pair.Value.Pieces, &Pair.Value.Retiring })
+        for (const FPieceSlots* Set : { &Pair.Value.Pieces, &Pair.Value.Retiring })
         {
             for (const UReflectionsDigChunkComponent* Piece : *Set)
             {

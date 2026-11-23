@@ -290,6 +290,11 @@ namespace
         bool bHaveTimings = false;
         int32 CookStartPiecesWindow = 0;
         int64 CookStartVerticesWindow = 0;
+        /** Slots given a new mesh, and filled slots left alone because their hash had not changed, over the window. */
+        int32 PiecesChanged = 0;
+        int32 PiecesKept = 0;
+        int32 LastPiecesChanged = -1;
+        int32 LastPiecesKept = -1;
         TUniquePtr<FGarbageCollectionWatch> CollectionWatch;
         /** Set while the window is measured (Start/Stop); null for the idle baseline. */
         TUniquePtr<FTerrainTimingWatch> Watch;
@@ -354,6 +359,10 @@ namespace
                 FrameNavMs = LastNavUpdates >= 0 ? (Terrain->GetNavUpdateSeconds() - LastNavSeconds) * 1000.0 : 0.0;
                 LastNavUpdates = Terrain->GetNavUpdateCount();
                 LastNavSeconds = Terrain->GetNavUpdateSeconds();
+                PiecesChanged += LastPiecesChanged >= 0 ? Terrain->GetPiecesChangedCount() - LastPiecesChanged : 0;
+                LastPiecesChanged = Terrain->GetPiecesChangedCount();
+                PiecesKept += LastPiecesKept >= 0 ? Terrain->GetPiecesKeptCount() - LastPiecesKept : 0;
+                LastPiecesKept = Terrain->GetPiecesKeptCount();
                 const TArray<FIntVector> Chunks = GetAllChunks(*Terrain);
                 const bool bFirst = ChunkShown.Num() != Chunks.Num();
                 ChunkShown.SetNum(Chunks.Num());
@@ -443,7 +452,7 @@ namespace
          * Whole-window figures: every frame as milliseconds above Idle's median (mean, median, p99, max) and the raw
          * maximum; the cost per dig, (window mean - idle mean) x frames / digs; the frames by kind with the largest of
          * each above the idle median; the background (neither dig-related nor a collection) here and in Idle;
-         * collections here and in Idle.
+         * collections here and in Idle; the slots the window's commits changed and kept.
          */
         FString DescribeWhole(const FFrameWindow& Idle) const
         {
@@ -471,11 +480,11 @@ namespace
             const double MaxAbove = Above.IsEmpty() ? 0.0 : FMath::Max(Above);
             const bool bMaxIsCollection = !Collection.IsEmpty() && FMath::Max(Collection) >= MaxAbove;
             const double CostPerDig = Digs > 0 ? (MeanOf(GameMs) - MeanOf(Idle.GameMs)) * Num() / Digs : 0.0;
-            return FString::Printf(TEXT("idle_median_ms=%.3f above_mean_ms=%.3f above_median_ms=%.3f above_p99_ms=%.3f above_max_ms=%.3f raw_max_ms=%.3f max_is_collection=%d frames=%d digs=%d cost_per_dig_ms=%.3f dig_related_frames=%d dig_related_max_ms=%.3f collection_frames=%d collection_max_ms=%.3f background_frames=%d background_max_ms=%.3f idle_background_max_ms=%.3f collections_window=%d collections_idle=%d commits=%d cooks_finished=%d nav_updates=%d releases=%d restores=%d release_ms_total=%.3f release_ms_max_frame=%.3f game_thread_cooks=%d"),
+            return FString::Printf(TEXT("idle_median_ms=%.3f above_mean_ms=%.3f above_median_ms=%.3f above_p99_ms=%.3f above_max_ms=%.3f raw_max_ms=%.3f max_is_collection=%d frames=%d digs=%d cost_per_dig_ms=%.3f dig_related_frames=%d dig_related_max_ms=%.3f collection_frames=%d collection_max_ms=%.3f background_frames=%d background_max_ms=%.3f idle_background_max_ms=%.3f collections_window=%d collections_idle=%d commits=%d cooks_finished=%d nav_updates=%d releases=%d restores=%d release_ms_total=%.3f release_ms_max_frame=%.3f game_thread_cooks=%d pieces_changed=%d pieces_kept=%d"),
                 Baseline, MeanOf(Above), PercentileOf(Above, 0.5), PercentileOf(Above, 0.99), MaxAbove, MaxOf(GameMs), bMaxIsCollection ? 1 : 0, Num(), Digs,
                 CostPerDig, DigRelated.Num(), DigRelated.IsEmpty() ? 0.0 : FMath::Max(DigRelated), Collection.Num(), Collection.IsEmpty() ? 0.0 : FMath::Max(Collection),
                 BackgroundFrames, Background, IdleBackground, Collections, Idle.Collections, Commits, CooksFinished, NavUpdates, Releases, Restores,
-                ReleaseMsTotal, ReleaseMsMaxFrame, GameThreadCooks);
+                ReleaseMsTotal, ReleaseMsMaxFrame, GameThreadCooks, PiecesChanged, PiecesKept);
         }
 
         /**
@@ -955,9 +964,10 @@ namespace
     /**
      * Queues a measured dig window: idle frames as long as the window (for the idle median and the collection count),
      * then Seconds of one DigOnce every 0.1 s (it returns whether the grid changed), then the logs under
-     * DIGSPIKE <Name>_WHOLE / _EXTRA / _IDLE / _WINDOW.
+     * DIGSPIKE <Name>_WHOLE / _EXTRA / _IDLE / _WINDOW. AfterLog, if set, then checks the measured window.
      */
-    void AddMeasuredDigWindow(const FDigGameSceneRef& Scene, const FString& Name, double Seconds, TFunction<bool(FDigGameScene&, int32)> DigOnce)
+    void AddMeasuredDigWindow(const FDigGameSceneRef& Scene, const FString& Name, double Seconds, TFunction<bool(FDigGameScene&, int32)> DigOnce,
+        TFunction<void(FDigGameScene&, const FFrameWindow&)> AfterLog = nullptr)
     {
         constexpr double DigEverySeconds = 0.1;
         const FFrameWindowRef Idle = MakeShared<FFrameWindow>();
@@ -995,7 +1005,7 @@ namespace
             Timer->Changed += DigOnce(S, Timer->Attempts++) ? 1 : 0;
             return false;
         });
-        AddAction(Scene, FString::Printf(TEXT("%s: log"), *Name), [Name, Idle, Window, Timer](FDigGameScene& S)
+        AddAction(Scene, FString::Printf(TEXT("%s: log"), *Name), [Name, Idle, Window, Timer, AfterLog = MoveTemp(AfterLog)](FDigGameScene& S)
         {
             UE_LOG(LogTemp, Display, TEXT("DIGSPIKE %s_WHOLE %s"), *Name, *Window->DescribeWhole(*Idle));
             UE_LOG(LogTemp, Display, TEXT("DIGSPIKE SPLIT %s"), *Window->DescribeSplit(*Idle, Name));
@@ -1005,6 +1015,10 @@ namespace
             Window->Log(*(Name + TEXT("_WINDOW")));
             Window->Stop();
             S.Test->TestTrue(FString::Printf(TEXT("%s: the window dug"), *Name), Timer->Changed > 0);
+            if (AfterLog)
+            {
+                AfterLog(S, *Window);
+            }
         });
     }
 
@@ -1118,12 +1132,26 @@ bool FReflectionsSpikePerfBusyChunkCostTest::RunTest(const FString& Parameters)
         }
     });
     AddWaitForQuiet(Scene, TEXT("BusyChunkCost"));
-    // Remove and Add in turn at one place between cavities, so every dig changes the grid and re-meshes the split chunk.
+    // Remove and Add in turn at one place between cavities, so every dig changes the grid and re-meshes the busy chunk (pieces= counts its filled block slots).
     AddMeasuredDigWindow(Scene, TEXT("BUSY"), 10.0, [Inside](FDigGameScene& S, int32 Index)
     {
         return S.GetSubsystem()->Dig(Inside, DigRadiusCm, Index % 2 == 0 ? EReflectionsDigMode::Remove : EReflectionsDigMode::Add);
     });
     AddStep(Scene, TEXT("Idle after the busy window"), ReadyTimeoutSeconds, [](FDigGameScene& S) { return S.GetSubsystem()->IsIdle(); });
+    // The same riddled chunk, digging at the centre of its block 0 (X 4225..5025, Y -2375..-1575, Z -2800..-2000):
+    // 400 cm from every block border and between the cavities, as Inside is, so each dig changes that block's slot only.
+    const FVector InsideBlock(4625.0, -1975.0, -2400.0);
+    AddWaitForQuiet(Scene, TEXT("BusyChunkCost block"));
+    AddMeasuredDigWindow(Scene, TEXT("BUSYBLOCK"), 10.0, [InsideBlock](FDigGameScene& S, int32 Index)
+    {
+        return S.GetSubsystem()->Dig(InsideBlock, DigRadiusCm, Index % 2 == 0 ? EReflectionsDigMode::Remove : EReflectionsDigMode::Add);
+    }, [](FDigGameScene& S, const FFrameWindow& Window)
+    {
+        const double PerCommit = Window.Commits > 0 ? static_cast<double>(Window.PiecesChanged) / Window.Commits : 0.0;
+        S.Test->TestTrue(FString::Printf(TEXT("BUSYBLOCK: each commit changes one slot (%d slots changed in %d commits, %.2f a commit)"),
+            Window.PiecesChanged, Window.Commits, PerCommit), Window.Commits > 0 && Window.PiecesChanged == Window.Commits);
+    });
+    AddStep(Scene, TEXT("Idle after the busy-block window"), ReadyTimeoutSeconds, [](FDigGameScene& S) { return S.GetSubsystem()->IsIdle(); });
     AddAction(Scene, TEXT("Log the busy chunk"), [Busy](FDigGameScene& S)
     {
         const FChunkMeshSize Size = FChunkMeshSize::Of(*S.Terrain, *Busy);

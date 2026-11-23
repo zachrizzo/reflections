@@ -5,6 +5,7 @@
 #include "Digging/ReflectionsDigTypes.h"
 #include "DynamicMesh/DynamicMesh3.h"
 #include "DynamicMesh/DynamicMeshAttributeSet.h"
+#include "Hash/CityHash.h"
 #include "IndexTypes.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogReflectionsDigPieces, Log, All);
@@ -14,128 +15,122 @@ using UE::Geometry::FIndex3i;
 
 namespace
 {
-    /**
-     * More slabs than any chunk needs: a slab one cube layer thick holds at most about 3 * 34 * 34 vertices,
-     * far under the limit, and 64 slabs are thinner than that. Reaching it would mean a broken mesh.
-     */
-    constexpr int32 MaxSlabs = 64;
-
-    void ZExtent(const FReflectionsDigMeshData& Mesh, float& OutMinZ, float& OutMaxZ)
+    /** The block that holds a centroid: the high half on an axis from the border on (a centroid on it is the high block's). */
+    int32 BlockOf(const FVector3f& Centroid, const FVector3f& Border)
     {
-        OutMinZ = TNumericLimits<float>::Max();
-        OutMaxZ = TNumericLimits<float>::Lowest();
-        for (const FVector3f& Position : Mesh.Positions)
-        {
-            OutMinZ = FMath::Min(OutMinZ, Position.Z);
-            OutMaxZ = FMath::Max(OutMaxZ, Position.Z);
-        }
+        return (Centroid.X >= Border.X ? 1 : 0) + (Centroid.Y >= Border.Y ? 2 : 0) + (Centroid.Z >= Border.Z ? 4 : 0);
     }
 
-    /** For each of NumSlabs equal-height slabs between MinZ and MaxZ, the triangles whose centroid it holds. */
-    TArray<TArray<int32>> AssignTrianglesToSlabs(const FReflectionsDigMeshData& Mesh, int32 NumSlabs)
+    /** What a piece's hash covers, gathered in the order the piece is built (the mesher's order). */
+    struct FPieceHashInput
     {
-        float MinZ = 0.0f;
-        float MaxZ = 0.0f;
-        ZExtent(Mesh, MinZ, MaxZ);
-        TArray<TArray<int32>> Slabs;
-        Slabs.SetNum(NumSlabs);
-        const int32 NumTriangles = Mesh.Triangles.Num() / 3;
-        const float SlabHeight = (MaxZ - MinZ) / static_cast<float>(NumSlabs);
-        for (int32 Triangle = 0; Triangle < NumTriangles; ++Triangle)
+        TArray<FVector3f> Positions;
+        TArray<FVector3f> Normals;
+        TArray<FIndex3i> Triangles;
+
+        /** CityHash64 of the bytes, the same on every thread and run; 0 only for no triangles. */
+        uint64 Hash() const
         {
-            int32 Slab = 0;
-            if (SlabHeight > 0.0f)
+            if (Triangles.IsEmpty())
             {
-                const float CentroidZ = (Mesh.Positions[Mesh.Triangles[3 * Triangle]].Z
-                    + Mesh.Positions[Mesh.Triangles[3 * Triangle + 1]].Z
-                    + Mesh.Positions[Mesh.Triangles[3 * Triangle + 2]].Z) / 3.0f;
-                Slab = FMath::Clamp(FMath::FloorToInt32((CentroidZ - MinZ) / SlabHeight), 0, NumSlabs - 1);
+                return 0;
             }
-            Slabs[Slab].Add(Triangle);
+            uint64 Hash = CityHash64(Positions.GetData(), Positions.Num() * sizeof(FVector3f));
+            Hash = CityHash64WithSeed(Normals.GetData(), Normals.Num() * sizeof(FVector3f), Hash);
+            Hash = CityHash64WithSeed(Triangles.GetData(), Triangles.Num() * sizeof(FIndex3i), Hash);
+            return Hash != 0 ? Hash : 1;
         }
-        return Slabs;
-    }
-
-    /** The most vertices any slab uses (each slab counts every vertex its triangles touch once). */
-    int32 LargestSlabVertexCount(const FReflectionsDigMeshData& Mesh, const TArray<TArray<int32>>& Slabs)
-    {
-        TArray<int32> LastSlabOfVertex;
-        LastSlabOfVertex.Init(INDEX_NONE, Mesh.Positions.Num());
-        int32 Largest = 0;
-        for (int32 Slab = 0; Slab < Slabs.Num(); ++Slab)
-        {
-            int32 Count = 0;
-            for (const int32 Triangle : Slabs[Slab])
-            {
-                for (int32 Corner = 0; Corner < 3; ++Corner)
-                {
-                    int32& Last = LastSlabOfVertex[Mesh.Triangles[3 * Triangle + Corner]];
-                    if (Last != Slab)
-                    {
-                        Last = Slab;
-                        ++Count;
-                    }
-                }
-            }
-            Largest = FMath::Max(Largest, Count);
-        }
-        return Largest;
-    }
+    };
 
     /**
-     * One piece's dynamic mesh: its own copy of the vertices the triangles use, with the mesher's per-vertex
-     * normals in the primary normal overlay (one element per vertex, which the scene proxy renders with).
-     * FDynamicMesh3 refuses a triangle on an edge that already has two; such a triangle gets its own vertex copies.
-     * Returns how many triangles could not be added even so.
+     * One piece's dynamic mesh: its own copy of the vertices the triangles use, with the mesher's per-vertex normals in
+     * the primary normal overlay (one element per vertex, which the scene proxy renders with). FDynamicMesh3 refuses a
+     * triangle on an edge that already has two; such a triangle goes onto a second copy of its vertices, shared by
+     * every such triangle of the piece, and only if that copy refuses it too onto vertex copies of its own. Returns how
+     * many triangles could not be added even so; OutHash is the piece's hash.
      */
-    int32 BuildPieceMesh(const FReflectionsDigMeshData& Mesh, const TArray<int32>& Triangles, FDynamicMesh3& Piece)
+    int32 BuildPieceMesh(const FReflectionsDigMeshData& Mesh, const TArray<int32>& Triangles, FDynamicMesh3& Piece, uint64& OutHash)
     {
         Piece = FDynamicMesh3();
         Piece.EnableAttributes();
         UE::Geometry::FDynamicMeshNormalOverlay* Normals = Piece.Attributes()->PrimaryNormals();
-        TArray<int32> PieceVertexOf;
-        PieceVertexOf.Init(INDEX_NONE, Mesh.Positions.Num());
+        FPieceHashInput HashInput;
+        HashInput.Triangles.Reserve(Triangles.Num());
+        TArray<int32> VertexOf[2];
+        VertexOf[0].Init(INDEX_NONE, Mesh.Positions.Num());
 
         // Vertex and normal element IDs stay equal: each vertex appends exactly one element.
-        auto AppendVertex = [&Piece, Normals, &Mesh](int32 Source)
+        auto AppendVertex = [&Piece, Normals, &Mesh, &HashInput](int32 Source)
         {
             const int32 Vertex = Piece.AppendVertex(FVector3d(Mesh.Positions[Source]));
             Normals->AppendElement(Mesh.Normals[Source]);
+            HashInput.Positions.Add(Mesh.Positions[Source]);
+            HashInput.Normals.Add(Mesh.Normals[Source]);
             return Vertex;
+        };
+
+        // The triangle on one copy of the vertices. An edge between two vertices the copy already has that holds two
+        // triangles is checked first, so no vertex is added for a triangle that cannot go in.
+        auto TryCopy = [&Piece, &AppendVertex](TArray<int32>& Copy, const int32 (&Sources)[3], FIndex3i& OutCorners)
+        {
+            for (int32 Edge = 0; Edge < 3; ++Edge)
+            {
+                const int32 A = Copy[Sources[Edge]];
+                const int32 B = Copy[Sources[(Edge + 1) % 3]];
+                if (A != INDEX_NONE && B != INDEX_NONE)
+                {
+                    const int32 EdgeID = Piece.FindEdge(A, B);
+                    if (EdgeID != FDynamicMesh3::InvalidID && !Piece.IsBoundaryEdge(EdgeID))
+                    {
+                        return FDynamicMesh3::NonManifoldID;
+                    }
+                }
+            }
+            for (int32 Corner = 0; Corner < 3; ++Corner)
+            {
+                int32& Vertex = Copy[Sources[Corner]];
+                if (Vertex == INDEX_NONE)
+                {
+                    Vertex = AppendVertex(Sources[Corner]);
+                }
+                OutCorners[Corner] = Vertex;
+            }
+            return Piece.AppendTriangle(OutCorners);
         };
 
         int32 Dropped = 0;
         for (const int32 Triangle : Triangles)
         {
+            const int32 Sources[3] = { Mesh.Triangles[3 * Triangle], Mesh.Triangles[3 * Triangle + 1], Mesh.Triangles[3 * Triangle + 2] };
             FIndex3i Corners;
-            for (int32 Corner = 0; Corner < 3; ++Corner)
+            int32 NewTriangle = TryCopy(VertexOf[0], Sources, Corners);
+            if (NewTriangle == FDynamicMesh3::NonManifoldID)
             {
-                const int32 Source = Mesh.Triangles[3 * Triangle + Corner];
-                int32& Vertex = PieceVertexOf[Source];
-                if (Vertex == INDEX_NONE)
+                if (VertexOf[1].IsEmpty())
                 {
-                    Vertex = AppendVertex(Source);
+                    VertexOf[1].Init(INDEX_NONE, Mesh.Positions.Num());
                 }
-                Corners[Corner] = Vertex;
+                NewTriangle = TryCopy(VertexOf[1], Sources, Corners);
             }
-            int32 NewTriangle = Piece.AppendTriangle(Corners);
             if (NewTriangle == FDynamicMesh3::NonManifoldID)
             {
                 for (int32 Corner = 0; Corner < 3; ++Corner)
                 {
-                    Corners[Corner] = AppendVertex(Mesh.Triangles[3 * Triangle + Corner]);
+                    Corners[Corner] = AppendVertex(Sources[Corner]);
                 }
                 NewTriangle = Piece.AppendTriangle(Corners);
             }
             if (NewTriangle >= 0)
             {
                 Normals->SetTriangle(NewTriangle, Corners);
+                HashInput.Triangles.Add(Corners);
             }
             else
             {
                 ++Dropped;
             }
         }
+        OutHash = HashInput.Hash();
         return Dropped;
     }
 
@@ -159,21 +154,21 @@ namespace
             Out.Indices.Add(IndexOfVertex[Corners.C]);
         }
     }
+}
 
-    int32 LargestPieceVertexCount(const FReflectionsDigChunkResult& Result)
+int32 FReflectionsDigChunkResult::NumPieces() const
+{
+    int32 Count = 0;
+    for (const FDynamicMesh3& Piece : Pieces)
     {
-        int32 Largest = 0;
-        for (const FDynamicMesh3& Piece : Result.Pieces)
-        {
-            Largest = FMath::Max(Largest, Piece.VertexCount());
-        }
-        return Largest;
+        Count += Piece.TriangleCount() > 0 ? 1 : 0;
     }
+    return Count;
 }
 
 namespace ReflectionsDigPieces
 {
-    void BuildWithSlabs(const FReflectionsDigMeshData& Mesh, int32 NumSlabs, FReflectionsDigChunkResult& Out)
+    void Build(const FReflectionsDigMeshData& Mesh, const FVector3f& ChunkLocalOriginCm, FReflectionsDigChunkResult& Out)
     {
         Out = FReflectionsDigChunkResult();
         Out.SourceVertexCount = Mesh.Positions.Num();
@@ -182,39 +177,28 @@ namespace ReflectionsDigPieces
         {
             return;
         }
-        const TArray<TArray<int32>> Slabs = AssignTrianglesToSlabs(Mesh, FMath::Max(1, NumSlabs));
-        for (const TArray<int32>& Slab : Slabs)
+        const FVector3f Border = ChunkLocalOriginCm + FVector3f(ReflectionsDig::BlockCells * ReflectionsDig::CellSizeCm);
+        TStaticArray<TArray<int32>, ReflectionsDig::BlocksPerChunk> BlockTriangles;
+        for (int32 Triangle = 0; Triangle < Out.SourceTriangleCount; ++Triangle)
         {
-            if (!Slab.IsEmpty())
-            {
-                Out.DroppedTriangles += BuildPieceMesh(Mesh, Slab, Out.Pieces.AddDefaulted_GetRef());
-            }
+            const FVector3f Centroid = (Mesh.Positions[Mesh.Triangles[3 * Triangle]] + Mesh.Positions[Mesh.Triangles[3 * Triangle + 1]]
+                + Mesh.Positions[Mesh.Triangles[3 * Triangle + 2]]) / 3.0f;
+            BlockTriangles[BlockOf(Centroid, Border)].Add(Triangle);
         }
-        Out.NavGeometry.SetNum(Out.Pieces.Num());
-        for (int32 Index = 0; Index < Out.Pieces.Num(); ++Index)
+        for (int32 Block = 0; Block < ReflectionsDig::BlocksPerChunk; ++Block)
         {
-            BuildNavGeometry(Out.Pieces[Index], Out.NavGeometry[Index]);
-        }
-    }
-
-    void Build(const FReflectionsDigMeshData& Mesh, FReflectionsDigChunkResult& Out)
-    {
-        for (int32 NumSlabs = 1; NumSlabs <= MaxSlabs; ++NumSlabs)
-        {
-            const bool bLastTry = NumSlabs == MaxSlabs;
-            // A slab's own vertex count is a lower bound of its built piece's, so a slab already over the limit
-            // rules this slab count out without building anything.
-            if (!bLastTry && LargestSlabVertexCount(Mesh, AssignTrianglesToSlabs(Mesh, NumSlabs)) > ReflectionsDig::MaxPieceVertices)
+            if (BlockTriangles[Block].IsEmpty())
             {
                 continue;
             }
-            BuildWithSlabs(Mesh, NumSlabs, Out);
-            if (LargestPieceVertexCount(Out) <= ReflectionsDig::MaxPieceVertices)
+            Out.DroppedTriangles += BuildPieceMesh(Mesh, BlockTriangles[Block], Out.Pieces[Block], Out.PieceHash[Block]);
+            BuildNavGeometry(Out.Pieces[Block], Out.NavGeometry[Block]);
+            if (Out.Pieces[Block].VertexCount() > ReflectionsDig::MaxPieceVertices)
             {
-                return;
+                // Not split: no chunk the mesher can make gives a block this many (WorstBlockStaysUnderTheLimit).
+                UE_LOG(LogReflectionsDigPieces, Warning, TEXT("Block %d of a chunk mesh of %d vertices holds %d vertices, above the %d a piece may hold"),
+                    Block, Mesh.Positions.Num(), Out.Pieces[Block].VertexCount(), ReflectionsDig::MaxPieceVertices);
             }
         }
-        UE_LOG(LogReflectionsDigPieces, Warning, TEXT("A chunk mesh of %d vertices does not fit %d slabs of %d vertices"),
-            Mesh.Positions.Num(), MaxSlabs, ReflectionsDig::MaxPieceVertices);
     }
 }

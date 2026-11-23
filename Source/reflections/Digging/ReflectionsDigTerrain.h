@@ -166,23 +166,36 @@ struct FReflectionsDigTerrainTimings
     int64 CookStartVertices = 0;
 };
 
-/** The mesh components of one chunk. */
+/**
+ * The mesh components of one chunk, in eight slots indexed by block (ReflectionsDig::BlocksPerChunk, block index
+ * X + 2 * Y + 4 * Z). The swap rules are at the top of the class's .cpp.
+ */
 USTRUCT()
 struct FReflectionsDigTerrainChunk
 {
     GENERATED_BODY()
 
-    /** The chunk's current pieces, lowest slab first. Empty after the chunk's mesh became empty. */
+    /** The chunk's current pieces by block; null where the block has no surface. */
     UPROPERTY(Transient)
-    TArray<TObjectPtr<UReflectionsDigChunkComponent>> Pieces;
+    TObjectPtr<UReflectionsDigChunkComponent> Pieces[8];
 
-    /** The newest set that really collided before the current one: hidden, still colliding until the swap. */
+    /**
+     * Retiring pieces by block, hidden and still colliding: in a block that shows a new piece, the newest piece that
+     * really collided before it (together, the chunk's retiring set); in a block that shows nothing, its last piece.
+     */
     UPROPERTY(Transient)
-    TArray<TObjectPtr<UReflectionsDigChunkComponent>> Retiring;
+    TObjectPtr<UReflectionsDigChunkComponent> Retiring[8];
+
+    /** The hash of the mesh each slot shows (FReflectionsDigChunkResult::PieceHash); 0 for an empty slot. */
+    uint64 PieceHash[8] = {};
+
+    /** Blocks whose current pieces the retiring set waits for: those the commits that made it created or changed. */
+    uint8 SwapWaitMask = 0;
 
     /** A failed cook kept the retiring set; it has been reported. */
     bool bCookFailureReported = false;
 };
+static_assert(ReflectionsDig::BlocksPerChunk == 8, "FReflectionsDigTerrainChunk has one slot per block");
 
 /**
  * A diggable patch of ground. It owns the grid, one or more mesh components per chunk and a safety floor under the
@@ -217,25 +230,35 @@ public:
     void CommitChunk(FIntVector Chunk, FReflectionsDigMeshData&& Mesh);
 
     /**
-     * Shows a chunk's new pieces (positions relative to the grid origin). No pieces retires the chunk's set.
-     * The chunk's previous collision stays until the new collision has finished cooking (see the collision swap
-     * in the class's .cpp).
+     * Shows a chunk's new pieces (positions relative to the grid origin), one slot per block. Only the slots whose
+     * hash changed are touched; an empty slot retires its block's piece. The previous collision of the blocks a commit
+     * changes stays until all their new collision has finished cooking (see the collision swap in the class's .cpp).
      */
     void CommitChunkPieces(FIntVector Chunk, FReflectionsDigChunkResult&& Result);
 
     /** Destroys the chunk's components at once, retiring ones included. */
     void ReleaseChunk(FIntVector Chunk);
 
-    /** The chunk's first (lowest) current piece, or null. */
+    /** The chunk's first current piece (lowest block index), or null. */
     UDynamicMeshComponent* FindChunkComponent(FIntVector Chunk) const;
 
+    /** How many of the chunk's slots hold a current piece. */
     int32 GetChunkPieceCount(FIntVector Chunk) const;
 
-    /** The chunk's current piece at Index (0 to GetChunkPieceCount - 1, lowest slab first), or null. */
+    /** The Index-th filled slot's piece (0 to GetChunkPieceCount - 1, lowest block index first), or null. */
     UDynamicMeshComponent* GetChunkPiece(FIntVector Chunk, int32 Index) const;
+
+    /** The current piece of one block's slot (0 to ReflectionsDig::BlocksPerChunk - 1), or null. */
+    UDynamicMeshComponent* GetChunkBlockPiece(FIntVector Chunk, int32 Block) const;
 
     /** The chunk's retiring pieces: hidden, still colliding until their swap. */
     int32 GetRetiringPieceCount(FIntVector Chunk) const;
+
+    /** Slots given a new mesh by commits, summed since BeginPlay. For measurements and tests. */
+    int32 GetPiecesChangedCount() const;
+
+    /** Filled slots commits left alone because their hash had not changed, summed since BeginPlay. For measurements and tests. */
+    int32 GetPiecesKeptCount() const;
 
     /** Null before BeginPlay and after EndPlay. */
     FReflectionsDigGrid* GetGrid() const;
@@ -313,10 +336,10 @@ private:
 
     UReflectionsDigChunkComponent* CreatePieceComponent();
     /**
-     * Moves the current set out of the way of a new one, keeping the newest set that really collides. A set that
-     * retires stops affecting navigation at once: it is old collision.
+     * Moves the current pieces of ChangedBlocks out of the way of new ones, keeping the newest collision that really
+     * exists. A piece that retires stops affecting navigation at once: it is old collision.
      */
-    void RetireCurrentSet(FReflectionsDigTerrainChunk& State, double& InOutDestroySeconds);
+    void RetireCurrentSet(FReflectionsDigTerrainChunk& State, uint8 ChangedBlocks, double& InOutDestroySeconds);
 
     /** Lets the chunk's retiring set affect navigation, or not, telling navigation only for pieces that change. */
     void SetRetiringSetNavigation(FReflectionsDigTerrainChunk& State, bool bAffects);
@@ -347,6 +370,8 @@ private:
     int32 CookStartPieces = 0;
     int64 CookStartVertices = 0;
     double ReleaseSeconds = 0.0;
+    int32 PiecesChangedCount = 0;
+    int32 PiecesKeptCount = 0;
 
     /** Rebuilt from the grid at run time, never saved. */
     UPROPERTY(Transient)

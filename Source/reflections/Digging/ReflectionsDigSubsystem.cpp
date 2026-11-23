@@ -332,15 +332,16 @@ void UReflectionsDigSubsystem::LaunchMeshTasks(AReflectionsDigTerrain& Terrain)
     for (int32 Index = 0; Index < Launching.Num(); ++Index)
     {
         // The worker owns its samples and shares only the queue; it never touches the grid, this subsystem or any UObject.
+        // Background priority: the frame's own tasks (rendering, physics) do not queue behind meshing.
         Launching[Index]->Task = UE::Tasks::Launch(TEXT("ReflectionsDigMeshChunk"),
             [Samples = MoveTemp(AllSamples[Index]), TaskQueue = Queue]()
             {
                 FReflectionsDigMeshData Mesh;
                 ReflectionsDigMesher::BuildFromSamples(Samples, Mesh);
                 FReflectionsDigChunkResult Result;
-                ReflectionsDigPieces::Build(Mesh, Result);
+                ReflectionsDigPieces::Build(Mesh, Samples.LocalOriginCm, Result);
                 TaskQueue->Push(Samples.Chunk, MoveTemp(Result));
-            });
+            }, UE::Tasks::ETaskPriority::BackgroundNormal);
     }
 }
 

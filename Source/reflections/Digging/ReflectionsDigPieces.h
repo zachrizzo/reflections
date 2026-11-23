@@ -1,6 +1,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Containers/StaticArray.h"
+#include "Digging/ReflectionsDigTypes.h"
 #include "DynamicMesh/DynamicMesh3.h"
 
 struct FReflectionsDigMeshData;
@@ -15,33 +17,39 @@ struct FReflectionsDigNavGeometry
     TArray<int32> Indices;
 };
 
-/** A chunk mesh built into the pieces the terrain shows, one mesh component each. Built on a worker. */
+/**
+ * A chunk mesh built into the pieces the terrain shows, one slot per block (ReflectionsDig::BlocksPerChunk, block
+ * index X + 2 * Y + 4 * Z, each 0 for the chunk's low half on that axis and 1 for the high half). Built on a worker.
+ */
 struct FReflectionsDigChunkResult
 {
-    /** Lowest slab first. Empty when the chunk has no surface. */
-    TArray<UE::Geometry::FDynamicMesh3> Pieces;
-    /** Parallel to Pieces: each piece's own triangles for navigation, built from the same triangles. */
-    TArray<FReflectionsDigNavGeometry> NavGeometry;
+    /** Each block's piece; a block with no triangles has an empty mesh. */
+    TStaticArray<UE::Geometry::FDynamicMesh3, ReflectionsDig::BlocksPerChunk> Pieces;
+    /** Each piece's own triangles for navigation, built from the same triangles. */
+    TStaticArray<FReflectionsDigNavGeometry, ReflectionsDig::BlocksPerChunk> NavGeometry;
+    /** Each piece's hash (its positions, normals and triangles); 0 for a block with no triangles. */
+    TStaticArray<uint64, ReflectionsDig::BlocksPerChunk> PieceHash{ InPlace, uint64(0) };
     int32 SourceVertexCount = 0;
     int32 SourceTriangleCount = 0;
     /** Source triangles no piece could take (FDynamicMesh3 refused them even with their own vertex copies). */
     int32 DroppedTriangles = 0;
+
+    /** How many slots hold a piece. */
+    REFLECTIONS_API int32 NumPieces() const;
 };
 
-/** Turns a chunk mesh into pieces under the collision limit. Pure (no statics, no UObjects): safe on any thread. */
+/** Turns a chunk mesh into one piece per block. Pure (no statics, no UObjects): safe on any thread. */
 namespace ReflectionsDigPieces
 {
     /**
-     * One piece when the mesh has at most ReflectionsDig::MaxPieceVertices vertices; otherwise the fewest
-     * equal-height horizontal slabs (over the mesh's Z extent) for which every built piece holds at most
-     * MaxPieceVertices vertices. A triangle goes to the slab that holds its centroid, each piece has its own copy
-     * of the vertices it uses with the mesher's per-vertex normals in its primary normal overlay, and an empty
-     * slab makes no piece. The limit is checked on the built pieces: a triangle on an edge that already has two
-     * gets its own vertex copies, so a piece can hold a few more vertices than its slab. Out is reset first.
-     * Each piece's navigation geometry (Out.NavGeometry) is built from the piece's own vertices and triangles.
+     * A triangle goes to the block that holds its centroid: the border between two blocks lies BlockCells cells past
+     * ChunkLocalOriginCm (the chunk's local cell (0, 0, 0) relative to the grid origin, as in FReflectionsDigChunkSamples)
+     * on each axis, and a centroid exactly on it goes to the high block. Each piece has its own copy of the vertices it
+     * uses, with the mesher's per-vertex normals in its primary normal overlay; a block with no triangles makes no
+     * piece. A triangle on an edge that already has two goes onto a second copy of its vertices (and, if that is full
+     * too, onto copies of its own). PieceHash covers each piece's positions, normals and triangles in the mesher's
+     * order, so the same input gives the same hash on any thread. Pieces are never split: a piece above
+     * ReflectionsDig::MaxPieceVertices is logged as a warning. Out is reset first.
      */
-    REFLECTIONS_API void Build(const FReflectionsDigMeshData& Mesh, FReflectionsDigChunkResult& Out);
-
-    /** The pieces (and their navigation geometry) of exactly NumSlabs slabs (at least 1), with no limit check. Build uses it; tests pin Build with it. */
-    REFLECTIONS_API void BuildWithSlabs(const FReflectionsDigMeshData& Mesh, int32 NumSlabs, FReflectionsDigChunkResult& Out);
+    REFLECTIONS_API void Build(const FReflectionsDigMeshData& Mesh, const FVector3f& ChunkLocalOriginCm, FReflectionsDigChunkResult& Out);
 }
