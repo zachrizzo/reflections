@@ -1,0 +1,787 @@
+{
+ "done": true,
+ "i": 8,
+ "n": 8,
+ "error": null,
+ "path_clear": 1400,
+ "table": [
+  {
+   "phase": "idle",
+   "fps": 17.5,
+   "frames": 88,
+   "actor_travel_cm": 0.0,
+   "ref_pelvis_travel_cm": 0.7,
+   "spine_04": "9.8/9.8 cm (dz -9.4), 3.5/5.2 deg",
+   "head": "19.6/20.2 cm (dz -18.4), 57.3/61.0 deg",
+   "hand_l": "8.6/10.5 cm (dz -7.0), 5.6/9.9 deg",
+   "hand_r": "11.2/12.5 cm (dz -8.4), 9.6/11.7 deg"
+  },
+  {
+   "phase": "spell_cast",
+   "fps": 23.3,
+   "frames": 87,
+   "actor_travel_cm": 0.0,
+   "ref_pelvis_travel_cm": 0.6,
+   "spine_04": "10.7/12.0 cm (dz -9.0), 27.6/45.0 deg",
+   "head": "28.3/37.5 cm (dz -22.4), 86.7/100.1 deg",
+   "hand_l": "26.2/32.6 cm (dz -23.4), 25.7/38.3 deg",
+   "hand_r": "36.9/77.3 cm (dz -26.7), 44.6/86.2 deg"
+  },
+  {
+   "phase": "walk_in_place",
+   "fps": 16.9,
+   "frames": 85,
+   "actor_travel_cm": 0.0,
+   "ref_pelvis_travel_cm": 7.2,
+   "spine_04": "9.8/10.0 cm (dz -9.4), 4.9/8.0 deg",
+   "head": "19.4/21.3 cm (dz -18.1), 49.7/66.1 deg",
+   "hand_l": "21.7/40.7 cm (dz -11.7), 26.1/54.1 deg",
+   "hand_r": "20.8/34.6 cm (dz -11.9), 23.7/46.5 deg"
+  },
+  {
+   "phase": "walk_moving",
+   "fps": 15.7,
+   "frames": 55,
+   "actor_travel_cm": 919.4,
+   "ref_pelvis_travel_cm": 5.7,
+   "spine_04": "15.2/27.7 cm (dz -11.7), 39.6/82.9 deg",
+   "head": "44.1/83.6 cm (dz -30.3), 72.0/135.3 deg",
+   "hand_l": "57.3/104.8 cm (dz -4.2), 77.5/153.1 deg",
+   "hand_r": "41.2/83.3 cm (dz -2.6), 72.9/173.9 deg"
+  },
+  {
+   "phase": "idle_no_gravity",
+   "fps": 18.3,
+   "frames": 95,
+   "actor_travel_cm": 0.0,
+   "ref_pelvis_travel_cm": 0.7,
+   "spine_04": "9.8/9.9 cm (dz -9.3), 2.5/7.6 deg",
+   "head": "17.9/20.8 cm (dz -15.5), 54.0/66.2 deg",
+   "hand_l": "11.4/30.6 cm (dz -4.2), 11.8/33.8 deg",
+   "hand_r": "12.8/25.2 cm (dz -3.3), 18.8/39.4 deg"
+  },
+  {
+   "phase": "spell_cast_no_gravity",
+   "fps": 18.1,
+   "frames": 64,
+   "actor_travel_cm": 0.0,
+   "ref_pelvis_travel_cm": 0.6,
+   "spine_04": "10.3/12.3 cm (dz -6.6), 15.1/42.4 deg",
+   "head": "24.1/46.1 cm (dz -6.3), 67.3/117.3 deg",
+   "hand_l": "19.1/33.6 cm (dz -12.1), 28.9/71.0 deg",
+   "hand_r": "30.6/76.0 cm (dz -10.5), 49.4/106.5 deg"
+  },
+  {
+   "phase": "walk_in_place_no_gravity",
+   "fps": 19.6,
+   "frames": 89,
+   "actor_travel_cm": 0.0,
+   "ref_pelvis_travel_cm": 7.3,
+   "spine_04": "9.8/9.9 cm (dz -9.3), 4.9/9.7 deg",
+   "head": "17.4/19.9 cm (dz -15.5), 45.7/65.7 deg",
+   "hand_l": "24.9/40.1 cm (dz -9.4), 34.0/66.4 deg",
+   "hand_r": "23.5/41.4 cm (dz -7.8), 32.3/54.6 deg"
+  },
+  {
+   "phase": "idle_dormant",
+   "fps": 18.9,
+   "frames": 41,
+   "actor_travel_cm": 0.0,
+   "ref_pelvis_travel_cm": 0.4,
+   "spine_04": "0.0/0.0 cm (dz -0.0), 0.0/0.0 deg",
+   "head": "0.0/0.0 cm (dz -0.0), 0.0/0.0 deg",
+   "hand_l": "0.0/0.0 cm (dz -0.0), 0.0/0.0 deg",
+   "hand_r": "0.0/0.0 cm (dz 0.0), 0.0/0.0 deg"
+  }
+ ],
+ "results": [
+  {
+   "phase": "idle",
+   "clip": "idle",
+   "gravity": 1.0,
+   "speed": 0.0,
+   "mode": "stand",
+   "frames": 88,
+   "seconds": 5.0,
+   "fps": 17.5,
+   "ref_pelvis_travel_cm": 0.7,
+   "actor_travel_cm": 0.0,
+   "bones": {
+    "spine_04": {
+     "mean_cm": 9.75,
+     "p95_cm": 9.77,
+     "max_cm": 9.77,
+     "mean_dz_cm": -9.44,
+     "mean_deg": 3.53,
+     "p95_deg": 5.17
+    },
+    "neck_01": {
+     "mean_cm": 15.81,
+     "p95_cm": 16.12,
+     "max_cm": 16.13,
+     "mean_dz_cm": -15.5,
+     "mean_deg": 41.27,
+     "p95_deg": 45.69
+    },
+    "head": {
+     "mean_cm": 19.55,
+     "p95_cm": 20.2,
+     "max_cm": 20.33,
+     "mean_dz_cm": -18.41,
+     "mean_deg": 57.3,
+     "p95_deg": 60.96
+    },
+    "upperarm_l": {
+     "mean_cm": 15.92,
+     "p95_cm": 16.41,
+     "max_cm": 16.86,
+     "mean_dz_cm": -14.71,
+     "mean_deg": 4.44,
+     "p95_deg": 5.1
+    },
+    "lowerarm_l": {
+     "mean_cm": 10.69,
+     "p95_cm": 11.64,
+     "max_cm": 11.89,
+     "mean_dz_cm": -9.33,
+     "mean_deg": 6.82,
+     "p95_deg": 10.45
+    },
+    "hand_l": {
+     "mean_cm": 8.6,
+     "p95_cm": 10.54,
+     "max_cm": 11.22,
+     "mean_dz_cm": -7.0,
+     "mean_deg": 5.59,
+     "p95_deg": 9.92
+    },
+    "upperarm_r": {
+     "mean_cm": 16.26,
+     "p95_cm": 16.72,
+     "max_cm": 16.79,
+     "mean_dz_cm": -15.76,
+     "mean_deg": 13.24,
+     "p95_deg": 14.97
+    },
+    "lowerarm_r": {
+     "mean_cm": 12.88,
+     "p95_cm": 13.58,
+     "max_cm": 13.73,
+     "mean_dz_cm": -10.98,
+     "mean_deg": 10.28,
+     "p95_deg": 12.29
+    },
+    "hand_r": {
+     "mean_cm": 11.18,
+     "p95_cm": 12.49,
+     "max_cm": 12.69,
+     "mean_dz_cm": -8.37,
+     "mean_deg": 9.61,
+     "p95_deg": 11.69
+    }
+   }
+  },
+  {
+   "phase": "spell_cast",
+   "clip": "fire",
+   "gravity": 1.0,
+   "speed": 0.0,
+   "mode": "stand",
+   "frames": 87,
+   "seconds": 3.5,
+   "fps": 23.3,
+   "ref_pelvis_travel_cm": 0.6,
+   "actor_travel_cm": 0.0,
+   "bones": {
+    "spine_04": {
+     "mean_cm": 10.71,
+     "p95_cm": 12.02,
+     "max_cm": 12.24,
+     "mean_dz_cm": -9.03,
+     "mean_deg": 27.61,
+     "p95_deg": 45.0
+    },
+    "neck_01": {
+     "mean_cm": 21.4,
+     "p95_cm": 29.33,
+     "max_cm": 30.62,
+     "mean_dz_cm": -18.05,
+     "mean_deg": 52.65,
+     "p95_deg": 82.29
+    },
+    "head": {
+     "mean_cm": 28.28,
+     "p95_cm": 37.46,
+     "max_cm": 38.49,
+     "mean_dz_cm": -22.44,
+     "mean_deg": 86.68,
+     "p95_deg": 100.08
+    },
+    "upperarm_l": {
+     "mean_cm": 24.78,
+     "p95_cm": 33.96,
+     "max_cm": 35.02,
+     "mean_dz_cm": -21.73,
+     "mean_deg": 33.39,
+     "p95_deg": 45.6
+    },
+    "lowerarm_l": {
+     "mean_cm": 21.43,
+     "p95_cm": 30.42,
+     "max_cm": 33.58,
+     "mean_dz_cm": -18.19,
+     "mean_deg": 22.95,
+     "p95_deg": 37.66
+    },
+    "hand_l": {
+     "mean_cm": 26.22,
+     "p95_cm": 32.59,
+     "max_cm": 33.0,
+     "mean_dz_cm": -23.39,
+     "mean_deg": 25.71,
+     "p95_deg": 38.3
+    },
+    "upperarm_r": {
+     "mean_cm": 25.46,
+     "p95_cm": 37.07,
+     "max_cm": 38.36,
+     "mean_dz_cm": -22.38,
+     "mean_deg": 55.7,
+     "p95_deg": 78.11
+    },
+    "lowerarm_r": {
+     "mean_cm": 23.54,
+     "p95_cm": 50.32,
+     "max_cm": 53.53,
+     "mean_dz_cm": -19.17,
+     "mean_deg": 44.65,
+     "p95_deg": 73.26
+    },
+    "hand_r": {
+     "mean_cm": 36.88,
+     "p95_cm": 77.29,
+     "max_cm": 81.07,
+     "mean_dz_cm": -26.69,
+     "mean_deg": 44.63,
+     "p95_deg": 86.19
+    }
+   }
+  },
+  {
+   "phase": "walk_in_place",
+   "clip": "walk",
+   "gravity": 1.0,
+   "speed": 0.0,
+   "mode": "stand",
+   "frames": 85,
+   "seconds": 4.5,
+   "fps": 16.9,
+   "ref_pelvis_travel_cm": 7.2,
+   "actor_travel_cm": 0.0,
+   "bones": {
+    "spine_04": {
+     "mean_cm": 9.79,
+     "p95_cm": 10.01,
+     "max_cm": 10.49,
+     "mean_dz_cm": -9.38,
+     "mean_deg": 4.93,
+     "p95_deg": 7.95
+    },
+    "neck_01": {
+     "mean_cm": 16.15,
+     "p95_cm": 17.78,
+     "max_cm": 21.5,
+     "mean_dz_cm": -15.47,
+     "mean_deg": 36.47,
+     "p95_deg": 50.22
+    },
+    "head": {
+     "mean_cm": 19.35,
+     "p95_cm": 21.32,
+     "max_cm": 28.02,
+     "mean_dz_cm": -18.09,
+     "mean_deg": 49.69,
+     "p95_deg": 66.13
+    },
+    "upperarm_l": {
+     "mean_cm": 16.75,
+     "p95_cm": 19.43,
+     "max_cm": 22.72,
+     "mean_dz_cm": -15.28,
+     "mean_deg": 16.9,
+     "p95_deg": 29.25
+    },
+    "lowerarm_l": {
+     "mean_cm": 15.69,
+     "p95_cm": 24.08,
+     "max_cm": 26.73,
+     "mean_dz_cm": -11.25,
+     "mean_deg": 23.66,
+     "p95_deg": 48.41
+    },
+    "hand_l": {
+     "mean_cm": 21.67,
+     "p95_cm": 40.66,
+     "max_cm": 46.35,
+     "mean_dz_cm": -11.7,
+     "mean_deg": 26.11,
+     "p95_deg": 54.12
+    },
+    "upperarm_r": {
+     "mean_cm": 16.86,
+     "p95_cm": 18.71,
+     "max_cm": 20.28,
+     "mean_dz_cm": -15.87,
+     "mean_deg": 18.49,
+     "p95_deg": 38.82
+    },
+    "lowerarm_r": {
+     "mean_cm": 15.73,
+     "p95_cm": 23.94,
+     "max_cm": 25.8,
+     "mean_dz_cm": -12.22,
+     "mean_deg": 22.58,
+     "p95_deg": 46.7
+    },
+    "hand_r": {
+     "mean_cm": 20.8,
+     "p95_cm": 34.61,
+     "max_cm": 46.78,
+     "mean_dz_cm": -11.94,
+     "mean_deg": 23.66,
+     "p95_deg": 46.48
+    }
+   }
+  },
+  {
+   "phase": "walk_moving",
+   "clip": "walk",
+   "gravity": 1.0,
+   "speed": 277.0,
+   "mode": "stand",
+   "frames": 55,
+   "seconds": 3.5,
+   "fps": 15.7,
+   "ref_pelvis_travel_cm": 5.7,
+   "actor_travel_cm": 919.4,
+   "bones": {
+    "spine_04": {
+     "mean_cm": 15.25,
+     "p95_cm": 27.72,
+     "max_cm": 29.51,
+     "mean_dz_cm": -11.71,
+     "mean_deg": 39.64,
+     "p95_deg": 82.9
+    },
+    "neck_01": {
+     "mean_cm": 35.36,
+     "p95_cm": 65.87,
+     "max_cm": 68.0,
+     "mean_dz_cm": -25.05,
+     "mean_deg": 72.2,
+     "p95_deg": 156.72
+    },
+    "head": {
+     "mean_cm": 44.14,
+     "p95_cm": 83.61,
+     "max_cm": 90.36,
+     "mean_dz_cm": -30.31,
+     "mean_deg": 72.01,
+     "p95_deg": 135.34
+    },
+    "upperarm_l": {
+     "mean_cm": 40.31,
+     "p95_cm": 81.33,
+     "max_cm": 105.32,
+     "mean_dz_cm": -22.46,
+     "mean_deg": 62.28,
+     "p95_deg": 139.55
+    },
+    "lowerarm_l": {
+     "mean_cm": 42.83,
+     "p95_cm": 77.7,
+     "max_cm": 129.79,
+     "mean_dz_cm": -10.15,
+     "mean_deg": 75.2,
+     "p95_deg": 157.54
+    },
+    "hand_l": {
+     "mean_cm": 57.28,
+     "p95_cm": 104.85,
+     "max_cm": 176.73,
+     "mean_dz_cm": -4.17,
+     "mean_deg": 77.45,
+     "p95_deg": 153.08
+    },
+    "upperarm_r": {
+     "mean_cm": 37.9,
+     "p95_cm": 71.02,
+     "max_cm": 83.61,
+     "mean_dz_cm": -24.82,
+     "mean_deg": 70.43,
+     "p95_deg": 162.05
+    },
+    "lowerarm_r": {
+     "mean_cm": 36.24,
+     "p95_cm": 67.88,
+     "max_cm": 96.01,
+     "mean_dz_cm": -13.57,
+     "mean_deg": 76.59,
+     "p95_deg": 168.07
+    },
+    "hand_r": {
+     "mean_cm": 41.22,
+     "p95_cm": 83.33,
+     "max_cm": 108.86,
+     "mean_dz_cm": -2.65,
+     "mean_deg": 72.86,
+     "p95_deg": 173.9
+    }
+   }
+  },
+  {
+   "phase": "idle_no_gravity",
+   "clip": "idle",
+   "gravity": 0.0,
+   "speed": 0.0,
+   "mode": "stand",
+   "frames": 95,
+   "seconds": 5.0,
+   "fps": 18.3,
+   "ref_pelvis_travel_cm": 0.7,
+   "actor_travel_cm": 0.0,
+   "bones": {
+    "spine_04": {
+     "mean_cm": 9.77,
+     "p95_cm": 9.87,
+     "max_cm": 10.27,
+     "mean_dz_cm": -9.35,
+     "mean_deg": 2.52,
+     "p95_deg": 7.63
+    },
+    "neck_01": {
+     "mean_cm": 16.08,
+     "p95_cm": 16.88,
+     "max_cm": 19.95,
+     "mean_dz_cm": -15.44,
+     "mean_deg": 38.12,
+     "p95_deg": 42.23
+    },
+    "head": {
+     "mean_cm": 17.9,
+     "p95_cm": 20.76,
+     "max_cm": 26.53,
+     "mean_dz_cm": -15.53,
+     "mean_deg": 54.02,
+     "p95_deg": 66.17
+    },
+    "upperarm_l": {
+     "mean_cm": 14.96,
+     "p95_cm": 16.94,
+     "max_cm": 23.66,
+     "mean_dz_cm": -13.47,
+     "mean_deg": 9.37,
+     "p95_deg": 24.55
+    },
+    "lowerarm_l": {
+     "mean_cm": 10.43,
+     "p95_cm": 18.33,
+     "max_cm": 31.4,
+     "mean_dz_cm": -7.46,
+     "mean_deg": 11.14,
+     "p95_deg": 31.11
+    },
+    "hand_l": {
+     "mean_cm": 11.43,
+     "p95_cm": 30.55,
+     "max_cm": 48.24,
+     "mean_dz_cm": -4.18,
+     "mean_deg": 11.78,
+     "p95_deg": 33.76
+    },
+    "upperarm_r": {
+     "mean_cm": 14.85,
+     "p95_cm": 17.4,
+     "max_cm": 20.36,
+     "mean_dz_cm": -13.73,
+     "mean_deg": 17.74,
+     "p95_deg": 29.66
+    },
+    "lowerarm_r": {
+     "mean_cm": 11.5,
+     "p95_cm": 17.29,
+     "max_cm": 24.7,
+     "mean_dz_cm": -7.89,
+     "mean_deg": 18.86,
+     "p95_deg": 35.64
+    },
+    "hand_r": {
+     "mean_cm": 12.81,
+     "p95_cm": 25.2,
+     "max_cm": 46.3,
+     "mean_dz_cm": -3.32,
+     "mean_deg": 18.75,
+     "p95_deg": 39.38
+    }
+   }
+  },
+  {
+   "phase": "spell_cast_no_gravity",
+   "clip": "fire",
+   "gravity": 0.0,
+   "speed": 0.0,
+   "mode": "stand",
+   "frames": 64,
+   "seconds": 3.5,
+   "fps": 18.1,
+   "ref_pelvis_travel_cm": 0.6,
+   "actor_travel_cm": 0.0,
+   "bones": {
+    "spine_04": {
+     "mean_cm": 10.35,
+     "p95_cm": 12.34,
+     "max_cm": 14.02,
+     "mean_dz_cm": -6.62,
+     "mean_deg": 15.06,
+     "p95_deg": 42.44
+    },
+    "neck_01": {
+     "mean_cm": 19.42,
+     "p95_cm": 33.01,
+     "max_cm": 41.57,
+     "mean_dz_cm": -8.15,
+     "mean_deg": 46.1,
+     "p95_deg": 102.49
+    },
+    "head": {
+     "mean_cm": 24.06,
+     "p95_cm": 46.14,
+     "max_cm": 59.47,
+     "mean_dz_cm": -6.28,
+     "mean_deg": 67.28,
+     "p95_deg": 117.27
+    },
+    "upperarm_l": {
+     "mean_cm": 21.18,
+     "p95_cm": 36.85,
+     "max_cm": 50.3,
+     "mean_dz_cm": -10.78,
+     "mean_deg": 26.32,
+     "p95_deg": 42.82
+    },
+    "lowerarm_l": {
+     "mean_cm": 18.25,
+     "p95_cm": 33.74,
+     "max_cm": 47.37,
+     "mean_dz_cm": -10.78,
+     "mean_deg": 27.06,
+     "p95_deg": 63.06
+    },
+    "hand_l": {
+     "mean_cm": 19.11,
+     "p95_cm": 33.61,
+     "max_cm": 50.18,
+     "mean_dz_cm": -12.05,
+     "mean_deg": 28.9,
+     "p95_deg": 70.99
+    },
+    "upperarm_r": {
+     "mean_cm": 20.21,
+     "p95_cm": 34.73,
+     "max_cm": 39.82,
+     "mean_dz_cm": -10.64,
+     "mean_deg": 49.23,
+     "p95_deg": 98.1
+    },
+    "lowerarm_r": {
+     "mean_cm": 17.33,
+     "p95_cm": 47.57,
+     "max_cm": 66.23,
+     "mean_dz_cm": -2.78,
+     "mean_deg": 44.97,
+     "p95_deg": 100.97
+    },
+    "hand_r": {
+     "mean_cm": 30.59,
+     "p95_cm": 75.99,
+     "max_cm": 96.61,
+     "mean_dz_cm": -10.51,
+     "mean_deg": 49.4,
+     "p95_deg": 106.49
+    }
+   }
+  },
+  {
+   "phase": "walk_in_place_no_gravity",
+   "clip": "walk",
+   "gravity": 0.0,
+   "speed": 0.0,
+   "mode": "stand",
+   "frames": 89,
+   "seconds": 4.5,
+   "fps": 19.6,
+   "ref_pelvis_travel_cm": 7.3,
+   "actor_travel_cm": 0.0,
+   "bones": {
+    "spine_04": {
+     "mean_cm": 9.8,
+     "p95_cm": 9.87,
+     "max_cm": 10.24,
+     "mean_dz_cm": -9.33,
+     "mean_deg": 4.88,
+     "p95_deg": 9.65
+    },
+    "neck_01": {
+     "mean_cm": 16.22,
+     "p95_cm": 16.83,
+     "max_cm": 19.51,
+     "mean_dz_cm": -15.4,
+     "mean_deg": 30.94,
+     "p95_deg": 44.98
+    },
+    "head": {
+     "mean_cm": 17.44,
+     "p95_cm": 19.89,
+     "max_cm": 24.45,
+     "mean_dz_cm": -15.54,
+     "mean_deg": 45.74,
+     "p95_deg": 65.73
+    },
+    "upperarm_l": {
+     "mean_cm": 14.68,
+     "p95_cm": 16.7,
+     "max_cm": 17.63,
+     "mean_dz_cm": -13.28,
+     "mean_deg": 22.85,
+     "p95_deg": 38.72
+    },
+    "lowerarm_l": {
+     "mean_cm": 15.39,
+     "p95_cm": 20.66,
+     "max_cm": 23.58,
+     "mean_dz_cm": -9.19,
+     "mean_deg": 30.81,
+     "p95_deg": 61.21
+    },
+    "hand_l": {
+     "mean_cm": 24.9,
+     "p95_cm": 40.15,
+     "max_cm": 46.05,
+     "mean_dz_cm": -9.38,
+     "mean_deg": 34.04,
+     "p95_deg": 66.42
+    },
+    "upperarm_r": {
+     "mean_cm": 15.46,
+     "p95_cm": 17.92,
+     "max_cm": 18.36,
+     "mean_dz_cm": -14.09,
+     "mean_deg": 23.15,
+     "p95_deg": 47.07
+    },
+    "lowerarm_r": {
+     "mean_cm": 15.54,
+     "p95_cm": 23.3,
+     "max_cm": 25.44,
+     "mean_dz_cm": -9.84,
+     "mean_deg": 30.27,
+     "p95_deg": 55.01
+    },
+    "hand_r": {
+     "mean_cm": 23.48,
+     "p95_cm": 41.36,
+     "max_cm": 44.04,
+     "mean_dz_cm": -7.76,
+     "mean_deg": 32.33,
+     "p95_deg": 54.62
+    }
+   }
+  },
+  {
+   "phase": "idle_dormant",
+   "clip": "idle",
+   "gravity": 1.0,
+   "speed": 0.0,
+   "mode": "dormant",
+   "frames": 41,
+   "seconds": 2.0,
+   "fps": 18.9,
+   "ref_pelvis_travel_cm": 0.4,
+   "actor_travel_cm": 0.0,
+   "bones": {
+    "spine_04": {
+     "mean_cm": 0.0,
+     "p95_cm": 0.0,
+     "max_cm": 0.0,
+     "mean_dz_cm": -0.0,
+     "mean_deg": 0.0,
+     "p95_deg": 0.0
+    },
+    "neck_01": {
+     "mean_cm": 0.0,
+     "p95_cm": 0.0,
+     "max_cm": 0.0,
+     "mean_dz_cm": -0.0,
+     "mean_deg": 0.0,
+     "p95_deg": 0.0
+    },
+    "head": {
+     "mean_cm": 0.0,
+     "p95_cm": 0.0,
+     "max_cm": 0.0,
+     "mean_dz_cm": -0.0,
+     "mean_deg": 0.0,
+     "p95_deg": 0.0
+    },
+    "upperarm_l": {
+     "mean_cm": 0.0,
+     "p95_cm": 0.0,
+     "max_cm": 0.0,
+     "mean_dz_cm": -0.0,
+     "mean_deg": 0.0,
+     "p95_deg": 0.0
+    },
+    "lowerarm_l": {
+     "mean_cm": 0.0,
+     "p95_cm": 0.0,
+     "max_cm": 0.0,
+     "mean_dz_cm": -0.0,
+     "mean_deg": 0.0,
+     "p95_deg": 0.0
+    },
+    "hand_l": {
+     "mean_cm": 0.0,
+     "p95_cm": 0.0,
+     "max_cm": 0.0,
+     "mean_dz_cm": -0.0,
+     "mean_deg": 0.0,
+     "p95_deg": 0.0
+    },
+    "upperarm_r": {
+     "mean_cm": 0.0,
+     "p95_cm": 0.0,
+     "max_cm": 0.0,
+     "mean_dz_cm": 0.0,
+     "mean_deg": 0.0,
+     "p95_deg": 0.0
+    },
+    "lowerarm_r": {
+     "mean_cm": 0.0,
+     "p95_cm": 0.0,
+     "max_cm": 0.0,
+     "mean_dz_cm": 0.0,
+     "mean_deg": 0.0,
+     "p95_deg": 0.0
+    },
+    "hand_r": {
+     "mean_cm": 0.0,
+     "p95_cm": 0.0,
+     "max_cm": 0.0,
+     "mean_dz_cm": 0.0,
+     "mean_deg": 0.0,
+     "p95_deg": 0.0
+    }
+   }
+  }
+ ]
+}
