@@ -1,0 +1,1030 @@
+#include "Hero/ReflectionsSwordTest.h"
+
+#include "Hero/ReflectionsHeroAnimInstance.h"
+#include "Hero/ReflectionsSampleSpellDriver.h"
+#include "Hero/ReflectionsSpellAim.h"
+
+#include "Animation/AnimationAsset.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Animation/AnimSequence.h"
+#include "Animation/AnimSequenceBase.h"
+#include "Animation/AnimTypes.h"
+#include "AssetRegistry/ARFilter.h"
+#include "AssetRegistry/AssetData.h"
+#include "AssetRegistry/IAssetRegistry.h"
+#include "CollisionQueryParams.h"
+#include "CollisionShape.h"
+#include "Components/ChildActorComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "DrawDebugHelpers.h"
+#include "Engine/Engine.h"
+#include "Engine/EngineTypes.h"
+#include "Engine/HitResult.h"
+#include "Engine/LocalPlayer.h"
+#include "Engine/StaticMesh.h"
+#include "Engine/World.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/Controller.h"
+#include "GameFramework/DamageType.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "HAL/IConsoleManager.h"
+#include "InputAction.h"
+#include "InputActionValue.h"
+#include "InputCoreTypes.h"
+#include "InputMappingContext.h"
+#include "Kismet/GameplayStatics.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogSwordTest, Log, All);
+
+namespace
+{
+    TAutoConsoleVariable<int32> CVarSwordTest(TEXT("Sword.Test"), UE_BUILD_SHIPPING ? 0 : 1,
+        TEXT("Temporary sword animation test (X draws the sword; then LMB / Q / RT strike, F combo). 0 turns it off: new player ")
+        TEXT("pawns get no test component, its keys and commands do nothing and a drawn sword is put away."));
+    TAutoConsoleVariable<int32> CVarSwordFullBody(TEXT("Sword.FullBody"), 1,
+        TEXT("1: sword moves play full body (the Body switches to BP_HeroAnimation and movement stops, like a non-layered cast). ")
+        TEXT("0: upper body only on the Body's current anim BP; the legs keep walking and root motion is ignored."));
+    TAutoConsoleVariable<int32> CVarSwordRootMotion(TEXT("Sword.RootMotion"), 1,
+        TEXT("1: a travelling sword move (root motion on) moves the capsule by the Body's root motion (full body only). 0: it plays in place."));
+    TAutoConsoleVariable<int32> CVarSwordDrawHits(TEXT("Sword.DrawHits"), 1,
+        TEXT("1: draw the traced blade in each hit window (yellow, red when it touches something) and each hit."));
+    TAutoConsoleVariable<float> CVarSwordDamage(TEXT("Sword.Damage"), 0.0f,
+        TEXT("Point damage per sword hit through the normal damage path (UReflectionsHealthComponent). 0: hits are only logged and drawn."));
+
+    void Say(const FString& Text, const FColor& Color = FColor::Cyan, float Seconds = 3.0f)
+    {
+        UE_LOG(LogSwordTest, Log, TEXT("%s"), *Text);
+        if (GEngine)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, Seconds, Color, Text);
+        }
+    }
+
+    const TCHAR* KindName(EReflectionsSwordMoveKind Kind)
+    {
+        switch (Kind)
+        {
+        case EReflectionsSwordMoveKind::Cut: return TEXT("Cut");
+        case EReflectionsSwordMoveKind::Thrust: return TEXT("Thrust");
+        case EReflectionsSwordMoveKind::Combo: return TEXT("Combo");
+        case EReflectionsSwordMoveKind::Footwork: return TEXT("Footwork");
+        case EReflectionsSwordMoveKind::Guard: return TEXT("Guard");
+        default: return TEXT("Other");
+        }
+    }
+
+    /** The library's folders first, then its names (AS_Hero_Sword_<1H|2H>_<Move>[_<Travel>]_<NN>). */
+    EReflectionsSwordMoveKind KindFor(const FString& Folder, const FString& Name)
+    {
+        if (Folder.Contains(TEXT("/Cuts"))) return EReflectionsSwordMoveKind::Cut;
+        if (Folder.Contains(TEXT("/Thrusts"))) return EReflectionsSwordMoveKind::Thrust;
+        if (Folder.Contains(TEXT("/Combos"))) return EReflectionsSwordMoveKind::Combo;
+        if (Folder.Contains(TEXT("/Footwork"))) return EReflectionsSwordMoveKind::Footwork;
+        if (Folder.Contains(TEXT("/Guards"))) return EReflectionsSwordMoveKind::Guard;
+        if (Name.Contains(TEXT("_Combo"))) return EReflectionsSwordMoveKind::Combo;
+        if (Name.Contains(TEXT("_Cut_"))) return EReflectionsSwordMoveKind::Cut;
+        if (Name.Contains(TEXT("_Thrust"))) return EReflectionsSwordMoveKind::Thrust;
+        if (Name.Contains(TEXT("_Step_"))) return EReflectionsSwordMoveKind::Footwork;
+        if (Name.Contains(TEXT("_Guard"))) return EReflectionsSwordMoveKind::Guard;
+        return EReflectionsSwordMoveKind::Other;
+    }
+
+    bool IsStrike(EReflectionsSwordMoveKind Kind)
+    {
+        return Kind == EReflectionsSwordMoveKind::Cut || Kind == EReflectionsSwordMoveKind::Thrust || Kind == EReflectionsSwordMoveKind::Combo;
+    }
+
+    bool IsHitNotify(const FAnimNotifyEvent& Event)
+    {
+        return Event.Notify && Event.Notify->IsA<UReflectionsSpellReleaseNotify>();
+    }
+
+    /**
+     * Seconds (in Asset's own time) of every Spell Release notify, which the library puts on its "Hit" track: the
+     * asset's own notifies, or, for a montage without any, its clips' notifies mapped onto the montage's time.
+     */
+    TArray<float> FindHitTimes(const UAnimSequenceBase* Asset)
+    {
+        TArray<float> Times;
+        if (!Asset)
+        {
+            return Times;
+        }
+        for (const FAnimNotifyEvent& Event : Asset->Notifies)
+        {
+            if (IsHitNotify(Event))
+            {
+                Times.Add(Event.GetTriggerTime());
+            }
+        }
+        const UAnimMontage* Montage = Cast<UAnimMontage>(Asset);
+        if (Times.Num() == 0 && Montage)
+        {
+            for (const FSlotAnimationTrack& Slot : Montage->SlotAnimTracks)
+            {
+                for (const FAnimSegment& Segment : Slot.AnimTrack.AnimSegments)
+                {
+                    const UAnimSequenceBase* Clip = Segment.GetAnimReference();
+                    if (!Clip)
+                    {
+                        continue;
+                    }
+                    const float Rate = FMath::IsNearlyZero(Segment.AnimPlayRate) ? 1.0f : FMath::Abs(Segment.AnimPlayRate);
+                    for (const FAnimNotifyEvent& Event : Clip->Notifies)
+                    {
+                        const float ClipTime = Event.GetTriggerTime();
+                        if (IsHitNotify(Event) && ClipTime >= Segment.AnimStartTime && ClipTime <= Segment.AnimEndTime)
+                        {
+                            Times.Add(Segment.StartPos + (ClipTime - Segment.AnimStartTime) / Rate);
+                        }
+                    }
+                }
+            }
+        }
+        Times.Sort();
+        return Times;
+    }
+
+    /** The local player's pawn's test component; with bAdd, added first if missing (any game mode). */
+    UReflectionsSwordTestComponent* LocalSwordTest(UWorld* World, bool bAdd)
+    {
+        APlayerController* PC = World ? World->GetFirstPlayerController() : nullptr;
+        APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+        if (!Pawn)
+        {
+            return nullptr;
+        }
+        return bAdd ? UReflectionsSwordTestComponent::EnsureOnPawn(Pawn) : Pawn->FindComponentByClass<UReflectionsSwordTestComponent>();
+    }
+
+    FAutoConsoleCommandWithWorldAndArgs GSwordToggleCommand(TEXT("Sword.Toggle"),
+        TEXT("Draw or put away the test sword (X does the same). Adds the test component to the player pawn if it has none."),
+        FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
+        {
+            if (UReflectionsSwordTestComponent* Test = LocalSwordTest(World, true))
+            {
+                Test->SetEquipped(!Test->IsEquipped());
+            }
+        }));
+
+    FAutoConsoleCommandWithWorldAndArgs GSwordPlayCommand(TEXT("Sword.Play"),
+        TEXT("Sword.Play [filter]: play the next sword move whose kind (Cut, Thrust, Combo, Footwork, Guard) or name contains filter. ")
+        TEXT("Repeat to cycle. Draws the sword first."),
+        FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
+        {
+            if (UReflectionsSwordTestComponent* Test = LocalSwordTest(World, true))
+            {
+                Test->PlayNextMatching(FString::Join(Args, TEXT(" ")));
+            }
+        }));
+
+    FAutoConsoleCommandWithWorldAndArgs GSwordListCommand(TEXT("Sword.List"),
+        TEXT("Rescan the sword library and log every move: kind, length, root motion, hit times."),
+        FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
+        {
+            if (UReflectionsSwordTestComponent* Test = LocalSwordTest(World, true))
+            {
+                Test->LogLibrary();
+            }
+        }));
+
+    FAutoConsoleCommandWithWorldAndArgs GSwordGripCommand(TEXT("Sword.Grip"),
+        TEXT("Sword.Grip [x y z pitch yaw roll]: show, or set, the sword's place in hand_r space (cm, degrees). Applies live."),
+        FConsoleCommandWithWorldAndArgsDelegate::CreateLambda([](const TArray<FString>& Args, UWorld* World)
+        {
+            UReflectionsSwordTestComponent* Test = LocalSwordTest(World, true);
+            if (!Test)
+            {
+                return;
+            }
+            if (Args.Num() == 6)
+            {
+                Test->GripLocation = FVector(FCString::Atod(*Args[0]), FCString::Atod(*Args[1]), FCString::Atod(*Args[2]));
+                Test->GripRotation = FRotator(FCString::Atod(*Args[3]), FCString::Atod(*Args[4]), FCString::Atod(*Args[5]));
+            }
+            Test->LogGrip();
+        }));
+}
+
+UReflectionsSwordTestComponent::UReflectionsSwordTestComponent()
+{
+    PrimaryComponentTick.bCanEverTick = true;
+    // After the Body has animated, so the blade position and the root motion read are this frame's.
+    PrimaryComponentTick.TickGroup = TG_PostPhysics;
+
+    SwordMesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TEXT("/Game/LanthorneAssets/Frostside/Props/SM_Frostside_MirrorSword.SM_Frostside_MirrorSword")));
+    GripBone = FName(TEXT("hand_r"));
+    GripLocation = FVector(-2.97, 3.48, -5.07);
+    GripRotation = FRotator(59.13, -158.21, 128.29);
+    MontageFolder = TEXT("/Game/Animation/SwordLibrary/Montages");
+    ClipFolder = TEXT("/Game/Animation/SwordLibrary/Hero");
+    FullBodyAnimClass = FSoftClassPath(TEXT("/Game/Characters/Hero/Gameplay/BP_HeroAnimation.BP_HeroAnimation_C"));
+}
+
+bool UReflectionsSwordTestComponent::IsEnabled()
+{
+    return CVarSwordTest.GetValueOnGameThread() != 0;
+}
+
+UReflectionsSwordTestComponent* UReflectionsSwordTestComponent::EnsureOnPawn(APawn* Pawn)
+{
+    if (Pawn == nullptr || !IsEnabled())
+    {
+        return nullptr;
+    }
+    if (UReflectionsSwordTestComponent* Existing = Pawn->FindComponentByClass<UReflectionsSwordTestComponent>())
+    {
+        return Existing;
+    }
+    UReflectionsSwordTestComponent* Added = NewObject<UReflectionsSwordTestComponent>(Pawn,
+        MakeUniqueObjectName(Pawn, StaticClass(), TEXT("SwordTest")));
+    Pawn->AddInstanceComponent(Added);
+    // Registering on a pawn that has already begun play also runs the component's BeginPlay.
+    Added->RegisterComponent();
+    return Added;
+}
+
+void UReflectionsSwordTestComponent::BeginPlay()
+{
+    Super::BeginPlay();
+    if (!IsEnabled())
+    {
+        return;
+    }
+    HookSpellDriver();
+    if (APawn* Pawn = Cast<APawn>(GetOwner()))
+    {
+        Pawn->ReceiveControllerChangedDelegate.AddUniqueDynamic(this, &UReflectionsSwordTestComponent::HandleControllerChanged);
+    }
+    BindControls();
+}
+
+void UReflectionsSwordTestComponent::EndPlay(const EEndPlayReason::Type Reason)
+{
+    if (APawn* Pawn = Cast<APawn>(GetOwner()))
+    {
+        Pawn->ReceiveControllerChangedDelegate.RemoveDynamic(this, &UReflectionsSwordTestComponent::HandleControllerChanged);
+    }
+    UnhookSpellDriver();
+    UnbindControls();
+    // Any end event still to come belongs to a move this component no longer tracks.
+    ++MoveSerial;
+    ActiveMontage = nullptr;
+    if (Sword)
+    {
+        Sword->DestroyComponent();
+        Sword = nullptr;
+    }
+    Super::EndPlay(Reason);
+}
+
+void UReflectionsSwordTestComponent::HookSpellDriver()
+{
+    Driver = GetOwner()->FindComponentByClass<UReflectionsSampleSpellDriver>();
+    if (Driver == nullptr || bHookedDriver)
+    {
+        return;
+    }
+    // Chained, not replaced: an override someone else set still runs while the sword is away.
+    PreviousPrimaryCastOverride = Driver->PrimaryCastOverride;
+    TWeakObjectPtr<UReflectionsSwordTestComponent> WeakThis(this);
+    TFunction<bool()> Previous = PreviousPrimaryCastOverride;
+    Driver->PrimaryCastOverride = [WeakThis, Previous]() -> bool
+    {
+        UReflectionsSwordTestComponent* Self = WeakThis.Get();
+        if (Self && Self->HandlePrimaryCast())
+        {
+            return true;
+        }
+        return Previous ? Previous() : false;
+    };
+    bHookedDriver = true;
+}
+
+void UReflectionsSwordTestComponent::UnhookSpellDriver()
+{
+    if (Driver && bHookedDriver)
+    {
+        Driver->PrimaryCastOverride = MoveTemp(PreviousPrimaryCastOverride);
+    }
+    PreviousPrimaryCastOverride = nullptr;
+    bHookedDriver = false;
+}
+
+bool UReflectionsSwordTestComponent::HandlePrimaryCast()
+{
+    if (!IsEnabled() || !bEquipped)
+    {
+        return false;
+    }
+    // The press is the sword's even when the move is refused (still swinging, aiming), so no spell slips out.
+    PlayNextStrike();
+    return true;
+}
+
+void UReflectionsSwordTestComponent::HandleControllerChanged(APawn* Pawn, AController* OldController, AController* NewController)
+{
+    UnbindControls();
+    BindControls();
+}
+
+void UReflectionsSwordTestComponent::BindControls()
+{
+    APawn* Pawn = Cast<APawn>(GetOwner());
+    APlayerController* PC = Pawn && Pawn->IsLocallyControlled() ? Cast<APlayerController>(Pawn->GetController()) : nullptr;
+    if (PC == nullptr || BoundController.IsValid())
+    {
+        return;
+    }
+    ULocalPlayer* Player = PC->GetLocalPlayer();
+    UEnhancedInputLocalPlayerSubsystem* Subsystem = Player ? Player->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>() : nullptr;
+    if (Subsystem == nullptr)
+    {
+        return;
+    }
+
+    // Built at runtime like the spell and dig controls; priority 1 sits above IMC_Sandbox. X and F are mapped by
+    // nothing else (see SwordCombatPatch.md for what was checked).
+    if (SwordContext == nullptr)
+    {
+        auto MakeAction = [this](const TCHAR* Name, bool bConsume)
+        {
+            UInputAction* Action = NewObject<UInputAction>(this, Name);
+            Action->ValueType = EInputActionValueType::Boolean;
+            Action->bConsumeInput = bConsume;
+            return Action;
+        };
+        ToggleAction = MakeAction(TEXT("IA_SwordTestToggle"), true);
+        ComboAction = MakeAction(TEXT("IA_SwordTestCombo"), true);
+        // Not consumed: on a pawn without the spell driver LMB may mean something else too.
+        StrikeAction = MakeAction(TEXT("IA_SwordTestStrike"), false);
+        SwordContext = NewObject<UInputMappingContext>(this, TEXT("IMC_SwordTest"));
+        SwordContext->MapKey(ToggleAction, EKeys::X);
+        SwordContext->MapKey(ComboAction, EKeys::F);
+        // With the spell driver, strikes come through its primary cast (LMB / Q / RT); without one, LMB is read here.
+        if (Driver == nullptr)
+        {
+            SwordContext->MapKey(StrikeAction, EKeys::LeftMouseButton);
+        }
+    }
+
+    SwordInput = NewObject<UEnhancedInputComponent>(PC, MakeUniqueObjectName(PC, UEnhancedInputComponent::StaticClass(), TEXT("SwordTestInput")));
+    SwordInput->RegisterComponent();
+    SwordInput->BindAction(ToggleAction, ETriggerEvent::Started, this, &UReflectionsSwordTestComponent::OnToggleAction);
+    SwordInput->BindAction(ComboAction, ETriggerEvent::Started, this, &UReflectionsSwordTestComponent::OnComboAction);
+    SwordInput->BindAction(StrikeAction, ETriggerEvent::Started, this, &UReflectionsSwordTestComponent::OnStrikeAction);
+    PC->PushInputComponent(SwordInput);
+    Subsystem->AddMappingContext(SwordContext, 1);
+    BoundController = PC;
+    BoundPlayer = Player;
+}
+
+void UReflectionsSwordTestComponent::UnbindControls()
+{
+    if (APlayerController* PC = BoundController.Get())
+    {
+        if (SwordInput != nullptr)
+        {
+            PC->PopInputComponent(SwordInput);
+        }
+    }
+    // Through the local player, not the controller: the context must go even if the controller was destroyed first.
+    if (ULocalPlayer* Player = BoundPlayer.Get())
+    {
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = Player->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+        {
+            if (SwordContext != nullptr)
+            {
+                Subsystem->RemoveMappingContext(SwordContext);
+            }
+        }
+    }
+    if (SwordInput != nullptr)
+    {
+        SwordInput->DestroyComponent();
+        SwordInput = nullptr;
+    }
+    BoundController.Reset();
+    BoundPlayer.Reset();
+}
+
+void UReflectionsSwordTestComponent::OnToggleAction(const FInputActionValue& Value)
+{
+    if (IsEnabled())
+    {
+        SetEquipped(!bEquipped);
+    }
+}
+
+void UReflectionsSwordTestComponent::OnComboAction(const FInputActionValue& Value)
+{
+    if (IsEnabled() && bEquipped)
+    {
+        PlayNextCombo();
+    }
+}
+
+void UReflectionsSwordTestComponent::OnStrikeAction(const FInputActionValue& Value)
+{
+    if (IsEnabled() && bEquipped)
+    {
+        PlayNextStrike();
+    }
+}
+
+USkeletalMeshComponent* UReflectionsSwordTestComponent::FindBody() const
+{
+    // The Body the spell driver casts on: the "Body" skeletal mesh of the Hero Visual child actor.
+    TInlineComponentArray<UChildActorComponent*> Children(GetOwner());
+    for (UChildActorComponent* Child : Children)
+    {
+        if (Child->GetFName() != TEXT("HeroVisual"))
+        {
+            continue;
+        }
+        if (AActor* Visual = Child->GetChildActor())
+        {
+            TInlineComponentArray<USkeletalMeshComponent*> Meshes(Visual);
+            for (USkeletalMeshComponent* Mesh : Meshes)
+            {
+                if (Mesh->GetFName() == TEXT("Body"))
+                {
+                    return Mesh;
+                }
+            }
+        }
+    }
+    return nullptr;
+}
+
+void UReflectionsSwordTestComponent::SetEquipped(bool bEquip)
+{
+    if (!bEquip)
+    {
+        StopMove();
+        if (Sword)
+        {
+            Sword->SetVisibility(false);
+        }
+        if (bEquipped)
+        {
+            Say(TEXT("Sword put away"));
+        }
+        bEquipped = false;
+        return;
+    }
+    if (!IsEnabled() || bEquipped)
+    {
+        return;
+    }
+    Body = FindBody();
+    if (Body == nullptr)
+    {
+        Say(TEXT("Sword test: the player has no Hero Visual child actor with a Body skeletal mesh"), FColor::Orange);
+        return;
+    }
+    if (Sword == nullptr || Sword->GetAttachParent() != Body.Get())
+    {
+        UStaticMesh* Mesh = SwordMesh.LoadSynchronous();
+        if (Mesh == nullptr)
+        {
+            Say(FString::Printf(TEXT("Sword test: could not load %s"), *SwordMesh.ToString()), FColor::Orange);
+            return;
+        }
+        if (Sword)
+        {
+            Sword->DestroyComponent();
+        }
+        // Owned by the visual actor, so it lives and dies with the Body it is attached to.
+        AActor* Holder = Body->GetOwner();
+        Sword = NewObject<UStaticMeshComponent>(Holder, MakeUniqueObjectName(Holder, UStaticMeshComponent::StaticClass(), TEXT("SwordTestMesh")));
+        Sword->SetMobility(EComponentMobility::Movable);
+        Sword->SetStaticMesh(Mesh);
+        Sword->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        Sword->SetGenerateOverlapEvents(false);
+        Sword->SetCanEverAffectNavigation(false);
+        Sword->RegisterComponent();
+        UE_CLOG(!Body->DoesSocketExist(GripBone), LogSwordTest, Warning, TEXT("Sword test: %s has no bone %s"), *Body->GetName(), *GripBone.ToString());
+        // The bone itself, so the shared skeleton needs no new socket.
+        Sword->AttachToComponent(Body.Get(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, GripBone);
+    }
+    Sword->SetRelativeLocationAndRotation(GripLocation, GripRotation);
+    Sword->SetVisibility(true);
+    bEquipped = true;
+
+    // Every draw rescans (cheap), so moves the library session saved since the last draw show up.
+    Rescan();
+    int32 Strikes = 0;
+    int32 Combos = 0;
+    for (const FReflectionsSwordMove& Move : Moves)
+    {
+        Strikes += Move.Kind == EReflectionsSwordMoveKind::Cut || Move.Kind == EReflectionsSwordMoveKind::Thrust ? 1 : 0;
+        Combos += Move.Kind == EReflectionsSwordMoveKind::Combo ? 1 : 0;
+    }
+    Say(FString::Printf(TEXT("Sword drawn: LMB / Q / RT strike (%d cuts and thrusts), F combo (%d), X put away; Sword.Play <name> for the other %d moves"),
+        Strikes, Combos, Moves.Num() - Strikes - Combos), FColor::Cyan, 6.0f);
+}
+
+void UReflectionsSwordTestComponent::Rescan()
+{
+    Moves.Reset();
+    IAssetRegistry* Registry = IAssetRegistry::Get();
+    if (Registry == nullptr)
+    {
+        return;
+    }
+    if (Registry->IsLoadingAssets())
+    {
+        Say(TEXT("Sword test: the asset registry is still scanning; Sword.List later picks up the rest"), FColor::Orange);
+    }
+    auto Scan = [this, Registry](const FString& Folder, const UClass* Class)
+    {
+        FARFilter Filter;
+        Filter.PackagePaths.Add(FName(*Folder));
+        Filter.bRecursivePaths = true;
+        Filter.ClassPaths.Add(Class->GetClassPathName());
+        Filter.bRecursiveClasses = true;
+        TArray<FAssetData> Found;
+        Registry->GetAssets(Filter, Found);
+        for (const FAssetData& Data : Found)
+        {
+            const FString Path = Data.PackagePath.ToString();
+            // Hero/_Review (and its montages) holds moves that failed a quality gate.
+            if (Path.Contains(TEXT("/_")))
+            {
+                continue;
+            }
+            FReflectionsSwordMove& Move = Moves.AddDefaulted_GetRef();
+            Move.Path = Data.GetSoftObjectPath();
+            Move.Name = Data.AssetName.ToString();
+            Move.Kind = KindFor(Path, Move.Name);
+        }
+    };
+    // Names are not final yet, so nothing is hard-coded: whatever the folders hold is the library.
+    Scan(MontageFolder, UAnimMontage::StaticClass());
+    const bool bClips = Moves.Num() == 0;
+    if (bClips)
+    {
+        Scan(ClipFolder, UAnimSequence::StaticClass());
+    }
+    Moves.Sort([](const FReflectionsSwordMove& A, const FReflectionsSwordMove& B) { return A.Name < B.Name; });
+    UE_LOG(LogSwordTest, Log, TEXT("Sword test: %d moves under %s%s"), Moves.Num(), bClips ? *ClipFolder : *MontageFolder,
+        bClips ? TEXT(" (clips: no montages found)") : TEXT(""));
+}
+
+void UReflectionsSwordTestComponent::LogLibrary()
+{
+    Rescan();
+    int32 Counts[static_cast<int32>(EReflectionsSwordMoveKind::Other) + 1] = {};
+    for (const FReflectionsSwordMove& Move : Moves)
+    {
+        const UAnimSequenceBase* Asset = Cast<UAnimSequenceBase>(Move.Path.TryLoad());
+        FString Hits;
+        for (const float Time : FindHitTimes(Asset))
+        {
+            Hits += FString::Printf(TEXT(" %.2f"), Time);
+        }
+        UE_LOG(LogSwordTest, Log, TEXT("  %-8s %s  %.2f s  root motion %s  hits:%s"), KindName(Move.Kind), *Move.Name,
+            Asset ? Asset->GetPlayLength() : 0.0f, Asset && Asset->HasRootMotion() ? TEXT("yes") : TEXT("no"),
+            Hits.IsEmpty() ? TEXT(" none") : *Hits);
+        ++Counts[static_cast<int32>(Move.Kind)];
+    }
+    Say(FString::Printf(TEXT("Sword library: %d moves (%d cuts, %d thrusts, %d combos, %d footwork, %d guards, %d other); details in the log (LogSwordTest)"),
+        Moves.Num(), Counts[static_cast<int32>(EReflectionsSwordMoveKind::Cut)], Counts[static_cast<int32>(EReflectionsSwordMoveKind::Thrust)],
+        Counts[static_cast<int32>(EReflectionsSwordMoveKind::Combo)], Counts[static_cast<int32>(EReflectionsSwordMoveKind::Footwork)],
+        Counts[static_cast<int32>(EReflectionsSwordMoveKind::Guard)], Counts[static_cast<int32>(EReflectionsSwordMoveKind::Other)]), FColor::Cyan, 6.0f);
+}
+
+void UReflectionsSwordTestComponent::LogGrip() const
+{
+    Say(FString::Printf(TEXT("Sword grip on %s: location (%.2f, %.2f, %.2f) cm, pitch %.2f yaw %.2f roll %.2f. Sword.Grip x y z pitch yaw roll sets it."),
+        *GripBone.ToString(), GripLocation.X, GripLocation.Y, GripLocation.Z, GripRotation.Pitch, GripRotation.Yaw, GripRotation.Roll),
+        FColor::Cyan, 8.0f);
+}
+
+bool UReflectionsSwordTestComponent::PlayNextStrike()
+{
+    return PlayNext(TEXT("strike"), [](const FReflectionsSwordMove& Move)
+    {
+        return Move.Kind == EReflectionsSwordMoveKind::Cut || Move.Kind == EReflectionsSwordMoveKind::Thrust;
+    });
+}
+
+bool UReflectionsSwordTestComponent::PlayNextCombo()
+{
+    return PlayNext(TEXT("combo"), [](const FReflectionsSwordMove& Move) { return Move.Kind == EReflectionsSwordMoveKind::Combo; });
+}
+
+bool UReflectionsSwordTestComponent::PlayNextMatching(const FString& Filter)
+{
+    if (!IsEnabled())
+    {
+        return false;
+    }
+    if (!bEquipped)
+    {
+        SetEquipped(true);
+    }
+    // FString::Contains ignores case by default.
+    return PlayNext(TEXT("match:") + Filter.ToLower(), [&Filter](const FReflectionsSwordMove& Move)
+    {
+        return Filter.IsEmpty() || Move.Name.Contains(Filter) || FString(KindName(Move.Kind)).Contains(Filter);
+    });
+}
+
+bool UReflectionsSwordTestComponent::PlayNext(const FString& CursorKey, TFunctionRef<bool(const FReflectionsSwordMove&)> Match)
+{
+    // Checked before the cursor moves: a held trigger asks every frame while a move plays, and must not skip moves.
+    if (!CanStartMove())
+    {
+        return false;
+    }
+    const int32* Found = Cursors.Find(CursorKey);
+    const int32 Cursor = Found ? *Found : INDEX_NONE;
+    for (int32 Step = 1; Step <= Moves.Num(); ++Step)
+    {
+        const int32 Index = (Cursor + Step) % Moves.Num();
+        if (Match(Moves[Index]))
+        {
+            Cursors.Add(CursorKey, Index);
+            return StartMove(Moves[Index]);
+        }
+    }
+    const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+    if (Now - LastNoMoveWarning > 2.0)
+    {
+        LastNoMoveWarning = Now;
+        Say(FString::Printf(TEXT("Sword test: no move of that kind among the %d found (Sword.List shows them)"), Moves.Num()), FColor::Orange);
+    }
+    return false;
+}
+
+bool UReflectionsSwordTestComponent::CanStartMove() const
+{
+    const ACharacter* Character = Cast<ACharacter>(GetOwner());
+    if (!IsEnabled() || !bEquipped || Character == nullptr || Body == nullptr)
+    {
+        return false;
+    }
+    if (Driver && (Driver->IsDefeated() || Driver->IsCasting()))
+    {
+        return false;
+    }
+    // A held aim plays the aim pose on the same slot and would cut the move off.
+    if (Driver && Driver->GetAim() && Driver->GetAim()->IsAiming())
+    {
+        return false;
+    }
+    // Still swinging. Once the move blends out the next one may start (that is how a held trigger chains).
+    const UAnimInstance* Anim = Body->GetAnimInstance();
+    if (ActiveMontage && Anim && Anim->Montage_IsPlaying(ActiveMontage))
+    {
+        return false;
+    }
+    if (CVarSwordFullBody.GetValueOnGameThread() != 0 && !bMovementLocked)
+    {
+        // Movement stops for a full-body move, so it starts only from the ground, as a full-body cast does.
+        const UCharacterMovementComponent* Movement = Character->GetCharacterMovement();
+        if (Movement == nullptr || !Movement->IsMovingOnGround() || Character->bIsCrouched)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool UReflectionsSwordTestComponent::StartMove(const FReflectionsSwordMove& Move)
+{
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    UObject* Asset = Move.Path.TryLoad();
+    UAnimMontage* Montage = Cast<UAnimMontage>(Asset);
+    UAnimSequenceBase* Clip = Montage ? nullptr : Cast<UAnimSequenceBase>(Asset);
+    if (Character == nullptr || (Montage == nullptr && Clip == nullptr))
+    {
+        Say(FString::Printf(TEXT("Sword test: could not load %s"), *Move.Path.ToString()), FColor::Orange);
+        return false;
+    }
+
+    const bool bFullBody = CVarSwordFullBody.GetValueOnGameThread() != 0;
+    if (bFullBody)
+    {
+        // As UReflectionsSampleSpellDriver::PlayCast does for a non-layered cast: the Body's retarget anim BP
+        // (ABP_HeroSampleCastBlend) takes DefaultSlot only above spine_01, so a full-body move needs the hero's own
+        // anim class, whose DefaultSlot covers the whole body.
+        UClass* FullBodyClass = FullBodyAnimClass.TryLoadClass<UAnimInstance>();
+        if (FullBodyClass == nullptr)
+        {
+            Say(FString::Printf(TEXT("Sword test: could not load %s"), *FullBodyAnimClass.ToString()), FColor::Orange);
+            return false;
+        }
+        if (Body->GetAnimClass() != FullBodyClass)
+        {
+            RestoreClass = Body->GetAnimClass();
+            Body->SetAnimInstanceClass(FullBodyClass);
+        }
+    }
+    UAnimInstance* Anim = Body->GetAnimInstance();
+    UAnimMontage* Playing = nullptr;
+    if (Anim && Montage)
+    {
+        Playing = Anim->Montage_Play(Montage) > 0.0f ? Montage : nullptr;
+    }
+    else if (Anim)
+    {
+        // The library's montages are not built yet: play the clip the way they will (DefaultSlot, 0.12 s in, 0.2 s out).
+        Playing = Anim->PlaySlotAnimationAsDynamicMontage(Clip, UReflectionsHeroAnimInstance::SpellSlot, 0.12f, 0.2f);
+    }
+    if (Playing == nullptr)
+    {
+        // The tick puts the Body back if this switched it and nothing else is playing.
+        bRestorePending = true;
+        Say(FString::Printf(TEXT("Sword test: %s did not play (wrong skeleton or slot?)"), *Move.Name), FColor::Orange);
+        return false;
+    }
+
+    ++MoveSerial;
+    ActiveMontage = Playing;
+    ActiveName = Move.Name;
+    HitTimes = FindHitTimes(Playing);
+    WindowIndex = INDEX_NONE;
+    WindowHits.Reset();
+    PreviousBlade.Reset();
+    LastPosition = 0.0f;
+    MoveHits = 0;
+    MoveStartLocation = Character->GetActorLocation();
+    MoveStartTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+    RootMotionApplied = 0.0f;
+    bRestorePending = false;
+    bMoveRootMotion = bFullBody && CVarSwordRootMotion.GetValueOnGameThread() != 0 && Playing->HasRootMotion();
+    // Only this move's root motion may move the capsule.
+    Body->ConsumeRootMotion();
+
+    if (bFullBody && !bMovementLocked)
+    {
+        UCharacterMovementComponent* Movement = Character->GetCharacterMovement();
+        Movement->StopMovementImmediately();
+        Movement->DisableMovement();
+        bMovementLocked = true;
+    }
+    if (bFaceCameraOnAttack)
+    {
+        if (const AController* Controller = Character->GetController())
+        {
+            Character->SetActorRotation(FRotator(0.0, Controller->GetControlRotation().Yaw, 0.0));
+        }
+    }
+
+    FOnMontageEnded Ended;
+    Ended.BindUObject(this, &UReflectionsSwordTestComponent::OnMoveEnded, MoveSerial);
+    Anim->Montage_SetEndDelegate(Ended, Playing);
+
+    UE_CLOG(HitTimes.Num() == 0 && IsStrike(Move.Kind), LogSwordTest, Warning,
+        TEXT("Sword test: %s has no Spell Release (Hit) notify, so nothing is traced"), *Move.Name);
+    Say(FString::Printf(TEXT("Sword: %s (%s, %.2f s, %d hit notify%s%s)"), *Move.Name, KindName(Move.Kind), Playing->GetPlayLength(),
+        HitTimes.Num(), HitTimes.Num() == 1 ? TEXT("") : TEXT("s"),
+        bMoveRootMotion ? TEXT(", travels") : Playing->HasRootMotion() ? TEXT(", in place: root motion not applied") : TEXT("")),
+        FColor::Cyan, 2.5f);
+    return true;
+}
+
+void UReflectionsSwordTestComponent::OnMoveEnded(UAnimMontage* Montage, bool bInterrupted, int32 Serial)
+{
+    // Replaying the same montage interrupts the earlier instance; only the latest move's end counts.
+    if (Serial != MoveSerial)
+    {
+        return;
+    }
+    const AActor* Owner = GetOwner();
+    const UWorld* World = GetWorld();
+    UE_LOG(LogSwordTest, Log, TEXT("%s %s: %d hit(s), %.2f s, capsule moved %.0f cm (root motion applied %.0f cm)"), *ActiveName,
+        bInterrupted ? TEXT("interrupted") : TEXT("ended"), MoveHits, World ? World->GetTimeSeconds() - MoveStartTime : 0.0,
+        Owner ? FVector::Dist2D(Owner->GetActorLocation(), MoveStartLocation) : 0.0, RootMotionApplied);
+    ActiveMontage = nullptr;
+    HitTimes.Reset();
+    WindowIndex = INDEX_NONE;
+    bMoveRootMotion = false;
+    // The Body goes back from the component tick, never from inside the anim update that sent this.
+    bRestorePending = true;
+}
+
+void UReflectionsSwordTestComponent::StopMove()
+{
+    UAnimInstance* Anim = Body ? Body->GetAnimInstance() : nullptr;
+    if (ActiveMontage && Anim)
+    {
+        // Its end event puts the Body back.
+        Anim->Montage_Stop(0.2f, ActiveMontage);
+    }
+}
+
+void UReflectionsSwordTestComponent::RestoreBody()
+{
+    if (Body && RestoreClass && Body->GetAnimClass() != RestoreClass.Get())
+    {
+        Body->SetAnimInstanceClass(RestoreClass);
+    }
+    RestoreClass = nullptr;
+    if (bMovementLocked)
+    {
+        bMovementLocked = false;
+        ACharacter* Character = Cast<ACharacter>(GetOwner());
+        UCharacterMovementComponent* Movement = Character ? Character->GetCharacterMovement() : nullptr;
+        // A hero defeated mid-move stays down: the spell driver turned movement off for that and turns it on at respawn.
+        if (Movement && Movement->MovementMode == MOVE_None && !(Driver && Driver->IsDefeated()))
+        {
+            Movement->SetMovementMode(MOVE_Walking);
+        }
+    }
+}
+
+void UReflectionsSwordTestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+    if (bEquipped && !IsEnabled())
+    {
+        SetEquipped(false);
+    }
+    if (Sword && bEquipped && (!Sword->GetRelativeLocation().Equals(GripLocation, 0.01) || !Sword->GetRelativeRotation().Equals(GripRotation, 0.01)))
+    {
+        // The grip was edited live (Details panel or Sword.Grip).
+        Sword->SetRelativeLocationAndRotation(GripLocation, GripRotation);
+    }
+
+    UAnimInstance* Anim = Body ? Body->GetAnimInstance() : nullptr;
+    // GetInstanceForMontage, not Montage_IsActive / Montage_GetPosition: those ignore a montage that is blending out,
+    // so the move would count as gone (and be cut off with a pop) for its last 0.2 s, and hits there would be lost.
+    const FAnimMontageInstance* Instance = (ActiveMontage && Anim) ? Anim->GetInstanceForMontage(ActiveMontage) : nullptr;
+    if (ActiveMontage && Instance == nullptr)
+    {
+        // The move vanished without an end event (something replaced the Body's anim instance): treat it as ended.
+        OnMoveEnded(ActiveMontage, true, MoveSerial);
+    }
+    if (ActiveMontage && Instance)
+    {
+        if (bMoveRootMotion)
+        {
+            ApplyRootMotion();
+        }
+        UpdateHitWindow(Instance->GetPosition());
+    }
+    if (bRestorePending && ActiveMontage == nullptr)
+    {
+        bRestorePending = false;
+        RestoreBody();
+    }
+}
+
+void UReflectionsSwordTestComponent::ApplyRootMotion()
+{
+    ACharacter* Character = Cast<ACharacter>(GetOwner());
+    const FRootMotionMovementParams Motion = Body->ConsumeRootMotion();
+    if (Character == nullptr || !Motion.bHasRootMotion)
+    {
+        return;
+    }
+    // CharacterMovement reads root motion only from the character's own mesh (here the sample's locomotion mesh), so
+    // the Body's is moved onto the capsule here. Movement is off for the move (MOVE_None), so nothing fights this;
+    // nothing follows the floor either: the sweep stops at walls, and the hero settles onto the ground when the move ends.
+    const FTransform Delta = Body->ConvertLocalRootMotionToWorld(Motion.GetRootMotionTransform());
+    FVector Translation = Delta.GetTranslation();
+    Translation.Z = 0.0;
+    const FQuat Turn = FRotator(0.0, Delta.Rotator().Yaw, 0.0).Quaternion();
+    FHitResult Blocked;
+    Character->GetCharacterMovement()->SafeMoveUpdatedComponent(Translation, Turn * Character->GetActorQuat(), true, Blocked);
+    RootMotionApplied += static_cast<float>(Translation.Size2D() * (Blocked.bBlockingHit ? Blocked.Time : 1.0f));
+}
+
+void UReflectionsSwordTestComponent::UpdateHitWindow(float Position)
+{
+    int32 Window = INDEX_NONE;
+    for (int32 Index = 0; Index < HitTimes.Num(); ++Index)
+    {
+        const float Open = HitTimes[Index] - HitWindowBefore;
+        const float Close = HitTimes[Index] + HitWindowAfter;
+        // Inside the window now, or a long frame stepped right over it.
+        if ((Position >= Open && Position <= Close) || (LastPosition < Open && Position > Close))
+        {
+            Window = Index;
+            break;
+        }
+    }
+    if (Window != WindowIndex)
+    {
+        // Each Hit notify may strike each actor once.
+        WindowIndex = Window;
+        WindowHits.Reset();
+        PreviousBlade.Reset();
+    }
+    if (Window != INDEX_NONE && Sword)
+    {
+        TraceBlade(Window, Position);
+    }
+    LastPosition = Position;
+}
+
+void UReflectionsSwordTestComponent::TraceBlade(int32 Window, float Position)
+{
+    UWorld* World = GetWorld();
+    if (World == nullptr)
+    {
+        return;
+    }
+    const FTransform& BladeTransform = Sword->GetComponentTransform();
+    const int32 Count = FMath::Clamp(BladeSamples, 2, 12);
+    TArray<FVector> Points;
+    Points.Reserve(Count);
+    for (int32 Index = 0; Index < Count; ++Index)
+    {
+        const float Along = FMath::Lerp(BladeStart, BladeTip, static_cast<float>(Index) / static_cast<float>(Count - 1));
+        Points.Add(BladeTransform.TransformPosition(FVector(Along, 0.0, 0.0)));
+    }
+
+    // The same object types the spell area queries use, so whatever a spell can hit a sword can too.
+    FCollisionObjectQueryParams Types;
+    Types.AddObjectTypesToQuery(ECC_Pawn);
+    Types.AddObjectTypesToQuery(ECC_WorldDynamic);
+    Types.AddObjectTypesToQuery(ECC_PhysicsBody);
+    if (bTraceWorldStatic)
+    {
+        Types.AddObjectTypesToQuery(ECC_WorldStatic);
+    }
+    // Like the spell and dig traces: skip the pawn and everything it carries (the Hero Visual child actor).
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(SwordTestBlade), false, GetOwner());
+    TArray<AActor*> Attached;
+    GetOwner()->GetAttachedActors(Attached, true, true);
+    Params.AddIgnoredActors(Attached);
+    if (Body && Body->GetOwner())
+    {
+        Params.AddIgnoredActor(Body->GetOwner());
+    }
+    const FCollisionShape Shape = FCollisionShape::MakeSphere(BladeRadius);
+
+    TArray<FHitResult> Hits;
+    auto Sweep = [&](const FVector& From, const FVector& To)
+    {
+        TArray<FHitResult> Found;
+        World->SweepMultiByObjectType(Found, From, To, FQuat::Identity, Types, Shape, Params);
+        Hits.Append(Found);
+    };
+    // The blade where it is now, then the path each point took since the last frame (a fast cut covers a lot in one).
+    Sweep(Points[0], Points.Last());
+    if (PreviousBlade.Num() == Points.Num())
+    {
+        for (int32 Index = 0; Index < Points.Num(); ++Index)
+        {
+            Sweep(PreviousBlade[Index], Points[Index]);
+        }
+    }
+
+    if (CVarSwordDrawHits.GetValueOnGameThread() != 0)
+    {
+        DrawDebugLine(World, Points[0], Points.Last(), Hits.Num() > 0 ? FColor::Red : FColor::Yellow, false, 1.5f, 0, 0.5f);
+    }
+    PreviousBlade = MoveTemp(Points);
+
+    for (const FHitResult& Hit : Hits)
+    {
+        const AActor* Actor = Hit.GetActor();
+        bool bAlreadyHit = false;
+        if (Actor == nullptr)
+        {
+            continue;
+        }
+        WindowHits.Add(Actor, &bAlreadyHit);
+        if (!bAlreadyHit)
+        {
+            ReportHit(Hit, Window, Position);
+        }
+    }
+}
+
+void UReflectionsSwordTestComponent::ReportHit(const FHitResult& Hit, int32 Window, float Position)
+{
+    AActor* Actor = Hit.GetActor();
+    const FVector Point = Hit.ImpactPoint;
+    ++MoveHits;
+    UE_LOG(LogSwordTest, Log, TEXT("%s hit %s (component %s, bone %s) at %.2f s, hit notify %d of %d, at %s"),
+        *ActiveName, *Actor->GetActorNameOrLabel(), *GetNameSafe(Hit.GetComponent()), *Hit.BoneName.ToString(),
+        Position, Window + 1, HitTimes.Num(), *Point.ToCompactString());
+    if (CVarSwordDrawHits.GetValueOnGameThread() != 0)
+    {
+        DrawDebugSphere(GetWorld(), Point, 8.0f, 12, FColor::Red, false, 2.0f);
+        DrawDebugString(GetWorld(), Point + FVector(0.0, 0.0, 15.0), Actor->GetActorNameOrLabel(), nullptr, FColor::Red, 2.0f);
+    }
+    // The hook into the existing combat: spells damage through ApplyPointDamage, which UReflectionsHealthComponent
+    // turns into health loss, death and the hero's out-of-combat timer. Off unless Sword.Damage > 0.
+    const float Damage = CVarSwordDamage.GetValueOnGameThread();
+    if (Damage > 0.0f)
+    {
+        const APawn* Pawn = Cast<APawn>(GetOwner());
+        const FVector Direction = (Point - GetOwner()->GetActorLocation()).GetSafeNormal2D();
+        UGameplayStatics::ApplyPointDamage(Actor, Damage, Direction, Hit, Pawn ? Pawn->GetController() : nullptr, GetOwner(), UDamageType::StaticClass());
+    }
+}
