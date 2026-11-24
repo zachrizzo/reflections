@@ -44,9 +44,30 @@ if not P.get("mask_only"):
         virtual = texture.get_editor_property("virtual_texture_streaming")
         sample.set_editor_property("sampler_type", unreal.MaterialSamplerType.SAMPLERTYPE_VIRTUAL_COLOR if virtual else unreal.MaterialSamplerType.SAMPLERTYPE_COLOR)
         assert ml.connect_material_property(sample, "RGB", unreal.MaterialProperty.MP_BASE_COLOR)
-        rough = ml.create_material_expression(material, unreal.MaterialExpressionConstant, -400, 205)
-        rough.set_editor_property("r", float(P.get("roughness", .8)))
-        assert ml.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+        rough_png = P.get("roughness_texture")
+        if rough_png and Path(rough_png).is_file():
+            r_task = unreal.AssetImportTask()
+            r_task.filename = rough_png
+            r_task.destination_path = package
+            r_task.destination_name = "T_" + name + "_Roughness"
+            r_task.automated = True
+            r_task.replace_existing = True
+            r_task.save = False
+            tools.import_asset_tasks([r_task])
+            r_tex = resource(package + "/T_" + name + "_Roughness")
+            assert isinstance(r_tex, unreal.Texture2D), "roughness texture import failed: " + rough_png
+            r_tex.set_editor_property("srgb", False)
+            r_tex.set_editor_property("compression_settings", unreal.TextureCompressionSettings.TC_GRAYSCALE)
+            save(r_tex)
+            r_sample = ml.create_material_expression(material, unreal.MaterialExpressionTextureSample, -405, 195)
+            r_sample.set_editor_property("texture", r_tex)
+            r_virt = r_tex.get_editor_property("virtual_texture_streaming")
+            r_sample.set_editor_property("sampler_type", unreal.MaterialSamplerType.SAMPLERTYPE_VIRTUAL_LINEAR_GRAYSCALE if r_virt else unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_GRAYSCALE)
+            assert ml.connect_material_property(r_sample, "R", unreal.MaterialProperty.MP_ROUGHNESS)
+        else:
+            rough = ml.create_material_expression(material, unreal.MaterialExpressionConstant, -400, 205)
+            rough.set_editor_property("r", float(P.get("roughness", .85)))
+            assert ml.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
         material.set_editor_property("two_sided", True)
         material.set_editor_property("used_with_skeletal_mesh", True)
         material.set_editor_property("used_with_clothing", True)

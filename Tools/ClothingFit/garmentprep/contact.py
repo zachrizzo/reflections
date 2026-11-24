@@ -101,12 +101,22 @@ def crossing_triangles(skin, skin_faces, cloth, cloth_faces, pad=2.):
     return np.unique(i_cloth), sub[np.unique(i_skin)]
 
 
-def self_crossing_pairs(P, F):
-    """Number of non-adjacent triangle pairs of one mesh that cross each other."""
+def self_crossing_pairs(P, F, split_walls=False):
+    """Number of non-adjacent triangle pairs of one mesh that cross each other.
+    When split_walls=True, returns (total, same_wall, opposite_wall) using face-normal dot product < -0.3."""
     F = F[(F[:, 0] != F[:, 1]) & (F[:, 1] != F[:, 2]) & (F[:, 0] != F[:, 2])]
     ia, ib = candidate_pairs(P, F, P, F)
     keep = ia < ib
     ia, ib = ia[keep], ib[keep]
     share = (F[ia][:, :, None] == F[ib][:, None, :]).any((1, 2))
     ia, ib = ia[~share], ib[~share]
-    return int(tri_tri(P[F[ia]], P[F[ib]]).sum())
+    hit = tri_tri(P[F[ia]], P[F[ib]])
+    if not split_walls:
+        return int(hit.sum())
+    ia, ib = ia[hit], ib[hit]
+    if not len(ia):
+        return 0, 0, 0
+    _, fn = vnormals(P, F)
+    dot = np.einsum("ij,ij->i", fn[ia], fn[ib])
+    opp = int((dot < -0.3).sum())
+    return int(len(ia)), int(len(ia) - opp), opp

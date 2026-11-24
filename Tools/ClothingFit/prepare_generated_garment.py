@@ -108,10 +108,16 @@ END_PAST = {"hand": 1.5, "foot": -3.}    # cm past the wrist / ankle joint where
 def end_limbs_at_joints(P, F, joints, trunk, log=print):
     """A sleeve may not cover the hand and a trouser leg may not cover the foot. Where cloth that wraps a limb
     runs on past the wrist (ankle), the part below the elbow (knee) is shortened along the forearm (shin) so the
-    cuff lands END_PAST cm past the wrist (ankle) joint. Shorter sleeves and legs are left alone."""
+    cuff lands END_PAST cm past the wrist (ankle) joint. Shorter sleeves and legs are left alone.
+    Expands across welded mesh edges within the limb's Voronoi region so flared cuffs move as one piece."""
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+
     P = P.copy()
     report = {}
     d_trunk = prep.distance_to_segments(P, np.asarray(trunk))[0] if len(trunk) else np.full(len(P), np.inf)
+    W, Fw, inv = meshops.weld(P, F)
+    E = meshops.edges_of(Fw)
     for upper, lower, end in (("upperarm", "lowerarm", "hand"), ("thigh", "calf", "foot")):
         chains = {}
         for side in "lr":
@@ -127,7 +133,8 @@ def end_limbs_at_joints(P, F, joints, trunk, log=print):
             dist[side] = prep.distance_to_segments(P, seg)[0]
         for side, (a, b, c) in chains.items():
             others = [dist[o] for o in dist if o != side] + [d_trunk]
-            mine = (dist[side] < np.minimum.reduce(others)) & (dist[side] < 16.)
+            closer = dist[side] < np.minimum.reduce(others)
+            mine = closer & (dist[side] < 24.)
             u = (c - b) / np.linalg.norm(c - b)
             length = float(np.linalg.norm(c - b))
             along = (P - b) @ u
@@ -135,11 +142,18 @@ def end_limbs_at_joints(P, F, joints, trunk, log=print):
             ring = mine & (np.abs(along - .5 * length) < 4.)
             if ring.sum() < 30:
                 continue
-            # the sleeve (trouser leg) below the elbow (knee): inside a tube round the forearm (shin) line. Generated
-            # meshes come in many separate panels (a cuff band can be its own piece), so this is geometric, not by
-            # connectivity; the tube is sized from the sleeve itself half way down the forearm.
-            tube = min(14., 1.6 * float(np.median(perp[ring])) + 2.)
-            limb = mine & (perp < tube) & (along > 0)
+            tube = min(22., 2.2 * float(np.percentile(perp[ring], 95)) + 3.)
+            seed = mine & (perp < tube) & (along > 0)
+            if not seed.any():
+                continue
+            # Include all welded cuff/limb vertices connected to the seed inside closer & (along > 0)
+            allow_w = np.zeros(len(W), bool); np.logical_or.at(allow_w, inv, closer & (along > 0))
+            seed_w = np.zeros(len(W), bool); np.logical_or.at(seed_w, inv, seed)
+            keep_e = allow_w[E[:, 0]] & allow_w[E[:, 1]]
+            sub_g = coo_matrix((np.ones(keep_e.sum()), (E[keep_e, 0], E[keep_e, 1])), shape=(len(W), len(W)))
+            _, comp = connected_components(sub_g, directed=False)
+            limb_w = allow_w & np.isin(comp, np.unique(comp[seed_w]))
+            limb = limb_w[inv] & closer & (along > 0)
             if not limb.any():
                 continue
             reach = float(along[limb].max())
@@ -153,6 +167,50 @@ def end_limbs_at_joints(P, F, joints, trunk, log=print):
             report[name] = dict(ends_past_joint_cm=round(reach - length, 1), shortened_cm=round(reach - target, 1), vertices=int(move.sum()), tube_cm=round(tube, 1))
             log(f"{name}: cloth ran {reach - length:.1f} cm past the {end} joint; shortened by {reach - target:.1f} cm below the {lower} joint")
     return P, report
+
+
+DEFECT_LIMITS = dict(
+    max_torn_triangles=40,
+    max_self_crossings_after=2800,
+    max_same_wall_crossings_after=1400,
+    max_same_wall_crossings_added=1000,
+    min_edge_p1_pct=-38.0,
+    min_edge_p5_pct=-18.0,
+    max_edge_p95_pct=35.0,
+    max_edge_p99_pct=65.0,
+)
+
+
+def check_fit_defects(report, limits=DEFECT_LIMITS):
+    """Automatic defect check for stretched, crumpled, folded, or torn cloth (from PrepareReport metrics)."""
+    defects = []
+    st = report["standing"]
+    if st["triangles_crossing_skin"] > 0:
+        defects.append(f"skin crossings: {st['triangles_crossing_skin']} triangles still cross skin")
+    if st["triangles_crossing_layer_underneath"] > 0:
+        defects.append(f"under-layer crossings: {st['triangles_crossing_layer_underneath']} triangles cross layer underneath")
+    torn = int(report.get("torn_triangles_dropped", 0))
+    if torn > limits["max_torn_triangles"]:
+        defects.append(f"torn cloth: {torn} stretched triangles dropped (limit {limits['max_torn_triangles']})")
+    sc_before, sc_after = report["self_crossing_pairs_before_after"]
+    if sc_after > limits["max_self_crossings_after"]:
+        defects.append(f"folded cloth: {sc_after} total self-crossing pairs after fit (limit {limits['max_self_crossings_after']})")
+    sw_before, sw_after = report.get("same_wall_self_crossing_pairs_before_after", [sc_before, sc_after])
+    sw_added = sw_after - sw_before
+    if sw_after > limits["max_same_wall_crossings_after"]:
+        defects.append(f"folded cloth: {sw_after} same-wall self-crossing pairs (limit {limits['max_same_wall_crossings_after']})")
+    if sw_added > limits["max_same_wall_crossings_added"]:
+        defects.append(f"fit-created folds: +{sw_added} new same-wall self-crossing pairs (limit +{limits['max_same_wall_crossings_added']})")
+    p1, p5, _, p95, p99 = report["edge_length_change_pct_p1_p5_p50_p95_p99"]
+    if p1 < limits["min_edge_p1_pct"]:
+        defects.append(f"crumpled cloth: edge length p1={p1:.1f}% (limit >= {limits['min_edge_p1_pct']}%)")
+    if p5 < limits["min_edge_p5_pct"]:
+        defects.append(f"crumpled cloth: edge length p5={p5:.1f}% (limit >= {limits['min_edge_p5_pct']}%)")
+    if p95 > limits["max_edge_p95_pct"]:
+        defects.append(f"over-stretched cloth: edge length p95=+{p95:.1f}% (limit <= +{limits['max_edge_p95_pct']}%)")
+    if p99 > limits["max_edge_p99_pct"]:
+        defects.append(f"over-stretched cloth: edge length p99=+{p99:.1f}% (limit <= +{limits['max_edge_p99_pct']}%)")
+    return dict(passed=not defects, defects=defects, limits=limits)
 
 
 def needs_arm_room(P, joints):
@@ -243,6 +301,8 @@ def main():
     spread = float(np.abs(P1 - W1[inv]).max())
     report = dict(result["report"])
     report.pop("history", None)
+    sc0_tot, sc0_same, _ = contact.self_crossing_pairs(W0, Fw, split_walls=True)
+    sc1_tot, sc1_same, _ = contact.self_crossing_pairs(W1, Fw, split_walls=True)
     report.update(
         seconds=round(time.time() - started, 1), arm_room=bool(arm_room), limb_ends=limb_ends, neck_hole_rule=bool(reaches_neck), torn_triangles_dropped=int(torn.sum()),
         settings={k: v for k, v in dict(prep.DEFAULTS, **params).items()},
@@ -253,14 +313,16 @@ def main():
         seam_duplicates_max_spread_cm=spread,
         edge_length_change_pct_p1_p5_p50_p95_p99=np.percentile(change, [1, 5, 50, 95, 99]).round(1).tolist(),
         displacement_cm_p50_p95_max=np.percentile(np.linalg.norm(P1 - P0, axis=1), [50, 95, 100]).round(2).tolist(),
-        self_crossing_pairs_before_after=[contact.self_crossing_pairs(W0, Fw), contact.self_crossing_pairs(W1, Fw)])
+        self_crossing_pairs_before_after=[sc0_tot, sc1_tot],
+        same_wall_self_crossing_pairs_before_after=[sc0_same, sc1_same])
     # where the cloth was brought out of the body: report the cost there (stretch of the moved edge, squeeze of the patch)
     planned = result["planned"][result["garment"].inv]
     if planned.any():
         on_patch = planned[edges[:, 0]] & planned[edges[:, 1]] & ok
         report["moved_patch_edge_change_pct_p5_p50_p95"] = np.percentile((l1[on_patch] / l0[on_patch] - 1) * 100, [5, 50, 95]).round(1).tolist()
+    report["quality"] = check_fit_defects(report)
     (args.output / "PrepareReport.json").write_text(json.dumps(report, indent=1, default=float))
-    print(json.dumps({k: report[k] for k in ("standing", "edge_length_change_pct_p1_p5_p50_p95_p99", "self_crossing_pairs_before_after", "refinement", "seconds")}, indent=1, default=float))
+    print(json.dumps({k: report[k] for k in ("standing", "edge_length_change_pct_p1_p5_p50_p95_p99", "self_crossing_pairs_before_after", "torn_triangles_dropped", "quality", "refinement", "seconds")}, indent=1, default=float))
 
 
 if __name__ == "__main__":

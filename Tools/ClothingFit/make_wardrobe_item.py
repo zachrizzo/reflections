@@ -46,7 +46,7 @@ TROUSERS = "/Game/Characters/Clothing/VillageWardrobe/TravelTrousers/WI_TravelTr
 STAGES = ["image", "mesh", "fit", "unreal", "test", "mask"]
 MASK_SHRINK = 1.0      # cm: skin next to the hidden area is pushed in this far (MaxShrinkDistance), the hidden area itself is removed
 SOURCE_LABEL = "GiltBarnaby"                                       # roster label of the source body
-SLOT = {"top": "Top Garment", "bottom": "Bottom Garment"}
+SLOT = {"top": "Top Garment", "bottom": "Bottom Garment", "cloak": "Outfits"}
 TRIANGLES = 60000
 
 
@@ -90,7 +90,7 @@ def editor_python(script, params, purpose):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("name")
-    parser.add_argument("kind", choices=("top", "bottom"))
+    parser.add_argument("kind", choices=("top", "bottom", "cloak"))
     parser.add_argument("--describe")
     parser.add_argument("--image", type=Path)
     parser.add_argument("--mesh", type=Path)
@@ -100,6 +100,7 @@ def main():
     parser.add_argument("--redo", choices=STAGES)
     parser.add_argument("--bodies", nargs="*")
     parser.add_argument("--wear-with")
+    parser.add_argument("--allow-defects", action="store_true", help="debug only: continue even if the automatic fit defect check flags folds/tears/stretch")
     args = parser.parse_args()
     name, kind = args.name, args.kind
     out = ROOT / "Saved/ClothingFit/Generated" / name
@@ -147,6 +148,19 @@ def main():
             under = ["under"]
         else:
             under = ["bottom"]
+    elif kind == "cloak":
+        # worn over trousers and (optionally) a generated top (--over <TopName>)
+        source = out / "SourceWithUnder"
+        source.mkdir(exist_ok=True)
+        for item in ("standing_body.bin", "standing_face.bin", "standing_bottom.bin", "joints_local.json"):
+            if (SOURCE / item).exists():
+                shutil.copyfile(SOURCE / item, source / item)
+        under = ["bottom"] if (source / "standing_bottom.bin").exists() else []
+        if args.over:
+            below = ROOT / "Saved/ClothingFit/Generated" / args.over / "Prepared/standing_garment.bin"
+            assert below.exists(), f"make {args.over} first"
+            shutil.copyfile(below, source / "standing_under.bin")
+            under.append("under")
     prepared = out / "Prepared"
     fbx = out / f"{name}_Fit.fbx"
     if wanted("fit", fbx):
@@ -158,16 +172,20 @@ def main():
         cmd = [PY, HERE / "prepare_generated_garment.py", out / "Registered.npz", source, prepared]
         for tag in under or ["none"]:
             cmd += ["--under", tag]
+        if kind == "cloak":
+            cmd += ["--arms", "off"]
         run(cmd, log)
         run([PY, PREP / "preview.py", prepared / "Prepared.npz", source, out / "Prepared_preview.png", f"{name} prepared"]
             + ([] if under == ["bottom"] else ["--no-under"]), log)
         run([blender(), "-b", "--python", PREP / "blender_io.py", "--", "build", prepared, fbx, out / f"{name}_Fit.blend", name], log)
     fit = json.loads((prepared / "PrepareReport.json").read_text())
     report["fit"] = {k: fit[k] for k in ("standing", "self_crossing_pairs_before_after", "edge_length_change_pct_p1_p5_p50_p95_p99",
-                                         "triangles", "arm_room") if k in fit}
+                                         "torn_triangles_dropped", "quality", "triangles", "arm_room") if k in fit}
     print("fit:", json.dumps(report["fit"]))
     assert fit["standing"]["triangles_crossing_skin"] == 0 and fit["standing"]["triangles_crossing_layer_underneath"] == 0, \
         "the prepared garment still crosses the source body; not importing it"
+    if not args.allow_defects and "quality" in fit and not fit["quality"]["passed"]:
+        raise SystemExit("fit defect check failed; not importing it: " + "; ".join(fit["quality"]["defects"]))
     if last < STAGES.index("unreal"):
         return
     # ---- unreal
@@ -180,7 +198,16 @@ def main():
             done.unlink()
         params = {"fbx": str(fbx).replace("\\", "/"), "package": package, "name": name, "material": f"{package}/M_{name}",
                   "texture": str(texture).replace("\\", "/"), "source_body": SOURCE_BODY_ASSET, "size_name": "Barnaby",
-                  "progress": str(done).replace("\\", "/")}
+                  "roughness": 0.85, "progress": str(done).replace("\\", "/")}
+        # Wire TRELLIS.2's baked roughness map when it has genuine non-degenerate cloth variation (never metallic)
+        rough_candidates = sorted(texture.parent.glob(f"T_{name}_T2_*_Roughness.png"))
+        if rough_candidates:
+            from PIL import Image
+            import numpy as np
+            ra = np.asarray(Image.open(rough_candidates[0]), float) / 255.0
+            p1, p50, p99 = np.percentile(ra, [1, 50, 99])
+            if 0.55 <= p50 <= 0.95 and (p99 - p1) > 0.02:
+                params["roughness_texture"] = str(rough_candidates[0].resolve()).replace("\\", "/")
         if (out / "BodyHiddenFaceMap.png").exists():
             params["hidden_face_map"] = str((out / "BodyHiddenFaceMap.png").resolve()).replace("\\", "/")
         (out / "import_params.json").write_text(json.dumps(params, indent=1))
@@ -195,6 +222,7 @@ def main():
     wear = {SLOT[kind]: item}
     surfaces = {name.lower(): f"/{name}/"}
     below = "none"
+    clear_slots = [] if kind == "cloak" else ["Outfits"]
     if kind == "top":
         if args.over:
             wear[SLOT["bottom"]] = f"{PACKAGE}/{args.over}/WI_{args.over}"
@@ -203,13 +231,22 @@ def main():
             wear[SLOT["bottom"]] = args.wear_with or TROUSERS
             surfaces["under"] = "OA_TravelTrousers" if not args.wear_with else args.wear_with.rsplit("/", 1)[0].rsplit("/", 1)[1]
         below = "under"
+    elif kind == "cloak":
+        wear[SLOT["bottom"]] = args.wear_with or TROUSERS
+        if args.over:
+            wear[SLOT["top"]] = f"{PACKAGE}/{args.over}/WI_{args.over}"
+            surfaces["under"] = f"/{args.over}/"
+            below = "under"
+        else:
+            surfaces["under"] = "OA_TravelTrousers" if not args.wear_with else args.wear_with.rsplit("/", 1)[0].rsplit("/", 1)[1]
+            below = "under"
     elif args.wear_with:
         wear[SLOT["top"]] = args.wear_with
-    config = {"out": str(lineup).replace("\\", "/"), "roster": roster, "wear": wear, "clear_slots": ["Outfits"], "surfaces": surfaces,
-              "audit": [[name.lower(), below]] + ([["under", "none"]] if args.over else []), "standing_views": ["front", "back", "left", "right"], "pose_views": ["back", "left"],
+    config = {"out": str(lineup).replace("\\", "/"), "roster": roster, "wear": wear, "clear_slots": clear_slots, "surfaces": surfaces,
+              "audit": [[name.lower(), below]] + ([["under", "none"]] if args.over and kind != "cloak" else []), "standing_views": ["front", "back", "left", "right"], "pose_views": ["back", "left"],
               "photo_frames": {"walk": [12], "reach": [12]}}
-    if kind == "bottom" or args.over:
-        config.update(camera_distance=215, aim_height=92)        # whole figure in the pictures
+    if kind in ("bottom", "cloak") or args.over:
+        config.update(camera_distance=220 if kind == "cloak" else 215, aim_height=96 if kind == "cloak" else 92)        # whole figure in the pictures
     (out / "lineup.json").write_text(json.dumps(config, indent=1))
     print(f"test: {len(roster) if not args.bodies else len(args.bodies)} bodies, 51 poses each")
     cmd = [PY, PREP / "run_lineup.py", out / "lineup.json"] + (["--only"] + args.bodies if args.bodies else [])

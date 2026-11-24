@@ -43,7 +43,7 @@ def whole_body_field(capture):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("garment", type=Path); parser.add_argument("capture", type=Path)
-    parser.add_argument("kind", choices=("top", "bottom")); parser.add_argument("output", type=Path)
+    parser.add_argument("kind", choices=("top", "bottom", "cloak")); parser.add_argument("output", type=Path)
     parser.add_argument("--joints", type=Path)
     args = parser.parse_args()
     data = np.load(args.garment)
